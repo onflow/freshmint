@@ -13,8 +13,9 @@ services:
   dev-wallet:
     image: ghcr.io/onflow/fcl-dev-wallet:latest
     ports:
-      - "8701:3000"
+      - "8701:8701"
     environment:
+      - PORT=8701
       - FLOW_ACCESS_NODE=http://emulator:8080
       - FLOW_ACCOUNT_ADDRESS=0xf8d6e0586b0a20c7
       - FLOW_ACCOUNT_KEY_ID=0

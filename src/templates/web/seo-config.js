@@ -1,32 +1,26 @@
+import getConfig from "next/config";
+const { publicRuntimeConfig } = getConfig();
+
 export default {
-  noindex: true,
-  title: "NFT App Site",
-  description: "Amazing NFTs for Sale",
+  noindex: true, // Remove this before going live.
+  title: publicRuntimeConfig.appName,
+  description: "",
   openGraph: {
-    url: "https://www.url.ie/a",
-    title: "Open Graph Title",
-    description: "Open Graph Description",
+    url: "",
+    title: "",
+    description: "",
     type: "website",
     locale: "en_IE",
     images: [
       {
-        url: "https://www.example.ie/og-image-01.jpg",
+        url: "http://placekitten.com/800/600",
         width: 800,
         height: 600,
-        alt: "Og Image Alt",
+        alt: "Cats on the Internet",
         type: "image/jpeg"
-      },
-      {
-        url: "https://www.example.ie/og-image-02.jpg",
-        width: 900,
-        height: 800,
-        alt: "Og Image Alt Second",
-        type: "image/jpeg"
-      },
-      { url: "https://www.example.ie/og-image-03.jpg" },
-      { url: "https://www.example.ie/og-image-04.jpg" }
+      }
     ],
-    site_name: "SiteName"
+    site_name: publicRuntimeConfig.appName
   },
   twitter: {
     handle: "@handle",

@@ -1,21 +1,18 @@
 const path = require("path");
-const { withPrefix } = require("@onflow/util-address")
+const { withPrefix } = require("@onflow/util-address");
 
 function getConfig() {
+  require("dotenv").config({ path: path.resolve(process.env.PWD, ".env") });
 
-  require("dotenv").config({ path: path.resolve(process.env.PWD, '.env') })
+  // TOOD: Inform when config is missing
+  const userConfig = require(path.resolve(process.env.PWD, "minty.config.js"));
 
-  const userConfig = require(
-    path.resolve(process.env.PWD, "minty.config.js")
-  )
+  const flowConfig = require(path.resolve(process.env.PWD, "flow.json"));
 
-  const flowConfig = require(
-    path.resolve(process.env.PWD, "flow.json")
-  )
-
-  const flowTestnetConfig = require(
-    path.resolve(process.env.PWD, "flow.testnet.json")
-  )
+  const flowTestnetConfig = require(path.resolve(
+    process.env.PWD,
+    "flow.testnet.json"
+  ));
 
   return {
     //////////////////////////////////////////////
@@ -62,28 +59,32 @@ function getConfig() {
     //////////////////////////////////////////////
 
     // This is the default owner address and signing key for all newly minted NFTs
-    emulatorFlowAccount: userConfig.emulatorFlowAccount ? 
-      getAccount(userConfig.emulatorFlowAccount, flowConfig) :
-      getAccount("emulator-account", flowConfig),
+    emulatorFlowAccount: userConfig.emulatorFlowAccount
+      ? getAccount(userConfig.emulatorFlowAccount, flowConfig)
+      : getAccount("emulator-account", flowConfig),
 
     //////////////////////////////////////////////
     // ------ Testnet Configs
     //////////////////////////////////////////////
 
     // This is the default owner address and signing key for all newly minted NFTs
-    testnetFlowAccount: userConfig.testnetFlowAccount ? 
-      getAccount(userConfig.testnetFlowAccount, flowTestnetConfig) :
-      getAccount("testnet-account", flowTestnetConfig),
-  }
+    testnetFlowAccount: userConfig.testnetFlowAccount
+      ? getAccount(userConfig.testnetFlowAccount, flowTestnetConfig)
+      : getAccount("testnet-account", flowTestnetConfig)
+  };
 }
 
 function getAccount(name, flowConfig) {
-  const account = flowConfig.accounts[name]
+  const account = flowConfig.accounts[name];
 
   return {
     name,
-    address: withPrefix(account.address),
-  }
+    address: withPrefix(account.address)
+  };
+}
+
+function getContractAddress(name, network, flowConfig) {
+  return flowConfig.contracts[name].aliases[network];
 }
 
 module.exports = getConfig;
