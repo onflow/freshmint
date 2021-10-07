@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-// This file contains the main entry point for the command line `minty` app, and the command line option parsing code.
-// See minty.js for the core functionality.
+// This file contains the main entry point for the command line `fresh` app, and the command line option parsing code.
+// See fresh.js for the core functionality.
 
 const path = require("path");
 const { Command } = require("commander");
@@ -9,9 +9,11 @@ const inquirer = require("inquirer");
 const chalk = require("chalk");
 const colorize = require("json-colorizer");
 const ora = require("ora");
-const { MakeMinty } = require("./minty");
+const { MakeFresh } = require("./fresh");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
+const { isExists } = require("./file-helpers");
+const carlton = require("./carlton");
 
 const colorizeOptions = {
   pretty: true,
@@ -22,20 +24,21 @@ const colorizeOptions = {
 };
 
 const spinner = ora();
-const program = new Command();
 
 async function main() {
-  // commands
+  const program = new Command();
 
   program.option(
-    "-n, --network <network-name>",
-    "use either 'testnet' or 'mainnet'"
+    "-n, --network <network>",
+    "Network to deploy to. Either 'testnet' or 'mainnet'"
   );
 
+  // commands
+
   program
-    .command("create")
+    .command("start")
     .description("initialize a new project")
-    .action(init);
+    .action(start);
 
   program
     .command("mint")
@@ -60,7 +63,7 @@ async function main() {
     .action(mintNFT);
 
   program
-    .command("show <token-id>")
+    .command("inspect <token-id>")
     .description("get info from Flow about an NFT using its token ID")
     .action(getNFT);
 
@@ -74,19 +77,14 @@ async function main() {
     .description("remove the current NFT drop")
     .action(removeDrop);
 
-  // program
-  //   .command("transfer <token-id> <to-address>")
-  //   .description("transfer an NFT to a new owner")
-  //   .action(transferNFT);
-
   program
     .command("pin <token-id>")
     .description('"pin" the data for an NFT to a remote IPFS Pinning Service')
     .action(pinNFTData);
 
   program
-    .command("deploy")
-    .description("deploy an instance of the Minty NFT contract")
+    .command("up")
+    .description("deploy an instance of the FreshMint NFT contract")
     .option(
       "-n, --network <name>",
       "Either: emulator, testnet, mainnet",
@@ -97,71 +95,8 @@ async function main() {
   program
     .command("prince")
     .description("In west Philadelphia born and raised.")
-    .action(() => {
-      console.log(`
-        ,,,,,,,,,..,,,,,,,,,,,,,,,,,,,,,,,**,,,,,,,,,,,,,*****,,***,,********,,,*******////////////*/////(//
-.,,,,,,...,,,,,,,,,,,,,,,,,,,,,,,,,**,,,,,,,*,,,,,,,,,,*****///*******,********///////////***////(//
-...,......,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,****//***,,***,*******/*************//////((
-..........,,....,,,,,,,,*,,,,,,,,**,,***,,,,,,,,,,,,,,,,,,,,******,**,,,*********************/*/////
-................,,,,,,,,,,,,,,,,,*****,,,,,,,,,,,,,,,,,,,,,,*******,,**,,*********************//*///
-...............,,.,,,,,,,,,,,,,,,,,,**,,*,,,,,,,,,,,,,,,,,,,*******,,**,,***********************////
-...................,,,,,,,,,,,,,,,,,,,,**,,,,,***,**///(/*******,*******,,***/*********************/
-.....,.............,,,,,.,,,,,,,,,,,,,,(@@@@@@@@@@@@@@@@@@@@@@@&/******,,,**//*********,,***********
-..................,,,..,,,,,,,,,,,,/@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&/*,,,**************************
-....,,,.................,,,,.,,,*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&/,****,**********,,,,,*,,,,*
-.........,..............,,.....&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,**,,*****,***,,,,,,,,,,**
-..................,,.........,@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@/,,,,********,,,,,,,,,***
-.................,,..........&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,,,,,**,****,,,,,,,*,***
-.......,.....,,,,,,,,......./@@@@@@@@@@&&&&&%%&%&%&&%%%&&&&%%%&&%&&&@@@@@@@@@,,,,,*,,*****,,,,,****,
-.,..,,,,,,,,,,,,,,,,........&@@@@@@@@@&&&&&&&%%%####(((((/////(((((#####%%@@@*,,,,,,,*,,,,,,,,,,,,,,
-..,,,,,,,,,,,,,,,,,,,.......@@@@@@@@@@&&&&&&&%%###(((////***/////((((####%%@@(,,,,,,,,,,,,,,,,,,,,,*
-.,,,,,,,,,,,,,,,,,,,.......,@@@@@@@@@@&&&&&&%%###((/////********///(((#####&@#,,,,,,,,,,,,,,,,,,,,**
-.,,,,,,,,,,,,,,,,...,......,@@@@@@@@@@&&&&&&%%%##(((//////*/**/////((((####%@#,,,,,,,,,,,,,,,,,,,,,,
-.,,,,,,,,,,,,,,,...........,@@@@@@@@&&&&&&&%%##(((//*************///((((####&*,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,....,,,,..,,,.......&@@@@@@&&&&&&&%%###((//***************//(((####%&,,,,,,,,,,**,,,,,,,,,,,
-.,,,,,,.....,,,.,,,,,,...&@&&@@@@@&&&&@@@@@@@&&&&#(/**************/(##%%&%##/,,,,,,,,,,**,,,,,,,,,**
-,,,,......,,,,....,,,,..#%@@&@@@@&&&&@@@&&&%%&&@@@@&&%((////(#%&&&@&@@&%&&%#(#,,,,,,,***,,,,,*******
-,,,.......,,........,,,*(&&&@@@@@&&&%%%&&@@@@@ @&##&&&%#///(#%%%#%@@&%#%%####(*,,,,*,****,,,,,******
-,,......,,,,.......,,...#&%&@@@@@@&&%##%&@&&%%(/*///(%&%(*/((//*/*&&/,#%#((##(,,,***,***,,,,,*******
-,....,,,,....,...,,..,,,(%&&@@@@@@&&%%%###(((((///((#%%(/*/(((//*/(###((/((/#/,,,***,*****,,*******/
-.,,,,,,.,,,.....,,,,,,**,%%#&@@@@@@&&%%###(((/////(%%%#(////(((/***//////((((,,,,,,,,*****,,*******/
-..,,,,,,,,,,,,...,,,,,,,,,&&&@@@@@@&&&%%##((//***(&%%#(//**//((/*****//(((((/,,,,,,,,**,*****,*****/
-.,,,,,,.........,,..,,,,,,,,.%@@@@@&&&&%%##((/**(&%##(//*,,*//((///*//((((((*,,,,,,,,,,,,**,,,******
-.,,,,...............,,,,,,,,,&@@@@@&&&&&&%%%##(((#%&&@@%###(#(////(#######,,,,,,,,,,,,,,,,,,,*******
-,,,,,.....,,,,,,,..,,,,,,,,,,&@@@@@@&&&&%%#&@&&%%%%%%%%#(/#%#%##%&&%%#%%%(,.,,,,,,,,,,.,,,,,,*******
-,,,..,,,...,,,,,,...,,,,,,,,*&@@@@@@&&%%%%###(&@&&%%##(/**/(##%%#//((##%%,,,,,,,,,,,,,,,,,,,,*******
-...,,,,...,,,,,,,,,.,,,,,,,,/#@@@@@@@@&&%%%####%%#%##((/(///(#(((((#####.,,,,,,,,,,,,,,,,,,,,*******
-,,,.,,,.,,....,,,,,,,,,,,,&%(%/(@@@@@@@@&&&%%%%%%&&&%#(////(#%#((###%%,..,,,,,,,,,,,,,,,,,,,,,******
-,,..,,,.......,,..,,,,,,%@@@(/@/,.&@@@@@@@@&&&%%##(((((/*//(((((#%%%,,,,,,,,,,,,,,,,,,,,,,,,,,,,,***
-,,,,.........,...,,,,,&@@@@@%*,#,.. (&@@@@@@@@&%%##((////////((#%&%,,,,,,,,,,,,,,,,,,,,**,,,,,,,,***
-,,,,,,,.....,,,..,,,@@@@@@@@@%...(.   ,%(@@@@@@@&%%%###(((((##%&&%.,,,,,,,,,,...,,,,,,,,,,,,,,,*****
-,,,,,,,.........*%@@@@@@@@@@@@@*   */    #/*%@@@@@@@&&&&&&&&&&&%%# ,,,,,,,,,,,,..,,,,,,,,,,*,,******
-,,...........@@@@@@@@@@@@@@@@@@@**    #    .&,.,(@@@@@@&&&&&%%%%% ..,,,,,,,,,,,,,...,,,,,,,,,,******
-,.......*&@@@@@@@@@@@@@@@@@@@@@@@#.#    ,/    ,(    (%%%%%%%%%#*,#@%&@@@@%,,,,,,,,,....,,,,,,,,,,,,,
-,,../@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&  (.    /. ** /.    #%%%%%, &@@@@@@&@@@@@*,,,,,,,,,...,,,,,,,,,,,
-%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@/   (  .,%@@/&@@&&@&,,...#&@@@&@@@@@@@@@*,,,,,,,,,,...,,,,,,,,,,
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&    *%@@&&@@@@@@@@@@/@@@@@@@@@@@@@(@@@,,,,,,,*,,,.....,,,,,,,,
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%.  .#@@@@@@@@@@@@@@@@@@@@@@@@@@@&(@@&*.,,,,***,,..,,.,,,,,,,
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@( ( /@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#,,*,,,,,,,,.,,,,,,
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&  (@@@@@@@@%@@@@@%@&@@@@@@@%(@@@@#((##&@@@@&*,,,,,,,,,,,,,
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,#@@@@@@&&@@@@@&  , .&&@@@&&&&%%#(///((##&@@@@@(,,,,,,,.,
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@&(  *  , *.*&@@#(//((((###%#(#(##&@@@@@%,,,..
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%*/((,.* .      * /.,%@@%#(((((//((((((##%##@@@@@@@,,,
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@/ .*   /  ,    * %,/&#((#####%%#%###((((/#&@@@@@@@@(.
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*  /   ,    , *.(/#&%##((((((#((((##((((%&%@@@@@@@@#
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@,  ,  ,  , *.(*(&%(((######%###(//(####%%&@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@( ..  . , *.%(%&&%#(((((((((((((##%###%%%@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@% ,. , , ,.(#&&%%&&%#(((((((########%%%&@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@% ,   , * .###&%%&&&#############%%%%%&@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@.. ., /  /.*#*&@@@%//(((((####%%%%%&&@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*.       *.*.(@@@%#((((########%%%&&@@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*  . ,  * .,*@@@@#%%######%###%%%&&&@@@@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@. . *     ,.@@@@&%&%%########%%%&@@@&&@@@@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@& , .   , * @@@@@@%&&&%%%%%###%#@#&&&@&(&@@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*     , , &@@@@@@@&&&&&&%%%##&&@@@#@#% @@
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&  ,   .. %@@@@@@@@@@@@@@@@@@@@@@@@#&@&*@
-      `);
-    });
+    .action(() => { console.log(carlton); });
+
   // The hardhat and getconfig modules both expect to be running from the root directory of the project,
   // so we change the current directory to the parent dir of this script file to make things work
   // even if you call minty from elsewhere
@@ -173,42 +108,87 @@ async function main() {
 
 // ---- command action functions
 
-async function init() {
+async function start() {
+  const ui = new inquirer.ui.BottomBar();
+  ui.log.write(chalk.greenBright("Initializing new project. 🍃\n"));
+
   const questions = [
     {
       type: "input",
       name: "projectName",
-      message: "What's your project name? (e.g. my-nft-project)"
+      message: "Name your new project:",
+      validate: async function (input) {
+        if (!input) {
+          return "Please enter a name for your project.";
+        }
+
+        const exists = await isExists(input);
+
+        if (exists) {
+          return "A project with that name already exists.";
+        }
+        return true;
+      }
     },
     {
       type: "input",
       name: "contractName",
-      message: "What's your contract name? (e.g. MyNFT)"
+      message: "Name the NFT contract (eg. MyNFT): ",
+      validate: async function (input) {
+        if (!input) {
+          return "Please enter a name for your contract.";
+        }
+
+        return true;
+      }
     }
   ];
 
   const answers = await inquirer.prompt(questions);
 
-  await generateProject(answers.projectName, answers.contractName);
-  await generateWebAssets(answers.projectName, answers.contractName);
+  spinner.start("Generating project files...");
 
-  console.log(
-    `\nProject initialized in ./${answers.projectName}\n\ncd ${answers.projectName}`
+  const formattedContractName = answers.contractName
+    // Remove spaces from the contract name.
+    .replace(/\s*/g, "")
+    .trim()
+    .split(" ")
+    // Ensure title-case
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(" ");
+
+  await generateProject(answers.projectName, formattedContractName);
+  await generateWebAssets(answers.projectName, formattedContractName);
+
+  spinner.succeed(
+    `✨ Project initialized in ${chalk.white(`./${answers.projectName}\n`)}`
+  );
+
+  ui.log.write(
+    `Use: ${chalk.magentaBright(
+      `cd ./${answers.projectName}`
+    )} to view your new project's files.\n`
+  );
+
+  ui.log.write(
+    `Visit: ${chalk.blueBright(
+      "https://instructions"
+    )} to learn how to use your new project!`
   );
 }
 
 async function deploy({ network }) {
-  const minty = await MakeMinty();
+  const fresh = await MakeFresh();
 
   spinner.start(`Deploying project to ${network}`);
 
-  await minty.deployContracts();
+  await fresh.deployContracts();
 
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
 async function batchMintNFT(options) {
-  const minty = await MakeMinty();
+  const fresh = await MakeFresh();
 
   const answer = await inquirer.prompt({
     type: "confirm",
@@ -218,7 +198,7 @@ async function batchMintNFT(options) {
 
   if (!answer.confirm) return;
 
-  const result = await minty.createNFTsFromCSVFile(options.data, (nft) => {
+  const result = await fresh.createNFTsFromCSVFile(options.data, (nft) => {
     console.log(colorize(JSON.stringify(nft), colorizeOptions));
   });
 
@@ -226,7 +206,7 @@ async function batchMintNFT(options) {
 }
 
 async function mintNFT(assetPath, options) {
-  const minty = await MakeMinty();
+  const fresh = await MakeFresh();
 
   // prompt for missing details if not provided as cli args
   const answers = await promptForMissing(options, {
@@ -239,7 +219,8 @@ async function mintNFT(assetPath, options) {
     }
   });
 
-  const nft = await minty.createNFTFromAssetFile(assetPath, answers);
+  const nft = await fresh.createNFTFromAssetFile(assetPath, answers);
+  
   console.log("✨ Minted a new NFT: ");
 
   alignOutput([
@@ -255,24 +236,24 @@ async function mintNFT(assetPath, options) {
 }
 
 async function startDrop() {
-  const minty = await MakeMinty();
+  const fresh = await MakeFresh();
 
-  await minty.startDrop();
+  await fresh.startDrop();
 
-  spinner.succeed(`✨ Success! Drop started. ✨`);
+  spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
 async function removeDrop() {
-  const minty = await MakeMinty();
+  const fresh = await MakeFresh();
 
-  await minty.removeDrop();
+  await fresh.removeDrop();
 
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
 
 async function getNFT(tokenId, options) {
-  const minty = await MakeMinty();
-  const nft = await minty.getNFT(tokenId);
+  const fresh = await MakeFresh();
+  const nft = await fresh.getNFT(tokenId);
 
   const output = [
     ["Token ID:", chalk.green(nft.tokenId)],
@@ -290,17 +271,18 @@ async function getNFT(tokenId, options) {
 }
 
 async function transferNFT(tokenId, toAddress) {
-  const minty = await MakeMinty();
+  const fresh = await MakeFresh();
 
-  await minty.transferToken(tokenId, toAddress);
+  await fresh.transferToken(tokenId, toAddress);
+  
   console.log(
     `🌿 Transferred token ${chalk.green(tokenId)} to ${chalk.yellow(toAddress)}`
   );
 }
 
 async function pinNFTData(tokenId) {
-  const minty = await MakeMinty();
-  await minty.pinTokenData(tokenId);
+  const fresh = await MakeFresh();
+  await fresh.pinTokenData(tokenId);
   console.log(`🌿 Pinned all data for token id ${chalk.green(tokenId)}`);
 }
 

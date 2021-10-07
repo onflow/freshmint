@@ -2,50 +2,28 @@ const fs = require("fs-extra");
 const path = require("path");
 const Handlebars = require("handlebars");
 const generateWebAssets = require("./generate-web");
+const { writeFile } = require("./file-helpers");
 
-async function generateProject(projectName, contractName) {
+async function generateProject(projectName, formattedContractName) {
   await createScaffold(projectName);
 
-  await createContract(projectName, contractName);
+  await createContract(projectName, formattedContractName);
 
-  await createSetupTransaction(projectName, contractName);
-  await createMintTransaction(projectName, contractName);
-  await createClaimTransaction(projectName, contractName);
-  await createStartDropTransaction(projectName, contractName);
-  await createRemoveDropTransaction(projectName, contractName);
+  await createSetupTransaction(projectName, formattedContractName);
+  await createMintTransaction(projectName, formattedContractName);
+  await createClaimTransaction(projectName, formattedContractName);
+  await createStartDropTransaction(projectName, formattedContractName);
+  await createRemoveDropTransaction(projectName, formattedContractName);
 
-  await createGetNFTScript(projectName, contractName);
-  await createGetDropScript(projectName, contractName);
+  await createGetNFTScript(projectName, formattedContractName);
+  await createGetDropScript(projectName, formattedContractName);
 
-  await createFlowConfig(projectName, contractName);
-  await createFlowTestnetConfig(projectName, contractName);
-  await createFlowMainnetConfig(projectName, contractName);
+  await createFlowConfig(projectName, formattedContractName);
+  await createFlowTestnetConfig(projectName, formattedContractName);
+  await createFlowMainnetConfig(projectName, formattedContractName);
 
-  await createWebAssets(projectName, contractName);
-  await createReadme(projectName, contractName);
-}
-
-async function isExists(path) {
-  try {
-    await fs.access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function writeFile(filePath, data) {
-  try {
-    const dirname = path.dirname(filePath);
-    const exist = await isExists(dirname);
-    if (!exist) {
-      await fs.mkdir(dirname, { recursive: true });
-    }
-
-    await fs.writeFile(filePath, data, "utf8");
-  } catch (err) {
-    throw new Error(err);
-  }
+  await createWebAssets(projectName, formattedContractName);
+  await createReadme(projectName, formattedContractName);
 }
 
 async function createScaffold(dir) {
@@ -70,8 +48,8 @@ async function createScaffold(dir) {
   );
 
   await fs.copy(
-    path.resolve(__dirname, "templates/minty.config.js"),
-    path.resolve(dir, "minty.config.js")
+    path.resolve(__dirname, "templates/freshmint.config.js"),
+    path.resolve(dir, "freshmint.config.js")
   );
 
   await fs.copy(
@@ -152,7 +130,10 @@ async function createClaimTransaction(dir, name) {
 
   const result = template({ name });
 
-  await writeFile(path.resolve(dir, "cadence/transactions/claim_nft.cdc"), result);
+  await writeFile(
+    path.resolve(dir, "cadence/transactions/claim_nft.cdc"),
+    result
+  );
 }
 
 async function createStartDropTransaction(dir, name) {
@@ -165,7 +146,10 @@ async function createStartDropTransaction(dir, name) {
 
   const result = template({ name });
 
-  await writeFile(path.resolve(dir, "cadence/transactions/start_drop.cdc"), result);
+  await writeFile(
+    path.resolve(dir, "cadence/transactions/start_drop.cdc"),
+    result
+  );
 }
 
 async function createRemoveDropTransaction(dir, name) {
@@ -178,7 +162,10 @@ async function createRemoveDropTransaction(dir, name) {
 
   const result = template({ name });
 
-  await writeFile(path.resolve(dir, "cadence/transactions/remove_drop.cdc"), result);
+  await writeFile(
+    path.resolve(dir, "cadence/transactions/remove_drop.cdc"),
+    result
+  );
 }
 
 async function createGetNFTScript(dir, name) {

@@ -1,21 +1,15 @@
 const fs = require("fs/promises");
 const path = require("path");
-const CID = require("cids");
 const { NFTStorage, Blob } = require("nft.storage");
 const Nebulus = require("nebulus");
 const ora = require("ora");
-const FlowMinter = require("./flow/flowMinter");
+const FlowMinter = require("./flow");
 const generateMetadata = require("./generate-metadata");
 
 const getConfig = require("./config");
 
-/**
- * Construct and asynchronously initialize a new Minty instance.
- * @returns {Promise<Minty>} a new instance of Minty, ready to mint NFTs.
- */
-
-async function MakeMinty() {
-  const m = new Minty();
+async function MakeFresh() {
+  const m = new Fresh();
   await m.init();
   return m;
 }
@@ -24,17 +18,9 @@ async function MakeFlowMinter() {
   return new FlowMinter();
 }
 
-/**
- * Minty is the main object responsible for storing NFT data and interacting with the smart contract.
- * Before constructing, make sure that the contract has been deployed and a deployment
- * info file exists (the default location is `minty-deployment.json`)
- *
- * Minty requires async initialization, so the Minty class (and its constructor) are not exported.
- * To make one, use the async {@link MakeMinty} function.
- */
-class Minty {
+class Fresh {
   constructor() {
-    this.config = null
+    this.config = null;
     this.ipfs = null;
     this.nebulus = null;
     this.flowMinter = null;
@@ -46,7 +32,7 @@ class Minty {
       return;
     }
 
-    this.config = getConfig()
+    this.config = getConfig();
 
     this.flowMinter = await MakeFlowMinter();
 
@@ -54,7 +40,10 @@ class Minty {
       path: path.resolve(process.env.PWD, this.config.nebulusPath)
     });
 
-    this.ipfs = new NFTStorage({ token: this.config.pinningService.key });
+    this.ipfs = new NFTStorage({ 
+      token: this.config.pinningService.key,
+      endpoint: this.config.pinningService.endpoint
+    });
 
     this.sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -75,25 +64,32 @@ class Minty {
   /**
    * Create a new NFT from the given CSV data.
    *
-   * @param {string} csvPath - Path to the csv data file
- 
+   * @param {string} csvPath - Path to the CSV data file
+   *
    * @typedef {object} BatchCreateNFTResult
    * @property {number} total - the total number of NFTs created
-
+   *
    *
    * @returns {Promise<BatchCreateNFTResult>}
    */
   async createNFTsFromCSVFile(csvPath, cb) {
-    const metadatas = await this.gernerateNFTMetadata(csvPath);
+    const metadatas = await generateMetadata(csvPath);
     console.log("Minting started...");
+
     for (const metadata of metadatas) {
       const result = await this.createNFTFromAssetData({
-        path: path.resolve(process.env.PWD, `${this.config.nftAssetPath}/${metadata.asset}`),
+        path: path.resolve(
+          process.env.PWD,
+          `${this.config.nftAssetPath}/${metadata.asset}`
+        ),
         ...metadata
       });
+
       cb(result);
+
       await this.sleep(this.config.RATE_LIMIT_MS);
     }
+
     return {
       total: metadatas.length
     };
@@ -138,7 +134,9 @@ class Minty {
 
     // make the NFT metadata JSON
     const metadataURI = ensureIpfsUriPrefix(metadataCid);
-    // Get the address of the token owner from options, or use the default signing address if no owner is given
+
+    // Get the address of the token owner from options, 
+    // or use the default signing address if no owner is given
     let ownerAddress = options.owner;
     if (!ownerAddress) {
       ownerAddress = await this.defaultOwnerAddress();
@@ -157,7 +155,10 @@ class Minty {
       assetURI,
       metadataURI,
       assetGatewayURL: makeGatewayURL(this.config.ipfsGatewayUrl, assetURI),
-      metadataGatewayURL: makeGatewayURL(this.config.ipfsGatewayUrl, metadataURI)
+      metadataGatewayURL: makeGatewayURL(
+        this.config.ipfsGatewayUrl,
+        metadataURI
+      )
     };
 
     await fs.writeFile(
@@ -173,7 +174,7 @@ class Minty {
     return path.resolve(
       process.env.PWD,
       `${this.config.mintDataPath}/${tokenId}.json`
-    )
+    );
   }
 
   /**
@@ -209,11 +210,6 @@ class Minty {
       ...metadata,
       asset: assetURI
     };
-  }
-
-  gernerateNFTMetadata(csvPath) {
-    const metadata = generateMetadata(csvPath);
-    return metadata;
   }
 
   //////////////////////////////////////////////
@@ -254,7 +250,10 @@ class Minty {
 
     const metadataURI = flowData.metadata;
     const ownerAddress = flowData.owner;
-    const metadataGatewayURL = makeGatewayURL(this.config.ipfsGatewayUrl, metadataURI);
+    const metadataGatewayURL = makeGatewayURL(
+      this.config.ipfsGatewayUrl,
+      metadataURI
+    );
 
     const metadata = await this.getIPFSJSON(metadataURI);
 
@@ -267,7 +266,10 @@ class Minty {
     };
 
     nft.assetURI = metadata.asset;
-    nft.assetGatewayURL = makeGatewayURL(this.config.ipfsGatewayUrl, metadata.asset);
+    nft.assetGatewayURL = makeGatewayURL(
+      this.config.ipfsGatewayUrl,
+      metadata.asset
+    );
 
     return nft;
   }
@@ -280,8 +282,8 @@ class Minty {
    * metadata URI. Fails if the token does not exist, or if fetching the data fails.
    */
   async getNFTMetadata(tokenId) {
-    const assetRaw = await fs.readFile(this.getAssetPath(tokenId), "utf8")
-    const assetJson = JSON.parse(assetRaw)
+    const assetRaw = await fs.readFile(this.getAssetPath(tokenId), "utf8");
+    const assetJson = JSON.parse(assetRaw);
 
     const metadataCid = await this.nebulus.add(
       Buffer.from(JSON.stringify(assetJson.metadata))
@@ -312,10 +314,6 @@ class Minty {
     return minted;
   }
 
-  async transferToken(tokenId, toAddress) {
-    // TODO
-  }
-
   async startDrop() {
     await this.flowMinter.startDrop();
   }
@@ -329,16 +327,6 @@ class Minty {
    */
   async defaultOwnerAddress() {
     return this.config.emulatorFlowAccount.address;
-  }
-
-  /**
-   * Get the address that owns the given token id.
-   *
-   * @param {string} tokenId - the id of an existing token
-   * @returns {Promise<string>} - the Flow address of the token owner. Fails if no token with the given id exists.
-   */
-  async getTokenOwner(tokenId) {
-    return; // TODO
   }
 
   //////////////////////////////////////////////
@@ -376,7 +364,7 @@ class Minty {
 
       const pin = async (cid) => {
         const data = await fs.readFile(
-          path.resolve(process.env.PWD, `ipfs-data/ipfs/${cid}`),
+          path.resolve(process.env.PWD, `ipfs-data/ipfs/${cid}`)
         );
         return await this.ipfs.storeBlob(new Blob([data]));
       };
@@ -430,17 +418,6 @@ function makeGatewayURL(ipfsGatewayUrl, ipfsURI) {
   return ipfsGatewayUrl + "/" + stripIpfsUriPrefix(ipfsURI);
 }
 
-/**
- *
- * @param {string} cidOrURI - an ipfs:// URI or CID string
- * @returns {CID} a CID for the root of the IPFS path
- */
-function extractCID(cidOrURI) {
-  // remove the ipfs:// prefix, split on '/' and return first path component (root CID)
-  const cidString = stripIpfsUriPrefix(cidOrURI).split("/")[0];
-  return new CID(cidString);
-}
-
 //////////////////////////////////////////////
 // -------- General Helpers
 //////////////////////////////////////////////
@@ -464,5 +441,5 @@ function formatMintResult(txOutput) {
 //////////////////////////////////////////////
 
 module.exports = {
-  MakeMinty
+  MakeFresh
 };

@@ -4,8 +4,8 @@ const t = require("@onflow/types")
 class FlowMinter {
 
   constructor(network) {
-    this.flow = new FlowCliWrapper(network);
-    this.network = this.network || "emulator"
+    this.network = network || "emulator"
+    this.flow = new FlowCliWrapper(this.network);
   }
 
   async deployContracts() {
