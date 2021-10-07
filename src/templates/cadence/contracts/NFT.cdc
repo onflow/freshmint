@@ -200,20 +200,20 @@ pub contract {{ name }}: NonFungibleToken {
     // Admin
     // Resource that an admin can use to mint NFTs and manage drops.
     //
-	pub resource Admin {
+    pub resource Admin {
 
-		// mintNFT
+        // mintNFT
         // Mints a new NFT with a new ID
-		// and deposit it in the recipients collection using their collection reference
+        // and deposit it in the recipients collection using their collection reference
         //
-		pub fun mintNFT(recipient: &{NonFungibleToken.CollectionPublic}, metadata: String) {
+        pub fun mintNFT(recipient: &{NonFungibleToken.CollectionPublic}, metadata: String) {
             emit Minted(id: {{ name }}.totalSupply)
 
-			// deposit it in the recipient's account using their reference
-			recipient.deposit(token: <-create {{ name }}.NFT(id: {{ name }}.totalSupply, metadata: metadata))
+            // deposit it in the recipient's account using their reference
+            recipient.deposit(token: <-create {{ name }}.NFT(id: {{ name }}.totalSupply, metadata: metadata))
 
             {{ name }}.totalSupply = {{ name }}.totalSupply + (1 as UInt64)
-		}
+        }
 
         pub fun startDrop(collection: Capability<&Collection>) {
             {{ name }}.drop = Drop(collection: collection)
@@ -230,7 +230,7 @@ pub contract {{ name }}: NonFungibleToken {
         pub fun removeDrop() {
             {{ name }}.drop = nil
         }
-	}
+    }
 
     // fetch
     // Get a reference to a {{ name }} from an account's Collection, if available.
@@ -267,7 +267,7 @@ pub contract {{ name }}: NonFungibleToken {
 
     // initializer
     //
-	init() {
+    init() {
         self.tokenName = "{{ name }}"
         self.drop = nil
 
@@ -293,5 +293,5 @@ pub contract {{ name }}: NonFungibleToken {
         self.account.save(<-admin, to: self.AdminStoragePath)
 
         emit ContractInitialized()
-	}
+    }
 }

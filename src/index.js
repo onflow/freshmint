@@ -9,7 +9,7 @@ const inquirer = require("inquirer");
 const chalk = require("chalk");
 const colorize = require("json-colorizer");
 const ora = require("ora");
-const { MakeFreshMint } = require("./freshmint");
+const { MakeFresh } = require("./fresh");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
 const { isExists } = require("./file-helpers");
@@ -72,11 +72,6 @@ async function main() {
     .command("remove-drop")
     .description("remove the current NFT drop")
     .action(removeDrop);
-
-  // program
-  //   .command("transfer <token-id> <to-address>")
-  //   .description("transfer an NFT to a new owner")
-  //   .action(transferNFT);
 
   program
     .command("pin <token-id>")
@@ -173,7 +168,7 @@ async function init() {
 }
 
 async function deploy({ network }) {
-  const fresh = await MakeFreshMint();
+  const fresh = await MakeFresh();
 
   spinner.start(`Deploying project to ${network}`);
 
@@ -183,7 +178,7 @@ async function deploy({ network }) {
 }
 
 async function batchMintNFT(options) {
-  const fresh = await MakeFreshMint();
+  const fresh = await MakeFresh();
 
   const answer = await inquirer.prompt({
     type: "confirm",
@@ -201,7 +196,7 @@ async function batchMintNFT(options) {
 }
 
 async function mintNFT(assetPath, options) {
-  const fresh = await MakeFreshMint();
+  const fresh = await MakeFresh();
 
   // prompt for missing details if not provided as cli args
   const answers = await promptForMissing(options, {
@@ -215,6 +210,7 @@ async function mintNFT(assetPath, options) {
   });
 
   const nft = await fresh.createNFTFromAssetFile(assetPath, answers);
+  
   console.log("✨ Minted a new NFT: ");
 
   alignOutput([
@@ -230,7 +226,7 @@ async function mintNFT(assetPath, options) {
 }
 
 async function startDrop() {
-  const fresh = await MakeFreshMint();
+  const fresh = await MakeFresh();
 
   await fresh.startDrop();
 
@@ -238,7 +234,7 @@ async function startDrop() {
 }
 
 async function removeDrop() {
-  const fresh = await MakeFreshMint();
+  const fresh = await MakeFresh();
 
   await fresh.removeDrop();
 
@@ -246,7 +242,7 @@ async function removeDrop() {
 }
 
 async function getNFT(tokenId, options) {
-  const fresh = await MakeFreshMint();
+  const fresh = await MakeFresh();
   const nft = await fresh.getNFT(tokenId);
 
   const output = [
@@ -265,16 +261,17 @@ async function getNFT(tokenId, options) {
 }
 
 async function transferNFT(tokenId, toAddress) {
-  const fresh = await MakeFreshMint();
+  const fresh = await MakeFresh();
 
   await fresh.transferToken(tokenId, toAddress);
+  
   console.log(
     `🌿 Transferred token ${chalk.green(tokenId)} to ${chalk.yellow(toAddress)}`
   );
 }
 
 async function pinNFTData(tokenId) {
-  const fresh = await MakeFreshMint();
+  const fresh = await MakeFresh();
   await fresh.pinTokenData(tokenId);
   console.log(`🌿 Pinned all data for token id ${chalk.green(tokenId)}`);
 }

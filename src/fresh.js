@@ -1,21 +1,15 @@
 const fs = require("fs/promises");
 const path = require("path");
-const CID = require("cids");
 const { NFTStorage, Blob } = require("nft.storage");
 const Nebulus = require("nebulus");
 const ora = require("ora");
-const FlowMinter = require("./flow/flowMinter");
+const FlowMinter = require("./flow");
 const generateMetadata = require("./generate-metadata");
 
 const getConfig = require("./config");
 
-/**
- * Construct and asynchronously initialize a new FreshMint instance.
- * @returns {Promise<FreshMint>} a new instance of FreshMint, ready to mint NFTs.
- */
-
-async function MakeFreshMint() {
-  const m = new FreshMint();
+async function MakeFresh() {
+  const m = new Fresh();
   await m.init();
   return m;
 }
@@ -24,15 +18,7 @@ async function MakeFlowMinter() {
   return new FlowMinter();
 }
 
-/**
- * FreshMint is the main object responsible for storing NFT data and interacting with the smart contract.
- * Before constructing, make sure that the contract has been deployed and a deployment
- * info file exists (the default location is `fresh-deployment.json`)
- *
- * FreshMint requires async initialization, so the FreshMint class (and its constructor) are not exported.
- * To make one, use the async {@link MakeFreshMint} function.
- */
-class FreshMint {
+class Fresh {
   constructor() {
     this.config = null;
     this.ipfs = null;
@@ -54,7 +40,10 @@ class FreshMint {
       path: path.resolve(process.env.PWD, this.config.nebulusPath)
     });
 
-    this.ipfs = new NFTStorage({ token: this.config.pinningService.key });
+    this.ipfs = new NFTStorage({ 
+      token: this.config.pinningService.key,
+      endpoint: this.config.pinningService.endpoint
+    });
 
     this.sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -75,17 +64,18 @@ class FreshMint {
   /**
    * Create a new NFT from the given CSV data.
    *
-   * @param {string} csvPath - Path to the csv data file
- 
+   * @param {string} csvPath - Path to the CSV data file
+   *
    * @typedef {object} BatchCreateNFTResult
    * @property {number} total - the total number of NFTs created
-
+   *
    *
    * @returns {Promise<BatchCreateNFTResult>}
    */
   async createNFTsFromCSVFile(csvPath, cb) {
-    const metadatas = await this.gernerateNFTMetadata(csvPath);
+    const metadatas = await generateMetadata(csvPath);
     console.log("Minting started...");
+
     for (const metadata of metadatas) {
       const result = await this.createNFTFromAssetData({
         path: path.resolve(
@@ -94,9 +84,12 @@ class FreshMint {
         ),
         ...metadata
       });
+
       cb(result);
+
       await this.sleep(this.config.RATE_LIMIT_MS);
     }
+
     return {
       total: metadatas.length
     };
@@ -141,7 +134,9 @@ class FreshMint {
 
     // make the NFT metadata JSON
     const metadataURI = ensureIpfsUriPrefix(metadataCid);
-    // Get the address of the token owner from options, or use the default signing address if no owner is given
+
+    // Get the address of the token owner from options, 
+    // or use the default signing address if no owner is given
     let ownerAddress = options.owner;
     if (!ownerAddress) {
       ownerAddress = await this.defaultOwnerAddress();
@@ -215,11 +210,6 @@ class FreshMint {
       ...metadata,
       asset: assetURI
     };
-  }
-
-  gernerateNFTMetadata(csvPath) {
-    const metadata = generateMetadata(csvPath);
-    return metadata;
   }
 
   //////////////////////////////////////////////
@@ -324,10 +314,6 @@ class FreshMint {
     return minted;
   }
 
-  async transferToken(tokenId, toAddress) {
-    // TODO
-  }
-
   async startDrop() {
     await this.flowMinter.startDrop();
   }
@@ -341,16 +327,6 @@ class FreshMint {
    */
   async defaultOwnerAddress() {
     return this.config.emulatorFlowAccount.address;
-  }
-
-  /**
-   * Get the address that owns the given token id.
-   *
-   * @param {string} tokenId - the id of an existing token
-   * @returns {Promise<string>} - the Flow address of the token owner. Fails if no token with the given id exists.
-   */
-  async getTokenOwner(tokenId) {
-    return; // TODO
   }
 
   //////////////////////////////////////////////
@@ -442,17 +418,6 @@ function makeGatewayURL(ipfsGatewayUrl, ipfsURI) {
   return ipfsGatewayUrl + "/" + stripIpfsUriPrefix(ipfsURI);
 }
 
-/**
- *
- * @param {string} cidOrURI - an ipfs:// URI or CID string
- * @returns {CID} a CID for the root of the IPFS path
- */
-function extractCID(cidOrURI) {
-  // remove the ipfs:// prefix, split on '/' and return first path component (root CID)
-  const cidString = stripIpfsUriPrefix(cidOrURI).split("/")[0];
-  return new CID(cidString);
-}
-
 //////////////////////////////////////////////
 // -------- General Helpers
 //////////////////////////////////////////////
@@ -476,5 +441,5 @@ function formatMintResult(txOutput) {
 //////////////////////////////////////////////
 
 module.exports = {
-  MakeFreshMint
+  MakeFresh
 };

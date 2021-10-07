@@ -1,7 +1,7 @@
 {
-  "name": "fresh",
-  "version": "1.0.0",
-  "description": "",
+  "name": "freshmint",
+  "version": "0.0.1",
+  "description": "The minty fresh way to launch an NFT project.",
   "main": "src/fresh.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,15 +12,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "chai": "^4.3.3"
-  },
   "dependencies": {
     "@onflow/decode": "0.0.11",
     "@onflow/types": "0.0.5",
     "@onflow/util-address": "0.0.0",
     "chalk": "^4.1.0",
-    "cids": "^1.1.6",
     "commander": "^7.1.0",
     "concurrently": "^6.0.0",
     "csv-parse": "^4.16.3",
@@ -34,5 +30,8 @@
     "ora": "3.1.0",
     "sha3": "^2.1.4",
     "yaml": "^1.10.2"
+  },
+  "devDependencies": {
+    "chai": "^4.3.3"
   }
 }

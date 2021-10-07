@@ -4,10 +4,10 @@ const { withPrefix } = require("@onflow/util-address");
 function getConfig() {
   require("dotenv").config({ path: path.resolve(process.env.PWD, ".env") });
 
-  // TOOD: Inform when config is missing
+  // TOOD: inform the user when config is missing
   const userConfig = require(path.resolve(
     process.env.PWD,
-    "freshmint.config.js"
+    "fresh.config.js"
   ));
 
   const flowConfig = require(path.resolve(process.env.PWD, "flow.json"));
@@ -38,16 +38,11 @@ function getConfig() {
     // ------ IPFS Configs
     //////////////////////////////////////////////
 
-    // The pinningService config tells fresh what remote pinning service to use for pinning the IPFS data for a token.
-    // The values are read in from environment variables, to discourage checking credentials into source control.
-    // You can make things easy by creating a .env file with your environment variable definitions. See the example files
-    // pinata.env.example and nft.storage.env.example in this directory for templates you can use to get up and running.
     pinningService: userConfig.pinningService,
 
     // pinningService: {
-    //   name: "$$PINNING_SERVICE_NAME",
-    //   endpoint: "$$PINNING_SERVICE_ENDPOINT",
-    //   key: "$$PINNING_SERVICE_KEY"
+    //   endpoint: "PINNING_SERVICE_ENDPOINT",
+    //   key: "PINNING_SERVICE_KEY"
     // },
 
     // If you're running IPFS on a non-default port, update this URL. If you're using the IPFS defaults, you should be all set.
@@ -84,10 +79,6 @@ function getAccount(name, flowConfig) {
     name,
     address: withPrefix(account.address)
   };
-}
-
-function getContractAddress(name, network, flowConfig) {
-  return flowConfig.contracts[name].aliases[network];
 }
 
 module.exports = getConfig;
