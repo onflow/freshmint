@@ -27,6 +27,11 @@ const spinner = ora();
 async function main() {
   const program = new Command();
 
+  program.option(
+    "-n, --network <network>",
+    "Network to deploy to. Either 'testnet' or 'mainnet'"
+  );
+
   // commands
 
   program
