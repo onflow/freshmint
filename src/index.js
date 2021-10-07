@@ -12,6 +12,7 @@ const ora = require("ora");
 const { MakeMinty } = require("./minty");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
+const { isExists } = require("./file-helpers");
 
 const colorizeOptions = {
   pretty: true,
@@ -101,26 +102,71 @@ async function main() {
 // ---- command action functions
 
 async function init() {
+  const ui = new inquirer.ui.BottomBar();
+  ui.log.write(chalk.greenBright("Initializing new project. 🍃\n"));
+
   const questions = [
     {
       type: "input",
       name: "projectName",
-      message: "What's your project name? (e.g. my-nft-project)"
+      message: "Name your new project:",
+      validate: async function (input) {
+        if (!input) {
+          return "Please enter a name for your project.";
+        }
+
+        const exists = await isExists(input);
+
+        if (exists) {
+          return "A project with that name already exists.";
+        }
+        return true;
+      }
     },
     {
       type: "input",
       name: "contractName",
-      message: "What's your contract name? (e.g. MyNFT)"
+      message: "Name the NFT contract (eg. MyNFT): ",
+      validate: async function (input) {
+        if (!input) {
+          return "Please enter a name for your contract.";
+        }
+
+        return true;
+      }
     }
   ];
 
   const answers = await inquirer.prompt(questions);
 
-  await generateProject(answers.projectName, answers.contractName);
-  await generateWebAssets(answers.projectName, answers.contractName);
+  spinner.start("Generating project files...");
 
-  console.log(
-    `\nProject initialized in ./${answers.projectName}\n\ncd ${answers.projectName}`
+  const formattedContractName = answers.contractName
+    // Remove spaces from the contract name.
+    .replace(/\s*/g, "")
+    .trim()
+    .split(" ")
+    // Ensure titlecase
+    .map((word) => word[0].toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+
+  await generateProject(answers.projectName, formattedContractName);
+  await generateWebAssets(answers.projectName, formattedContractName);
+
+  spinner.succeed(
+    `✨ Project initialized in ${chalk.white(`./${answers.projectName}\n`)}`
+  );
+
+  ui.log.write(
+    `Use: ${chalk.magentaBright(
+      `cd ./${answers.projectName}`
+    )} to view your new project's files.\n`
+  );
+
+  ui.log.write(
+    `Visit: ${chalk.blueBright(
+      "https://instructions"
+    )} to learn how to use your new project!`
   );
 }
 
@@ -186,7 +232,7 @@ async function startDrop() {
 
   await minty.startDrop();
 
-  spinner.succeed(`✨ Success! Drop started. ✨`);
+  spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
 async function removeDrop() {
