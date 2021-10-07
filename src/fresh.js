@@ -8,8 +8,8 @@ const generateMetadata = require("./generate-metadata");
 
 const getConfig = require("./config");
 
-async function MakeFreshMint() {
-  const m = new FreshMint();
+async function MakeFresh() {
+  const m = new Fresh();
   await m.init();
   return m;
 }
@@ -18,7 +18,7 @@ async function MakeFlowMinter() {
   return new FlowMinter();
 }
 
-class FreshMint {
+class Fresh {
   constructor() {
     this.config = null;
     this.ipfs = null;
@@ -441,5 +441,5 @@ function formatMintResult(txOutput) {
 //////////////////////////////////////////////
 
 module.exports = {
-  MakeFreshMint
+  MakeFresh
 };
