@@ -1,29 +1,7 @@
 const fs = require("fs-extra");
 const path = require("path");
 const Handlebars = require("handlebars");
-
-async function isExists(path) {
-  try {
-    await fs.access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function writeFile(filePath, data) {
-  try {
-    const dirname = path.dirname(filePath);
-    const exist = await isExists(dirname);
-    if (!exist) {
-      await fs.mkdir(dirname, { recursive: true });
-    }
-
-    await fs.writeFile(filePath, data, "utf8");
-  } catch (err) {
-    throw new Error(err);
-  }
-}
+const { writeFile } = require("./file-helpers");
 
 async function generateWebAssets(dir, name) {
   await fs.copy(path.resolve(__dirname, "templates/web"), dir);

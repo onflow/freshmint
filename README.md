@@ -1,6 +1,6 @@
 # Fresh
 
-> The minty fresh way to launch an NFT project. :leaves:
+> The minty fresh way to launch an NFT project. What will you build? :leaves: 
 
 Fresh is an all-in-one tool to deploy an NFT project on the Flow blockchain using Next.js and IPFS.
 
