@@ -13,6 +13,7 @@ const { MakeFresh } = require("./fresh");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
 const { isExists } = require("./file-helpers");
+const carlton = require("./carlton");
 
 const colorizeOptions = {
   pretty: true,
@@ -34,7 +35,10 @@ async function main() {
 
   // commands
 
-  program.command("start").description("initialize a new project").action(init);
+  program
+    .command("start")
+    .description("initialize a new project")
+    .action(start);
 
   program
     .command("mint")
@@ -88,8 +92,14 @@ async function main() {
     )
     .action(deploy);
 
-  // Change the current directory to the parent dir of this script file to make things work
-  // even if you call fresh from elsewhere
+  program
+    .command("prince")
+    .description("In west Philadelphia born and raised.")
+    .action(() => { console.log(carlton); });
+
+  // The hardhat and getconfig modules both expect to be running from the root directory of the project,
+  // so we change the current directory to the parent dir of this script file to make things work
+  // even if you call minty from elsewhere
   const rootDir = path.join(__dirname, "..");
   process.chdir(rootDir);
 
@@ -98,7 +108,7 @@ async function main() {
 
 // ---- command action functions
 
-async function init() {
+async function start() {
   const ui = new inquirer.ui.BottomBar();
   ui.log.write(chalk.greenBright("Initializing new project. 🍃\n"));
 
