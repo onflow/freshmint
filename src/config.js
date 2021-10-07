@@ -5,7 +5,10 @@ function getConfig() {
   require("dotenv").config({ path: path.resolve(process.env.PWD, ".env") });
 
   // TOOD: Inform when config is missing
-  const userConfig = require(path.resolve(process.env.PWD, "minty.config.js"));
+  const userConfig = require(path.resolve(
+    process.env.PWD,
+    "freshmint.config.js"
+  ));
 
   const flowConfig = require(path.resolve(process.env.PWD, "flow.json"));
 
@@ -35,7 +38,7 @@ function getConfig() {
     // ------ IPFS Configs
     //////////////////////////////////////////////
 
-    // The pinningService config tells minty what remote pinning service to use for pinning the IPFS data for a token.
+    // The pinningService config tells fresh what remote pinning service to use for pinning the IPFS data for a token.
     // The values are read in from environment variables, to discourage checking credentials into source control.
     // You can make things easy by creating a .env file with your environment variable definitions. See the example files
     // pinata.env.example and nft.storage.env.example in this directory for templates you can use to get up and running.

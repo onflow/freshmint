@@ -1,13 +1,13 @@
 {
-  "name": "minty",
+  "name": "fresh",
   "version": "1.0.0",
   "description": "",
-  "main": "src/minty.js",
+  "main": "src/fresh.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "minty": "src/index.js"
+    "fresh": "src/index.js"
   },
   "keywords": [],
   "author": "",

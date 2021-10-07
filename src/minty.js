@@ -10,12 +10,12 @@ const generateMetadata = require("./generate-metadata");
 const getConfig = require("./config");
 
 /**
- * Construct and asynchronously initialize a new Minty instance.
- * @returns {Promise<Minty>} a new instance of Minty, ready to mint NFTs.
+ * Construct and asynchronously initialize a new FreshMint instance.
+ * @returns {Promise<FreshMint>} a new instance of FreshMint, ready to mint NFTs.
  */
 
-async function MakeMinty() {
-  const m = new Minty();
+async function MakeFreshMint() {
+  const m = new FreshMint();
   await m.init();
   return m;
 }
@@ -25,16 +25,16 @@ async function MakeFlowMinter() {
 }
 
 /**
- * Minty is the main object responsible for storing NFT data and interacting with the smart contract.
+ * FreshMint is the main object responsible for storing NFT data and interacting with the smart contract.
  * Before constructing, make sure that the contract has been deployed and a deployment
- * info file exists (the default location is `minty-deployment.json`)
+ * info file exists (the default location is `fresh-deployment.json`)
  *
- * Minty requires async initialization, so the Minty class (and its constructor) are not exported.
- * To make one, use the async {@link MakeMinty} function.
+ * FreshMint requires async initialization, so the FreshMint class (and its constructor) are not exported.
+ * To make one, use the async {@link MakeFreshMint} function.
  */
-class Minty {
+class FreshMint {
   constructor() {
-    this.config = null
+    this.config = null;
     this.ipfs = null;
     this.nebulus = null;
     this.flowMinter = null;
@@ -46,7 +46,7 @@ class Minty {
       return;
     }
 
-    this.config = getConfig()
+    this.config = getConfig();
 
     this.flowMinter = await MakeFlowMinter();
 
@@ -88,7 +88,10 @@ class Minty {
     console.log("Minting started...");
     for (const metadata of metadatas) {
       const result = await this.createNFTFromAssetData({
-        path: path.resolve(process.env.PWD, `${this.config.nftAssetPath}/${metadata.asset}`),
+        path: path.resolve(
+          process.env.PWD,
+          `${this.config.nftAssetPath}/${metadata.asset}`
+        ),
         ...metadata
       });
       cb(result);
@@ -157,7 +160,10 @@ class Minty {
       assetURI,
       metadataURI,
       assetGatewayURL: makeGatewayURL(this.config.ipfsGatewayUrl, assetURI),
-      metadataGatewayURL: makeGatewayURL(this.config.ipfsGatewayUrl, metadataURI)
+      metadataGatewayURL: makeGatewayURL(
+        this.config.ipfsGatewayUrl,
+        metadataURI
+      )
     };
 
     await fs.writeFile(
@@ -173,7 +179,7 @@ class Minty {
     return path.resolve(
       process.env.PWD,
       `${this.config.mintDataPath}/${tokenId}.json`
-    )
+    );
   }
 
   /**
@@ -254,7 +260,10 @@ class Minty {
 
     const metadataURI = flowData.metadata;
     const ownerAddress = flowData.owner;
-    const metadataGatewayURL = makeGatewayURL(this.config.ipfsGatewayUrl, metadataURI);
+    const metadataGatewayURL = makeGatewayURL(
+      this.config.ipfsGatewayUrl,
+      metadataURI
+    );
 
     const metadata = await this.getIPFSJSON(metadataURI);
 
@@ -267,7 +276,10 @@ class Minty {
     };
 
     nft.assetURI = metadata.asset;
-    nft.assetGatewayURL = makeGatewayURL(this.config.ipfsGatewayUrl, metadata.asset);
+    nft.assetGatewayURL = makeGatewayURL(
+      this.config.ipfsGatewayUrl,
+      metadata.asset
+    );
 
     return nft;
   }
@@ -280,8 +292,8 @@ class Minty {
    * metadata URI. Fails if the token does not exist, or if fetching the data fails.
    */
   async getNFTMetadata(tokenId) {
-    const assetRaw = await fs.readFile(this.getAssetPath(tokenId), "utf8")
-    const assetJson = JSON.parse(assetRaw)
+    const assetRaw = await fs.readFile(this.getAssetPath(tokenId), "utf8");
+    const assetJson = JSON.parse(assetRaw);
 
     const metadataCid = await this.nebulus.add(
       Buffer.from(JSON.stringify(assetJson.metadata))
@@ -376,7 +388,7 @@ class Minty {
 
       const pin = async (cid) => {
         const data = await fs.readFile(
-          path.resolve(process.env.PWD, `ipfs-data/ipfs/${cid}`),
+          path.resolve(process.env.PWD, `ipfs-data/ipfs/${cid}`)
         );
         return await this.ipfs.storeBlob(new Blob([data]));
       };
@@ -464,5 +476,5 @@ function formatMintResult(txOutput) {
 //////////////////////////////////////////////
 
 module.exports = {
-  MakeMinty
+  MakeFreshMint
 };

@@ -9,19 +9,19 @@ docker-compose up -d
 ## Deploy your contract
 
 ```sh
-minty deploy
+fresh deploy
 ```
 
 ## Mint your NFTs
 
 ```sh
-minty mint
+fresh mint
 ```
 
 ## Get an NFT
 
 ```sh
-minty show 0
+fresh show 0
 ```
 
 ## Pin an NFT
@@ -35,5 +35,5 @@ cp .env.example .env
 ```
 
 ```sh
-minty pin 0
+fresh pin 0
 ```

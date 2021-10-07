@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-// This file contains the main entry point for the command line `minty` app, and the command line option parsing code.
-// See minty.js for the core functionality.
+// This file contains the main entry point for the command line `fresh` app, and the command line option parsing code.
+// See fresh.js for the core functionality.
 
 const path = require("path");
 const { Command } = require("commander");
@@ -9,7 +9,7 @@ const inquirer = require("inquirer");
 const chalk = require("chalk");
 const colorize = require("json-colorizer");
 const ora = require("ora");
-const { MakeMinty } = require("./minty");
+const { MakeFreshMint } = require("./fresh");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
 const { isExists } = require("./file-helpers");
@@ -34,10 +34,7 @@ async function main() {
 
   // commands
 
-  program
-    .command("create")
-    .description("initialize a new project")
-    .action(init);
+  program.command("start").description("initialize a new project").action(init);
 
   program
     .command("mint")
@@ -62,7 +59,7 @@ async function main() {
     .action(mintNFT);
 
   program
-    .command("show <token-id>")
+    .command("inspect <token-id>")
     .description("get info from Flow about an NFT using its token ID")
     .action(getNFT);
 
@@ -87,8 +84,8 @@ async function main() {
     .action(pinNFTData);
 
   program
-    .command("deploy")
-    .description("deploy an instance of the Minty NFT contract")
+    .command("up")
+    .description("deploy an instance of the FreshMint NFT contract")
     .option(
       "-n, --network <name>",
       "Either: emulator, testnet, mainnet",
@@ -97,7 +94,7 @@ async function main() {
     .action(deploy);
 
   // Change the current directory to the parent dir of this script file to make things work
-  // even if you call minty from elsewhere
+  // even if you call fresh from elsewhere
   const rootDir = path.join(__dirname, "..");
   process.chdir(rootDir);
 
@@ -151,8 +148,8 @@ async function init() {
     .replace(/\s*/g, "")
     .trim()
     .split(" ")
-    // Ensure titlecase
-    .map((word) => word[0].toUpperCase() + word.slice(1).toLowerCase())
+    // Ensure title-case
+    .map((word) => word[0].toUpperCase() + word.slice(1))
     .join(" ");
 
   await generateProject(answers.projectName, formattedContractName);
@@ -176,17 +173,17 @@ async function init() {
 }
 
 async function deploy({ network }) {
-  const minty = await MakeMinty();
+  const fresh = await MakeFreshMint();
 
   spinner.start(`Deploying project to ${network}`);
 
-  await minty.deployContracts();
+  await fresh.deployContracts();
 
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
 async function batchMintNFT(options) {
-  const minty = await MakeMinty();
+  const fresh = await MakeFreshMint();
 
   const answer = await inquirer.prompt({
     type: "confirm",
@@ -196,7 +193,7 @@ async function batchMintNFT(options) {
 
   if (!answer.confirm) return;
 
-  const result = await minty.createNFTsFromCSVFile(options.data, (nft) => {
+  const result = await fresh.createNFTsFromCSVFile(options.data, (nft) => {
     console.log(colorize(JSON.stringify(nft), colorizeOptions));
   });
 
@@ -204,7 +201,7 @@ async function batchMintNFT(options) {
 }
 
 async function mintNFT(assetPath, options) {
-  const minty = await MakeMinty();
+  const fresh = await MakeFreshMint();
 
   // prompt for missing details if not provided as cli args
   const answers = await promptForMissing(options, {
@@ -217,7 +214,7 @@ async function mintNFT(assetPath, options) {
     }
   });
 
-  const nft = await minty.createNFTFromAssetFile(assetPath, answers);
+  const nft = await fresh.createNFTFromAssetFile(assetPath, answers);
   console.log("✨ Minted a new NFT: ");
 
   alignOutput([
@@ -233,24 +230,24 @@ async function mintNFT(assetPath, options) {
 }
 
 async function startDrop() {
-  const minty = await MakeMinty();
+  const fresh = await MakeFreshMint();
 
-  await minty.startDrop();
+  await fresh.startDrop();
 
   spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
 async function removeDrop() {
-  const minty = await MakeMinty();
+  const fresh = await MakeFreshMint();
 
-  await minty.removeDrop();
+  await fresh.removeDrop();
 
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
 
 async function getNFT(tokenId, options) {
-  const minty = await MakeMinty();
-  const nft = await minty.getNFT(tokenId);
+  const fresh = await MakeFreshMint();
+  const nft = await fresh.getNFT(tokenId);
 
   const output = [
     ["Token ID:", chalk.green(nft.tokenId)],
@@ -268,17 +265,17 @@ async function getNFT(tokenId, options) {
 }
 
 async function transferNFT(tokenId, toAddress) {
-  const minty = await MakeMinty();
+  const fresh = await MakeFreshMint();
 
-  await minty.transferToken(tokenId, toAddress);
+  await fresh.transferToken(tokenId, toAddress);
   console.log(
     `🌿 Transferred token ${chalk.green(tokenId)} to ${chalk.yellow(toAddress)}`
   );
 }
 
 async function pinNFTData(tokenId) {
-  const minty = await MakeMinty();
-  await minty.pinTokenData(tokenId);
+  const fresh = await MakeFreshMint();
+  await fresh.pinTokenData(tokenId);
   console.log(`🌿 Pinned all data for token id ${chalk.green(tokenId)}`);
 }
 
