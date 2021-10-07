@@ -1,6 +1,6 @@
 # {{name}}
 
-This project was generated with [fresh](https://github.com/onflow/fresh).
+This project was generated with [freshmint](https://github.com/onflow/freshmint).
 
 ## Setup
 
@@ -42,7 +42,7 @@ fresh mint
 ### Get an NFT
 
 ```sh
-fresh get 0
+fresh show 0
 ```
 
 ### Pin the NFT metadata
@@ -79,7 +79,6 @@ fresh pin 0
 
 ## Run an NFT drop
 
-Once you've 
-
 ```sh
 npm run dev
+```
