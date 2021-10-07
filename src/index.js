@@ -90,8 +90,7 @@ async function main() {
     )
     .action(deploy);
 
-  // The hardhat and getconfig modules both expect to be running from the root directory of the project,
-  // so we change the current directory to the parent dir of this script file to make things work
+  // Change the current directory to the parent dir of this script file to make things work
   // even if you call minty from elsewhere
   const rootDir = path.join(__dirname, "..");
   process.chdir(rootDir);
