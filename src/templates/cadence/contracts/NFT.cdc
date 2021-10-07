@@ -20,7 +20,6 @@ pub contract {{ name }}: NonFungibleToken {
     // The total number of {{ name }} that have been minted
     //
     pub var totalSupply: UInt64
-    pub var tokenName: String
 
     pub enum DropStatus: UInt8 {
         pub case open
@@ -78,7 +77,7 @@ pub contract {{ name }}: NonFungibleToken {
         }
     }
 
-    pub var drop: Drop?
+    access(self) var drop: Drop?
 
     pub resource NFT: NonFungibleToken.INFT {
 
@@ -268,7 +267,6 @@ pub contract {{ name }}: NonFungibleToken {
     // initializer
     //
     init() {
-        self.tokenName = "{{ name }}"
         self.drop = nil
 
         // Set our named paths
