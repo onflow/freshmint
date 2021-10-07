@@ -96,7 +96,7 @@ async function main() {
 
   program
     .command("prince")
-    .description("start prince")
+    .description("In west Philadelphia born and raised.")
     .action(() => {
       console.log(`
         ,,,,,,,,,..,,,,,,,,,,,,,,,,,,,,,,,**,,,,,,,,,,,,,*****,,***,,********,,,*******////////////*/////(//
