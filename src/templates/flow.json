@@ -13,7 +13,7 @@
         "testnet": "0x9a0766d93b6608b7"
       }
     },
-      "NonFungibleToken": {
+    "NonFungibleToken": {
       "source": "cadence/contracts/NonFungibleToken.cdc",
       "aliases": {
         "emulator": "0xf8d6e0586b0a20c7",
