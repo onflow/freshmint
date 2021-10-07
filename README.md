@@ -1,6 +1,6 @@
 # Freshmint
 
-> The minty fresh way to launch an NFT project. What will you build? :leaves: 
+> The minty fresh way to launch an NFT project. :leaves: 
 
 Freshmint is an all-in-one tool to deploy an NFT project on the Flow blockchain using Next.js and IPFS.
 
