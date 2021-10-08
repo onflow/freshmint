@@ -21,7 +21,7 @@ async function generateWebAssets(dir, name) {
 
   await writeFile(
     path.resolve(dir, `package.json`),
-    packageJSONTemplate({ name })
+    packageJSONTemplate({ dir })
   );
 
   await writeFile(

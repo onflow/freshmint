@@ -2,18 +2,18 @@ const path = require("path");
 const { withPrefix } = require("@onflow/util-address");
 
 function getConfig() {
-  require("dotenv").config({ path: path.resolve(process.env.PWD, ".env") });
+  require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
 
   // TOOD: inform the user when config is missing
   const userConfig = require(path.resolve(
-    process.env.PWD,
+    process.cwd(),
     "fresh.config.js"
   ));
 
-  const flowConfig = require(path.resolve(process.env.PWD, "flow.json"));
+  const flowConfig = require(path.resolve(process.cwd(), "flow.json"));
 
   const flowTestnetConfig = require(path.resolve(
-    process.env.PWD,
+    process.cwd(),
     "flow.testnet.json"
   ));
 

@@ -7,7 +7,7 @@ const getConfig = require("./config");
 const generateMetaData = async (csvPath) => {
   const config = getConfig();
 
-  const nftCSV = fs.readFileSync(path.resolve(process.env.PWD, csvPath));
+  const nftCSV = fs.readFileSync(path.resolve(process.cwd(), csvPath));
   
   // Parse the CSV content
   const records = parse(nftCSV);
@@ -28,7 +28,7 @@ const generateMetaData = async (csvPath) => {
 
     try {
       fs.statSync(
-        path.resolve(process.env.PWD, `${config.nftAssetPath}/${record.asset}`)
+        path.resolve(process.cwd(), `${config.nftAssetPath}/${record.asset}`)
       );
     } catch (e) {
       throw new Error(

@@ -37,9 +37,9 @@ class Fresh {
     this.flowMinter = await MakeFlowMinter();
 
     this.nebulus = new Nebulus({
-      path: path.resolve(process.env.PWD, this.config.nebulusPath)
+      path: path.resolve(process.cwd(), this.config.nebulusPath)
     });
-
+    
     this.ipfs = new NFTStorage({ 
       token: this.config.pinningService.key,
       endpoint: this.config.pinningService.endpoint
@@ -79,7 +79,7 @@ class Fresh {
     for (const metadata of metadatas) {
       const result = await this.createNFTFromAssetData({
         path: path.resolve(
-          process.env.PWD,
+          process.cwd(),
           `${this.config.nftAssetPath}/${metadata.asset}`
         ),
         ...metadata
@@ -172,7 +172,7 @@ class Fresh {
 
   getAssetPath(tokenId) {
     return path.resolve(
-      process.env.PWD,
+      process.cwd(),
       `${this.config.mintDataPath}/${tokenId}.json`
     );
   }
@@ -364,17 +364,23 @@ class Fresh {
 
       const pin = async (cid) => {
         const data = await fs.readFile(
-          path.resolve(process.env.PWD, `ipfs-data/ipfs/${cid}`)
+          path.resolve(process.cwd(), `ipfs-data/ipfs/${cid}`)
         );
+
         return await this.ipfs.storeBlob(new Blob([data]));
       };
+
       const spinner = ora();
 
       spinner.start("Pinning metadata...");
+
       const meta = await pin(stripIpfsUriPrefix(metadataURI));
+
       spinner.succeed(`📌 ${meta} was pinned!`);
       spinner.start("Pinning asset...");
+
       const asset = await pin(stripIpfsUriPrefix(assetURI));
+
       spinner.succeed(`📌 ${asset} was pinned!`);
 
       resolve();

@@ -40,7 +40,7 @@ class FlowCliWrapper {
         ${configString} \
         --update \
         -o json`,
-        { cwd: process.env.PWD }
+        { cwd: process.cwd() }
     );
 
     if (err) {
@@ -62,7 +62,7 @@ class FlowCliWrapper {
         -o json \
         --args-json '${argString}' \
         ${path}`,
-        { cwd: process.env.PWD }
+        { cwd: process.cwd() }
     );
 
     if (err) {
@@ -83,7 +83,7 @@ class FlowCliWrapper {
         -o json \
         --args-json '${argString}' \
         ${path}`,
-        { cwd: process.env.PWD }
+        { cwd: process.cwd() }
     );
 
     if (err) {

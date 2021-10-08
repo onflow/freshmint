@@ -1,4 +1,4 @@
-# {{name}}
+# {{ name }}
 
 This project was generated with [freshmint](https://github.com/onflow/freshmint).
 
@@ -15,7 +15,7 @@ Now install the project and its dependencies:
 npm install
 ```
 
-## Development
+## Quick start
 
 This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) for rapid local development.
 
@@ -25,8 +25,6 @@ This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) f
 docker-compose up -d
 ```
 
-## Usage
-
 ### Deploy your contract to Flow
 
 ```sh
@@ -35,14 +33,18 @@ fresh deploy
 
 ### Mint your NFTs
 
+This command mints the NFTs declared in `nfts.csv`. Edit that file to add your own NFTs!
+
 ```sh
 fresh mint
 ```
 
-### Get an NFT
+### Inspect an NFT
+
+View the metadata for a single NFT.
 
 ```sh
-fresh show 0
+fresh inspect 0
 ```
 
 ### Pin the NFT metadata
@@ -77,7 +79,23 @@ Pin a single NFT:
 fresh pin 0
 ```
 
-## Run an NFT drop
+### Start your drop
+
+Start an NFT drop. This will start a new drop that lists all the NFTs currently minted.
+
+```sh
+fresh start-drop
+```
+
+Stop a drop. Once your drop is complete, you can run this command to close it.
+
+```sh
+fresh stop-drop
+```
+
+### Launch the web app
+
+This is the last step! Run this command to launch the UI for you NFT project.
 
 ```sh
 npm run dev

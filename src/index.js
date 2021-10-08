@@ -23,15 +23,10 @@ const colorizeOptions = {
   }
 };
 
+const program = new Command();
 const spinner = ora();
 
 async function main() {
-  const program = new Command();
-
-  program.option(
-    "-n, --network <network>",
-    "Network to deploy to. Either 'testnet' or 'mainnet'"
-  );
 
   // commands
 
@@ -41,6 +36,16 @@ async function main() {
     .action(start);
 
   program
+    .command("deploy")
+    .description("deploy an instance of the FreshMint NFT contract")
+    .option(
+      "-n, --network <network>",
+      "Network to deploy to. Either 'emulator', 'testnet' or 'mainnet'",
+      "emulator"
+    )
+    .action(deploy);
+
+  program
     .command("mint")
     .description("create multiple NFTs using data from a csv file")
     .option(
@@ -48,19 +53,12 @@ async function main() {
       "The location of the csv file to use for minting",
       "nfts.csv"
     )
-    .action(batchMintNFT);
-
-  program
-    .command("mintone <image-path>")
-    .description("create a new NFT from an image file")
-    .option("-n, --name <name>", "The name of the NFT")
-    .option("-d, --description <desc>", "A description of the NFT")
     .option(
-      "-o, --owner <address>",
-      "The Flow address that should own the NFT." +
-        "If not provided, defaults to the first signing address."
+      "-n, --network <network>",
+      "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
+      "emulator"
     )
-    .action(mintNFT);
+    .action(batchMintNFT);
 
   program
     .command("inspect <token-id>")
@@ -70,11 +68,21 @@ async function main() {
   program
     .command("start-drop")
     .description("start a new NFT drop")
+    .option(
+      "-n, --network <network>",
+      "Network to use. Either 'emulator', 'testnet' or 'mainnet'",
+      "emulator"
+    )
     .action(startDrop);
 
   program
     .command("remove-drop")
     .description("remove the current NFT drop")
+    .option(
+      "-n, --network <network>",
+      "Network to use. Either 'emulator', 'testnet' or 'mainnet'",
+      "emulator"
+    )
     .action(removeDrop);
 
   program
@@ -83,25 +91,9 @@ async function main() {
     .action(pinNFTData);
 
   program
-    .command("up")
-    .description("deploy an instance of the FreshMint NFT contract")
-    .option(
-      "-n, --network <name>",
-      "Either: emulator, testnet, mainnet",
-      "emulator"
-    )
-    .action(deploy);
-
-  program
     .command("prince")
     .description("In west Philadelphia born and raised.")
     .action(() => { console.log(carlton); });
-
-  // The hardhat and getconfig modules both expect to be running from the root directory of the project,
-  // so we change the current directory to the parent dir of this script file to make things work
-  // even if you call minty from elsewhere
-  const rootDir = path.join(__dirname, "..");
-  process.chdir(rootDir);
 
   await program.parseAsync(process.argv);
 }

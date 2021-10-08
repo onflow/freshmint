@@ -48,8 +48,8 @@ async function createScaffold(dir) {
   );
 
   await fs.copy(
-    path.resolve(__dirname, "templates/freshmint.config.js"),
-    path.resolve(dir, "freshmint.config.js")
+    path.resolve(__dirname, "templates/fresh.config.js"),
+    path.resolve(dir, "fresh.config.js")
   );
 
   await fs.copy(
