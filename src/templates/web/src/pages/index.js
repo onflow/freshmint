@@ -1,5 +1,6 @@
 import claimNft from "../flow/claim_nft";
 import * as fcl from "@onflow/fcl"
+import getConfig from "next/config";
 
 import { useState } from "react"
 import { useRouter } from 'next/router'
@@ -8,6 +9,8 @@ import useCurrentUser from "../hooks/use-current-user";
 import Drop from "../components/Drop";
 import DropImage from "../components/DropImage";
 import Header from "../components/Header";
+
+const { publicRuntimeConfig: { appName } } = getConfig();
 
 export default function Home() {
   const router = useRouter()
@@ -52,8 +55,8 @@ export default function Home() {
 
       <div className="container h-full my-8 mx-auto">
         <div className="flex flex-col items-center justify-center">
-          <h1 className="text-4xl mb-2 font-bold">NFT Drop</h1>
-          <p className="text-gray-700">Welcome to the NFT Drop web app</p>
+          <h1 className="text-4xl mb-2 font-bold">{appName} NFT Drop</h1>
+          <p className="text-gray-700">Welcome to the {appName} NFT drop web app</p>
         </div>
 
         <div className="flex flex-col items-center pt-4">
