@@ -12,8 +12,6 @@ Here's what it gives you:
 
 ## Installation
 
-You can also install freshmint using NPM:
-
 ```sh
 npm install -g @onflow/freshmint
 
