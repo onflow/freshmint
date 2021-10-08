@@ -36,7 +36,7 @@ export default function NFT({ nft }) {
   return (
     <div className="w-80 border rounded-lg">
       <img
-        className="w-full rounded-t-lg"
+        className="w-full rounded-lg"
         src={metadata.image} 
         alt={metadata.description} />
       <div className="p-4">
