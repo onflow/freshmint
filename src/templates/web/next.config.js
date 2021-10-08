@@ -43,7 +43,7 @@ module.exports = {
     return config;
   },
   publicRuntimeConfig: {
-    appName: "{{ name fog}}",
+    appName: "{{ name }}",
     ...getConfig(process.env.NETWORK)
   }
 };
