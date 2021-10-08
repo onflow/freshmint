@@ -163,8 +163,8 @@ async function start() {
   );
 
   ui.log.write(
-    `Visit: ${chalk.blueBright(
-      "https://instructions"
+    `Open ${chalk.blueBright(
+      `./${answers.projectName}/REAMDE.md`
     )} to learn how to use your new project!`
   );
 }
