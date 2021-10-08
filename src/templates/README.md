@@ -55,7 +55,7 @@ Hint: you can implement a blind drop by pinning the metadata _after_ your drop c
 
 #### Configure your pinning service
 
-Fresh is compatible with [NFT Storage](https://nft.storage), [Pinata](https://www.pinata.cloud/) and any other pinning service that implements the [IPFS Remote Pinning API](https://ipfs.github.io/pinning-services-api-spec).
+Freshmint is compatible with [NFT Storage](https://nft.storage), [Pinata](https://www.pinata.cloud/) and any other pinning service that implements the [IPFS Remote Pinning API](https://ipfs.github.io/pinning-services-api-spec).
 
 First configure your pinning service by editing `.env`:
 
