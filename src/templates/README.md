@@ -53,27 +53,35 @@ After you mint your NFTs, you'll need to pin the metdata to IPFS so that it's av
 
 Hint: you can implement a blind drop by pinning the metadata _after_ your drop completes.
 
-Fresh is compatible with [Pinata](https://www.pinata.cloud/), [NFT Storage](https://nft.storage) and any other pinning service that implements the [IPFS Remote Pinning API](https://ipfs.github.io/pinning-services-api-spec).
+#### Configure your pinning service
+
+Fresh is compatible with [NFT Storage](https://nft.storage), [Pinata](https://www.pinata.cloud/) and any other pinning service that implements the [IPFS Remote Pinning API](https://ipfs.github.io/pinning-services-api-spec).
 
 First configure your pinning service by editing `.env`:
 
-**NFT Storage**
+- **NFT Storage**
 
-```sh
-# .env
-PINNING_SERVICE_ENDPOINT="https://nft.storage/api"
-PINNING_SERVICE_KEY="Paste your nft.storage JWT token here!"
-```
+    [Create a free NFT Storage account to get an API key](https://nft.storage/).
 
-**Pinata**
+    ```sh
+    # .env
+    PINNING_SERVICE_ENDPOINT="https://nft.storage/api"
+        PINNING_SERVICE_KEY="Paste your nft.storage JWT token here!"
+    ```
 
-```sh
-# .env
-PINNING_SERVICE_ENDPOINT="https://api.pinata.cloud/psa"
-PINNING_SERVICE_KEY="Paste your Pinata JWT token here!"
-```
+- **Pinata**
 
-Pin a single NFT:
+    [Create a free Pinata account to get an API key](https://www.pinata.cloud/).
+
+    ```sh
+    # .env
+    PINNING_SERVICE_ENDPOINT="https://api.pinata.cloud/psa"
+    PINNING_SERVICE_KEY="Paste your Pinata JWT token here!"
+    ```
+
+#### Pin an NFT
+
+Use the pin command to pin an NFT by ID.
 
 ```sh
 fresh pin 0
@@ -87,10 +95,12 @@ Start an NFT drop. This will start a new drop that lists all the NFTs currently 
 fresh start-drop
 ```
 
-Stop a drop. Once your drop is complete, you can run this command to close it.
+#### Remove a drop
+
+Remove a drop. Once your drop is sold out, run this command to remove it.
 
 ```sh
-fresh stop-drop
+fresh remove-drop
 ```
 
 ### Launch the web app
