@@ -66,7 +66,7 @@ First configure your pinning service by editing `.env`:
     ```sh
     # .env
     PINNING_SERVICE_ENDPOINT="https://nft.storage/api"
-        PINNING_SERVICE_KEY="Paste your nft.storage JWT token here!"
+    PINNING_SERVICE_KEY="Paste your nft.storage JWT token here!"
     ```
 
 - **Pinata**
