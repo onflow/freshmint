@@ -2,13 +2,13 @@
 
 > The minty fresh way to launch an NFT project. :leaves: 
 
-Freshmint is an all-in-one tool to deploy an NFT project on the Flow blockchain using Next.js and IPFS.
+Freshmint is an all-in-one tool to deploy an NFT project on the [Flow blockchain](https://www.onflow.org/) using Next.js and IPFS.
 
-Here's what it gives you:
+What it gives you:
 
-- A custom ready-to-deploy NFT contract.
-- A simple command to mint NFT sets from CSV and image data.
-- A pre-built app template for running a live NFT drop.
+- A custom ready-to-deploy NFT contract 🗒️
+- A simple command to mint NFT sets from CSV and image data 🖼️
+- A pre-built app template for running a live NFT drop 📫
 
 ## Installation
 
