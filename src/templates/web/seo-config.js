@@ -2,7 +2,7 @@ import getConfig from "next/config";
 
 const { publicRuntimeConfig: { appName } } = getConfig();
 
-const title = `${publicRuntimeConfig.appName} NFT Drop`;
+const title = `${appName} NFT Drop`;
 
 export default {
   noindex: true, // Remove this before going live.
