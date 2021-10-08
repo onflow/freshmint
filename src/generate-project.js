@@ -53,7 +53,7 @@ async function createScaffold(dir) {
   );
 
   await fs.copy(
-    path.resolve(__dirname, "templates/.env.template"),
+    path.resolve(__dirname, "templates/env.template"),
     path.resolve(dir, ".env")
   );
 
@@ -73,7 +73,7 @@ async function createScaffold(dir) {
   );
 
   await fs.copy(
-    path.resolve(__dirname, "templates/.gitignore"),
+    path.resolve(__dirname, "templates/gitignore"),
     path.resolve(dir, ".gitignore")
   );
 }

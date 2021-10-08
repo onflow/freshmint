@@ -15,7 +15,7 @@ Here's what it gives you:
 Generate a new project that is preconfigured to use freshmint:
 
 ```sh
-npx freshmint start
+npx @onflow/freshmint start
 ```
 
 ## Installation
@@ -23,7 +23,7 @@ npx freshmint start
 You can also install freshmint using NPM:
 
 ```sh
-npm install -g freshmint
+npm install -g @onflow/freshmint
 
 # start a new project
 fresh start
