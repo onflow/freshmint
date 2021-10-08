@@ -52,8 +52,8 @@ export default function Home() {
 
       <div className="container h-full my-8 mx-auto">
         <div className="flex flex-col items-center justify-center">
-          <h1 className="text-4xl mb-2 font-bold">NFT Drop</h1>
-          <p className="text-gray-700">Welcome to the NFT Drop web app</p>
+          <h1 className="text-4xl mb-2 font-bold">Freshmint NFT Drop</h1>
+          <p className="text-gray-700">Welcome to the Freshmint NFT Drop web app</p>
         </div>
 
         <div className="flex flex-col items-center pt-4">

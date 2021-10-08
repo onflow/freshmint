@@ -18,7 +18,7 @@ export default function NFTDetails() {
       <header className="flex items-center h-16 p-3 border-b">
         <div className="container flex flex-row items-center mx-auto">
           <div className="flex-grow">
-            <a href="/">NFT Drop</a>
+            <a href="/">Freshmint NFT Drop</a>
           </div>
           <AuthCluster user={user} />
         </div>
