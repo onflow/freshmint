@@ -164,7 +164,7 @@ async function start() {
 
   ui.log.write(
     `Open ${chalk.blueBright(
-      `./${answers.projectName}/REAMDE.md`
+      `./${answers.projectName}/README.md`
     )} to learn how to use your new project!`
   );
 }
