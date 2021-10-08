@@ -1,5 +1,8 @@
 import getConfig from "next/config";
-const { publicRuntimeConfig } = getConfig();
+
+const { publicRuntimeConfig: { appName } } = getConfig();
+
+const title = `${publicRuntimeConfig.appName} NFT Drop`;
 
 export default {
   noindex: true, // Remove this before going live.
@@ -7,7 +10,7 @@ export default {
   description: "",
   openGraph: {
     url: "",
-    title: "",
+    title: title,
     description: "",
     type: "website",
     locale: "en_IE",
@@ -20,7 +23,7 @@ export default {
         type: "image/jpeg"
       }
     ],
-    site_name: publicRuntimeConfig.appName
+    site_name: title,
   },
   twitter: {
     handle: "@handle",
