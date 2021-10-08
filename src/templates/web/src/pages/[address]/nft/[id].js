@@ -1,4 +1,4 @@
-import AuthCluster from "../../../components/AuthCluster";
+import Header from "../../../components/Header";
 import NFT from "../../../components/NFT";
 
 import { useRouter } from "next/router";
@@ -15,14 +15,7 @@ export default function NFTDetails() {
 
   return (
     <div>
-      <header className="flex items-center h-16 p-3 border-b">
-        <div className="container flex flex-row items-center mx-auto">
-          <div className="flex-grow">
-            <a href="/">Freshmint NFT Drop</a>
-          </div>
-          <AuthCluster user={user} />
-        </div>
-      </header>
+      <Header user={user} />
 
       <div className="container mx-auto">
         <div className="flex flex-col items-center py-20">
