@@ -1,5 +1,5 @@
 {
-  "name": "freshmint",
+  "name": "@onflow/freshmint",
   "version": "0.0.1",
   "description": "The minty fresh way to launch an NFT project.",
   "main": "src/fresh.js",
