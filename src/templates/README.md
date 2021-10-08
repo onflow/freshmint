@@ -89,10 +89,10 @@ fresh pin 0
 
 ### Start your drop
 
-Start an NFT drop. This will start a new drop that lists all the NFTs currently minted.
+Start an NFT drop. This will start a new drop that lists all the NFTs currently minted. Use the price argument to set the price of each NFT in FLOW.
 
 ```sh
-fresh start-drop
+fresh start-drop 10.0
 ```
 
 #### Remove a drop

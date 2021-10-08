@@ -2,12 +2,12 @@ function getColor(error) {
   return error ? "bg-red-600" : "bg-black"
 }
 
-function getText(isLoading, isInactive, isSoldOut, error) {
+function getText(price, isLoading, isInactive, isSoldOut, error) {
   if (error) return "Error";
   if (isLoading) return "Loading...";
   if (isInactive) return "No active drop";
   if (isSoldOut) return "Sold out!";
-  return "Claim NFT"
+  return `Claim NFT for ${price} FLOW`
 }
 
 function getDisabled(isLoading, isInactive, isSoldOut, error) {
@@ -17,13 +17,14 @@ function getDisabled(isLoading, isInactive, isSoldOut, error) {
 
 export default function DropButton({ 
   onClick,
+  price,
   isLoading,
   isInactive,
   isSoldOut,
   error 
 }) {
   const color = getColor(error)
-  const text = getText(isLoading, isInactive, isSoldOut, error)
+  const text = getText(price, isLoading, isInactive, isSoldOut, error)
   const disabled = getDisabled(isLoading, isInactive, isSoldOut, error)
 
   return (

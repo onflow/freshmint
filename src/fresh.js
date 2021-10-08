@@ -314,8 +314,8 @@ class Fresh {
     return minted;
   }
 
-  async startDrop() {
-    await this.flowMinter.startDrop();
+  async startDrop(price) {
+    await this.flowMinter.startDrop(price);
   }
 
   async removeDrop() {

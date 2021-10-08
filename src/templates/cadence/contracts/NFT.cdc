@@ -1,4 +1,5 @@
 import NonFungibleToken from "./NonFungibleToken.cdc"
+import FungibleToken from "./FungibleToken.cdc"
 
 pub contract {{ name }}: NonFungibleToken {
 
@@ -8,6 +9,7 @@ pub contract {{ name }}: NonFungibleToken {
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
     pub event Minted(id: UInt64)
+    pub event Claimed(id: UInt64, to: Address?)
 
     // Named Paths
     //
@@ -21,6 +23,24 @@ pub contract {{ name }}: NonFungibleToken {
     //
     pub var totalSupply: UInt64
 
+    // drop
+    // The current active NFT drop
+    //
+    access(self) var drop: Drop?
+
+    pub resource NFT: NonFungibleToken.INFT {
+
+        pub let id: UInt64
+
+        // The IPFS CID of the metadata file.
+        pub let metadata: String
+
+        init(id: UInt64, metadata: String) {
+            self.id = id
+            self.metadata = metadata
+        }
+    }
+
     pub enum DropStatus: UInt8 {
         pub case open
         pub case paused
@@ -29,9 +49,11 @@ pub contract {{ name }}: NonFungibleToken {
 
     pub struct Drop {
 
-        access(self) let collection: Capability<&Collection>
+        access(self) let sellerCollection: Capability<&Collection>
+        access(self) let sellerReceiver: Capability<&{FungibleToken.Receiver}>
 
-        pub var size: Int
+        pub let price: UFix64
+        pub let size: Int
         pub var status: DropStatus
 
         pub fun pause() {
@@ -51,15 +73,22 @@ pub contract {{ name }}: NonFungibleToken {
         }
 
         pub fun supply(): Int {
-            return self.collection.borrow()!.size()
+            return self.sellerCollection.borrow()!.size()
         }
 
         pub fun complete(): Bool {
             return self.supply() == 0
         }
 
-        access(contract) fun pop(): @NonFungibleToken.NFT {
-            let collection = self.collection.borrow()!
+        access(contract) fun claim(payment: @FungibleToken.Vault): @NonFungibleToken.NFT {
+            pre {
+                payment.balance == self.price: "payment vault does not contain requested price"
+            }
+
+            let collection = self.sellerCollection.borrow()!
+            let receiver = self.sellerReceiver.borrow()!
+
+            receiver.deposit(from: <- payment)
 
             let nft <- collection.pop()
 
@@ -67,28 +96,22 @@ pub contract {{ name }}: NonFungibleToken {
                 self.close()
             }
 
+            emit Claimed(id: nft.id, to: receiver.owner?.address)
+
             return <- nft
         }
 
-        init(collection: Capability<&Collection>) {
-            self.collection = collection
-            self.size = collection.borrow()!.size()
+        init(
+            sellerCollection: Capability<&Collection>, 
+            sellerReceiver: Capability<&{FungibleToken.Receiver}>,
+            price: UFix64,
+        ) {
+            self.sellerCollection = sellerCollection
+            self.sellerReceiver = sellerReceiver
+
+            self.price = price
+            self.size = sellerCollection.borrow()!.size()
             self.status = DropStatus.open
-        }
-    }
-
-    access(self) var drop: Drop?
-
-    pub resource NFT: NonFungibleToken.INFT {
-
-        pub let id: UInt64
-
-        // The IPFS CID of the metadata file.
-        pub let metadata: String
-
-        init(id: UInt64, metadata: String) {
-            self.id = id
-            self.metadata = metadata
         }
     }
 
@@ -119,7 +142,7 @@ pub contract {{ name }}: NonFungibleToken {
 
             emit Withdraw(id: token.id, from: self.owner?.address)
 
-            return <-token
+            return <- token
         }
 
         // deposit
@@ -155,9 +178,7 @@ pub contract {{ name }}: NonFungibleToken {
         }
 
         // borrow{{ name }}
-        // Gets a reference to an NFT in the collection as a {{ name }},
-        // exposing all of its fields (including the typeID).
-        // This is safe as there are no functions that can be called on the KittyItem.
+        // Gets a reference to an NFT in the collection as a {{ name }}.
         //
         pub fun borrow{{ name }}(id: UInt64): &{{ name }}.NFT? {
             if self.ownedNFTs[id] != nil {
@@ -168,11 +189,16 @@ pub contract {{ name }}: NonFungibleToken {
             }
         }
 
+        // pop
+        // Removes and returns the next NFT from the collection.
+        //
         pub fun pop(): @NonFungibleToken.NFT {
             let nextID = self.ownedNFTs.keys[0]
             return <- self.withdraw(withdrawID: nextID)
         }
 
+        // size
+        // Returns the current size of the collection.
         pub fun size(): Int {
             return self.ownedNFTs.length
         }
@@ -209,13 +235,21 @@ pub contract {{ name }}: NonFungibleToken {
             emit Minted(id: {{ name }}.totalSupply)
 
             // deposit it in the recipient's account using their reference
-            recipient.deposit(token: <-create {{ name }}.NFT(id: {{ name }}.totalSupply, metadata: metadata))
+            recipient.deposit(token: <- create {{ name }}.NFT(id: {{ name }}.totalSupply, metadata: metadata))
 
             {{ name }}.totalSupply = {{ name }}.totalSupply + (1 as UInt64)
         }
 
-        pub fun startDrop(collection: Capability<&Collection>) {
-            {{ name }}.drop = Drop(collection: collection)
+        pub fun startDrop(
+            sellerCollection: Capability<&Collection>,
+            sellerReceiver: Capability<&{FungibleToken.Receiver}>,
+            price: UFix64,
+        ) {
+            {{ name }}.drop = Drop(
+                sellerCollection: sellerCollection,
+                sellerReceiver: sellerReceiver,
+                price: price,
+            )
         }
 
         pub fun pauseDrop() {
@@ -252,14 +286,17 @@ pub contract {{ name }}: NonFungibleToken {
         return {{ name }}.drop
     }
 
-    pub fun claim(recipient: &{NonFungibleToken.CollectionPublic}) {
+    pub fun claim(
+        payment: @FungibleToken.Vault,
+        recipient: &{NonFungibleToken.CollectionPublic}
+    ) {
         pre {
             {{ name }}.drop != nil : "No active drop"
             {{ name }}.drop!.status != DropStatus.paused : "Drop is paused"
             {{ name }}.drop!.status != DropStatus.closed : "Drop is closed"
         }
 
-        let nft <- {{ name }}.drop!.pop()
+        let nft <- {{ name }}.drop!.claim(payment: <- payment)
 
         recipient.deposit(token: <-nft)
     }
@@ -280,7 +317,7 @@ pub contract {{ name }}: NonFungibleToken {
 
         let collection <- {{ name }}.createEmptyCollection()
         
-        self.account.save(<-collection, to: {{ name }}.CollectionStoragePath)
+        self.account.save(<- collection, to: {{ name }}.CollectionStoragePath)
 
         self.account.link<&{{ name }}.Collection>({{ name }}.CollectionPrivatePath, target: {{ name }}.CollectionStoragePath)
 
@@ -288,7 +325,7 @@ pub contract {{ name }}: NonFungibleToken {
         
         // Create an admin resource and save it to storage
         let admin <- create Admin()
-        self.account.save(<-admin, to: self.AdminStoragePath)
+        self.account.save(<- admin, to: self.AdminStoragePath)
 
         emit ContractInitialized()
     }
