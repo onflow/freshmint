@@ -19,6 +19,9 @@ npm install -g @onflow/freshmint
 fresh start
 ```
 
+After creating a new project, 
+follow the instructions in your project README to get it up and running!
+
 ## Acknowledgments
 
 Freshmint owes its existence to [minty](https://github.com/yusefnapora/minty),
