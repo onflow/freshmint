@@ -9,7 +9,15 @@ export default function replaceImports(src) {
       publicRuntimeConfig.nonFungibleTokenAddress
     )
     .replace(
-      '"../contracts/{{ name }}.cdc"',
+      '"../contracts/FungibleToken.cdc"',
+      publicRuntimeConfig.fungibleTokenAddress
+    )
+    .replace(
+      '"../contracts/FlowToken.cdc"',
+      publicRuntimeConfig.flowTokenAddress
+    )
+    .replace(
+      '"../contracts/Dog.cdc"',
       publicRuntimeConfig.projectNFTContract
     );
 }

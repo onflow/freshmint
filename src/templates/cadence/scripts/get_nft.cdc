@@ -1,5 +1,5 @@
-import NonFungibleToken from "../contracts/NonFungibleToken.cdc"
 import {{ name }} from "../contracts/{{ name }}.cdc"
+import NonFungibleToken from "../contracts/NonFungibleToken.cdc"
 
 pub struct AccountItem {
     pub let tokenId: UInt64
@@ -14,8 +14,8 @@ pub struct AccountItem {
 }
 
 pub fun main(address: Address, id: UInt64): AccountItem? {
-    if let col = getAccount(address).getCapability<&{{name}}.Collection{NonFungibleToken.CollectionPublic, {{name}}.{{name}}CollectionPublic}>({{name}}.CollectionPublicPath).borrow() {
-        if let item = col.borrow{{name}}(id: id) {
+    if let col = getAccount(address).getCapability<&{{ name }}.Collection{NonFungibleToken.CollectionPublic, {{ name }}.{{ name }}CollectionPublic}>({{ name }}.CollectionPublicPath).borrow() {
+        if let item = col.borrow{{ name }}(id: id) {
             return AccountItem(tokenId: id, metadata: item.metadata, owner: address)
         }
     }

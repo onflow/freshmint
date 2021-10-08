@@ -66,7 +66,7 @@ async function main() {
     .action(getNFT);
 
   program
-    .command("start-drop")
+    .command("start-drop <price>")
     .description("start a new NFT drop")
     .option(
       "-n, --network <network>",
@@ -227,10 +227,10 @@ async function mintNFT(assetPath, options) {
   console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
 }
 
-async function startDrop() {
+async function startDrop(price) {  
   const fresh = await MakeFresh();
 
-  await fresh.startDrop();
+  await fresh.startDrop(price);
 
   spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }

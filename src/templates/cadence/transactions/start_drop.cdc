@@ -1,20 +1,30 @@
 import {{ name }} from "../contracts/{{ name }}.cdc"
+import FungibleToken from "../contracts/FungibleToken.cdc"
 
-transaction {
+transaction(price: UFix64) {
     
     let admin: &{{ name }}.Admin
-    let collection: Capability<&{{ name }}.Collection>
+
+    let sellerCollection: Capability<&{{ name }}.Collection>
+    let sellerReceiver: Capability<&{FungibleToken.Receiver}>
 
     prepare(signer: AuthAccount) {
         self.admin = signer
             .borrow<&{{ name }}.Admin>(from: {{ name }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
 
-        self.collection = signer
+        self.sellerCollection = signer
             .getCapability<&{{ name }}.Collection>({{ name }}.CollectionPrivatePath)
+
+        self.sellerReceiver = signer
+            .getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)!
     }
 
     execute {
-        self.admin.startDrop(collection: self.collection)
+        self.admin.startDrop(
+            sellerCollection: self.sellerCollection,
+            sellerReceiver: self.sellerReceiver, 
+            price: price,
+        )
     }
 }

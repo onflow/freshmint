@@ -31,11 +31,13 @@ class FlowMinter {
     )
   }
 
-  async startDrop() {
+  async startDrop(price) {
     return await this.flow.transaction(
       "./cadence/transactions/start_drop.cdc",
       `${this.network}-account`,
-      []
+      [
+        { type: t.UFix64, value: price },
+      ]
     )
   }
 

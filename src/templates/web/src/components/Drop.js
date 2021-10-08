@@ -12,11 +12,13 @@ export default function Drop({ onClaim, isLoading, error }) {
   const isInactive = !!drop.notfound
   const isSoldOut = drop.supply === 0 || drop.status === "closed"
   const supply = drop.status === "closed" ? 0 : drop.supply
+  const price = parseFloat(drop.price)
 
   return (
     <>
       <DropButton
         onClick={() => onClaim()}
+        price={price}
         isInactive={isInactive}
         isSoldOut={isSoldOut}
         isLoading={isLoading} 
