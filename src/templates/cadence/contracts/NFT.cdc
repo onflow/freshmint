@@ -80,7 +80,7 @@ pub contract {{ name }}: NonFungibleToken {
             return self.supply() == 0
         }
 
-        access(contract) fun pop(payment: @FungibleToken.Vault): @NonFungibleToken.NFT {
+        access(contract) fun claim(payment: @FungibleToken.Vault): @NonFungibleToken.NFT {
             pre {
                 payment.balance == self.price: "payment vault does not contain requested price"
             }
@@ -296,7 +296,7 @@ pub contract {{ name }}: NonFungibleToken {
             {{ name }}.drop!.status != DropStatus.closed : "Drop is closed"
         }
 
-        let nft <- {{ name }}.drop!.pop(payment: <- payment)
+        let nft <- {{ name }}.drop!.claim(payment: <- payment)
 
         recipient.deposit(token: <-nft)
     }
