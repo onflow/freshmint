@@ -6,7 +6,7 @@ const title = `${appName} NFT Drop`;
 
 export default {
   noindex: true, // Remove this before going live.
-  title: publicRuntimeConfig.appName,
+  title: title,
   description: "",
   openGraph: {
     url: "",
