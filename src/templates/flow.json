@@ -20,6 +20,13 @@
         "testnet": "0x631e88ae7f1d7c20"
       }
     },
+    "FlowToken": {
+      "source": "cadence/contracts/FlowToken.cdc",
+      "aliases": {
+        "emulator": "0x0ae53cb6e3f42a79",
+        "testnet": "0x7e60df042a9c0868"
+      }
+    },
     "{{name}}": {
       "source": "cadence/contracts/{{name}}.cdc",
       "aliases": {

@@ -48,6 +48,16 @@ async function createScaffold(dir) {
   );
 
   await fs.copy(
+    path.resolve(__dirname, "templates/cadence/contracts/FungibleToken.cdc"),
+    path.resolve(dir, "cadence/contracts/FungibleToken.cdc")
+  );
+
+  await fs.copy(
+    path.resolve(__dirname, "templates/cadence/contracts/FlowToken.cdc"),
+    path.resolve(dir, "cadence/contracts/FlowToken.cdc")
+  );
+
+  await fs.copy(
     path.resolve(__dirname, "templates/fresh.config.js"),
     path.resolve(dir, "fresh.config.js")
   );
