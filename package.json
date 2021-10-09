@@ -2,6 +2,16 @@
   "name": "@onflow/freshmint",
   "version": "0.0.15",
   "description": "The minty fresh way to launch an NFT project.",
+  "author": "Mackenzie Kieran",
+  "contributors": [
+    "Peter Siemens <peterjsiemens@gmail.com>"
+  ],
+  "license": "MIT",
+  "repository": "github:onflow/freshmint",
+  "keywords": [
+    "nft",
+    "blockchain"
+  ],
   "main": "src/fresh.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,9 +19,6 @@
   "bin": {
     "fresh": "src/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@onflow/decode": "0.0.11",
     "@onflow/types": "0.0.5",
