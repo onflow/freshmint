@@ -1,7 +1,7 @@
 const fs = require("fs-extra");
 const path = require("path");
 const Handlebars = require("handlebars");
-const { writeFile } = require("./file-helpers");
+const { writeFile } = require("./helpers");
 
 async function generateWebAssets(dir, name) {
   await fs.copy(path.resolve(__dirname, "templates/web"), dir);

@@ -12,7 +12,7 @@ const ora = require("ora");
 const { MakeFresh } = require("./fresh");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
-const { isExists } = require("./file-helpers");
+const { isExists } = require("./helpers");
 const carlton = require("./carlton");
 
 const colorizeOptions = {
@@ -27,7 +27,6 @@ const program = new Command();
 const spinner = ora();
 
 async function main() {
-
   // commands
 
   program
@@ -93,7 +92,9 @@ async function main() {
   program
     .command("prince")
     .description("In west Philadelphia born and raised.")
-    .action(() => { console.log(carlton); });
+    .action(() => {
+      console.log(carlton);
+    });
 
   await program.parseAsync(process.argv);
 }
@@ -212,7 +213,7 @@ async function mintNFT(assetPath, options) {
   });
 
   const nft = await fresh.createNFTFromAssetFile(assetPath, answers);
-  
+
   console.log("✨ Minted a new NFT: ");
 
   alignOutput([
@@ -227,7 +228,7 @@ async function mintNFT(assetPath, options) {
   console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
 }
 
-async function startDrop(price) {  
+async function startDrop(price) {
   const fresh = await MakeFresh();
 
   await fresh.startDrop(price);
@@ -266,7 +267,7 @@ async function transferNFT(tokenId, toAddress) {
   const fresh = await MakeFresh();
 
   await fresh.transferToken(tokenId, toAddress);
-  
+
   console.log(
     `🌿 Transferred token ${chalk.green(tokenId)} to ${chalk.yellow(toAddress)}`
   );

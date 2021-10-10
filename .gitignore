@@ -1,7 +1,9 @@
-.idea
-node_modules
-.env
+*
 
-#Hardhat files
-cache
-artifacts
+!.gitignore
+!src/**/*
+!/LICENSE.md
+!/README.md
+!/package.json
+!/package-lock.json
+

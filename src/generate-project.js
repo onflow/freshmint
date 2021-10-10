@@ -1,8 +1,9 @@
 const fs = require("fs-extra");
 const path = require("path");
 const Handlebars = require("handlebars");
+const simpleGit = require("simple-git/promise");
 const generateWebAssets = require("./generate-web");
-const { writeFile } = require("./file-helpers");
+const { writeFile } = require("./helpers");
 
 async function generateProject(projectName, formattedContractName) {
   await createScaffold(projectName);
@@ -24,6 +25,7 @@ async function generateProject(projectName, formattedContractName) {
 
   await createWebAssets(projectName, formattedContractName);
   await createReadme(projectName, formattedContractName);
+  await createGitRepo(projectName);
 }
 
 async function createScaffold(dir) {
@@ -75,11 +77,6 @@ async function createScaffold(dir) {
   await fs.copy(
     path.resolve(__dirname, "templates/docker-compose.yml"),
     path.resolve(dir, "docker-compose.yml")
-  );
-
-  await fs.copy(
-    path.resolve(__dirname, "templates/cleanup.sh"),
-    path.resolve(dir, "cleanup.sh")
   );
 
   await fs.copy(
@@ -258,6 +255,13 @@ async function createReadme(dir, name) {
 
 async function createWebAssets(dir, name) {
   await generateWebAssets(dir, name);
+}
+
+async function createGitRepo(dir) {
+  const git = simpleGit(path.resolve(dir));
+  await git.init();
+  await git.add(path.resolve(dir + "/*"));
+  await git.commit(`✨ Initial commit.`);
 }
 
 module.exports = generateProject;
