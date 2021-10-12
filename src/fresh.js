@@ -39,8 +39,8 @@ class Fresh {
     this.nebulus = new Nebulus({
       path: path.resolve(process.cwd(), this.config.nebulusPath)
     });
-    
-    this.ipfs = new NFTStorage({ 
+
+    this.ipfs = new NFTStorage({
       token: this.config.pinningService.key,
       endpoint: this.config.pinningService.endpoint
     });
@@ -77,11 +77,23 @@ class Fresh {
     console.log("Minting started...");
 
     for (const metadata of metadatas) {
+      // Images are required
+      const imagePath = path.resolve(
+        process.cwd(),
+        `${this.config.nftAssetPath}/images/${metadata.image}`
+      );
+
+      // Animatons are not required, so check if one has been provided
+      const animationPath = metadata.animation
+        ? path.resolve(
+            process.cwd(),
+            `${this.config.nftAssetPath}/animations/${metadata.animation}`
+          )
+        : null;
+
       const result = await this.createNFTFromAssetData({
-        path: path.resolve(
-          process.cwd(),
-          `${this.config.nftAssetPath}/${metadata.asset}`
-        ),
+        imagePath,
+        animationPath,
         ...metadata
       });
 
@@ -119,13 +131,25 @@ class Fresh {
    */
 
   async createNFTFromAssetData(options) {
-    const filePath = options.path || "asset.bin";
+    const imagePath = options.imagePath;
+    const animationPath = options.animationPath;
 
-    // add the asset to IPFS
-    const assetCid = await this.nebulus.add(filePath);
+    // Generate image CIDs for IPFS
+    const imageCid = await this.nebulus.add(imagePath);
+    const imageURI = ensureIpfsUriPrefix(imageCid);
 
-    const assetURI = ensureIpfsUriPrefix(assetCid);
-    const metadata = await this.makeNFTMetadata(assetURI, options);
+    // Generate animation CIDs for IPFS (if animation file is given)
+    let animationCid = null;
+    let animationURI = null;
+    if (animationPath) {
+      animationCid = await this.nebulus.add(animationPath);
+      animationURI = ensureIpfsUriPrefix(animationCid);
+    }
+
+    const metadata = await this.makeNFTMetadata(
+      { imageURI, animationURI },
+      options
+    );
 
     // add the metadata to IPFS
     const metadataCid = await this.nebulus.add(
@@ -135,7 +159,7 @@ class Fresh {
     // make the NFT metadata JSON
     const metadataURI = ensureIpfsUriPrefix(metadataCid);
 
-    // Get the address of the token owner from options, 
+    // Get the address of the token owner from options,
     // or use the default signing address if no owner is given
     let ownerAddress = options.owner;
     if (!ownerAddress) {
@@ -152,9 +176,9 @@ class Fresh {
       tokenId: deposit.tokenId,
       ownerAddress,
       metadata,
-      assetURI,
+      imageURI,
       metadataURI,
-      assetGatewayURL: makeGatewayURL(this.config.ipfsGatewayUrl, assetURI),
+      imageGatewayURL: makeGatewayURL(this.config.ipfsGatewayUrl, imageURI),
       metadataGatewayURL: makeGatewayURL(
         this.config.ipfsGatewayUrl,
         metadataURI
@@ -202,13 +226,18 @@ class Fresh {
    * @param {?string} description - optional description to store in NFT metadata
    * @returns {object} - NFT metadata object
    */
-  async makeNFTMetadata(assetURI, options) {
-    assetURI = ensureIpfsUriPrefix(assetURI);
-    // remove the assetpath from the options
-    const { path, ...metadata } = options;
+  async makeNFTMetadata({ imageURI, animationURI }, options) {
+    imageURI = ensureIpfsUriPrefix(imageURI);
+    if (animationURI) animationURI = ensureIpfsUriPrefix(animationURI);
+    // remove path, imagePath and animationPath from the options, because we don't
+    // need them to be part of the metadata
+    const { path, imagePath, animationPath, ...metadata } = options;
     return {
       ...metadata,
-      asset: assetURI
+      image: imageURI,
+      // if an animation has been provided, add it to the metadata
+      // Named 'animation_url' to conform to the OpenSea schema
+      animation_url: animationURI || ""
     };
   }
 
@@ -264,12 +293,6 @@ class Fresh {
       metadataGatewayURL,
       ownerAddress
     };
-
-    nft.assetURI = metadata.asset;
-    nft.assetGatewayURL = makeGatewayURL(
-      this.config.ipfsGatewayUrl,
-      metadata.asset
-    );
 
     return nft;
   }
@@ -360,7 +383,7 @@ class Fresh {
   async pinTokenData(tokenId) {
     return new Promise(async (resolve, reject) => {
       const { metadata, metadataURI } = await this.getNFTMetadata(tokenId);
-      const { asset: assetURI } = metadata;
+      const { image: imageURI, animation_url: animationURI } = metadata;
 
       const pin = async (cid) => {
         const data = await fs.readFile(
@@ -379,9 +402,14 @@ class Fresh {
       spinner.succeed(`📌 ${meta} was pinned!`);
       spinner.start("Pinning asset...");
 
-      const asset = await pin(stripIpfsUriPrefix(assetURI));
+      const image = await pin(stripIpfsUriPrefix(imageURI));
+      spinner.succeed(`📌 ${image} was pinned!`);
 
-      spinner.succeed(`📌 ${asset} was pinned!`);
+      if (animationURI) {
+        spinner.start("Pinning animation...");
+        const animation = await pin(stripIpfsUriPrefix(animationURI));
+        spinner.succeed(`📌 ${animation} was pinned!`);
+      }
 
       resolve();
     });

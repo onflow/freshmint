@@ -17,7 +17,7 @@ export default function replaceImports(src) {
       publicRuntimeConfig.flowTokenAddress
     )
     .replace(
-      '"../contracts/{{dir}}.cdc"',
+      '"../contracts/OpenSeaCompat.cdc"',
       publicRuntimeConfig.projectNFTContract
     );
 }

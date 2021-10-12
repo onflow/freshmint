@@ -7,6 +7,6 @@ const { publicRuntimeConfig } = getConfig();
 config()
   .put("env", "local")
   .put("app.detail.icon", "http://localhost:3000/favicon.png")
-  .put("app.detail.title", "{{ name }} NFT Drop")
+  .put("app.detail.title", "OpenSeaCompat NFT Drop")
   .put("accessNode.api", publicRuntimeConfig.flowAccessAPI)
   .put("discovery.wallet", publicRuntimeConfig.fclWalletDiscovery);

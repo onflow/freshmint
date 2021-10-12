@@ -1,4 +1,4 @@
-external_url,description,name,attributes,background_color,animation,image
+external_url,description,name,attributes,background_color,animation_url,youtube_url,image,image_data
 ,Lady is a dog. A great dog.,Lady,"[{
       ""trait_type"": ""Base"", 
       ""value"": ""Canine""
@@ -22,4 +22,4 @@ external_url,description,name,attributes,background_color,animation,image
     {
       ""trait_type"": ""Personality"", 
       ""value"": ""Happy""
-    }]",#ffffff,,lady.jpg
+    }]",#ffffff,,,lady.jpg,

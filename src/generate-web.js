@@ -16,8 +16,20 @@ async function generateWebAssets(dir, name) {
     "utf8"
   );
 
+  const fclConfig = await fs.readFile(
+    path.resolve(__dirname, "templates/web/src/fcl.config.js"),
+    "utf8"
+  );
+
+  const replaceImportsScript = await fs.readFile(
+    path.resolve(__dirname, "templates/web/src/flow/replace-imports.js"),
+    "utf8"
+  );
+
   const packageJSONTemplate = Handlebars.compile(packageJSON);
   const nextConfigTemplate = Handlebars.compile(nextConfig);
+  const fclConfigTemplate = Handlebars.compile(fclConfig);
+  const replaceImportsScriptTemplate = Handlebars.compile(replaceImportsScript);
 
   await writeFile(
     path.resolve(dir, `package.json`),
@@ -29,16 +41,14 @@ async function generateWebAssets(dir, name) {
     nextConfigTemplate({ name })
   );
 
-  const replaceImportsScript = await fs.readFile(
-    path.resolve(__dirname, "templates/web/src/flow/replace-imports.js"),
-    "utf8"
+  await writeFile(
+    path.resolve(dir, `src/fcl.config.js`),
+    fclConfigTemplate({ name })
   );
-
-  const replaceImportsScriptTemplate = Handlebars.compile(replaceImportsScript);
 
   await writeFile(
     path.resolve(dir, `src/flow/replace-imports.js`),
-    replaceImportsScriptTemplate({ name })
+    replaceImportsScriptTemplate({ dir })
   );
 }
 

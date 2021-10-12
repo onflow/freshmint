@@ -27,7 +27,6 @@ const program = new Command();
 const spinner = ora();
 
 async function main() {
-
   // commands
 
   program
@@ -93,7 +92,9 @@ async function main() {
   program
     .command("prince")
     .description("In west Philadelphia born and raised.")
-    .action(() => { console.log(carlton); });
+    .action(() => {
+      console.log(carlton);
+    });
 
   await program.parseAsync(process.argv);
 }
@@ -197,37 +198,7 @@ async function batchMintNFT(options) {
   console.log(`✨ Success! ${result.total} NFTs were minted! ✨`);
 }
 
-async function mintNFT(assetPath, options) {
-  const fresh = await MakeFresh();
-
-  // prompt for missing details if not provided as cli args
-  const answers = await promptForMissing(options, {
-    name: {
-      message: "Enter a name for your new NFT: "
-    },
-
-    description: {
-      message: "Enter a description for your new NFT: "
-    }
-  });
-
-  const nft = await fresh.createNFTFromAssetFile(assetPath, answers);
-  
-  console.log("✨ Minted a new NFT: ");
-
-  alignOutput([
-    ["Token ID:", chalk.green(nft.tokenId)],
-    ["Metadata Address:", chalk.blue(nft.metadataURI)],
-    ["Metadata Gateway URL:", chalk.blue(nft.metadataGatewayURL)],
-    ["Asset Address:", chalk.blue(nft.assetURI)],
-    ["Asset Gateway URL:", chalk.blue(nft.assetGatewayURL)]
-  ]);
-
-  console.log("NFT Metadata:");
-  console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
-}
-
-async function startDrop(price) {  
+async function startDrop(price) {
   const fresh = await MakeFresh();
 
   await fresh.startDrop(price);
@@ -249,13 +220,11 @@ async function getNFT(tokenId, options) {
 
   const output = [
     ["Token ID:", chalk.green(nft.tokenId)],
-    ["Owner Address:", chalk.yellow(nft.ownerAddress)]
+    ["Owner Address:", chalk.yellow(nft.ownerAddress)],
+    ["Metadata Address:", chalk.blue(nft.metadataURI)],
+    ["Metadata Gateway URL:", chalk.blue(nft.metadataGatewayURL)]
   ];
 
-  output.push(["Metadata Address:", chalk.blue(nft.metadataURI)]);
-  output.push(["Metadata Gateway URL:", chalk.blue(nft.metadataGatewayURL)]);
-  output.push(["Asset Address:", chalk.blue(nft.assetURI)]);
-  output.push(["Asset Gateway URL:", chalk.blue(nft.assetGatewayURL)]);
   alignOutput(output);
 
   console.log("NFT Metadata:");
@@ -266,7 +235,7 @@ async function transferNFT(tokenId, toAddress) {
   const fresh = await MakeFresh();
 
   await fresh.transferToken(tokenId, toAddress);
-  
+
   console.log(
     `🌿 Transferred token ${chalk.green(tokenId)} to ${chalk.yellow(toAddress)}`
   );

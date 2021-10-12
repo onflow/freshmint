@@ -8,7 +8,7 @@ const generateMetaData = async (csvPath) => {
   const config = getConfig();
 
   const nftCSV = fs.readFileSync(path.resolve(process.cwd(), csvPath));
-  
+
   // Parse the CSV content
   const records = parse(nftCSV);
 
@@ -20,16 +20,30 @@ const generateMetaData = async (csvPath) => {
     values.forEach((value, index) => {
       record[fields[index]] = value;
     });
-    if (!record.asset) {
+    if (!record.image) {
       throw new Error(
-        "Error generating metadata, must supply 'asset' property"
+        "Error generating metadata, must supply an 'image' property"
       );
     }
 
     try {
-      fs.statSync(
-        path.resolve(process.cwd(), `${config.nftAssetPath}/${record.asset}`)
-      );
+      if (record.image) {
+        fs.statSync(
+          path.resolve(
+            process.cwd(),
+            `${config.nftAssetPath}/images/${record.image}`
+          )
+        );
+      }
+
+      if (record.animation) {
+        fs.statSync(
+          path.resolve(
+            process.cwd(),
+            `${config.nftAssetPath}/animations/${record.animation}`
+          )
+        );
+      }
     } catch (e) {
       throw new Error(
         `Generating metadata failed, asset does not exist for ${JSON.stringify(
