@@ -30,6 +30,7 @@ const generateMetaData = async (csvPath) => {
     if (record.attributes) {
       try {
         JSON.parse(record.attributes);
+        record.attributes = record.attributes.trim();
       } catch (e) {
         throw new Error(
           "Error generating metadata, 'attributes' must be valid JSON"
