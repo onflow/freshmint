@@ -20,10 +20,21 @@ const generateMetaData = async (csvPath) => {
     values.forEach((value, index) => {
       record[fields[index]] = value;
     });
+
     if (!record.image) {
       throw new Error(
         "Error generating metadata, must supply an 'image' property"
       );
+    }
+
+    if (record.attributes) {
+      try {
+        JSON.parse(record.attributes);
+      } catch (e) {
+        throw new Error(
+          "Error generating metadata, 'attributes' must be valid JSON"
+        );
+      }
     }
 
     try {
