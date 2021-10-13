@@ -14,7 +14,6 @@ Now install the project and its dependencies:
 ```sh
 npm install
 ```
-
 ## Quick start
 
 This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) for rapid local development.
@@ -25,7 +24,15 @@ This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) f
 docker-compose up -d
 ```
 
+### Create a project
+
+```
+fresh start
+```
+
 ### Deploy your contract to Flow
+
+(Ensure you run the following commands from your new project's directory)
 
 ```sh
 fresh deploy
@@ -67,16 +74,6 @@ First configure your pinning service by editing `.env`:
     # .env
     PINNING_SERVICE_ENDPOINT="https://nft.storage/api"
     PINNING_SERVICE_KEY="Paste your nft.storage JWT token here!"
-    ```
-
-- **Pinata**
-
-    [Create a free Pinata account to get an API key](https://www.pinata.cloud/).
-
-    ```sh
-    # .env
-    PINNING_SERVICE_ENDPOINT="https://api.pinata.cloud/psa"
-    PINNING_SERVICE_KEY="Paste your Pinata JWT token here!"
     ```
 
 #### Pin an NFT
