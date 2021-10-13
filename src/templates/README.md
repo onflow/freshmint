@@ -23,13 +23,6 @@ This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) f
 ```sh
 docker-compose up -d
 ```
-
-### Create a project
-
-```
-fresh start
-```
-
 ### Deploy your contract to Flow
 
 (Ensure you run the following commands from your new project's directory)
