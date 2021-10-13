@@ -1,7 +1,7 @@
 * 
 
 !.gitignore
-!src/**/*
+!/src/*
 !/LICENSE.md
 !/README.md
 !/package.json
