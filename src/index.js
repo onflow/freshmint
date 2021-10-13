@@ -4,6 +4,7 @@
 // See fresh.js for the core functionality.
 
 const path = require("path");
+const fs = require("fs/promises");
 const { Command } = require("commander");
 const inquirer = require("inquirer");
 const chalk = require("chalk");
@@ -171,12 +172,9 @@ async function start() {
 }
 
 async function deploy({ network }) {
+  spinner.start(`Deploying project to ${network} ...`);
   const fresh = await MakeFresh();
-
-  spinner.start(`Deploying project to ${network}`);
-
   await fresh.deployContracts();
-
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
@@ -191,26 +189,26 @@ async function batchMintNFT(options) {
 
   if (!answer.confirm) return;
 
+  spinner.start(`Minting your NFTs ...`);
+
   const result = await fresh.createNFTsFromCSVFile(options.data, (nft) => {
     console.log(colorize(JSON.stringify(nft), colorizeOptions));
   });
 
-  console.log(`✨ Success! ${result.total} NFTs were minted! ✨`);
+  spinner.succeed(`✨ Success! ${result.total} NFTs were minted! ✨`);
 }
 
 async function startDrop(price) {
+  spinner.start(`Creating drop ...`);
   const fresh = await MakeFresh();
-
   await fresh.startDrop(price);
-
   spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
 async function removeDrop() {
+  spinner.start(`Removing drop ...`);
   const fresh = await MakeFresh();
-
   await fresh.removeDrop();
-
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
 

@@ -1,3 +1,4 @@
+const { toGatewayURL } = require("nft.storage");
 const fs = require("fs/promises");
 const path = require("path");
 const { NFTStorage, Blob } = require("nft.storage");
@@ -118,9 +119,9 @@ class Fresh {
    * @property {string} ownerAddress - the Flow address of the new token's owner
    * @property {object} metadata - the JSON metadata stored in IPFS and referenced by the token's metadata URI
    * @property {string} imageURI - an ipfs:// URI for the image
-   * @property {string} imageGatewayURL - an HTTP gateway URL for the image
+   * @property {URL} imageGatewayURL - an HTTP gateway URL for the image
    * @property {string} metadataURI - an ipfs:// URI for the NFT metadata
-   * @property {string} metadataGatewayURL - an HTTP gateway URL for the NFT metadata
+   * @property {URL} metadataGatewayURL - an HTTP gateway URL for the NFT metadata
    *
    * @returns {Promise<CreateNFTResult>}
    */
@@ -151,7 +152,6 @@ class Fresh {
       Buffer.from(JSON.stringify(metadata))
     );
 
-    // make the NFT metadata JSON
     const metadataURI = ensureIpfsUriPrefix(metadataCid);
 
     // Get the address of the token owner from options,
@@ -171,12 +171,10 @@ class Fresh {
       tokenId: deposit.tokenId,
       ownerAddress,
       metadata,
+      imageURI,
+      imageGatewayURL: toGatewayURL(imageURI),
       metadataURI,
-      imageGatewayURL: makeGatewayURL(this.config.ipfsGatewayUrl, imageURI),
-      metadataGatewayURL: makeGatewayURL(
-        this.config.ipfsGatewayUrl,
-        metadataURI
-      )
+      metadataGatewayURL: toGatewayURL(metadataURI)
     };
 
     await fs.writeFile(
@@ -248,7 +246,7 @@ class Fresh {
    * @property {string} tokenId
    * @property {object} metadata
    * @property {string} metadataURI
-   * @property {string} metadataGatewayURL
+   * @property {URL} metadataGatewayURL
    * @property {string} ownerAddress
    * @returns {Promise<NFTInfo>}
    */
@@ -260,10 +258,7 @@ class Fresh {
 
     const metadataURI = flowData.metadata;
     const ownerAddress = flowData.owner;
-    const metadataGatewayURL = makeGatewayURL(
-      this.config.ipfsGatewayUrl,
-      metadataURI
-    );
+    const metadataGatewayURL = toGatewayURL(metadataURI);
 
     const metadata = await this.getIPFSJSON(metadataURI);
 
@@ -420,15 +415,6 @@ function ensureIpfsUriPrefix(cidOrURI) {
     uri = uri.replace("ipfs://ipfs/", "ipfs://");
   }
   return uri;
-}
-
-/**
- * Return an HTTP gateway URL for the given IPFS object.
- * @param {string} ipfsURI - an ipfs:// uri or CID string
- * @returns - an HTTP url to view the IPFS object on the configured gateway.
- */
-function makeGatewayURL(ipfsGatewayUrl, ipfsURI) {
-  return ipfsGatewayUrl + "/" + stripIpfsUriPrefix(ipfsURI);
 }
 
 //////////////////////////////////////////////
