@@ -1,7 +1,8 @@
 * 
 
-!src/*
-!LICENSE.md
-!README.md
-!package.json
-!package-lock.json
+!.gitignore
+!src/**/*
+!/LICENSE.md
+!/README.md
+!/package.json
+!/package-lock.json
