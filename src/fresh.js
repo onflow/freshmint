@@ -1,7 +1,7 @@
-const { toGatewayURL } = require("nft.storage");
 const fs = require("fs/promises");
 const path = require("path");
-const { NFTStorage, Blob } = require("nft.storage");
+const fetch = require("node-fetch");
+const { NFTStorage, Blob, toGatewayURL } = require("nft.storage");
 const Nebulus = require("nebulus");
 const ora = require("ora");
 const FlowMinter = require("./flow");
@@ -337,9 +337,20 @@ class Fresh {
    * @returns {Promise<string>} - contents of the IPFS object, as a javascript object (or array, etc depending on what was stored). Fails if the content isn't valid JSON.
    */
   async getIPFSJSON(cidOrURI) {
-    const metadataBytes = await this.nebulus.get(stripIpfsUriPrefix(cidOrURI));
-    const metadata = JSON.parse(metadataBytes.toString());
-    return metadata;
+    try {
+      // Attempt to get local data from the URI
+      const metadataBytes = await this.nebulus.get(
+        stripIpfsUriPrefix(cidOrURI)
+      );
+      const metadata = JSON.parse(metadataBytes.toString());
+      return metadata;
+    } catch (e) {
+      // If we can't get local data, this NFT may have been created using the Web UI.
+      // So, we need to fetch it from IPFS...
+      const location = toGatewayURL(cidOrURI);
+      const result = await fetch(location.toString()).then((r) => r.json());
+      return result;
+    }
   }
 
   //////////////////////////////////////////////

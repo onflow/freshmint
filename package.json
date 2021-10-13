@@ -1,6 +1,6 @@
 {
   "name": "@onflow/freshmint",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The minty fresh way to launch an NFT project.",
   "author": "Mackenzie Kieran",
   "contributors": [
@@ -33,6 +33,7 @@
     "json-colorizer": "^2.2.2",
     "nebulus": "0.0.11",
     "nft.storage": "^3.3.0",
+    "node-fetch": "^2.6.0",
     "ora": "3.1.0"
   }
 }
