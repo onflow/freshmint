@@ -229,14 +229,15 @@ class Fresh {
   async makeNFTMetadata({ imageURI, animationURI }, options) {
     imageURI = ensureIpfsUriPrefix(imageURI);
     if (animationURI) animationURI = ensureIpfsUriPrefix(animationURI);
-    // remove path, imagePath and animationPath from the options, because we don't
-    // need them to be part of the metadata
-    const { path, imagePath, animationPath, ...metadata } = options;
+    // remove path, imagePath and animationPath and animation, because we don't
+    // need them to be part of the metadata...
+    const { path, imagePath, animationPath, animation, ...metadata } = options;
     return {
       ...metadata,
       image: imageURI,
       // if an animation has been provided, add it to the metadata
-      // Named 'animation_url' to conform to the OpenSea schema
+      // Named 'animation_url' to conform to the OpenSea's NFT schema
+      // https://docs.opensea.io/docs/metadata-standards
       animation_url: animationURI || ""
     };
   }
