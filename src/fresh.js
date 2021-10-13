@@ -65,7 +65,7 @@ class Fresh {
    * Create a new NFT from the given CSV data.
    *
    * @param {string} csvPath - Path to the CSV data file
-   *
+   * @param {function} cb - Callback to call with the results of the minting
    * @typedef {object} BatchCreateNFTResult
    * @property {number} total - the total number of NFTs created
    *
@@ -111,21 +111,16 @@ class Fresh {
    * Create a new NFT from the given asset data.
    *
    * @param {object} options
-   * @param {?string} path - the path to an image file or other asset to use
-   * @param {?string} name - optional name to set in NFT metadata
-   * @param {?string} description - optional description to store in NFT metadata
-   * @param {?string} owner - optional Flow address that should own the new NFT.
-   * If missing, the default signing address will be used.
    *
    * @typedef {object} CreateNFTResult
    * @property {string} txId - The id of the minting transaction
    * @property {number} tokenId - the unique ID of the new token
    * @property {string} ownerAddress - the Flow address of the new token's owner
    * @property {object} metadata - the JSON metadata stored in IPFS and referenced by the token's metadata URI
+   * @property {string} imageURI - an ipfs:// URI for the image
+   * @property {string} imageGatewayURL - an HTTP gateway URL for the image
    * @property {string} metadataURI - an ipfs:// URI for the NFT metadata
    * @property {string} metadataGatewayURL - an HTTP gateway URL for the NFT metadata
-   * @property {string} assetURI - an ipfs:// URI for the NFT asset
-   * @property {string} assetGatewayURL - an HTTP gateway URL for the NFT asset
    *
    * @returns {Promise<CreateNFTResult>}
    */
@@ -176,7 +171,6 @@ class Fresh {
       tokenId: deposit.tokenId,
       ownerAddress,
       metadata,
-      imageURI,
       metadataURI,
       imageGatewayURL: makeGatewayURL(this.config.ipfsGatewayUrl, imageURI),
       metadataGatewayURL: makeGatewayURL(
@@ -205,40 +199,36 @@ class Fresh {
    * Create a new NFT from an asset file at the given path.
    *
    * @param {string} filename - the path to an image file or other asset to use
-   * @param {object} options
-   * @param {?string} name - optional name to set in NFT metadata
-   * @param {?string} description - optional description to store in NFT metadata
-   * @param {?string} owner - optional Flow address that should own the new NFT.
    * If missing, the default signing address will be used.
    *
    * @returns {Promise<CreateNFTResult>}
    */
-  async createNFTFromAssetFile(filename, options) {
+  async createNFTFromAssetFile(filename) {
     const content = await fs.readFile(filename);
-    return this.createNFTFromAssetData(content, { ...options, path: filename });
+    return this.createNFTFromAssetData(content);
   }
 
   /**
    * Helper to construct metadata JSON for
-   * @param {string} assetCid - IPFS URI for the NFT asset
    * @param {object} options
-   * @param {?string} name - optional name to set in NFT metadata
-   * @param {?string} description - optional description to store in NFT metadata
-   * @returns {object} - NFT metadata object
+   * @param {object} uris
+   * @property {string} imageURI - IPFS URI for the NFT image
+   * @property {?string} animationURI - optional URI to a video file to use as the NFT animation
    */
-  async makeNFTMetadata({ imageURI, animationURI }, options) {
-    imageURI = ensureIpfsUriPrefix(imageURI);
-    if (animationURI) animationURI = ensureIpfsUriPrefix(animationURI);
+  async makeNFTMetadata(uris, options) {
+    uris.imageURI = ensureIpfsUriPrefix(uris.imageURI);
+    if (uris.animationURI)
+      uris.animationURI = ensureIpfsUriPrefix(uris.animationURI);
     // remove path, imagePath and animationPath and animation, because we don't
     // need them to be part of the metadata...
     const { path, imagePath, animationPath, animation, ...metadata } = options;
     return {
       ...metadata,
-      image: imageURI,
+      image: uris.imageURI,
       // if an animation has been provided, add it to the metadata
       // Named 'animation_url' to conform to the OpenSea's NFT schema
       // https://docs.opensea.io/docs/metadata-standards
-      animation_url: animationURI || ""
+      animation_url: uris.animationURI || ""
     };
   }
 
@@ -252,24 +242,14 @@ class Fresh {
    * To include info about when the token was created and by whom, set `opts.fetchCreationInfo` to true.
    * To include the full asset data (base64 encoded), set `opts.fetchAsset` to true.
    *
-   * @param {string} tokenId
-   * @param {object} opts
-   * @param {?boolean} opts.fetchAsset - if true, asset data will be fetched from IPFS and returned in assetData (base64 encoded)
-   * @param {?boolean} opts.fetchCreationInfo - if true, fetch historical info (creator address and block number)
-   *
+   * @param {string} tokenId - the unique ID of the token to get info for
    *
    * @typedef {object} NFTInfo
    * @property {string} tokenId
-   * @property {string} ownerAddress
    * @property {object} metadata
    * @property {string} metadataURI
-   * @property {string} metadataGatewayURI
-   * @property {string} assetURI
-   * @property {string} assetGatewayURL
-   * @property {?string} assetDataBase64
-   * @property {?object} creationInfo
-   * @property {string} creationInfo.creatorAddress
-   * @property {number} creationInfo.blockNumber
+   * @property {string} metadataGatewayURL
+   * @property {string} ownerAddress
    * @returns {Promise<NFTInfo>}
    */
   async getNFT(tokenId) {
@@ -302,7 +282,7 @@ class Fresh {
    * Fetch the NFT metadata for a given token id.
    *
    * @param tokenId - the id of an existing token
-   * @returns {Promise<{metadata: object, metadataURI: string, local: boolean}>} - resolves to an object containing the metadata and
+   * @returns {Promise<{metadata: object, metadataURI: string}>} - resolves to an object containing the metadata and
    * metadata URI. Fails if the token does not exist, or if fetching the data fails.
    */
   async getNFTMetadata(tokenId) {
@@ -331,8 +311,6 @@ class Fresh {
    * @returns {Promise<any>} - The result from minting the token, includes events
    */
   async mintToken(ownerAddress, metadataURI) {
-    // the smart contract adds an ipfs:// prefix to all URIs, so make sure it doesn't get added twice
-    // metadataURI = stripIpfsUriPrefix(metadataURI);
     await this.flowMinter.setupAccount();
     const minted = await this.flowMinter.mint(ownerAddress, metadataURI);
     return minted;
@@ -377,7 +355,7 @@ class Fresh {
    * Pins all IPFS data associated with the given tokend id to the remote pinning service.
    *
    * @param {string} tokenId - the ID of an NFT that was previously minted.
-   * @returns {ObservableLike<{assetURI: string, metadataURI: string}>} - the IPFS asset and metadata uris that were pinned.
+   * @returns {Promise<void>} - the IPFS asset and metadata uris that were pinned.
    * Fails if no token with the given id exists, or if pinning fails.
    */
 
