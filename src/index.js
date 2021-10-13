@@ -12,7 +12,7 @@ const ora = require("ora");
 const { MakeFresh } = require("./fresh");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
-const { isExists } = require("./file-helpers");
+const { isExists } = require("./helpers");
 const carlton = require("./carlton");
 
 const colorizeOptions = {
@@ -231,16 +231,6 @@ async function getNFT(tokenId, options) {
   console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
 }
 
-async function transferNFT(tokenId, toAddress) {
-  const fresh = await MakeFresh();
-
-  await fresh.transferToken(tokenId, toAddress);
-
-  console.log(
-    `🌿 Transferred token ${chalk.green(tokenId)} to ${chalk.yellow(toAddress)}`
-  );
-}
-
 async function pinNFTData(tokenId) {
   const fresh = await MakeFresh();
   await fresh.pinTokenData(tokenId);
@@ -249,21 +239,23 @@ async function pinNFTData(tokenId) {
 
 // ---- helpers
 
-async function promptForMissing(cliOptions, prompts) {
-  const questions = [];
-  for (const [name, prompt] of Object.entries(prompts)) {
-    prompt.name = name;
-    prompt.when = (answers) => {
-      if (cliOptions[name]) {
-        answers[name] = cliOptions[name];
-        return false;
-      }
-      return true;
-    };
-    questions.push(prompt);
-  }
-  return inquirer.prompt(questions);
-}
+// Unused but could come in handy later.
+//
+// async function promptForMissing(cliOptions, prompts) {
+//   const questions = [];
+//   for (const [name, prompt] of Object.entries(prompts)) {
+//     prompt.name = name;
+//     prompt.when = (answers) => {
+//       if (cliOptions[name]) {
+//         answers[name] = cliOptions[name];
+//         return false;
+//       }
+//       return true;
+//     };
+//     questions.push(prompt);
+//   }
+//   return inquirer.prompt(questions);
+// }
 
 function alignOutput(labelValuePairs) {
   const maxLabelLength = labelValuePairs

@@ -2,7 +2,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const Handlebars = require("handlebars");
 const generateWebAssets = require("./generate-web");
-const { writeFile } = require("./file-helpers");
+const { writeFile } = require("./helpers");
 
 async function generateProject(projectName, formattedContractName) {
   await createScaffold(projectName);
