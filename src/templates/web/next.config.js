@@ -34,7 +34,12 @@ function getConfig(network) {
   }
 }
 
-module.exports = {
+module.exports = withPWA({
+  pwa: {
+    dest: "public",
+    register: true,
+    skipWaiting: true
+  },
   webpack: (config, _options) => {
     config.module.rules.push({
       test: /\.cdc/,
@@ -47,4 +52,4 @@ module.exports = {
     pinningServiceKey: process.env.PINNING_SERVICE_KEY,
     ...getConfig(process.env.NETWORK)
   }
-};
+});

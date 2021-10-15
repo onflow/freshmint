@@ -1,12 +1,18 @@
 import { NextSeo } from "next-seo";
+
 import Head from "next/head";
 import getConfig from "next/config";
+
+import "../fcl.config";
+import seoConfig, {
+  additionalLinkTags,
+  additionalMetaTags
+} from "../../seo-config.js";
 import "../styles/global.css";
 
-import seoConfig from "../../seo-config.js";
-import "../fcl.config";
-
-const { publicRuntimeConfig: { appName } } = getConfig();
+const {
+  publicRuntimeConfig: { appName }
+} = getConfig();
 
 function App({ Component, pageProps }) {
   return (
@@ -14,10 +20,13 @@ function App({ Component, pageProps }) {
       <Head>
         <title>{appName} NFT Drop</title>
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-        <link rel="icon" href="/favicon.png" />
       </Head>
 
-      <NextSeo {...seoConfig} />
+      <NextSeo
+        {...seoConfig}
+        additionalLinkTags={additionalLinkTags}
+        additionalMetaTags={additionalMetaTags}
+      />
       <Component {...pageProps} />
     </>
   );
