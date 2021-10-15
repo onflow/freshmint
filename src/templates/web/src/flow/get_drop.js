@@ -5,7 +5,7 @@ import replaceImports from "./replace-imports";
 
 const getDrop = async () => {
   return await fcl.query({
-    cadence: replaceImports(get_drop),
+    cadence: replaceImports(get_drop)
   });
 };
 

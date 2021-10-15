@@ -326,6 +326,12 @@ class Fresh {
     return this.config.emulatorFlowAccount.address;
   }
 
+  /** @returns {Promise<string>} - Amoutn of tokens funded */
+  async fundAccount(address) {
+    const result = this.flowMinter.fundAccount(address);
+    return result;
+  }
+
   //////////////////////////////////////////////
   // --------- IPFS helpers
   //////////////////////////////////////////////

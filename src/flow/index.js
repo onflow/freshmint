@@ -1,10 +1,9 @@
 const FlowCliWrapper = require("./cli");
-const t = require("@onflow/types")
+const t = require("@onflow/types");
 
 class FlowMinter {
-
   constructor(network) {
-    this.network = network || "emulator"
+    this.network = network || "emulator";
     this.flow = new FlowCliWrapper(this.network);
   }
 
@@ -17,7 +16,27 @@ class FlowMinter {
       "./cadence/transactions/setup_account.cdc",
       `${this.network}-account`,
       []
-    )
+    );
+  }
+
+  async fundAccount(address, amount) {
+    amount = amount || "10.0";
+
+    await this.flow.transaction(
+      "./cadence/transactions/setup_flowtoken.cdc",
+      `${this.network}-account`,
+      []
+    );
+
+    await this.flow.transaction(
+      "./cadence/transactions/fund_account.cdc",
+      `${this.network}-account`,
+      [
+        { type: t.UFix64, value: amount },
+        { type: t.Address, value: address }
+      ]
+    );
+    return amount;
   }
 
   async mint(recipient, metadata) {
@@ -26,19 +45,17 @@ class FlowMinter {
       `${this.network}-account`,
       [
         { type: t.Address, value: recipient },
-        { type: t.String, value: metadata },
+        { type: t.String, value: metadata }
       ]
-    )
+    );
   }
 
   async startDrop(price) {
     return await this.flow.transaction(
       "./cadence/transactions/start_drop.cdc",
       `${this.network}-account`,
-      [
-        { type: t.UFix64, value: price },
-      ]
-    )
+      [{ type: t.UFix64, value: price }]
+    );
   }
 
   async removeDrop() {
@@ -46,7 +63,7 @@ class FlowMinter {
       "./cadence/transactions/remove_drop.cdc",
       `${this.network}-account`,
       []
-    )
+    );
   }
 
   async transfer(recipient, itemID) {
@@ -54,13 +71,10 @@ class FlowMinter {
   }
 
   async getNFTDetails(address, nftId) {
-    return await this.flow.script(
-      "./cadence/scripts/get_nft.cdc",
-      [
-        { type: t.Address, value: address },
-        { type: t.UInt64, value: Number(nftId) },
-      ]
-    )
+    return await this.flow.script("./cadence/scripts/get_nft.cdc", [
+      { type: t.Address, value: address },
+      { type: t.UInt64, value: Number(nftId) }
+    ]);
   }
 }
 

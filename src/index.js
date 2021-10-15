@@ -91,6 +91,13 @@ async function main() {
     .action(pinNFTData);
 
   program
+    .command("fund-account <address>")
+    .description(
+      "Transfer some tokens to an emulator account. Only works when using the emulator & dev-wallet."
+    )
+    .action(fundAccount);
+
+  program
     .command("prince")
     .description("In west Philadelphia born and raised.")
     .action(() => {
@@ -212,7 +219,8 @@ async function removeDrop() {
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
 
-async function getNFT(tokenId, options) {
+async function getNFT(tokenId) {
+  spinner.start(`Getting NFT data ...`);
   const fresh = await MakeFresh();
   const nft = await fresh.getNFT(tokenId);
 
@@ -227,12 +235,22 @@ async function getNFT(tokenId, options) {
 
   console.log("NFT Metadata:");
   console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
+  spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
 }
 
 async function pinNFTData(tokenId) {
   const fresh = await MakeFresh();
   await fresh.pinTokenData(tokenId);
   console.log(`🌿 Pinned all data for token id ${chalk.green(tokenId)}`);
+}
+
+async function fundAccount(address) {
+  spinner.start("Funding account  ...");
+  const fresh = await MakeFresh();
+  const result = await fresh.fundAccount(address);
+  spinner.succeed(
+    `💰 ${result} FLOW tokens transferred to ${chalk.green(address)}`
+  );
 }
 
 // ---- helpers

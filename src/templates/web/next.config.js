@@ -44,6 +44,7 @@ module.exports = {
   },
   publicRuntimeConfig: {
     appName: "{{ name }}",
+    pinningServiceKey: process.env.PINNING_SERVICE_KEY,
     ...getConfig(process.env.NETWORK)
   }
 };

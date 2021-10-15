@@ -58,6 +58,19 @@ async function createScaffold(dir) {
   );
 
   await fs.copy(
+    path.resolve(
+      __dirname,
+      "templates/cadence/transactions/setup_flowtoken.cdc"
+    ),
+    path.resolve(dir, "cadence/transactions/setup_flowtoken.cdc")
+  );
+
+  await fs.copy(
+    path.resolve(__dirname, "templates/cadence/transactions/fund_account.cdc"),
+    path.resolve(dir, "cadence/transactions/fund_account.cdc")
+  );
+
+  await fs.copy(
     path.resolve(__dirname, "templates/fresh.config.js"),
     path.resolve(dir, "fresh.config.js")
   );
@@ -119,7 +132,7 @@ async function createSetupTransaction(dir, name) {
 
 async function createMintTransaction(dir, name) {
   const nftTemplate = await fs.readFile(
-    path.resolve(__dirname, "templates/cadence/transactions/mint_nft.cdc"),
+    path.resolve(__dirname, "templates/cadence/transactions/mint.cdc"),
     "utf8"
   );
 
