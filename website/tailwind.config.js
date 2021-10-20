@@ -1,12 +1,19 @@
 module.exports = {
   mode: "jit",
-  purge: [
-    "./src/pages/**/*.{js,ts,jsx,tsx}",
-    "./src/components/**/*.{js,ts,jsx,tsx}"
-  ],
+  purge: ["./pages/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
   darkMode: false, // or 'media' or 'class'
   theme: {
-    extend: {}
+    extend: {
+      backgroundImage: {
+        "hero": "url('/images/NFT.jpeg.jpg')",
+      },
+      height: (theme) => ({
+        youtube: "360px"
+      }),
+      width: (theme) => ({
+        youtube: "640px"
+      })
+    }
   },
   variants: {
     extend: {}

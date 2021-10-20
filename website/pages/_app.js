@@ -1,7 +1,6 @@
 import { NextSeo } from "next-seo";
 
 import Head from "next/head";
-import getConfig from "next/config";
 
 import seoConfig, {
   additionalLinkTags,
@@ -9,15 +8,11 @@ import seoConfig, {
 } from "../seo.config";
 import "../styles/globals.css";
 
-const {
-  publicRuntimeConfig: { appName }
-} = getConfig();
-
 function App({ Component, pageProps }) {
   return (
     <>
       <Head>
-        <title>{appName} NFT Drop</title>
+        <title>Freshmint</title>
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
 
