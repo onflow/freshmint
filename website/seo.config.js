@@ -118,7 +118,6 @@ export const additionalLinkTags = [
     href: "/icons/safari-pinned-tab.svg",
     color: "#5bbad5"
   },
-
   {
     rel: "apple-touch-startup-image",
     href: "/images/apple_splash_2048.png",
