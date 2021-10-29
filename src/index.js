@@ -200,13 +200,18 @@ async function batchMintNFT(options) {
 
   if (!answer.confirm) return;
 
-  spinner.start(`Minting your NFTs ...`);
+  spinner.start("Minting your NFTs ...\n");
 
   const result = await fresh.createNFTsFromCSVFile(
     options.data, 
     options.claim, 
     (nft) => {
       console.log(colorize(JSON.stringify(nft), colorizeOptions));
+
+      if (nft.claimKey) {
+        console.log(`\nClaim the NFT with this key: ${chalk.blue(nft.claimKey)}\n`)
+        console.log(chalk.blue(`http://localhost:3000/claim/${nft.claimKey}`))
+      }
     }
   );
 
