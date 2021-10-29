@@ -35,6 +35,12 @@ fresh deploy
 
 This command mints the NFTs declared in `nfts.csv`. Edit that file to add your own NFTs!
 
+Notes: 
+
+- The metadata in the CSV is compatible with [OpenSea's NFT standard](https://docs.opensea.io/docs/metadata-standards). Freshmint does not enforce any standard metadata, but it is reccomended you consider using a standard format.
+
+- Only the **image** property is required, and it's value must be the name of a file in the **assets/images** directory of your project. 
+
 ```sh
 fresh mint
 ```
