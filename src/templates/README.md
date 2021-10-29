@@ -45,6 +45,16 @@ Notes:
 fresh mint
 ```
 
+### Mint a claimable NFT (i.e. airdrop support)
+
+Use the `claim` flag to create claim keys for your minted NFTs.
+Each NFT gets a unique claim key. 
+Give a key to a user to allow them to claim that NFT.
+
+```sh
+fresh mint --claim
+```
+
 ### Inspect an NFT
 
 View the metadata for a single NFT.
