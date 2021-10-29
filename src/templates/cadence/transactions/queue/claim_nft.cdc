@@ -1,12 +1,14 @@
-import {{ name }} from "../contracts/{{ name }}.cdc"
-import FlowToken from "../contracts/FlowToken.cdc"
-import FungibleToken from "../contracts/FungibleToken.cdc"
-import NonFungibleToken from "../contracts/NonFungibleToken.cdc"
+import {{ name }} from "../../contracts/{{ name }}.cdc"
+import NFTQueueDrop from "../../contracts/NFTQueueDrop.cdc"
+import FlowToken from "../../contracts/FlowToken.cdc"
+import FungibleToken from "../../contracts/FungibleToken.cdc"
+import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 
 transaction {
 
     let payment: @FungibleToken.Vault
-    let recipient: &{NonFungibleToken.CollectionPublic}
+    let receiver: &{NonFungibleToken.CollectionPublic}
+    let drop: &{NFTQueueDrop.DropPublic}
 
     prepare(signer: AuthAccount) {
         if signer.borrow<&{{ name }}.Collection>(from: {{ name }}.CollectionStoragePath) == nil {
@@ -20,21 +22,25 @@ transaction {
             signer.link<&{{ name }}.Collection{NonFungibleToken.CollectionPublic, {{ name }}.{{ name }}CollectionPublic}>({{ name }}.CollectionPublicPath, target: {{ name }}.CollectionStoragePath)
         }
 
+        self.receiver = signer
+            .getCapability({{ name }}.CollectionPublicPath)!
+            .borrow<&{NonFungibleToken.CollectionPublic}>()!
+
+        self.drop = signer
+            .getCapability(NFTQueueDrop.DropPublicPath)!
+            .borrow<&{NFTQueueDrop.DropPublic}>()!
+
         let vault = signer
             .borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
             ?? panic("Cannot borrow FLOW vault from account storage")
 
-        let drop = {{ name }}.getDrop()!
-        let price = drop.price
+        let price = self.drop.price
    
         self.payment <- vault.withdraw(amount: price)
-        
-        self.recipient = signer
-            .getCapability({{ name }}.CollectionPublicPath)!
-            .borrow<&{NonFungibleToken.CollectionPublic}>()!
     }
 
     execute {
-        {{ name }}.claim(payment: <- self.payment, recipient: self.recipient)
+        let token <- self.drop.claim(payment: <- self.payment)
+        self.receiver.deposit(token: <- token)
     }
 }

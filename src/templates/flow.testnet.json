@@ -8,6 +8,8 @@
   "deployments": {
     "testnet": {
       "testnet-account": [
+        "NFTQueueDrop",
+        "NFTAirDrop",
         "{{name}}"
       ]
     }

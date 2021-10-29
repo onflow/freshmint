@@ -1,81 +1,32 @@
-import * as fcl from "@onflow/fcl";
-
 import getConfig from "next/config";
-
-import { useState } from "react";
-
-import { useRouter } from "next/router";
-
-import Drop from "../components/Drop";
-import DropImage from "../components/DropImage";
-import Header from "../components/Header";
-import claimNft from "../flow/claim_nft";
 import useCurrentUser from "../hooks/use-current-user";
 
-const {
-  publicRuntimeConfig: { appName }
-} = getConfig();
+import Header from "../components/Header";
+import DropImage from "../components/DropImage";
+import QueueDrop from "../components/QueueDrop";
+
+const { publicRuntimeConfig: { appName, projectAdminAddress} } = getConfig();
 
 export default function Home() {
-  const router = useRouter();
 
   const user = useCurrentUser();
 
-  const [status, setStatus] = useState({ isLoading: false, error: "" });
-
-  async function claim() {
-    setStatus({ isLoading: true });
-
-    let txId;
-
-    try {
-      txId = await claimNft();
-    } catch (err) {
-      setStatus({ isLoading: false, error: err });
-      return;
-    }
-
-    fcl.tx(txId).subscribe((tx) => {
-      if (tx.errorMessage) {
-        setStatus({ isLoading: false, error: tx.errorMessage });
-        return;
-      }
-
-      if (fcl.tx.isSealed(tx)) {
-        const { data } = tx.events.find((e) =>
-          e.type.includes("{{ name }}.Deposit")
-        );
-
-        fcl
-          .currentUser()
-          .snapshot()
-          .then((user) => {
-            router.push(`/${user.addr}/nft/${data.id}`);
-          });
-      }
-    });
-  }
-
   return (
     <div className="flex flex-col h-screen">
+
       <Header user={user} />
 
       <div className="container h-full my-8 mx-auto">
         <div className="flex flex-col items-center justify-center">
           <h1 className="text-4xl mb-2 font-bold">{appName} NFT Drop</h1>
-          <p className="text-gray-700">
-            Welcome to the {appName} NFT drop web app
-          </p>
+          <p className="text-gray-700">Welcome to the {appName} NFT drop web app</p>
         </div>
 
         <div className="flex flex-col items-center pt-4">
           <DropImage />
-          <Drop
-            onClaim={claim}
-            isLoading={status.isLoading}
-            error={status.error}
-          />
+          <QueueDrop dropAddress={projectAdminAddress} />
         </div>
+        
       </div>
     </div>
   );
