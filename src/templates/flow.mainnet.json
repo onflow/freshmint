@@ -8,6 +8,8 @@
   "deployments": {
     "mainnet": {
       "mainnet-account": [
+        "NFTQueueDrop",
+        "NFTAirDrop",
         "{{name}}"
       ]
     }

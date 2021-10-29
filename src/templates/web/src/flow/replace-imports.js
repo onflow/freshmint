@@ -5,19 +5,27 @@ const { publicRuntimeConfig } = getConfig();
 export default function replaceImports(src) {
   return src
     .replace(
-      '"../contracts/NonFungibleToken.cdc"',
+      /\".*NonFungibleToken\.cdc\"/,
       publicRuntimeConfig.nonFungibleTokenAddress
     )
     .replace(
-      '"../contracts/FungibleToken.cdc"',
+      /\".*FungibleToken\.cdc\"/,
       publicRuntimeConfig.fungibleTokenAddress
     )
     .replace(
-      '"../contracts/FlowToken.cdc"',
+      /\".*FlowToken\.cdc\"/,
       publicRuntimeConfig.flowTokenAddress
     )
     .replace(
-      '"../contracts/{{name}}.cdc"',
-      publicRuntimeConfig.projectNFTContract
+      /\".*{{ name }}\.cdc\"/,
+      publicRuntimeConfig.projectContractAddress
+    )
+    .replace(
+      /\".*NFTAirDrop\.cdc\"/,
+      publicRuntimeConfig.projectContractAddress
+    )
+    .replace(
+      /\".*NFTQueueDrop\.cdc\"/,
+      publicRuntimeConfig.projectContractAddress
     );
 }

@@ -33,7 +33,9 @@
         "emulator": "0xf8d6e0586b0a20c7",
         "testnet": "0xf8d6e0586b0a20c7"
       }
-    }
+    },
+    "NFTQueueDrop": "cadence/contracts/NFTQueueDrop.cdc",
+    "NFTAirDrop": "cadence/contracts/NFTAirDrop.cdc"
   },
   "networks": {
     "emulator": "127.0.0.1:3569",
@@ -49,6 +51,8 @@
     "emulator": {
       "emulator-account": [
         "NonFungibleToken",
+        "NFTQueueDrop",
+        "NFTAirDrop",
         "{{name}}"
       ]
     }
