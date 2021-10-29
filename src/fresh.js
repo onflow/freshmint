@@ -8,6 +8,7 @@ const FlowMinter = require("./flow");
 const generateMetadata = require("./generate-metadata");
 
 const getConfig = require("./config");
+const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
 
 async function MakeFresh() {
   const m = new Fresh();
@@ -73,9 +74,8 @@ class Fresh {
    *
    * @returns {Promise<BatchCreateNFTResult>}
    */
-  async createNFTsFromCSVFile(csvPath, cb) {
+  async createNFTsFromCSVFile(csvPath, withClaimKey, cb) {
     const metadatas = await generateMetadata(csvPath);
-    console.log("Minting started...");
 
     for (const metadata of metadatas) {
       // Images are required
@@ -95,6 +95,7 @@ class Fresh {
       const result = await this.createNFTFromAssetData({
         imagePath,
         animationPath,
+        withClaimKey,
         ...metadata
       });
 
@@ -129,6 +130,7 @@ class Fresh {
   async createNFTFromAssetData(options) {
     const imagePath = options.imagePath;
     const animationPath = options.animationPath;
+    const withClaimKey = options.withClaimKey
 
     // Generate image CIDs for IPFS
     const imageCid = await this.nebulus.add(imagePath);
@@ -161,20 +163,16 @@ class Fresh {
       ownerAddress = await this.defaultOwnerAddress();
     }
 
-    // mint a new token referencing the metadata URI
-    const minted = await this.mintToken(ownerAddress, metadataURI);
-    const deposit = formatMintResult(minted);
+    const nftDetails = await this.createNFT(metadataURI, withClaimKey)
 
-    // format and return the results
     const details = {
-      txId: deposit.txId,
-      tokenId: deposit.tokenId,
+      ...nftDetails,
       ownerAddress,
       metadata,
       imageURI,
       imageGatewayURL: toGatewayURL(imageURI),
       metadataURI,
-      metadataGatewayURL: toGatewayURL(metadataURI)
+      metadataGatewayURL: toGatewayURL(metadataURI),
     };
 
     await fs.writeFile(
@@ -184,6 +182,14 @@ class Fresh {
     );
 
     return details;
+  }
+
+  async createNFT(metadataURI, withClaimKey) {
+    if (withClaimKey) {
+      return await this.mintTokenWithClaimKey(metadataURI)
+    }
+
+    return await this.mintToken(metadataURI)
   }
 
   getAssetPath(tokenId) {
@@ -305,18 +311,34 @@ class Fresh {
    * @param {string} metadataURI - IPFS URI for the NFT metadata that should be associated with this token
    * @returns {Promise<any>} - The result from minting the token, includes events
    */
-  async mintToken(ownerAddress, metadataURI) {
+  async mintToken(metadataURI) {
     await this.flowMinter.setupAccount();
-    const minted = await this.flowMinter.mint(ownerAddress, metadataURI);
-    return minted;
+    const minted = await this.flowMinter.mint(metadataURI);
+    return formatMintResult(minted);
+  }
+
+  async mintTokenWithClaimKey(metadataURI) {
+    await this.flowMinter.setupAccount();
+
+    const { privateKey, publicKey } = generateKeyPair();
+
+    const minted = await this.flowMinter.mintWithClaimKey(metadataURI, publicKey);
+    const result = formatMintResult(minted);
+
+    // format and return the results
+    return {
+      txId: result.txId,
+      tokenId: result.tokenId,
+      claimKey: formatClaimKey(result.tokenId, privateKey)
+    };
   }
 
   async startDrop(price) {
-    await this.flowMinter.startDrop(price);
+    await this.flowMinter.startQueueDrop(price);
   }
 
   async removeDrop() {
-    await this.flowMinter.removeDrop();
+    await this.flowMinter.removeQueueDrop();
   }
 
   /**
@@ -408,6 +430,24 @@ class Fresh {
 }
 
 //////////////////////////////////////////////
+// -------- Crypto helpers
+//////////////////////////////////////////////
+
+function generateKeyPair() {
+  const privateKey = ECPrivateKey.generate(signatureAlgorithms.ECDSA_P256)
+  const publicKey = privateKey.getPublicKey()
+
+  return {
+    privateKey: privateKey.toHex(),
+    publicKey: publicKey.toHex()
+  }
+}
+
+function formatClaimKey(nftId, privateKey) {
+  return `${privateKey}${nftId}`
+}
+
+//////////////////////////////////////////////
 // -------- URI helpers
 //////////////////////////////////////////////
 
@@ -442,6 +482,7 @@ function formatMintResult(txOutput) {
   const deposit = txOutput.events.find((event) =>
     event.type.includes("Deposit")
   );
+  
   const tokenId = deposit.values.value.fields.find(
     (f) => f.name === "id"
   ).value;

@@ -4,7 +4,6 @@
 // See fresh.js for the core functionality.
 
 const path = require("path");
-const fs = require("fs/promises");
 const { Command } = require("commander");
 const inquirer = require("inquirer");
 const chalk = require("chalk");
@@ -57,6 +56,10 @@ async function main() {
       "-n, --network <network>",
       "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
       "emulator"
+    )
+    .option(
+      "-c, --claim",
+      "Generate a claim key for each NFT"
     )
     .action(batchMintNFT);
 
@@ -111,6 +114,7 @@ async function main() {
 
 async function start() {
   const ui = new inquirer.ui.BottomBar();
+
   ui.log.write(chalk.greenBright("Initializing new project. 🍃\n"));
 
   const questions = [
@@ -198,9 +202,13 @@ async function batchMintNFT(options) {
 
   spinner.start(`Minting your NFTs ...`);
 
-  const result = await fresh.createNFTsFromCSVFile(options.data, (nft) => {
-    console.log(colorize(JSON.stringify(nft), colorizeOptions));
-  });
+  const result = await fresh.createNFTsFromCSVFile(
+    options.data, 
+    options.claim, 
+    (nft) => {
+      console.log(colorize(JSON.stringify(nft), colorizeOptions));
+    }
+  );
 
   spinner.succeed(`✨ Success! ${result.total} NFTs were minted! ✨`);
 }
