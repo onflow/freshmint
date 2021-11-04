@@ -39,28 +39,46 @@ class FlowMinter {
     return amount;
   }
 
-  async mint(recipient, metadata) {
+  async mint(metadata) {
     return await this.flow.transaction(
       "./cadence/transactions/mint.cdc",
       `${this.network}-account`,
       [
-        { type: t.Address, value: recipient },
-        { type: t.String, value: metadata }
+        { type: t.String, value: metadata },
       ]
     );
   }
 
-  async startDrop(price) {
+  async mintWithClaimKey(metadata, publicKey) {
     return await this.flow.transaction(
-      "./cadence/transactions/start_drop.cdc",
+      "./cadence/transactions/airdrop/mint.cdc",
+      `${this.network}-account`,
+      [
+        { type: t.String, value: metadata },
+        { type: t.String, value: publicKey }
+      ]
+    );
+  }
+
+  async startQueueDrop(price) {
+    return await this.flow.transaction(
+      "./cadence/transactions/queue/start_drop.cdc",
       `${this.network}-account`,
       [{ type: t.UFix64, value: price }]
     );
   }
 
-  async removeDrop() {
+  async removeQueueDrop() {
     return await this.flow.transaction(
-      "./cadence/transactions/remove_drop.cdc",
+      "./cadence/transactions/queue/remove_drop.cdc",
+      `${this.network}-account`,
+      []
+    );
+  }
+
+  async removeAirDrop() {
+    return await this.flow.transaction(
+      "./cadence/transactions/airdrop/remove_drop.cdc",
       `${this.network}-account`,
       []
     );
