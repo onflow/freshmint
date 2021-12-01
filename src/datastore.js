@@ -31,8 +31,11 @@ class DataStore {
       return null;
     }
     const doc = result.docs[0];
-    const key = Object.keys(value)[0];
-    doc[key] = value[key];
+    const keys = Object.keys(value);
+    for (const key of keys) {
+      doc[key] = value[key];
+    }
+
     return await this.db.put(doc);
   }
   async remove(key) {}
