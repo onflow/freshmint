@@ -5,8 +5,8 @@ const { NFTStorage, Blob, toGatewayURL } = require("nft.storage");
 const Nebulus = require("nebulus");
 const ora = require("ora");
 const FlowMinter = require("./flow");
+const DataStore = require("./datastore");
 const generateMetadata = require("./generate-metadata");
-
 const getConfig = require("./config");
 const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
 
@@ -20,12 +20,19 @@ async function MakeFlowMinter() {
   return new FlowMinter();
 }
 
+async function MakeDataStore() {
+  const db = new DataStore();
+  await db.init("freshdb");
+  return db;
+}
+
 class Fresh {
   constructor() {
     this.config = null;
     this.ipfs = null;
     this.nebulus = null;
     this.flowMinter = null;
+    this.datastore = null;
     this._initialized = false;
   }
 
@@ -36,6 +43,7 @@ class Fresh {
 
     this.config = getConfig();
 
+    this.datastore = await MakeDataStore();
     this.flowMinter = await MakeFlowMinter();
 
     this.nebulus = new Nebulus({
@@ -99,7 +107,14 @@ class Fresh {
         ...metadata
       });
 
-      cb(result);
+      if (!result) {
+        cb({ skip: true });
+        metadatas.length--;
+      } else {
+        // Save the NFT to the database
+        this.datastore.save({ pinned: false, ...result });
+        cb(result);
+      }
 
       await this.sleep(this.config.RATE_LIMIT_MS);
     }
@@ -130,7 +145,7 @@ class Fresh {
   async createNFTFromAssetData(options) {
     const imagePath = options.imagePath;
     const animationPath = options.animationPath;
-    const withClaimKey = options.withClaimKey
+    const withClaimKey = options.withClaimKey;
 
     // Generate image CIDs for IPFS
     const imageCid = await this.nebulus.add(imagePath);
@@ -156,6 +171,13 @@ class Fresh {
 
     const metadataURI = ensureIpfsUriPrefix(metadataCid);
 
+    // If attempting to mint n NFT with identical metadata, as one that has laready been minted,
+    // we skip it skip to ensure the minting command is idempotent.
+    // NOTE: This could be configured to allow multiple mints of
+    // the same metadata if the user desired.
+    const exists = await this.datastore.find({ metadataURI });
+    if (exists.length) return;
+
     // Get the address of the token owner from options,
     // or use the default signing address if no owner is given
     let ownerAddress = options.owner;
@@ -163,33 +185,27 @@ class Fresh {
       ownerAddress = await this.defaultOwnerAddress();
     }
 
-    const nftDetails = await this.createNFT(metadataURI, withClaimKey)
+    const nftDetails = await this.createNFT(metadataURI, withClaimKey);
 
     const details = {
       ...nftDetails,
       ownerAddress,
       metadata,
       imageURI,
-      imageGatewayURL: toGatewayURL(imageURI),
       metadataURI,
-      metadataGatewayURL: toGatewayURL(metadataURI),
+      imageGatewayURL: toGatewayURL(imageURI),
+      metadataGatewayURL: toGatewayURL(metadataURI)
     };
-
-    await fs.writeFile(
-      this.getAssetPath(details.tokenId),
-      JSON.stringify(details),
-      "utf8"
-    );
 
     return details;
   }
 
   async createNFT(metadataURI, withClaimKey) {
     if (withClaimKey) {
-      return await this.mintTokenWithClaimKey(metadataURI)
+      return await this.mintTokenWithClaimKey(metadataURI);
     }
 
-    return await this.mintToken(metadataURI)
+    return await this.mintToken(metadataURI);
   }
 
   getAssetPath(tokenId) {
@@ -241,7 +257,7 @@ class Fresh {
   //////////////////////////////////////////////
 
   /**
-   * Get information about an existing token.
+   * Get information about an existing token, from the chain.
    * By default, this includes the token id, owner address, metadata, and metadata URI.
    * To include info about when the token was created and by whom, set `opts.fetchCreationInfo` to true.
    * To include the full asset data (base64 encoded), set `opts.fetchAsset` to true.
@@ -287,11 +303,15 @@ class Fresh {
    * metadata URI. Fails if the token does not exist, or if fetching the data fails.
    */
   async getNFTMetadata(tokenId) {
-    const assetRaw = await fs.readFile(this.getAssetPath(tokenId), "utf8");
-    const assetJson = JSON.parse(assetRaw);
+    const results = await this.datastore.find({ tokenId });
+
+    if (results.length === 0) {
+      throw new Error(`Token ${tokenId} does not exist`);
+    }
+    const meta = results[0].metadata;
 
     const metadataCid = await this.nebulus.add(
-      Buffer.from(JSON.stringify(assetJson.metadata))
+      Buffer.from(JSON.stringify(meta))
     );
 
     const metadataURI = ensureIpfsUriPrefix(metadataCid);
@@ -322,7 +342,10 @@ class Fresh {
 
     const { privateKey, publicKey } = generateKeyPair();
 
-    const minted = await this.flowMinter.mintWithClaimKey(metadataURI, publicKey);
+    const minted = await this.flowMinter.mintWithClaimKey(
+      metadataURI,
+      publicKey
+    );
     const result = formatMintResult(minted);
 
     // format and return the results
@@ -398,6 +421,10 @@ class Fresh {
       const { metadata, metadataURI } = await this.getNFTMetadata(tokenId);
       const { image: imageURI, animation: animationURI } = metadata;
 
+      const spinner = ora();
+
+      spinner.start("Pinning metadata...");
+
       const pin = async (cid) => {
         const data = await fs.readFile(
           path.resolve(process.cwd(), `ipfs-data/ipfs/${cid}`)
@@ -406,14 +433,10 @@ class Fresh {
         return await this.ipfs.storeBlob(new Blob([data]));
       };
 
-      const spinner = ora();
-
-      spinner.start("Pinning metadata...");
-
       const meta = await pin(stripIpfsUriPrefix(metadataURI));
 
       spinner.succeed(`📌 ${meta} was pinned!`);
-      spinner.start("Pinning asset...");
+      spinner.start("Pinning assets...");
 
       const image = await pin(stripIpfsUriPrefix(imageURI));
       spinner.succeed(`📌 ${image} was pinned!`);
@@ -423,7 +446,7 @@ class Fresh {
         const animation = await pin(stripIpfsUriPrefix(animationURI));
         spinner.succeed(`📌 ${animation} was pinned!`);
       }
-
+      this.datastore.update({ tokenId }, { pinned: true });
       resolve();
     });
   }
@@ -434,17 +457,17 @@ class Fresh {
 //////////////////////////////////////////////
 
 function generateKeyPair() {
-  const privateKey = ECPrivateKey.generate(signatureAlgorithms.ECDSA_P256)
-  const publicKey = privateKey.getPublicKey()
+  const privateKey = ECPrivateKey.generate(signatureAlgorithms.ECDSA_P256);
+  const publicKey = privateKey.getPublicKey();
 
   return {
     privateKey: privateKey.toHex(),
     publicKey: publicKey.toHex()
-  }
+  };
 }
 
 function formatClaimKey(nftId, privateKey) {
-  return `${privateKey}${nftId}`
+  return `${privateKey}${nftId}`;
 }
 
 //////////////////////////////////////////////
@@ -482,7 +505,7 @@ function formatMintResult(txOutput) {
   const deposit = txOutput.events.find((event) =>
     event.type.includes("Deposit")
   );
-  
+
   const tokenId = deposit.values.value.fields.find(
     (f) => f.name === "id"
   ).value;

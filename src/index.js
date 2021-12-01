@@ -57,10 +57,7 @@ async function main() {
       "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
       "emulator"
     )
-    .option(
-      "-c, --claim",
-      "Generate a claim key for each NFT"
-    )
+    .option("-c, --claim", "Generate a claim key for each NFT")
     .action(batchMintNFT);
 
   program
@@ -203,18 +200,24 @@ async function batchMintNFT(options) {
   spinner.start("Minting your NFTs ...\n");
 
   const result = await fresh.createNFTsFromCSVFile(
-    options.data, 
-    options.claim, 
+    options.data,
+    options.claim,
     (nft) => {
+      if (nft.skip) {
+        spinner.warn(`Skipping NFT, because it already exists.`);
+        return;
+      }
+
       console.log(colorize(JSON.stringify(nft), colorizeOptions));
 
       if (nft.claimKey) {
-        console.log(`\nClaim the NFT with this key: ${chalk.blue(nft.claimKey)}\n`)
-        console.log(chalk.blue(`http://localhost:3000/claim/${nft.claimKey}`))
+        console.log(
+          `\nClaim the NFT with this key: ${chalk.blue(nft.claimKey)}\n`
+        );
+        console.log(chalk.blue(`http://localhost:3000/claim/${nft.claimKey}`));
       }
     }
   );
-
   spinner.succeed(`✨ Success! ${result.total} NFTs were minted! ✨`);
 }
 

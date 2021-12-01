@@ -1,6 +1,6 @@
-import * as fcl from "@onflow/fcl"
-import { useState } from "react"
-import { useRouter } from 'next/router'
+import * as fcl from "@onflow/fcl";
+import { useState } from "react";
+import { useRouter } from "next/router";
 import useCurrentUser from "../../hooks/use-current-user";
 import claimNft from "../../flow/airdrop/claim_nft";
 
@@ -14,32 +14,37 @@ export default function AirDrop({ nftId, privateKey }) {
   const [status, setStatus] = useState({ isLoading: false, error: "" });
 
   async function claim() {
-    setStatus({ isLoading: true })
+    setStatus({ isLoading: true });
 
     let txId;
 
     try {
       txId = await claimNft(user.addr, nftId, privateKey);
-    } catch(err) {
+    } catch (err) {
       setStatus({ isLoading: false, error: err });
-      return
+      return;
     }
 
     fcl.tx(txId).subscribe((tx) => {
       if (tx.errorMessage) {
         setStatus({ isLoading: false, error: tx.errorMessage });
-        return
+        return;
       }
 
       if (fcl.tx.isSealed(tx)) {
-        const event = tx.events.find((e) => e.type.includes("NFTAirDrop.Claimed"));
+        const event = tx.events.find((e) =>
+          e.type.includes("NFTAirDrop.Claimed")
+        );
         const nftId = event.id;
 
-        fcl.currentUser().snapshot().then((user) => {
-          router.push(`/${user.addr}/nft/${nftId}`)
-        })
+        fcl
+          .currentUser()
+          .snapshot()
+          .then((user) => {
+            router.push(`/${user.addr}/nft/${nftId}`);
+          });
       }
-    })
+    });
   }
 
   return (
@@ -47,8 +52,9 @@ export default function AirDrop({ nftId, privateKey }) {
       <AirDropButton
         onClick={() => claim()}
         nftId={nftId}
-        isLoading={status.isLoading} 
-        error={status.error} />
+        isLoading={status.isLoading}
+        error={status.error}
+      />
     </>
   );
 }
