@@ -66,6 +66,11 @@ async function main() {
   program
     .command("inspect <token-id>")
     .description("get info from Flow about an NFT using its token ID")
+    .option(
+      "-n, --network <network>",
+      "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
+      "emulator"
+    )
     .action(getNFT);
 
   program
@@ -91,12 +96,22 @@ async function main() {
   program
     .command("pin <token-id>")
     .description('"pin" the data for an NFT to a remote IPFS Pinning Service')
+    .option(
+      "-n, --network <network>",
+      "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
+      "emulator"
+    )
     .action(pinNFTData);
 
   program
     .command("fund-account <address>")
     .description(
       "Transfer some tokens to an emulator account. Only works when using the emulator & dev-wallet."
+    )
+    .option(
+      "-n, --network <network>",
+      "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
+      "emulator"
     )
     .action(fundAccount);
 
@@ -232,9 +247,9 @@ async function removeDrop(network) {
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
 
-async function getNFT(tokenId) {
+async function getNFT(tokenId, network) {
   spinner.start(`Getting NFT data ...`);
-  const fresh = await MakeFresh("emulator");
+  const fresh = await MakeFresh(network);
   const nft = await fresh.getNFT(tokenId);
 
   const output = [
@@ -251,15 +266,15 @@ async function getNFT(tokenId) {
   spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
 }
 
-async function pinNFTData(tokenId) {
-  const fresh = await MakeFresh("emulator");
+async function pinNFTData(tokenId, network) {
+  const fresh = await MakeFresh(network);
   await fresh.pinTokenData(tokenId);
   console.log(`🌿 Pinned all data for token id ${chalk.green(tokenId)}`);
 }
 
-async function fundAccount(address) {
+async function fundAccount(address, network) {
   spinner.start("Funding account  ...");
-  const fresh = await MakeFresh("emulator");
+  const fresh = await MakeFresh(network);
   const result = await fresh.fundAccount(address);
   spinner.succeed(
     `💰 ${result} FLOW tokens transferred to ${chalk.green(address)}`

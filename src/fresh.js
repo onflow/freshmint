@@ -259,7 +259,7 @@ class Fresh {
    */
   async getNFT(tokenId) {
     const flowData = await this.flowMinter.getNFTDetails(
-      this.config.emulatorFlowAccount.address,
+      this.network === "testnet"? this.config.testnetFlowAccount.address : this.config.emulatorFlowAccount.address,
       tokenId
     );
 
@@ -346,7 +346,7 @@ class Fresh {
    * @returns {Promise<string>} - the default signing address that should own new tokens, if no owner was specified.
    */
   async defaultOwnerAddress() {
-    return this.config.emulatorFlowAccount.address;
+    return this.network === "testnet"? this.config.testnetFlowAccount.address : this.config.emulatorFlowAccount.address;
   }
 
   /** @returns {Promise<string>} - Amoutn of tokens funded */
