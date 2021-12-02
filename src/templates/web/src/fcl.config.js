@@ -2,7 +2,7 @@ import { config } from "@onflow/fcl";
 
 import getConfig from "next/config";
 
-const publicRuntimeConfig = getConfig();
+const { publicRuntimeConfig } = getConfig();
 
 config()
   .put("env", "local")
