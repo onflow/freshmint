@@ -208,13 +208,6 @@ class Fresh {
     return await this.mintToken(metadataURI);
   }
 
-  getAssetPath(tokenId) {
-    return path.resolve(
-      process.cwd(),
-      `${this.config.mintDataPath}/${tokenId}.json`
-    );
-  }
-
   /**
    * Create a new NFT from an asset file at the given path.
    *

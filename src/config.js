@@ -5,10 +5,7 @@ function getConfig() {
   require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
 
   // TOOD: inform the user when config is missing
-  const userConfig = require(path.resolve(
-    process.cwd(),
-    "fresh.config.js"
-  ));
+  const userConfig = require(path.resolve(process.cwd(), "fresh.config.js"));
 
   const flowConfig = require(path.resolve(process.cwd(), "flow.json"));
 
@@ -25,7 +22,6 @@ function getConfig() {
     // Store IPFS NFT asset & metadata CIDs and data before pushing to the live network
     // https://github.com/rarepress/nebulus
     nebulusPath: userConfig.ipfsDataPath || "ipfs-data",
-    mintDataPath: userConfig.mintDataPath || "mint-data",
 
     // Location of NFT metadata and assets for minting
     nftDataPath: userConfig.nftDataPath || "nfts.csv",
