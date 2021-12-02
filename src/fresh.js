@@ -10,18 +10,19 @@ const generateMetadata = require("./generate-metadata");
 const getConfig = require("./config");
 const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
 
-async function MakeFresh() {
-  const m = new Fresh();
+async function MakeFresh(network) {
+  const m = new Fresh(network);
   await m.init();
   return m;
 }
 
-async function MakeFlowMinter() {
-  return new FlowMinter();
+async function MakeFlowMinter(network) {
+  return new FlowMinter(network);
 }
 
 class Fresh {
-  constructor() {
+  constructor(network) {
+    this.network = network
     this.config = null;
     this.ipfs = null;
     this.nebulus = null;
@@ -36,7 +37,7 @@ class Fresh {
 
     this.config = getConfig();
 
-    this.flowMinter = await MakeFlowMinter();
+    this.flowMinter = await MakeFlowMinter(this.network);
 
     this.nebulus = new Nebulus({
       path: path.resolve(process.cwd(), this.config.nebulusPath)

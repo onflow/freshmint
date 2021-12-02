@@ -184,13 +184,13 @@ async function start() {
 
 async function deploy({ network }) {
   spinner.start(`Deploying project to ${network} ...`);
-  const fresh = await MakeFresh();
+  const fresh = await MakeFresh(network);
   await fresh.deployContracts();
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
 async function batchMintNFT(options) {
-  const fresh = await MakeFresh();
+  const fresh = await MakeFresh(options.network);
 
   const answer = await inquirer.prompt({
     type: "confirm",
@@ -218,23 +218,23 @@ async function batchMintNFT(options) {
   spinner.succeed(`✨ Success! ${result.total} NFTs were minted! ✨`);
 }
 
-async function startDrop(price) {
+async function startDrop(price, network) {
   spinner.start(`Creating drop ...`);
-  const fresh = await MakeFresh();
+  const fresh = await MakeFresh(network);
   await fresh.startDrop(price);
   spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
-async function removeDrop() {
+async function removeDrop(network) {
   spinner.start(`Removing drop ...`);
-  const fresh = await MakeFresh();
+  const fresh = await MakeFresh(network);
   await fresh.removeDrop();
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
 
 async function getNFT(tokenId) {
   spinner.start(`Getting NFT data ...`);
-  const fresh = await MakeFresh();
+  const fresh = await MakeFresh("emulator");
   const nft = await fresh.getNFT(tokenId);
 
   const output = [
@@ -252,14 +252,14 @@ async function getNFT(tokenId) {
 }
 
 async function pinNFTData(tokenId) {
-  const fresh = await MakeFresh();
+  const fresh = await MakeFresh("emulator");
   await fresh.pinTokenData(tokenId);
   console.log(`🌿 Pinned all data for token id ${chalk.green(tokenId)}`);
 }
 
 async function fundAccount(address) {
   spinner.start("Funding account  ...");
-  const fresh = await MakeFresh();
+  const fresh = await MakeFresh("emulator");
   const result = await fresh.fundAccount(address);
   spinner.succeed(
     `💰 ${result} FLOW tokens transferred to ${chalk.green(address)}`
