@@ -308,14 +308,18 @@ class Fresh {
   /**
    * Create a new NFT token that references the given metadata CID, owned by the given address.
    *
-   * @param {string} ownerAddress - the Flow address that should own the new token
    * @param {string} metadataURI - IPFS URI for the NFT metadata that should be associated with this token
    * @returns {Promise<any>} - The result from minting the token, includes events
    */
   async mintToken(metadataURI) {
     await this.flowMinter.setupAccount();
     const minted = await this.flowMinter.mint(metadataURI);
-    return formatMintResult(minted);
+
+    try {
+      return formatMintResult(minted);
+    } catch (error) {
+      console.log(minted);
+    }
   }
 
   async mintTokenWithClaimKey(metadataURI) {

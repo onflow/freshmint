@@ -204,13 +204,14 @@ async function deploy({ network }) {
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
-async function batchMintNFT(options) {
-  const fresh = await MakeFresh(options.network);
+async function batchMintNFT({data, network, claim}) {
+  // fresh.config.nftDataPath will not be equal to data, but this value is not used by Fresh.createNFTsFromCSVFile anyway
+  const fresh = await MakeFresh(network);
 
   const answer = await inquirer.prompt({
     type: "confirm",
     name: "confirm",
-    message: `Create NFTs using data from ${path.basename(options.data)}?`
+    message: `Create NFTs using data from ${path.basename(data)}?`
   });
 
   if (!answer.confirm) return;
@@ -218,8 +219,8 @@ async function batchMintNFT(options) {
   spinner.start("Minting your NFTs ...\n");
 
   const result = await fresh.createNFTsFromCSVFile(
-    options.data, 
-    options.claim, 
+    data, 
+    claim, 
     (nft) => {
       console.log(colorize(JSON.stringify(nft), colorizeOptions));
 
