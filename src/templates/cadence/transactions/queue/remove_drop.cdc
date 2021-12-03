@@ -7,8 +7,6 @@ transaction {
 
         signer.unlink(NFTQueueDrop.DropPublicPath)
 
-        signer.load(<- drop, to: NFTQueueDrop.DropStoragePath)
-
         let drop <- signer.load<@NFTQueueDrop.Drop>(from: NFTQueueDrop.DropStoragePath)
 
         destroy drop
