@@ -9,11 +9,12 @@ This project requires the Flow CLI and Docker.
 - [Install Flow CLI](https://docs.onflow.org/flow-cli/install/)
 - [Install Docker Desktop](https://www.docker.com/products/docker-desktop)
 
-Now install the project and its dependencies: 
+Now install the project and its dependencies:
 
 ```sh
 npm install
 ```
+
 ## Quick start
 
 This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) for rapid local development.
@@ -23,6 +24,7 @@ This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) f
 ```sh
 docker-compose up -d
 ```
+
 ### Deploy your contract to Flow
 
 (Ensure you run the following commands from your new project's directory)
@@ -35,11 +37,11 @@ fresh deploy
 
 This command mints the NFTs declared in `nfts.csv`. Edit that file to add your own NFTs!
 
-Notes: 
+Notes:
 
-- The metadata in the CSV is compatible with [OpenSea's NFT standard](https://docs.opensea.io/docs/metadata-standards). Freshmint does not enforce any standard metadata, but it is reccomended you consider using a standard format.
+- The metadata in the CSV is compatible with [OpenSea's NFT standard](https://docs.opensea.io/docs/metadata-standards). Freshmint does not enforce any standard metadata, but it is recommended you consider using a standard format.
 
-- Only the **image** property is required, and it's value must be the name of a file in the **assets/images** directory of your project. 
+- Only the **image** property is required, and it's value must be the name of a file in the **assets/images** directory of your project.
 
 ```sh
 fresh mint
@@ -48,7 +50,7 @@ fresh mint
 ### Mint a claimable NFT (i.e. airdrop support)
 
 Use the `claim` flag to create claim keys for your minted NFTs.
-Each NFT gets a unique claim key. 
+Each NFT gets a unique claim key.
 Give a key to a user to allow them to claim that NFT.
 
 ```sh
@@ -65,7 +67,7 @@ fresh inspect 0
 
 ### Pin the NFT metadata
 
-After you mint your NFTs, you'll need to pin the metdata to IPFS so that it's available to the world.
+After you mint your NFTs, you'll need to pin the metadata to IPFS so that it's available to the world.
 
 Hint: you can implement a blind drop by pinning the metadata _after_ your drop completes.
 
@@ -77,13 +79,13 @@ First configure your pinning service by editing `.env`:
 
 - **NFT.Storage**
 
-    [Create a free NFT.Storage account to get an API key](https://nft.storage/).
+  [Create a free NFT.Storage account to get an API key](https://nft.storage/).
 
-    ```sh
-    # .env
-    PINNING_SERVICE_ENDPOINT="https://nft.storage/api"
-    PINNING_SERVICE_KEY="Paste your nft.storage JWT token here!"
-    ```
+  ```sh
+  # .env
+  PINNING_SERVICE_ENDPOINT="https://nft.storage/api"
+  PINNING_SERVICE_KEY="Paste your nft.storage JWT token here!"
+  ```
 
 #### Pin an NFT
 
