@@ -9,18 +9,19 @@ const generateMetadata = require("./generate-metadata");
 
 const getConfig = require("./config");
 
-async function MakeFresh() {
-  const m = new Fresh();
+async function MakeFresh(network) {
+  const m = new Fresh(network);
   await m.init();
   return m;
 }
 
-async function MakeFlowMinter() {
-  return new FlowMinter();
+async function MakeFlowMinter(network) {
+  return new FlowMinter(network);
 }
 
 class Fresh {
-  constructor() {
+  constructor(network) {
+    this.network = network
     this.config = null;
     this.ipfs = null;
     this.nebulus = null;
@@ -35,7 +36,7 @@ class Fresh {
 
     this.config = getConfig();
 
-    this.flowMinter = await MakeFlowMinter();
+    this.flowMinter = await MakeFlowMinter(this.network);
 
     this.nebulus = new Nebulus({
       path: path.resolve(process.cwd(), this.config.nebulusPath)
@@ -252,7 +253,7 @@ class Fresh {
    */
   async getNFT(tokenId) {
     const flowData = await this.flowMinter.getNFTDetails(
-      this.config.emulatorFlowAccount.address,
+      this.network === "testnet"? this.config.testnetFlowAccount.address : this.config.emulatorFlowAccount.address,
       tokenId
     );
 
@@ -323,7 +324,7 @@ class Fresh {
    * @returns {Promise<string>} - the default signing address that should own new tokens, if no owner was specified.
    */
   async defaultOwnerAddress() {
-    return this.config.emulatorFlowAccount.address;
+    return this.network === "testnet"? this.config.testnetFlowAccount.address : this.config.emulatorFlowAccount.address;
   }
 
   /** @returns {Promise<string>} - Amoutn of tokens funded */
