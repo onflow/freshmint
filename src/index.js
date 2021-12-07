@@ -203,7 +203,7 @@ async function batchMintNFT(options) {
     options.data,
     options.claim,
     (nft) => {
-      if (nft.skip) {
+      if (nft.skipped) {
         spinner.warn(`Skipping NFT, because it already exists.`);
         return;
       }

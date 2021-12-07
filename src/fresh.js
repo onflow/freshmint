@@ -108,7 +108,7 @@ class Fresh {
       });
 
       if (!result) {
-        cb({ skip: true });
+        cb({ skipped: true });
         metadatas.length--;
       } else {
         // Save the NFT to the database
