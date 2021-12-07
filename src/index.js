@@ -66,6 +66,11 @@ async function main() {
     .action(getNFT);
 
   program
+    .command("dump <csv-path>")
+    .description("dump all token metadata to a file")
+    .action(dumpNFTs);
+
+  program
     .command("start-drop <price>")
     .description("start a new NFT drop")
     .option(
@@ -93,13 +98,13 @@ async function main() {
   program
     .command("fund-account <address>")
     .description(
-      "Transfer some tokens to an emulator account. Only works when using the emulator & dev-wallet."
+      "transfer some tokens to an emulator account. Only works when using the emulator & dev-wallet."
     )
     .action(fundAccount);
 
   program
     .command("prince")
-    .description("In west Philadelphia born and raised.")
+    .description("in West Philadelphia born and raised...")
     .action(() => {
       console.log(carlton);
     });
@@ -204,20 +209,20 @@ async function batchMintNFT(options) {
     options.claim,
     (nft) => {
       if (nft.skipped) {
-        spinner.warn(`Skipping NFT, because it already exists.`);
+        spinner.warn(`Skipping NFT because it already exists.`);
         return;
       }
 
-      console.log(colorize(JSON.stringify(nft), colorizeOptions));
-
       if (nft.claimKey) {
-        console.log(
-          `\nClaim the NFT with this key: ${chalk.blue(nft.claimKey)}\n`
+        spinner.info(
+          `Minted NFT ${nft.tokenId}. Claim key: ${chalk.blue(nft.claimKey)}`
         );
-        console.log(chalk.blue(`http://localhost:3000/claim/${nft.claimKey}`));
+      } else {
+        spinner.info(`Minted NFT ${nft.tokenId}`);
       }
     }
   );
+
   spinner.succeed(`✨ Success! ${result.total} NFTs were minted! ✨`);
 }
 
@@ -252,6 +257,13 @@ async function getNFT(tokenId) {
   console.log("NFT Metadata:");
   console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
   spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
+}
+
+async function dumpNFTs(csvPath) {
+  const fresh = await MakeFresh();
+  const count = await fresh.dumpNFTs(csvPath);
+  
+  spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
 }
 
 async function pinNFTData(tokenId) {

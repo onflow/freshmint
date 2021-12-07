@@ -19,6 +19,19 @@ class DataStore {
     return result.docs;
   }
 
+  async all() {
+    const result = await this.db.allDocs({
+      include_docs: true,
+      attachments: true
+    });
+
+    return result.rows
+      .map(row => row.doc)
+      .sort((a, b) => {
+        return parseInt(a.tokenId, 10) - parseInt(b.tokenId, 10);
+      })
+  }
+
   async save(value) {
     // Creates a new document with an auto-generated _id
     return await this.db.post(value);
@@ -38,7 +51,6 @@ class DataStore {
 
     return await this.db.put(doc);
   }
-  async remove(key) {}
 }
 
 module.exports = DataStore;

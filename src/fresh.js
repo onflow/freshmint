@@ -4,6 +4,8 @@ const fetch = require("node-fetch");
 const { NFTStorage, Blob, toGatewayURL } = require("nft.storage");
 const Nebulus = require("nebulus");
 const ora = require("ora");
+const stdout = require('mute-stdout');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const FlowMinter = require("./flow");
 const DataStore = require("./datastore");
 const generateMetadata = require("./generate-metadata");
@@ -85,6 +87,8 @@ class Fresh {
   async createNFTsFromCSVFile(csvPath, withClaimKey, cb) {
     const metadatas = await generateMetadata(csvPath);
 
+    let totalMinted = 0;
+
     for (const metadata of metadatas) {
       // Images are required
       const imagePath = path.resolve(
@@ -100,27 +104,29 @@ class Fresh {
           )
         : null;
 
-      const result = await this.createNFTFromAssetData({
-        imagePath,
-        animationPath,
-        withClaimKey,
-        ...metadata
-      });
+      const result = await this.createNFTFromAssetData(
+        {
+          imagePath,
+          animationPath,
+          ...metadata
+        },
+        withClaimKey
+      );
 
       if (!result) {
         cb({ skipped: true });
-        metadatas.length--;
       } else {
         // Save the NFT to the database
         this.datastore.save({ pinned: false, ...result });
         cb(result);
+        totalMinted++;
       }
 
       await this.sleep(this.config.RATE_LIMIT_MS);
     }
 
     return {
-      total: metadatas.length
+      total: totalMinted
     };
   }
 
@@ -142,10 +148,12 @@ class Fresh {
    * @returns {Promise<CreateNFTResult>}
    */
 
-  async createNFTFromAssetData(options) {
-    const imagePath = options.imagePath;
-    const animationPath = options.animationPath;
-    const withClaimKey = options.withClaimKey;
+  async createNFTFromAssetData(data, withClaimKey) {
+    // Mute noisy nebulus logs
+    stdout.mute();
+
+    const imagePath = data.imagePath;
+    const animationPath = data.animationPath;
 
     // Generate image CIDs for IPFS
     const imageCid = await this.nebulus.add(imagePath);
@@ -161,7 +169,7 @@ class Fresh {
 
     const metadata = await this.makeNFTMetadata(
       { imageURI, animationURI },
-      options
+      data
     );
 
     // add the metadata to IPFS
@@ -178,9 +186,9 @@ class Fresh {
     const exists = await this.datastore.find({ metadataURI });
     if (exists.length) return;
 
-    // Get the address of the token owner from options,
+    // Get the address of the token owner from data,
     // or use the default signing address if no owner is given
-    let ownerAddress = options.owner;
+    let ownerAddress = data.owner;
     if (!ownerAddress) {
       ownerAddress = await this.defaultOwnerAddress();
     }
@@ -197,6 +205,9 @@ class Fresh {
       metadataGatewayURL: toGatewayURL(metadataURI)
     };
 
+    // Unmute when done using nebulus
+    stdout.unmute();
+
     return details;
   }
 
@@ -206,19 +217,6 @@ class Fresh {
     }
 
     return await this.mintToken(metadataURI);
-  }
-
-  /**
-   * Create a new NFT from an asset file at the given path.
-   *
-   * @param {string} filename - the path to an image file or other asset to use
-   * If missing, the default signing address will be used.
-   *
-   * @returns {Promise<CreateNFTResult>}
-   */
-  async createNFTFromAssetFile(filename) {
-    const content = await fs.readFile(filename);
-    return this.createNFTFromAssetData(content);
   }
 
   /**
@@ -232,9 +230,12 @@ class Fresh {
     uris.imageURI = ensureIpfsUriPrefix(uris.imageURI);
     if (uris.animationURI)
       uris.animationURI = ensureIpfsUriPrefix(uris.animationURI);
+
     // remove path, imagePath and animationPath and animation, because we don't
     // need them to be part of the metadata...
+
     const { path, imagePath, animationPath, animation, ...metadata } = options;
+
     return {
       ...metadata,
       image: uris.imageURI,
@@ -286,6 +287,48 @@ class Fresh {
     };
 
     return nft;
+  }
+
+  async dumpNFTs(csvPath) {
+    const nfts = await this.datastore.all();
+
+    if (nfts.length === 0) {
+      return 0;
+    }
+
+    const firstNft = nfts[0];
+
+    const metadataHeaders = Object.keys(firstNft.metadata)
+      .map(key => { return { id: key, title: key.toUpperCase()} })
+
+    const csvWriter = createCsvWriter({
+      path: csvPath,
+      header: [
+        {id: 'tokenID', title: 'TOKEN ID'},
+        ...metadataHeaders,
+        {id: 'imageURI', title: 'IMAGE URI'},
+        {id: 'metadataURI', title: 'METADATA URI'},
+        {id: 'transactionID', title: 'TRANSACTION ID'},
+        {id: 'pinned', title: 'PINNED'},
+        {id: 'claimKey', title: "CLAIM KEY"},
+      ]
+    });
+   
+    const records = nfts.map(nft => {
+      return {
+        tokenID: nft.tokenId,
+        ...nft.metadata,
+        imageURI: nft.imageURI,
+        metadataURI: nft.metadataURI,
+        transactionID: nft.txId,
+        pinned: nft.pinned,
+        claimKey: nft.claimKey,
+      }
+    })
+  
+    await csvWriter.writeRecords(records);
+
+    return nfts.length;
   }
 
   /**
