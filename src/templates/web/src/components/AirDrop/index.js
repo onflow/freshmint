@@ -31,11 +31,12 @@ export default function AirDrop({ nftId, privateKey }) {
         return;
       }
 
-      if (fcl.tx.isSealed(tx)) {
+      if (fcl.tx.isSealed(tx)) {        
         const event = tx.events.find((e) =>
           e.type.includes("NFTAirDrop.Claimed")
         );
-        const nftId = event.id;
+
+        const nftId = event.data.nftID;
 
         fcl
           .currentUser()
