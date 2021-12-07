@@ -171,7 +171,7 @@ class Fresh {
 
     const metadataURI = ensureIpfsUriPrefix(metadataCid);
 
-    // If attempting to mint n NFT with identical metadata, as one that has laready been minted,
+    // If attempting to mint an NFT with identical metadata to one that has already been minted,
     // we skip it skip to ensure the minting command is idempotent.
     // NOTE: This could be configured to allow multiple mints of
     // the same metadata if the user desired.
