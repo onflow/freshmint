@@ -57,16 +57,18 @@ async function main() {
       "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
       "emulator"
     )
-    .option(
-      "-c, --claim",
-      "Generate a claim key for each NFT"
-    )
+    .option("-c, --claim", "Generate a claim key for each NFT")
     .action(batchMintNFT);
 
   program
     .command("inspect <token-id>")
     .description("get info from Flow about an NFT using its token ID")
     .action(getNFT);
+
+  program
+    .command("dump <csv-path>")
+    .description("dump all token metadata to a file")
+    .action(dumpNFTs);
 
   program
     .command("start-drop <price>")
@@ -96,13 +98,13 @@ async function main() {
   program
     .command("fund-account <address>")
     .description(
-      "Transfer some tokens to an emulator account. Only works when using the emulator & dev-wallet."
+      "transfer some tokens to an emulator account. Only works when using the emulator & dev-wallet."
     )
     .action(fundAccount);
 
   program
     .command("prince")
-    .description("In west Philadelphia born and raised.")
+    .description("in West Philadelphia born and raised...")
     .action(() => {
       console.log(carlton);
     });
@@ -203,14 +205,20 @@ async function batchMintNFT(options) {
   spinner.start("Minting your NFTs ...\n");
 
   const result = await fresh.createNFTsFromCSVFile(
-    options.data, 
-    options.claim, 
+    options.data,
+    options.claim,
     (nft) => {
-      console.log(colorize(JSON.stringify(nft), colorizeOptions));
+      if (nft.skipped) {
+        spinner.warn(`Skipping NFT because it already exists.`);
+        return;
+      }
 
       if (nft.claimKey) {
-        console.log(`\nClaim the NFT with this key: ${chalk.blue(nft.claimKey)}\n`)
-        console.log(chalk.blue(`http://localhost:3000/claim/${nft.claimKey}`))
+        spinner.info(
+          `Minted NFT ${nft.tokenId}. Claim key: ${chalk.blue(nft.claimKey)}`
+        );
+      } else {
+        spinner.info(`Minted NFT ${nft.tokenId}`);
       }
     }
   );
@@ -249,6 +257,13 @@ async function getNFT(tokenId) {
   console.log("NFT Metadata:");
   console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
   spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
+}
+
+async function dumpNFTs(csvPath) {
+  const fresh = await MakeFresh();
+  const count = await fresh.dumpNFTs(csvPath);
+  
+  spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
 }
 
 async function pinNFTData(tokenId) {
