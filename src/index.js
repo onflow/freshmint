@@ -227,7 +227,7 @@ async function startDrop(price, {network}) {
   spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
-async function removeDrop(network) {
+async function removeDrop({network}) {
   spinner.start(`Removing drop ...`);
   const fresh = await MakeFresh(network);
   await fresh.removeDrop();
