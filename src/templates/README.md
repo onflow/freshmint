@@ -14,6 +14,7 @@ Now install the project and its dependencies:
 ```sh
 npm install
 ```
+
 ## Quick start
 
 This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) for rapid local development.
@@ -23,9 +24,10 @@ This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) f
 ```sh
 docker-compose up -d
 ```
+
 ### Deploy your contract to Flow
 
-(Ensure you run the following commands from your new project's directory)
+Ensure you run the remaining commands from your new project's directory.
 
 ```sh
 fresh deploy

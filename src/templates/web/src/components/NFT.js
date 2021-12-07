@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Image from 'next/image'
 import { toGatewayURL } from "nft.storage"
 
 import fetchWithTimeout from "../fetch";
@@ -18,12 +17,10 @@ export default function NFT({ nft }) {
           metadataURL.href, 
           { timeout }
         ).then(r => r.json())
-
-        const imageURL = toGatewayURL(metadata.asset)
     
         setMetadata({
-          image: imageURL.href,
           ...metadata,
+          image: toGatewayURL(metadata.image),
         })
       } catch (error) {
         setMetadata({ doesNotExist: true })
@@ -42,12 +39,11 @@ export default function NFT({ nft }) {
   }
 
   return (
-    <div className="w-80 border rounded-lg">
-      <div className="w-full rounded-lg">
-        <Image
-          src={metadata.image} 
-          alt={metadata.description} />
-      </div>
+    <div className="w-80 border rounded-b-lg">
+      <img
+        className="w-full"
+        src={metadata.image} 
+        alt={metadata.description} />
       <div className="p-4">
         <h2 className="text-xl font-medium mb-2">
           {metadata.name}
