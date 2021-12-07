@@ -18,7 +18,7 @@ export default function QueueDrop({ dropAddress }) {
     let txId;
 
     try {
-      txId = await claimNft();
+      txId = await claimNft(dropAddress);
     } catch(err) {
       setStatus({ isLoading: false, error: err });
       return
