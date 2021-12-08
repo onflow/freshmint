@@ -4,7 +4,7 @@ import FlowToken from "../../contracts/FlowToken.cdc"
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 
-transaction(id: UInt64, signature: String) {
+transaction(dropAddress: Address, id: UInt64, signature: String) {
 
     let receiver: &{NonFungibleToken.CollectionPublic}
     let drop: &{NFTAirDrop.DropPublic}
@@ -28,7 +28,7 @@ transaction(id: UInt64, signature: String) {
             .getCapability({{ name }}.CollectionPublicPath)!
             .borrow<&{NonFungibleToken.CollectionPublic}>()!
 
-        self.drop = signer
+        self.drop = getAccount(dropAddress)
             .getCapability(NFTAirDrop.DropPublicPath)!
             .borrow<&{NFTAirDrop.DropPublic}>()!
     }

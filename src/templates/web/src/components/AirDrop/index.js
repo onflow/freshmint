@@ -6,7 +6,7 @@ import claimNft from "../../flow/airdrop/claim_nft";
 
 import AirDropButton from "./AirDropButton";
 
-export default function AirDrop({ nftId, privateKey }) {
+export default function AirDrop({ dropAddress, nftId, privateKey }) {
   const router = useRouter();
 
   const user = useCurrentUser();
@@ -19,7 +19,7 @@ export default function AirDrop({ nftId, privateKey }) {
     let txId;
 
     try {
-      txId = await claimNft(user.addr, nftId, privateKey);
+      txId = await claimNft(dropAddress, user.addr, nftId, privateKey);
     } catch (err) {
       setStatus({ isLoading: false, error: err });
       return;
@@ -31,7 +31,7 @@ export default function AirDrop({ nftId, privateKey }) {
         return;
       }
 
-      if (fcl.tx.isSealed(tx)) {        
+      if (fcl.tx.isSealed(tx)) {
         const event = tx.events.find((e) =>
           e.type.includes("NFTAirDrop.Claimed")
         );

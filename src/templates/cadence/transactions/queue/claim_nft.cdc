@@ -4,7 +4,7 @@ import FlowToken from "../../contracts/FlowToken.cdc"
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 
-transaction {
+transaction(dropAddress: Address) {
 
     let payment: @FungibleToken.Vault
     let receiver: &{NonFungibleToken.CollectionPublic}
@@ -26,7 +26,7 @@ transaction {
             .getCapability({{ name }}.CollectionPublicPath)!
             .borrow<&{NonFungibleToken.CollectionPublic}>()!
 
-        self.drop = signer
+        self.drop = getAccount(dropAddress)
             .getCapability(NFTQueueDrop.DropPublicPath)!
             .borrow<&{NFTQueueDrop.DropPublic}>()!
 

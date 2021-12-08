@@ -38,13 +38,14 @@ function generateNFTClaim(address, nftId, privateKeyHex) {
   return signature.toHex()
 }
 
-const claimNft = async (address, nftId, privateKey) => {
-  const signature = generateNFTClaim(address, nftId, privateKey)
+const claimNft = async (dropAddress, userAddress, nftId, privateKey) => {
+  const signature = generateNFTClaim(userAddress, nftId, privateKey)
 
   return await fcl.mutate({
     cadence: replaceImports(claim_nft),
     limit: 500,
     args: (arg, t) => [
+      arg(dropAddress, t.Address),
       arg(Number(nftId), t.UInt64),
       arg(signature, t.String)
     ]
