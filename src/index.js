@@ -206,7 +206,7 @@ async function deploy({ network }) {
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
-async function batchMintNFT({ network, data }) {
+async function batchMintNFT({ network, data, claim }) {
   const fresh = await MakeFresh(network);
 
   const answer = await inquirer.prompt({
@@ -220,8 +220,8 @@ async function batchMintNFT({ network, data }) {
   spinner.start("Minting your NFTs ...\n");
 
   const result = await fresh.createNFTsFromCSVFile(
-    options.data,
-    options.claim,
+    data,
+    claim,
     (nft) => {
       if (nft.skipped) {
         spinner.warn(`Skipping NFT because it already exists.`);
