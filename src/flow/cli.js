@@ -53,6 +53,8 @@ class FlowCliWrapper {
     const argString = formatArgString(args);
     const configString = formatConfigString(this.configs);
 
+    console.log(this);
+
     const { stdout: out, stderr: err } = await exec(
       `flow transactions send \
         --network=${this.network} \

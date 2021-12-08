@@ -1,18 +1,34 @@
 const path = require("path");
+const dotenv = require('dotenv')
+const fs = require('fs')
+
 const { withPrefix } = require("@onflow/util-address");
 
+// Render templated string that comes from flow.json
+// Ref: https://stackoverflow.com/a/58317158/3823815
+function render(template, data) {
+  return template.replace(/\$\{(\w+)\}/g, (_, name) => data[name] || "?");
+}
+
 function getConfig() {
-  require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
+  dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+  const envConfig = dotenv.parse(fs.readFileSync('.env'))
 
   // TOOD: inform the user when config is missing
   const userConfig = require(path.resolve(process.cwd(), "fresh.config.js"));
 
   const flowConfig = require(path.resolve(process.cwd(), "flow.json"));
 
-  const flowTestnetConfig = require(path.resolve(
+  let flowTestnetConfig = require(path.resolve(
     process.cwd(),
     "flow.testnet.json"
   ));
+  flowTestnetConfig = {...flowTestnetConfig, accounts: {
+    "testnet-account": {
+      address: render(flowTestnetConfig['accounts']['testnet-account']['address'], envConfig),
+      key: render(flowTestnetConfig['accounts']['testnet-account']['key'], envConfig),
+    }
+  }}
 
   return {
     //////////////////////////////////////////////
