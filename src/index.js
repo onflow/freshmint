@@ -206,7 +206,7 @@ async function deploy({ network }) {
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
-async function batchMintNFT({network, data}) {
+async function batchMintNFT({ network, data }) {
   const fresh = await MakeFresh(network);
 
   const answer = await inquirer.prompt({
@@ -241,21 +241,21 @@ async function batchMintNFT({network, data}) {
   spinner.succeed(`✨ Success! ${result.total} NFTs were minted! ✨`);
 }
 
-async function startDrop(price, {network}) {
+async function startDrop(price, { network }) {
   spinner.start(`Creating drop ...`);
   const fresh = await MakeFresh(network);
   await fresh.startDrop(price);
   spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
-async function removeDrop({network}) {
+async function removeDrop({ network }) {
   spinner.start(`Removing drop ...`);
   const fresh = await MakeFresh(network);
   await fresh.removeDrop();
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
 
-async function getNFT(tokenId, {network}) {
+async function getNFT(tokenId, { network }) {
   spinner.start(`Getting NFT data ...`);
   const fresh = await MakeFresh(network);
   const nft = await fresh.getNFT(tokenId);
@@ -287,7 +287,7 @@ async function pinNFTData(tokenId, { network }) {
   console.log(`🌿 Pinned all data for token id ${chalk.green(tokenId)}`);
 }
 
-async function fundAccount(address, {network}) {
+async function fundAccount(address, { network }) {
   spinner.start("Funding account  ...");
   const fresh = await MakeFresh(network);
   const result = await fresh.fundAccount(address);
