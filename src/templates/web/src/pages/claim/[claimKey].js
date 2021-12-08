@@ -6,7 +6,7 @@ import AirDrop from "../../components/AirDrop";
 import DropImage from "../../components/DropImage";
 import Header from "../../components/Header";
 
-const { publicRuntimeConfig: { appName } } = getConfig();
+const { publicRuntimeConfig: { appName, projectAdminAddress } } = getConfig();
 
 export default function Claim() {
   const router = useRouter();
@@ -29,11 +29,11 @@ export default function Claim() {
 
         <div className="flex flex-col items-center pt-4">
           <DropImage />
-          <AirDrop 
+          <AirDrop
+            dropAddress={projectAdminAddress}
             nftId={nftId} 
             privateKey={privateKey} />
         </div>
-        
       </div>
     </div>
   );

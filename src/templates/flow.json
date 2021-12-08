@@ -27,13 +27,7 @@
         "testnet": "0x7e60df042a9c0868"
       }
     },
-    "{{name}}": {
-      "source": "cadence/contracts/{{name}}.cdc",
-      "aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "testnet": "0xf8d6e0586b0a20c7"
-      }
-    },
+    "{{name}}": "cadence/contracts/{{name}}.cdc",
     "NFTQueueDrop": "cadence/contracts/NFTQueueDrop.cdc",
     "NFTAirDrop": "cadence/contracts/NFTAirDrop.cdc"
   },
