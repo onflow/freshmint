@@ -1,4 +1,4 @@
-# Freshmint 🌿
+# Freshmint 🍃
 
 > The minty fresh way to launch an NFT project.
 
