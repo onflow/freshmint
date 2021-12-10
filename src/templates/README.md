@@ -118,3 +118,50 @@ This is the last step! Run this command to launch the UI for you NFT project.
 ```sh
 npm run dev
 ```
+
+## Deploy on testnet
+
+Generate a new key pair for your testnet admin account:
+
+```sh
+flow keys generate
+```
+
+Save the private key to your `.env` file:
+
+```sh
+# .env
+FLOW_TESTNET_PRIVATE_KEY=xxxx
+```
+
+Use the [Flow Faucet to create a new account](https://testnet-faucet.onflow.org/) with the public key.
+
+Save the resulting address to your `.env` file:
+
+```sh
+# .env
+FLOW_TESTNET_ADDRESS=xxxx
+```
+
+### Deploy your contract
+
+You can now run the project commands with the testnet flag:
+
+```sh
+fresh deploy --network testnet
+```
+
+### Mint your NFTs and manage drops
+
+```sh
+fresh mint --network testnet
+
+fresh start-drop 10.0 --network testnet
+fresh stop-drop --network testnet
+```
+
+### Launch your app on testnet
+
+```sh
+NETWORK=testnet npm run dev
+```
