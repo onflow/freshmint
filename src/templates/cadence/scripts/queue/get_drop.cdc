@@ -1,5 +1,5 @@
-import {{ name }} from "../contracts/{{ name }}.cdc"
-import NFTQueueDrop from "../contracts/NFTQueueDrop.cdc"
+import {{ name }} from "../../contracts/{{ name }}.cdc"
+import NFTQueueDrop from "../../contracts/NFTQueueDrop.cdc"
 
 pub struct Drop {
 
