@@ -547,6 +547,12 @@ function formatMintResult(txOutput) {
     event.type.includes("Deposit")
   );
 
+  if (!deposit.values) {
+    throw new Error(
+      "Error format mint result, missing values"
+    )
+  }
+
   const tokenId = deposit.values.value.fields.find(
     (f) => f.name === "id"
   ).value;
