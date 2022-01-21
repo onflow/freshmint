@@ -407,7 +407,9 @@ class Fresh {
   defaultOwnerAddress() {
     return this.network === "testnet" ? 
       this.config.testnetFlowAccount.address : 
-      this.config.emulatorFlowAccount.address;
+      (this.network === "mainnet" ?
+        this.config.mainnetFlowAccount.address :
+        this.config.emulatorFlowAccount.address);
   }
 
   /** @returns {Promise<string>} - Amoutn of tokens funded */
