@@ -458,7 +458,7 @@ class Fresh {
   async pinTokenData(tokenId) {
     return new Promise(async (resolve, reject) => {
       const { metadata, metadataURI } = await this.getNFTMetadata(tokenId);
-      const { image: imageURI, animation: animationURI } = metadata;
+      const { image: imageURI, animation_url: animationURI } = metadata;
 
       const spinner = ora();
 
