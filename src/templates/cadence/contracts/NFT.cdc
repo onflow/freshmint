@@ -1,4 +1,5 @@
 import NonFungibleToken from "./NonFungibleToken.cdc"
+import MetadataViews from "./MetadataViews.cdc"
 import FungibleToken from "./FungibleToken.cdc"
 
 pub contract {{ name }}: NonFungibleToken {
@@ -39,7 +40,7 @@ pub contract {{ name }}: NonFungibleToken {
         // Additional NFT fields.
         //
         {{#each customFields}}
-        pub let {{ this.name }}: {{ this.type}}
+        pub let {{ this.name }}: {{ this.type }}
         {{/each}}
 
         {{/if}}
@@ -49,7 +50,7 @@ pub contract {{ name }}: NonFungibleToken {
             description: String,
             image: String,
             {{#each customFields}}
-            {{ this.name }}: {{ this.type}},
+            {{ this.name }}: {{ this.type }},
             {{/each}}
         ) {
             self.id = id
@@ -185,8 +186,23 @@ pub contract {{ name }}: NonFungibleToken {
         // mintNFT
         // Mints a new NFT with a new ID
         //
-        pub fun mintNFT(metadata: String): @{{ name }}.NFT {
-            let nft <- create {{ name }}.NFT(id: {{ name }}.totalSupply, metadata: metadata)
+        pub fun mintNFT(
+            name: String,
+            description: String,
+            image: String,
+            {{#each customFields}}
+            {{ this.name }}: {{ this.type }},
+            {{/each}}
+        ): @{{ name }}.NFT {
+            let nft <- create {{ name }}.NFT(
+                id: {{ name }}.totalSupply,
+                name: name,
+                description: description,
+                image: image,
+                {{#each customFields}}
+                {{ this.name }}: {{ this.name }},
+                {{/each}}
+            )
 
             emit Minted(id: nft.id)
 

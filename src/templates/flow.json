@@ -22,6 +22,14 @@
         "mainnet": "0x1d7e57aa55817448"
       }
     },
+    "MetadataViews": {
+      "source": "cadence/contracts/MetadataViews.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7",
+        "testnet": "0x631e88ae7f1d7c20",
+        "mainnet": "0x1d7e57aa55817448"
+      }
+    },
     "FlowToken": {
       "source": "cadence/contracts/FlowToken.cdc",
       "aliases": {
@@ -49,6 +57,7 @@
     "emulator": {
       "emulator-account": [
         "NonFungibleToken",
+        "MetadataViews",
         "NFTQueueDrop",
         "NFTAirDrop",
         "{{name}}"
