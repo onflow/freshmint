@@ -4,30 +4,42 @@ const Handlebars = require("handlebars");
 const generateWebAssets = require("./generate-web");
 const { writeFile } = require("./helpers");
 
-async function generateProject(projectName, formattedContractName) {
+async function generateProject(
+  projectName,
+  contractName,
+  customFields
+) {
+
   await createScaffold(projectName);
 
-  await createContract(projectName, formattedContractName);
+  const createContract = template(
+    "templates/cadence/contracts/NFT.cdc",
+    `cadence/contracts/${contractName}.cdc`
+  );  
 
-  await createSetupTransaction(projectName, formattedContractName);
-  await createMintTransaction(projectName, formattedContractName);
-  await createMintWithClaimTransaction(projectName, formattedContractName);
+  await createContract(projectName, contractName, { customFields });
 
-  await createClaimQueueDropTransaction(projectName, formattedContractName);
-  await createClaimAirDropTransaction(projectName, formattedContractName);
+  await createSetupTransaction(projectName, contractName);
+  await createMintTransaction(projectName, contractName, { customFields });
+  await createMintWithClaimTransaction(projectName, contractName);
 
-  await createStartDropTransaction(projectName, formattedContractName);
-  await createRemoveDropTransaction(projectName, formattedContractName);
+  await createClaimQueueDropTransaction(projectName, contractName);
+  await createClaimAirDropTransaction(projectName, contractName);
 
-  await createGetNFTScript(projectName, formattedContractName);
-  await createGetDropScript(projectName, formattedContractName);
+  await createStartDropTransaction(projectName, contractName);
+  await createRemoveDropTransaction(projectName, contractName);
 
-  await createFlowConfig(projectName, formattedContractName);
-  await createFlowTestnetConfig(projectName, formattedContractName);
-  await createFlowMainnetConfig(projectName, formattedContractName);
+  await createGetNFTScript(projectName, contractName);
+  await createGetDropScript(projectName, contractName);
 
-  await createWebAssets(projectName, formattedContractName);
-  await createReadme(projectName, formattedContractName);
+  await createFreshConfig(projectName, contractName, { customFields });
+
+  await createFlowConfig(projectName, contractName);
+  await createFlowTestnetConfig(projectName, contractName);
+  await createFlowMainnetConfig(projectName, contractName);
+
+  await createWebAssets(projectName, contractName);
+  await createReadme(projectName, contractName);
 }
 
 async function createScaffold(dir) {
@@ -80,11 +92,6 @@ async function createScaffold(dir) {
   );
 
   await fs.copy(
-    path.resolve(__dirname, "templates/fresh.config.js"),
-    path.resolve(dir, "fresh.config.js")
-  );
-
-  await fs.copy(
     path.resolve(__dirname, "templates/env.template"),
     path.resolve(dir, ".env")
   );
@@ -108,19 +115,6 @@ async function createScaffold(dir) {
     path.resolve(__dirname, "templates/gitignore"),
     path.resolve(dir, ".gitignore")
   );
-}
-
-async function createContract(dir, name) {
-  const nftTemplate = await fs.readFile(
-    path.resolve(__dirname, "templates/cadence/contracts/NFT.cdc"),
-    "utf8"
-  );
-
-  const template = Handlebars.compile(nftTemplate);
-
-  const result = template({ name });
-
-  await writeFile(path.resolve(dir, `cadence/contracts/${name}.cdc`), result);
 }
 
 const createSetupTransaction = template(
@@ -168,6 +162,8 @@ const createGetDropScript = template(
   "cadence/scripts/queue/get_drop.cdc"
 );
 
+const createFreshConfig = template("templates/fresh.config.js", "fresh.config.js");
+
 const createFlowConfig = template("templates/flow.json", "flow.json");
 
 const createFlowTestnetConfig = template(
@@ -187,15 +183,15 @@ async function createWebAssets(dir, name) {
 }
 
 function template(src, out) {
-  return async (dir, name) => {
-    const readmeTemplate = await fs.readFile(
+  return async (dir, name, fields = {}) => {
+    const templateSource = await fs.readFile(
       path.resolve(__dirname, src),
       "utf8"
     );
 
-    const template = Handlebars.compile(readmeTemplate);
+    const template = Handlebars.compile(templateSource);
 
-    const result = template({ name });
+    const result = template({ name, ...fields });
 
     await writeFile(path.resolve(dir, out), result);
   };

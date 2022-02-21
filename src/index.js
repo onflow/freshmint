@@ -10,10 +10,8 @@ const chalk = require("chalk");
 const colorize = require("json-colorizer");
 const ora = require("ora");
 const { MakeFresh } = require("./fresh");
-const generateProject = require("./generate-project");
-const generateWebAssets = require("./generate-web");
-const { isExists } = require("./helpers");
 const carlton = require("./carlton");
+const startCommand = require("./start");
 
 const colorizeOptions = {
   pretty: true,
@@ -130,73 +128,7 @@ async function main() {
 // ---- command action functions
 
 async function start() {
-  const ui = new inquirer.ui.BottomBar();
-
-  ui.log.write(chalk.greenBright("Initializing new project. 🍃\n"));
-
-  const questions = [
-    {
-      type: "input",
-      name: "projectName",
-      message: "Name your new project:",
-      validate: async function (input) {
-        if (!input) {
-          return "Please enter a name for your project.";
-        }
-
-        const exists = await isExists(input);
-
-        if (exists) {
-          return "A project with that name already exists.";
-        }
-        return true;
-      }
-    },
-    {
-      type: "input",
-      name: "contractName",
-      message: "Name the NFT contract (eg. MyNFT): ",
-      validate: async function (input) {
-        if (!input) {
-          return "Please enter a name for your contract.";
-        }
-
-        return true;
-      }
-    }
-  ];
-
-  const answers = await inquirer.prompt(questions);
-
-  spinner.start("Generating project files...");
-
-  const formattedContractName = answers.contractName
-    // Remove spaces from the contract name.
-    .replace(/\s*/g, "")
-    .trim()
-    .split(" ")
-    // Ensure title-case
-    .map((word) => word[0].toUpperCase() + word.slice(1))
-    .join(" ");
-
-  await generateProject(answers.projectName, formattedContractName);
-  await generateWebAssets(answers.projectName, formattedContractName);
-
-  spinner.succeed(
-    `✨ Project initialized in ${chalk.white(`./${answers.projectName}\n`)}`
-  );
-
-  ui.log.write(
-    `Use: ${chalk.magentaBright(
-      `cd ./${answers.projectName}`
-    )} to view your new project's files.\n`
-  );
-
-  ui.log.write(
-    `Open ${chalk.blueBright(
-      `./${answers.projectName}/README.md`
-    )} to learn how to use your new project!`
-  );
+  await startCommand(spinner)
 }
 
 async function deploy({ network }) {

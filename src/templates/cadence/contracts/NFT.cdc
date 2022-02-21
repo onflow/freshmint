@@ -26,12 +26,61 @@ pub contract {{ name }}: NonFungibleToken {
 
         pub let id: UInt64
 
-        // The IPFS CID of the metadata file.
-        pub let metadata: String
+        // The name of the NFT image.
+        pub let name: String
 
-        init(id: UInt64, metadata: String) {
+        // The description of the NFT image.
+        pub let description: String
+
+        // The IPFS CID of the NFT image.
+        pub let image: String
+
+        {{#if customFields}}
+        // Additional NFT fields.
+        //
+        {{#each customFields}}
+        pub let {{ this.name }}: {{ this.type}}
+        {{/each}}
+
+        {{/if}}
+        init(
+            id: UInt64,
+            name: String,
+            description: String,
+            image: String,
+            {{#each customFields}}
+            {{ this.name }}: {{ this.type}},
+            {{/each}}
+        ) {
             self.id = id
-            self.metadata = metadata
+            self.name = name
+            self.description = description
+            self.image = image
+            {{#each customFields}}
+            self.{{ this.name }} = {{ this.name }}
+            {{/each}}
+        }
+
+        pub fun getViews(): [Type] {
+            return [
+                Type<MetadataViews.Display>()
+            ]
+        }
+
+        pub fun resolveView(_ view: Type): AnyStruct? {
+            switch view {
+                case Type<MetadataViews.Display>():
+                    return MetadataViews.Display(
+                        name: self.name,
+                        description: self.description,
+                        thumbnail: MetadataViews.IPFSFile(
+                            cid: self.image, 
+                            nil
+                        )
+                    )
+            }
+
+            return nil
         }
     }
 

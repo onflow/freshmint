@@ -15,7 +15,7 @@ function getConfig() {
 
   return {
     //////////////////////////////////////////////
-    // ------ App Configs
+    // ------ App Config
     //////////////////////////////////////////////
 
     // Store IPFS NFT asset & metadata CIDs and data before pushing to the live network
@@ -26,11 +26,14 @@ function getConfig() {
     nftDataPath: userConfig.nftDataPath || "nfts.csv",
     nftAssetPath: userConfig.nftAssetPath || "assets",
 
-    // How fast to batch mint txs
-    RATE_LIMIT_MS: 2000,
+    // How fast to batch mint txs (milliseconds)
+    rateLimitMs: 2000,
+
+    // Custom NFT fields defined by the user
+    customFields: userConfig.customFields || [],
 
     //////////////////////////////////////////////
-    // ------ IPFS Configs
+    // ------ IPFS Config
     //////////////////////////////////////////////
 
     pinningService: userConfig.pinningService,
@@ -48,7 +51,7 @@ function getConfig() {
     ipfsGatewayUrl: userConfig.ipfsGatewayUrl || "http://localhost:4001",
 
     //////////////////////////////////////////////
-    // ------ Emulator Configs
+    // ------ Emulator Config
     //////////////////////////////////////////////
 
     // This is the default owner address and signing key for all newly minted NFTs
@@ -57,7 +60,7 @@ function getConfig() {
       : getAccount("emulator-account", flowConfig),
 
     //////////////////////////////////////////////
-    // ------ Testnet Configs
+    // ------ Testnet Config
     //////////////////////////////////////////////
 
     // This is the default owner address and signing key for all newly minted NFTs

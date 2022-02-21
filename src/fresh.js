@@ -123,7 +123,7 @@ class Fresh {
         totalMinted++;
       }
 
-      await this.sleep(this.config.RATE_LIMIT_MS);
+      await this.sleep(this.config.rateLimitMs);
     }
 
     return {
