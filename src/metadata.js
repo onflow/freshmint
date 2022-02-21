@@ -94,7 +94,7 @@ async function generateMetadata(csvPath) {
       })
 
     return {
-      uuid: hashMetadata(values),
+      hash: hashMetadata(values),
       fields: fieldValues,
     };
   });

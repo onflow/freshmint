@@ -8,7 +8,7 @@ const stdout = require('mute-stdout');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const FlowMinter = require("./flow");
 const DataStore = require("./datastore");
-const { generateMetadata, fieldsToObject, getMetadataFields } = require("./generate-metadata");
+const { generateMetadata, fieldsToObject, getMetadataFields } = require("./metadata");
 const getConfig = require("./config");
 const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
 const { IPFSImage } = require("./fields");
@@ -83,8 +83,7 @@ class Fresh {
 
     for (const metadata of metadatas) {
 
-      const exists = await this.nftExists(metadata.uuid)
-
+      const exists = await this.nftExists(metadata.hash)
       if (exists) {
         cb({ skipped: true });
         continue;
@@ -95,10 +94,10 @@ class Fresh {
       const { tokenId, txId, claimKey } = await this.createNFT(fields, withClaimKey);
 
       const result = { 
-        freshmint_uuid: metadata.uuid,
         tokenId,
         txId,
         pinned: false,
+        metadataHash: metadata.hash,
         metadata: fieldsToObject(fields),
         claimKey
       }
@@ -115,8 +114,8 @@ class Fresh {
     };
   }
 
-  async nftExists(uuid) {
-    const exists = await this.datastore.find({ freshmint_uuid: uuid });
+  async nftExists(hash) {
+    const exists = await this.datastore.find({ metadataHash: hash });
     return (exists.length !== 0)
   }
 
