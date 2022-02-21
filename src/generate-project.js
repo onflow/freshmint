@@ -3,6 +3,7 @@ const path = require("path");
 const Handlebars = require("handlebars");
 const generateWebAssets = require("./generate-web");
 const { writeFile } = require("./helpers");
+const { getFieldPlaceholders } = require("./fields");
 
 async function generateProject(
   projectName,
@@ -21,7 +22,7 @@ async function generateProject(
 
   await createSetupTransaction(projectName, contractName);
   await createMintTransaction(projectName, contractName, { customFields });
-  await createMintWithClaimTransaction(projectName, contractName);
+  await createMintWithClaimTransaction(projectName, contractName, { customFields });
 
   await createClaimQueueDropTransaction(projectName, contractName);
   await createClaimAirDropTransaction(projectName, contractName);
@@ -31,6 +32,12 @@ async function generateProject(
 
   await createGetNFTScript(projectName, contractName);
   await createGetDropScript(projectName, contractName);
+    
+  await createCSVFile(
+    projectName, 
+    contractName, 
+    { customFields }
+  );
 
   await createFreshConfig(projectName, contractName, { customFields });
 
@@ -56,6 +63,11 @@ async function createScaffold(dir) {
   await fs.copy(
     path.resolve(__dirname, "templates/cadence/contracts/NonFungibleToken.cdc"),
     path.resolve(dir, "cadence/contracts/NonFungibleToken.cdc")
+  );
+
+  await fs.copy(
+    path.resolve(__dirname, "templates/cadence/contracts/MetadataViews.cdc"),
+    path.resolve(dir, "cadence/contracts/MetadataViews.cdc")
   );
 
   await fs.copy(
@@ -94,11 +106,6 @@ async function createScaffold(dir) {
   await fs.copy(
     path.resolve(__dirname, "templates/env.template"),
     path.resolve(dir, ".env")
-  );
-
-  await fs.copy(
-    path.resolve(__dirname, "templates/nfts.csv"),
-    path.resolve(dir, "nfts.csv")
   );
 
   await fs.copy(
@@ -161,6 +168,8 @@ const createGetDropScript = template(
   "templates/cadence/scripts/queue/get_drop.cdc",
   "cadence/scripts/queue/get_drop.cdc"
 );
+
+const createCSVFile = template("templates/nfts.csv", "nfts.csv");
 
 const createFreshConfig = template("templates/fresh.config.js", "fresh.config.js");
 

@@ -6,7 +6,7 @@ transaction(
     description: String,
     image: String,
     {{#each customFields}}
-    {{ this.name }}: {{ this.type }},
+    {{ this.name }}: {{ this.type.toCadence }},
     {{/each}}
 ) {
     

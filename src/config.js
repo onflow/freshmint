@@ -2,6 +2,7 @@ const path = require("path");
 const dotenv = require('dotenv')
 
 const { withPrefix } = require("@onflow/util-address");
+const { parseFields } = require("./fields");
 
 function getConfig() {
   dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -26,11 +27,8 @@ function getConfig() {
     nftDataPath: userConfig.nftDataPath || "nfts.csv",
     nftAssetPath: userConfig.nftAssetPath || "assets",
 
-    // How fast to batch mint txs (milliseconds)
-    rateLimitMs: 2000,
-
     // Custom NFT fields defined by the user
-    customFields: userConfig.customFields || [],
+    customFields: parseFields(userConfig.customFields) || [],
 
     //////////////////////////////////////////////
     // ------ IPFS Config

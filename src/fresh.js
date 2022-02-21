@@ -8,9 +8,10 @@ const stdout = require('mute-stdout');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const FlowMinter = require("./flow");
 const DataStore = require("./datastore");
-const generateMetadata = require("./generate-metadata");
+const { generateMetadata, fieldsToObject, getMetadataFields } = require("./generate-metadata");
 const getConfig = require("./config");
 const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
+const { IPFSImage } = require("./fields");
 
 async function MakeFresh(network) {
   const m = new Fresh(network);
@@ -58,8 +59,6 @@ class Fresh {
       endpoint: this.config.pinningService.endpoint
     });
 
-    this.sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
     this._initialized = true;
   }
 
@@ -74,56 +73,41 @@ class Fresh {
   //////////////////////////////////////////////
   // ------ NFT Creation
   //////////////////////////////////////////////
-  /**
-   * Create a new NFT from the given CSV data.
-   *
-   * @param {string} csvPath - Path to the CSV data file
-   * @param {function} cb - Callback to call with the results of the minting
-   * @typedef {object} BatchCreateNFTResult
-   * @property {number} total - the total number of NFTs created
-   *
-   *
-   * @returns {Promise<BatchCreateNFTResult>}
-   */
+
   async createNFTsFromCSVFile(csvPath, withClaimKey, cb) {
+    await this.flowMinter.setupAccount();
+
     const metadatas = await generateMetadata(csvPath);
 
     let totalMinted = 0;
 
     for (const metadata of metadatas) {
-      // Images are required
-      const imagePath = path.resolve(
-        process.cwd(),
-        `${this.config.nftAssetPath}/images/${metadata.image}`
-      );
 
-      // Animatons are not required, so check if one has been provided
-      const animationPath = metadata.animation
-        ? path.resolve(
-            process.cwd(),
-            `${this.config.nftAssetPath}/animations/${metadata.animation}`
-          )
-        : null;
+      const exists = await this.nftExists(metadata.uuid)
 
-      const result = await this.createNFTFromAssetData(
-        {
-          imagePath,
-          animationPath,
-          ...metadata
-        },
-        withClaimKey
-      );
-
-      if (!result) {
+      if (exists) {
         cb({ skipped: true });
-      } else {
-        // Save the NFT to the database
-        this.datastore.save({ pinned: false, ...result });
-        cb(result);
-        totalMinted++;
+        continue;
       }
 
-      await this.sleep(this.config.rateLimitMs);
+      const fields = await this.processFieldValues(metadata.fields)
+
+      const { tokenId, txId, claimKey } = await this.createNFT(fields, withClaimKey);
+
+      const result = { 
+        freshmint_uuid: metadata.uuid,
+        tokenId,
+        txId,
+        pinned: false,
+        metadata: fieldsToObject(fields),
+        claimKey
+      }
+      
+      await this.datastore.save(result);
+
+      cb(result);
+
+      totalMinted++;
     }
 
     return {
@@ -131,163 +115,61 @@ class Fresh {
     };
   }
 
-  /**
-   * Create a new NFT from the given asset data.
-   *
-   * @param {object} options
-   *
-   * @typedef {object} CreateNFTResult
-   * @property {string} txId - The id of the minting transaction
-   * @property {number} tokenId - the unique ID of the new token
-   * @property {string} ownerAddress - the Flow address of the new token's owner
-   * @property {object} metadata - the JSON metadata stored in IPFS and referenced by the token's metadata URI
-   * @property {string} imageURI - an ipfs:// URI for the image
-   * @property {URL} imageGatewayURL - an HTTP gateway URL for the image
-   * @property {string} metadataURI - an ipfs:// URI for the NFT metadata
-   * @property {URL} metadataGatewayURL - an HTTP gateway URL for the NFT metadata
-   *
-   * @returns {Promise<CreateNFTResult>}
-   */
+  async nftExists(uuid) {
+    const exists = await this.datastore.find({ freshmint_uuid: uuid });
+    return (exists.length !== 0)
+  }
 
-  async createNFTFromAssetData(data, withClaimKey) {
+  async processFieldValues(fields) {
+    return await Promise.all(fields.map(async (field) => ({
+      ...field,
+      value: await this.processFieldValue(field)
+    })))
+  }
+
+  async processFieldValue(field) {
+    switch (field.type) {
+      case IPFSImage:
+        return this.processIPFSFile(field.value)
+      default:
+        return field.value
+    }
+  }
+
+  async processIPFSFile(filename) {
+    const filepath = path.resolve(
+      process.cwd(),
+      `${this.config.nftAssetPath}/images/${filename}`
+    );
+  
     // Mute noisy nebulus logs
     stdout.mute();
 
-    const imagePath = data.imagePath;
-    const animationPath = data.animationPath;
-
-    // Generate image CIDs for IPFS
-    const imageCid = await this.nebulus.add(imagePath);
-    const imageURI = ensureIpfsUriPrefix(imageCid);
-
-    // Generate animation CIDs for IPFS (if animation file is given)
-    let animationCid = null;
-    let animationURI = null;
-    if (animationPath) {
-      animationCid = await this.nebulus.add(animationPath);
-      animationURI = ensureIpfsUriPrefix(animationCid);
-    }
-
-    const metadata = await this.makeNFTMetadata(
-      { imageURI, animationURI },
-      data
-    );
-
-    // add the metadata to IPFS
-    const metadataCid = await this.nebulus.add(
-      Buffer.from(JSON.stringify(metadata))
-    );
-
-    const metadataURI = ensureIpfsUriPrefix(metadataCid);
-
-    // If attempting to mint an NFT with identical metadata to one that has already been minted,
-    // we skip it skip to ensure the minting command is idempotent.
-    // NOTE: This could be configured to allow multiple mints of
-    // the same metadata if the user desired.
-    const exists = await this.datastore.find({ metadataURI });
-    if (exists.length) return;
-
-    // Get the address of the token owner from data,
-    // or use the default signing address if no owner is given
-    let ownerAddress = data.owner;
-    if (!ownerAddress) {
-      ownerAddress = await this.defaultOwnerAddress();
-    }
-
-    const nftDetails = await this.createNFT(metadataURI, withClaimKey);
-
-    const details = {
-      ...nftDetails,
-      ownerAddress,
-      metadata,
-      imageURI,
-      metadataURI,
-      imageGatewayURL: toGatewayURL(imageURI),
-      metadataGatewayURL: toGatewayURL(metadataURI)
-    };
+    const cid = await this.nebulus.add(filepath);
 
     // Unmute when done using nebulus
     stdout.unmute();
 
-    return details;
+    return cid;
   }
 
-  async createNFT(metadataURI, withClaimKey) {
+  async createNFT(fields, withClaimKey) {
     if (withClaimKey) {
-      return await this.mintTokenWithClaimKey(metadataURI);
+      return await this.mintTokenWithClaimKey(fields);
     }
 
-    return await this.mintToken(metadataURI);
-  }
-
-  /**
-   * Helper to construct metadata JSON for
-   * @param {object} options
-   * @param {object} uris
-   * @property {string} imageURI - IPFS URI for the NFT image
-   * @property {?string} animationURI - optional URI to a video file to use as the NFT animation
-   */
-  async makeNFTMetadata(uris, options) {
-    uris.imageURI = ensureIpfsUriPrefix(uris.imageURI);
-    if (uris.animationURI)
-      uris.animationURI = ensureIpfsUriPrefix(uris.animationURI);
-
-    // remove path, imagePath and animationPath and animation, because we don't
-    // need them to be part of the metadata...
-
-    const { path, imagePath, animationPath, animation, ...metadata } = options;
-
-    return {
-      ...metadata,
-      image: uris.imageURI,
-      // if an animation has been provided, add it to the metadata
-      // Named 'animation_url' to conform to the OpenSea's NFT schema
-      // https://docs.opensea.io/docs/metadata-standards
-      animation_url: uris.animationURI || ""
-    };
+    return await this.mintToken(fields);
   }
 
   //////////////////////////////////////////////
   // -------- NFT Retreival
   //////////////////////////////////////////////
 
-  /**
-   * Get information about an existing token, from the chain.
-   * By default, this includes the token id, owner address, metadata, and metadata URI.
-   * To include info about when the token was created and by whom, set `opts.fetchCreationInfo` to true.
-   * To include the full asset data (base64 encoded), set `opts.fetchAsset` to true.
-   *
-   * @param {string} tokenId - the unique ID of the token to get info for
-   *
-   * @typedef {object} NFTInfo
-   * @property {string} tokenId
-   * @property {object} metadata
-   * @property {string} metadataURI
-   * @property {URL} metadataGatewayURL
-   * @property {string} ownerAddress
-   * @returns {Promise<NFTInfo>}
-   */
   async getNFT(tokenId) {
-    const flowData = await this.flowMinter.getNFTDetails(
+    return await this.flowMinter.getNFTDetails(
       this.defaultOwnerAddress(),
       tokenId
     );
-
-    const metadataURI = flowData.metadata;
-    const ownerAddress = flowData.owner;
-    const metadataGatewayURL = toGatewayURL(metadataURI);
-
-    const metadata = await this.getIPFSJSON(metadataURI);
-
-    const nft = {
-      tokenId,
-      metadata,
-      metadataURI,
-      metadataGatewayURL,
-      ownerAddress
-    };
-
-    return nft;
   }
 
   async dumpNFTs(csvPath) {
@@ -307,8 +189,6 @@ class Fresh {
       header: [
         {id: 'tokenID', title: 'TOKEN ID'},
         ...metadataHeaders,
-        {id: 'imageURI', title: 'IMAGE URI'},
-        {id: 'metadataURI', title: 'METADATA URI'},
         {id: 'transactionID', title: 'TRANSACTION ID'},
         {id: 'pinned', title: 'PINNED'},
         {id: 'claimKey', title: "CLAIM KEY"},
@@ -319,8 +199,6 @@ class Fresh {
       return {
         tokenID: nft.tokenId,
         ...nft.metadata,
-        imageURI: nft.imageURI,
-        metadataURI: nft.metadataURI,
         transactionID: nft.txId,
         pinned: nft.pinned,
         claimKey: nft.claimKey,
@@ -332,57 +210,33 @@ class Fresh {
     return nfts.length;
   }
 
-  /**
-   * Fetch the NFT metadata for a given token id.
-   *
-   * @param tokenId - the id of an existing token
-   * @returns {Promise<{metadata: object, metadataURI: string}>} - resolves to an object containing the metadata and
-   * metadata URI. Fails if the token does not exist, or if fetching the data fails.
-   */
   async getNFTMetadata(tokenId) {
     const results = await this.datastore.find({ tokenId });
 
     if (results.length === 0) {
       throw new Error(`Token ${tokenId} does not exist`);
     }
-    const meta = results[0].metadata;
 
-    const metadataCid = await this.nebulus.add(
-      Buffer.from(JSON.stringify(meta))
-    );
-
-    const metadataURI = ensureIpfsUriPrefix(metadataCid);
-    const metadata = await this.getIPFSJSON(metadataURI);
-
-    return { metadata, metadataURI };
+    return results[0].metadata;
   }
 
   //////////////////////////////////////////////
   // --------- Smart contract interactions
   //////////////////////////////////////////////
 
-  /**
-   * Create a new NFT token that references the given metadata CID, owned by the given address.
-   *
-   * @param {string} ownerAddress - the Flow address that should own the new token
-   * @param {string} metadataURI - IPFS URI for the NFT metadata that should be associated with this token
-   * @returns {Promise<any>} - The result from minting the token, includes events
-   */
-  async mintToken(metadataURI) {
-    await this.flowMinter.setupAccount();
-    const minted = await this.flowMinter.mint(metadataURI);
+  async mintToken(fields) {
+    const minted = await this.flowMinter.mint(fields);
     return formatMintResult(minted);
   }
 
-  async mintTokenWithClaimKey(metadataURI) {
-    await this.flowMinter.setupAccount();
-
+  async mintTokenWithClaimKey(fields) {
     const { privateKey, publicKey } = generateKeyPair();
 
     const minted = await this.flowMinter.mintWithClaimKey(
-      metadataURI,
-      publicKey
+      publicKey,
+      fields
     );
+
     const result = formatMintResult(minted);
 
     // format and return the results
@@ -456,38 +310,32 @@ class Fresh {
    */
 
   async pinTokenData(tokenId) {
-    return new Promise(async (resolve, reject) => {
-      const { metadata, metadataURI } = await this.getNFTMetadata(tokenId);
-      const { image: imageURI, animation_url: animationURI } = metadata;
+    const metadata = await this.getNFTMetadata(tokenId);
+    const fields = getMetadataFields(this.config)
 
-      const spinner = ora();
+    const spinner = ora();
 
-      spinner.start("Pinning metadata...");
+    const pin = async (cid) => {
+      const data = await fs.readFile(
+        path.resolve(process.cwd(), `ipfs-data/ipfs/${cid}`)
+      );
 
-      const pin = async (cid) => {
-        const data = await fs.readFile(
-          path.resolve(process.cwd(), `ipfs-data/ipfs/${cid}`)
-        );
+      return await this.ipfs.storeBlob(new Blob([data]));
+    };
 
-        return await this.ipfs.storeBlob(new Blob([data]));
-      };
+    for (const field of fields) {
+      if (field.type === IPFSImage) {
+        const cid = metadata[field.name];
+        
+        spinner.start(`Pinning ${field.name}...`);
 
-      const meta = await pin(stripIpfsUriPrefix(metadataURI));
+        await pin(cid);
 
-      spinner.succeed(`📌 ${meta} was pinned!`);
-      spinner.start("Pinning assets...");
-
-      const image = await pin(stripIpfsUriPrefix(imageURI));
-      spinner.succeed(`📌 ${image} was pinned!`);
-
-      if (animationURI) {
-        spinner.start("Pinning animation...");
-        const animation = await pin(stripIpfsUriPrefix(animationURI));
-        spinner.succeed(`📌 ${animation} was pinned!`);
+        spinner.succeed(`📌 ${field.name} was pinned!`);
       }
-      this.datastore.update({ tokenId }, { pinned: true });
-      resolve();
-    });
+    }
+
+    await this.datastore.update({ tokenId }, { pinned: true });
   }
 }
 

@@ -2,7 +2,15 @@ import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 import {{ name }} from "../../contracts/{{ name }}.cdc"
 import NFTAirDrop from "../../contracts/NFTAirDrop.cdc"
 
-transaction(metadata: String, publicKey: String) {
+transaction(
+    publicKey: String,
+    name: String,
+    description: String,
+    image: String,
+    {{#each customFields}}
+    {{ this.name }}: {{ this.type.toCadence }},
+    {{/each}}
+) {
     
     let admin: &{{ name }}.Admin
     let drop: &NFTAirDrop.Drop
@@ -34,7 +42,14 @@ transaction(metadata: String, publicKey: String) {
     }
 
     execute {
-        let token <- self.admin.mintNFT(metadata: metadata)
+        let token <- self.admin.mintNFT(
+            name: name,
+            description: description,
+            image: image,
+            {{#each customFields}}
+            {{ this.name }}: {{ this.name }},
+            {{/each}}
+        )
 
         self.drop.deposit(token: <- token, publicKey: publicKey.decodeHex())
     }

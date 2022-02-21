@@ -3,6 +3,7 @@ const chalk = require("chalk");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
 const { isExists } = require("./helpers");
+const { fieldTypes, parseFields } = require("./fields")
 
 const questions = [
   {
@@ -41,22 +42,6 @@ const questions = [
   }
 ]
 
-const fieldTypeChoices = [
-  "String",
-  "Int",
-  "Int8",
-  "Int16",
-  "Int32",
-  "Int64",
-  "UInt",
-  "UInt8",
-  "UInt16",
-  "UInt32",
-  "UInt64",
-  "Fix64",
-  "UFix64"
-]
-
 function customFieldQuestions(count) {
   return [
     {
@@ -75,7 +60,7 @@ function customFieldQuestions(count) {
       type: "list",
       name: "type",
       message: `Custom field ${count} type:`,
-      choices: fieldTypeChoices
+      choices: fieldTypes
     },
     {
       type: "confirm",
@@ -105,7 +90,7 @@ async function getCustomFields(shouldStart) {
     shouldContinue = customField.continue
   }
   
-  return customFields
+  return parseFields(customFields)
 }
 
 async function start(spinner) {

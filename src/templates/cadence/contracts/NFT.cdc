@@ -40,7 +40,7 @@ pub contract {{ name }}: NonFungibleToken {
         // Additional NFT fields.
         //
         {{#each customFields}}
-        pub let {{ this.name }}: {{ this.type }}
+        pub let {{ this.name }}: {{ this.type.toCadence }}
         {{/each}}
 
         {{/if}}
@@ -50,7 +50,7 @@ pub contract {{ name }}: NonFungibleToken {
             description: String,
             image: String,
             {{#each customFields}}
-            {{ this.name }}: {{ this.type }},
+            {{ this.name }}: {{ this.type.toCadence }},
             {{/each}}
         ) {
             self.id = id
@@ -191,7 +191,7 @@ pub contract {{ name }}: NonFungibleToken {
             description: String,
             image: String,
             {{#each customFields}}
-            {{ this.name }}: {{ this.type }},
+            {{ this.name }}: {{ this.type.toCadence }},
             {{/each}}
         ): @{{ name }}.NFT {
             let nft <- create {{ name }}.NFT(

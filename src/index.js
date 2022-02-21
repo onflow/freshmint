@@ -7,19 +7,10 @@ const path = require("path");
 const { Command } = require("commander");
 const inquirer = require("inquirer");
 const chalk = require("chalk");
-const colorize = require("json-colorizer");
 const ora = require("ora");
 const { MakeFresh } = require("./fresh");
 const carlton = require("./carlton");
 const startCommand = require("./start");
-
-const colorizeOptions = {
-  pretty: true,
-  colors: {
-    STRING_KEY: "blue.bold",
-    STRING_LITERAL: "green"
-  }
-};
 
 const program = new Command();
 const spinner = ora();
@@ -56,7 +47,7 @@ async function main() {
       "emulator"
     )
     .option("-c, --claim", "Generate a claim key for each NFT")
-    .action(batchMintNFT);
+    .action(mint);
 
   program
     .command("inspect <token-id>")
@@ -138,7 +129,7 @@ async function deploy({ network }) {
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
-async function batchMintNFT({ network, data, claim }) {
+async function mint({ network, data, claim }) {
   const fresh = await MakeFresh(network);
 
   const answer = await inquirer.prompt({
@@ -156,7 +147,7 @@ async function batchMintNFT({ network, data, claim }) {
     claim,
     (nft) => {
       if (nft.skipped) {
-        spinner.warn(`Skipping NFT because it already exists.`);
+        spinner.warn("Skipping NFT because it already exists.");
         return;
       }
 
@@ -189,21 +180,21 @@ async function removeDrop({ network }) {
 
 async function getNFT(tokenId, { network }) {
   spinner.start(`Getting NFT data ...`);
+
   const fresh = await MakeFresh(network);
   const nft = await fresh.getNFT(tokenId);
 
+  spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
+
   const output = [
-    ["Token ID:", chalk.green(nft.tokenId)],
-    ["Owner Address:", chalk.yellow(nft.ownerAddress)],
-    ["Metadata Address:", chalk.blue(nft.metadataURI)],
-    ["Metadata Gateway URL:", chalk.blue(nft.metadataGatewayURL)]
+    ["Token ID:", chalk.green(nft.id)],
+    ["Owner Address:", chalk.yellow(nft.owner)],
+    ["Name:", chalk.blue(nft.name)],
+    ["Description:", chalk.blue(nft.description)],
+    ["Image:", chalk.blue(nft.image)]
   ];
 
   alignOutput(output);
-
-  console.log("NFT Metadata:");
-  console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
-  spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
 }
 
 async function dumpNFTs(csvPath) {

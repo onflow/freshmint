@@ -4,7 +4,7 @@ module.exports = {
     {{#each customFields}}
     {
       name: "{{ this.name }}",
-      type: "{{ this.type }}"
+      type: "{{ this.type.label }}"
     },
     {{/each}}
   ],
