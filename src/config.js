@@ -13,6 +13,8 @@ function getConfig() {
 
   const flowTestnetConfig = require(path.resolve(process.cwd(), "flow.testnet.json"));
 
+  const flowMainnetConfig = require(path.resolve(process.cwd(), "flow.mainnet.json"));
+
   return {
     //////////////////////////////////////////////
     // ------ App Configs
@@ -63,7 +65,16 @@ function getConfig() {
     // This is the default owner address and signing key for all newly minted NFTs
     testnetFlowAccount: userConfig.testnetFlowAccount
       ? getAccount(userConfig.testnetFlowAccount, flowTestnetConfig)
-      : getAccount("testnet-account", flowTestnetConfig)
+      : getAccount("testnet-account", flowTestnetConfig),
+
+    //////////////////////////////////////////////
+    // ------ Mainnet Configs
+    //////////////////////////////////////////////
+
+    // This is the default owner address and signing key for all newly minted NFTs
+    mainnetFlowAccount: userConfig.mainnetFlowAccount
+      ? getAccount(userConfig.mainnetFlowAccount, flowMainnetConfig)
+      : getAccount("mainnet-account", flowMainnetConfig)
   };
 }
 

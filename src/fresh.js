@@ -407,7 +407,9 @@ class Fresh {
   defaultOwnerAddress() {
     return this.network === "testnet" ? 
       this.config.testnetFlowAccount.address : 
-      this.config.emulatorFlowAccount.address;
+      (this.network === "mainnet" ?
+        this.config.mainnetFlowAccount.address :
+        this.config.emulatorFlowAccount.address);
   }
 
   /** @returns {Promise<string>} - Amoutn of tokens funded */
@@ -544,6 +546,12 @@ function formatMintResult(txOutput) {
   const deposit = txOutput.events.find((event) =>
     event.type.includes("Deposit")
   );
+
+  if (!deposit.values) {
+    throw new Error(
+      "Error format mint result, missing values"
+    )
+  }
 
   const tokenId = deposit.values.value.fields.find(
     (f) => f.name === "id"
