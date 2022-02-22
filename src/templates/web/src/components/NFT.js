@@ -1,7 +1,7 @@
 import { toGatewayURL } from "nft.storage"
 
 export default function NFT({ nft }) {
-  const imageURL = toGatewayURL(nft.image)
+  const imageURL = toGatewayURL(`ipfs://${nft.image}`)
 
   return (
     <div className="w-80 border rounded-b-lg">
