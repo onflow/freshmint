@@ -57,7 +57,7 @@ async function generateMetadata(csvPath) {
   const records = parse(nftCSV);
 
   const columns = records[0];
-  const data = records.slice(1);
+  const rows = records.slice(1);
 
   let fields = getMetadataFields(config)
 
@@ -82,24 +82,26 @@ async function generateMetadata(csvPath) {
     }
   })
 
-  const metadata = data.map((values) => {
-    const fieldValues = fields
-      .map(field => {
-        const value = values[field.index]
-
-        return {
-          ...field,
-          value
-        }
-      })
+  const tokens = rows.map((columns) => {
+    const orderedValues = fields.map(field => columns[field.index])
+    const values = fields.reduce(
+      (values, field) => ({ [
+        field.name]: columns[field.index],
+        ...values
+      }),
+      {}
+    )
 
     return {
-      hash: hashMetadata(values),
-      fields: fieldValues,
+      hash: hashMetadata(orderedValues),
+      values,
     };
   });
 
-  return metadata;
+  return {
+    fields,
+    tokens
+  }
 };
 
 module.exports = { 

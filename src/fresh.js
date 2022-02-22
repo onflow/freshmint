@@ -74,44 +74,72 @@ class Fresh {
   // ------ NFT Creation
   //////////////////////////////////////////////
 
-  async createNFTsFromCSVFile(csvPath, withClaimKey, cb) {
+  async createNFTsFromCSVFile(
+    csvPath,
+    withClaimKey,
+    onStart,
+    onBatchComplete,
+    batchSize = 10
+  ) {
     await this.flowMinter.setupAccount();
 
-    const metadatas = await generateMetadata(csvPath);
+    const { fields, tokens } = await generateMetadata(csvPath);
 
-    let totalMinted = 0;
+    const newTokens = []
 
-    for (const metadata of metadatas) {
-
-      const exists = await this.nftExists(metadata.hash)
-      if (exists) {
-        cb({ skipped: true });
-        continue;
+    for (const token of tokens) {
+      const exists = await this.nftExists(token.hash)
+      if (!exists) {
+        newTokens.push(token)
       }
-
-      const fields = await this.processFieldValues(metadata.fields)
-
-      const { tokenId, txId, claimKey } = await this.createNFT(fields, withClaimKey);
-
-      const result = { 
-        tokenId,
-        txId,
-        pinned: false,
-        metadataHash: metadata.hash,
-        metadata: fieldsToObject(fields),
-        claimKey
-      }
-      
-      await this.datastore.save(result);
-
-      cb(result);
-
-      totalMinted++;
     }
 
-    return {
-      total: totalMinted
-    };
+    const total = newTokens.length
+    const skipped = tokens.length - newTokens.length
+    
+    const batches = []
+
+    while (newTokens.length > 0) {
+      const batch = newTokens.splice(0, batchSize)
+      batches.push(batch)    
+    }
+
+    onStart(total, skipped, batches.length, batchSize)
+
+    for (const batch of batches) {
+
+      const batchSize = batch.length
+
+      const processedBatch = await this.processTokenBatch(fields, batch)
+
+      const batchFields = groupBatchesByField(fields, processedBatch)
+
+      const results = await this.createTokenBatch(
+        batchFields, 
+        withClaimKey
+      );
+
+      const finalResults = results.map((result, index) => {
+        const { tokenId, txId, claimKey } = result;
+        const metadata = processedBatch[index];
+        
+        return {
+          tokenId,
+          txId,
+          pinned: false,
+          metadataHash: metadata.hash,
+          metadata: metadata.values,
+          claimKey
+        }
+      })
+
+      for (const result of finalResults) {        
+        await this.datastore.save(result);
+      }
+
+      onBatchComplete(batchSize)
+
+    }
   }
 
   async nftExists(hash) {
@@ -119,19 +147,29 @@ class Fresh {
     return (exists.length !== 0)
   }
 
-  async processFieldValues(fields) {
-    return await Promise.all(fields.map(async (field) => ({
-      ...field,
-      value: await this.processFieldValue(field)
+  async processTokenBatch(fields, batch) {
+    return await Promise.all(batch.map(async (token) => ({
+      ...token,
+      values: await this.processTokenValues(fields, token.values)
     })))
   }
 
-  async processFieldValue(field) {
+  async processTokenValues(fields, values) {
+    const newValues = {}
+
+    for (const field of fields) {
+      newValues[field.name] = await this.processTokenValue(field, values[field.name])
+    }
+
+    return newValues
+  }
+
+  async processTokenValue(field, value) {
     switch (field.type) {
       case IPFSImage:
-        return this.processIPFSFile(field.value)
+        return this.processIPFSFile(value)
       default:
-        return field.value
+        return value
     }
   }
 
@@ -152,12 +190,12 @@ class Fresh {
     return cid;
   }
 
-  async createNFT(fields, withClaimKey) {
+  async createTokenBatch(batchFields, withClaimKey) {
     if (withClaimKey) {
-      return await this.mintTokenWithClaimKey(fields);
+      return await this.mintTokensWithClaimKey(batchFields);
     }
 
-    return await this.mintToken(fields);
+    return await this.mintTokens(batchFields);
   }
 
   //////////////////////////////////////////////
@@ -223,27 +261,29 @@ class Fresh {
   // --------- Smart contract interactions
   //////////////////////////////////////////////
 
-  async mintToken(fields) {
-    const minted = await this.flowMinter.mint(fields);
-    return formatMintResult(minted);
+  async mintTokens(batchFields) {
+    const minted = await this.flowMinter.mint(batchFields);
+    return formatMintResults(minted);
   }
 
-  async mintTokenWithClaimKey(fields) {
-    const { privateKey, publicKey } = generateKeyPair();
+  async mintTokensWithClaimKey(batchFields) {
+
+    const batchSize = batchFields[0].values.length
+
+    const { privateKeys, publicKeys } = generateKeyPairs(batchSize);
 
     const minted = await this.flowMinter.mintWithClaimKey(
-      publicKey,
-      fields
+      publicKeys,
+      batchFields
     );
 
-    const result = formatMintResult(minted);
-
-    // format and return the results
-    return {
+    const results = formatMintResults(minted);
+    
+    return results.map((result, i) => ({
       txId: result.txId,
       tokenId: result.tokenId,
-      claimKey: formatClaimKey(result.tokenId, privateKey)
-    };
+      claimKey: formatClaimKey(result.tokenId, privateKeys[i])
+    }))
   }
 
   async startDrop(price) {
@@ -342,13 +382,23 @@ class Fresh {
 // -------- Crypto helpers
 //////////////////////////////////////////////
 
-function generateKeyPair() {
-  const privateKey = ECPrivateKey.generate(signatureAlgorithms.ECDSA_P256);
-  const publicKey = privateKey.getPublicKey();
+function generateKeyPairs(count) {
+
+  const privateKeys = [];
+  const publicKeys = [];
+
+  while (count--) {
+    const privateKey = ECPrivateKey.generate(signatureAlgorithms.ECDSA_P256);
+    const publicKey = privateKey.getPublicKey();
+
+    privateKeys.push(privateKey.toHex())
+    publicKeys.push(publicKey.toHex())
+
+  }
 
   return {
-    privateKey: privateKey.toHex(),
-    publicKey: publicKey.toHex()
+    privateKeys,
+    publicKeys,
   };
 }
 
@@ -387,19 +437,28 @@ function ensureIpfsUriPrefix(cidOrURI) {
 // -------- General Helpers
 //////////////////////////////////////////////
 
-function formatMintResult(txOutput) {
-  const deposit = txOutput.events.find((event) =>
+function formatMintResults(txOutput) {
+  const deposits = txOutput.events.filter((event) =>
     event.type.includes("Deposit")
   );
 
-  const tokenId = deposit.values.value.fields.find(
-    (f) => f.name === "id"
-  ).value;
+  return deposits.map(deposit => {
+    const tokenId = deposit.values.value.fields.find(
+      (f) => f.name === "id"
+    ).value;
+  
+    return {
+      tokenId: tokenId.value,
+      txId: txOutput.id
+    };
+  })
+}
 
-  return {
-    tokenId: tokenId.value,
-    txId: txOutput.id
-  };
+function groupBatchesByField(fields, batches) {
+  return fields.map(field => ({
+    ...field,
+    values: batches.map(batch => batch.values[field.name])
+  }))
 }
 
 //////////////////////////////////////////////

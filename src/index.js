@@ -8,6 +8,7 @@ const { Command } = require("commander");
 const inquirer = require("inquirer");
 const chalk = require("chalk");
 const ora = require("ora");
+const ProgressBar = require("progress");
 const { MakeFresh } = require("./fresh");
 const carlton = require("./carlton");
 const startCommand = require("./start");
@@ -42,11 +43,16 @@ async function main() {
       "nfts.csv"
     )
     .option(
+      "-b, --batch-size <number>",
+      "The number of NFTs to mint per batch",
+      "10"
+    )
+    .option("-c, --claim", "Generate a claim key for each NFT")
+    .option(
       "-n, --network <network>",
       "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
       "emulator"
     )
-    .option("-c, --claim", "Generate a claim key for each NFT")
     .action(mint);
 
   program
@@ -129,7 +135,7 @@ async function deploy({ network }) {
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
-async function mint({ network, data, claim }) {
+async function mint({ network, data, claim, batchSize }) {
   const fresh = await MakeFresh(network);
 
   const answer = await inquirer.prompt({
@@ -140,28 +146,38 @@ async function mint({ network, data, claim }) {
 
   if (!answer.confirm) return;
 
-  spinner.start("Minting your NFTs ...\n");
+  console.log();
 
-  const result = await fresh.createNFTsFromCSVFile(
+  spinner.start("Checking for duplicate NFTs ...\n");
+
+  let bar;
+
+  await fresh.createNFTsFromCSVFile(
     data,
     claim,
-    (nft) => {
-      if (nft.skipped) {
-        spinner.warn("Skipping NFT because it already exists.");
-        return;
+    (total, skipped, batchCount, batchSize) => {
+      if (skipped) {
+        spinner.info(`Skipped ${skipped} NFTs because they already exist.\n`);
       }
 
-      if (nft.claimKey) {
-        spinner.info(
-          `Minted NFT ${nft.tokenId}. Claim key: ${chalk.blue(nft.claimKey)}`
-        );
-      } else {
-        spinner.info(`Minted NFT ${nft.tokenId}`);
+      if (total === 0) {
+        return
       }
-    }
+
+      console.log(`Minting ${total} NFTs in ${batchCount} batches (batchSize = ${batchSize})...\n`)
+
+      bar = new ProgressBar(
+        "[:bar] :current/:total :percent :etas", 
+        { width: 40, total }
+      );
+
+      bar.tick(0);
+    },
+    (batchSize) => {
+      bar.tick(batchSize)
+    },
+    Number(batchSize),
   );
-
-  spinner.succeed(`✨ Success! ${result.total} NFTs were minted! ✨`);
 }
 
 async function startDrop(price, { network }) {

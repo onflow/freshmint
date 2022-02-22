@@ -3,12 +3,12 @@ import {{ name }} from "../../contracts/{{ name }}.cdc"
 import NFTAirDrop from "../../contracts/NFTAirDrop.cdc"
 
 transaction(
-    publicKey: String,
-    name: String,
-    description: String,
-    image: String,
+    publicKeys: [String],
+    names: [String],
+    descriptions: [String],
+    images: [String],
     {{#each customFields}}
-    {{ this.name }}: {{ this.type.toCadence }},
+    {{ this.name }}: [{{ this.type.toCadence }}],
     {{/each}}
 ) {
     
@@ -42,15 +42,25 @@ transaction(
     }
 
     execute {
-        let token <- self.admin.mintNFT(
-            name: name,
-            description: description,
-            image: image,
-            {{#each customFields}}
-            {{ this.name }}: {{ this.name }},
-            {{/each}}
-        )
+        var i = 0
+        
+        while i < names.length {
 
-        self.drop.deposit(token: <- token, publicKey: publicKey.decodeHex())
+            let token <- self.admin.mintNFT(
+                name: names[i],
+                description: descriptions[i],
+                image: images[i],
+                {{#each customFields}}
+                {{ this.name }}: {{ this.name }}[i],
+                {{/each}}
+            )
+        
+            self.drop.deposit(
+                token: <- token, 
+                publicKey: publicKeys[i].decodeHex()
+            )
+
+            i = i +1
+        }
     }
 }

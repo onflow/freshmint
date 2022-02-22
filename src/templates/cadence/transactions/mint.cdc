@@ -2,11 +2,11 @@ import NonFungibleToken from "../contracts/NonFungibleToken.cdc"
 import {{ name }} from "../contracts/{{ name }}.cdc"
 
 transaction(
-    name: String,
-    description: String,
-    image: String,
+    names: [String],
+    descriptions: [String],
+    images: [String],
     {{#each customFields}}
-    {{ this.name }}: {{ this.type.toCadence }},
+    {{ this.name }}: [{{ this.type.toCadence }}],
     {{/each}}
 ) {
     
@@ -24,15 +24,22 @@ transaction(
     }
 
     execute {
-        let token <- self.admin.mintNFT(
-            name: name,
-            description: description,
-            image: image,
-            {{#each customFields}}
-            {{ this.name }}: {{ this.name }},
-            {{/each}}
-        )
+        var i = 0
         
-        self.receiver.deposit(token: <- token)
+        while i < names.length {
+
+            let token <- self.admin.mintNFT(
+                name: names[i],
+                description: descriptions[i],
+                image: images[i],
+                {{#each customFields}}
+                {{ this.name }}: {{ this.name }}[i],
+                {{/each}}
+            )
+        
+            self.receiver.deposit(token: <- token)
+
+            i = i +1
+        }
     }
 }
