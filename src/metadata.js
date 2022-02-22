@@ -38,16 +38,6 @@ function getMetadataFields(config) {
   ]
 }
 
-function fieldsToObject(fields) {
-  const values = {};
-
-  fields.forEach(field => {
-    values[field.name] = field.value
-  })
-
-  return values
-}
-
 async function generateMetadata(csvPath) {
   const config = getConfig();
 
@@ -107,5 +97,4 @@ async function generateMetadata(csvPath) {
 module.exports = { 
   generateMetadata,
   getMetadataFields,
-  fieldsToObject
 }
