@@ -158,6 +158,8 @@ async function mint({ network, data, claim, batchSize }) {
     (total, skipped, batchCount, batchSize) => {
       if (skipped) {
         spinner.info(`Skipped ${skipped} NFTs because they already exist.\n`);
+      } else {
+        spinner.succeed()
       }
 
       if (total === 0) {
