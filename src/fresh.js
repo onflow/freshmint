@@ -439,7 +439,7 @@ function ensureIpfsUriPrefix(cidOrURI) {
 
 function formatMintResults(txOutput) {
   const deposits = txOutput.events.filter((event) =>
-    event.type.includes("Deposit")
+    event.type.includes(".Deposit")
   );
 
   return deposits.map(deposit => {
