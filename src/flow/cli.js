@@ -7,9 +7,13 @@ async function handleError(error) {
   return;
 }
 
+function escapeForShell(s) {
+  return '"'+s.replace(/(["$`\\])/g,'\\$1')+'"';
+};
+
 function formatArgString(args) {
   const cadenceArgs = args.map((v) => v.type.asArgument(v.value));
-  return JSON.stringify(cadenceArgs);
+  return escapeForShell(JSON.stringify(cadenceArgs));
 }
 
 function formatConfigString(configs) {
@@ -59,11 +63,11 @@ class FlowCliWrapper {
         --signer ${signer} \
         ${configString} \
         -o json \
-        --args-json '${argString}' \
+        --args-json ${argString} \
         ${path}`,
       { cwd: process.cwd() }
     );
-
+    
     if (err) {
       handleError(err);
     }
