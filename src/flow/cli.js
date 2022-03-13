@@ -2,11 +2,6 @@ const decode = require("@onflow/decode").decode;
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
 
-async function handleError(error) {
-  console.error(error);
-  return;
-}
-
 function escapeForShell(s) {
   return '"'+s.replace(/(["$`\\])/g,'\\$1')+'"';
 };
@@ -47,7 +42,7 @@ class FlowCliWrapper {
     );
 
     if (err) {
-      handleError(err);
+      throw err;
     }
 
     return JSON.parse(out);
@@ -67,12 +62,18 @@ class FlowCliWrapper {
         ${path}`,
       { cwd: process.cwd() }
     );
-    
+
     if (err) {
-      handleError(err);
+      throw new Error(err);
     }
 
-    return JSON.parse(out);
+    const result = JSON.parse(out);
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    return result;
   }
 
   async script(path, args) {
@@ -84,18 +85,18 @@ class FlowCliWrapper {
         --network=${this.network} \
         ${configString} \
         -o json \
-        --args-json '${argString}' \
+        --args-json ${argString} \
         ${path}`,
       { cwd: process.cwd() }
     );
 
     if (err) {
-      handleError(err);
+      throw err;
     }
 
-    const json = JSON.parse(out);
+    const result = JSON.parse(out);
 
-    return await decode(json);
+    return await decode(result);
   }
 }
 

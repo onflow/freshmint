@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const t = require("@onflow/types");
 
 const toNumber = (v) => Number(v)
@@ -14,6 +16,46 @@ class Field {
     this.toCadence = this.type.label
     this.placeholder = placeholder;
     this.toArgument = toArgument
+  }
+
+  setIndex(index) {
+    this.index = index;
+  }
+
+  getValue(items, headers, config) {
+    return items[this.index]
+  }
+}
+
+class IPFSMetadataField extends Field {
+  constructor() {
+    super("IPFS Metadata", t.String, "");
+  }
+
+  getValue(items, headers, config) {
+    const metadata = {}
+
+    items.forEach((value, index) => {
+      metadata[headers[index]] = value
+    })
+
+    if (!metadata.image) {
+      throw new Error(
+        "Error generating metadata, must supply an 'image' property"
+      );
+    }
+
+    if (metadata.attributes) {
+      try {
+        metadata.attributes = JSON.parse(metadata.attributes);
+      } catch (e) {
+        throw new Error(
+          "Error generating metadata, 'attributes' must be valid JSON"
+        );
+      }
+    }
+
+    return metadata
   }
 }
 
@@ -32,6 +74,7 @@ const Fix64 = new Field("Fix64", t.Fix64, "42.0", toNumber)
 const UFix64 = new Field("UFix64", t.UFix64, "42.0", toNumber)
 
 const IPFSImage = new Field("IPFS Image", t.String, "lady.jpg")
+const IPFSMetadata = new IPFSMetadataField("IPFS Metadata", t.String, "")
 
 const validFields = [
   IPFSImage,
@@ -65,6 +108,7 @@ function parseFields(fields) {
 }
 
 module.exports = {
+  IPFSMetadata,
   IPFSImage,
   String,
   Int,

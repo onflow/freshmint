@@ -4,10 +4,7 @@ import NFTAirDrop from "../../contracts/NFTAirDrop.cdc"
 
 transaction(
     publicKeys: [String],
-    names: [String],
-    descriptions: [String],
-    images: [String],
-    {{#each customFields}}
+    {{#each fields}}
     {{ this.name }}: [{{ this.type.toCadence }}],
     {{/each}}
 ) {
@@ -44,13 +41,10 @@ transaction(
     execute {
         var i = 0
         
-        while i < names.length {
+        while i < {{ fields.[0].name }}.length {
 
             let token <- self.admin.mintNFT(
-                name: names[i],
-                description: descriptions[i],
-                image: images[i],
-                {{#each customFields}}
+                {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
             )

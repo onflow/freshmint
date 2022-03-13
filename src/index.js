@@ -178,6 +178,9 @@ async function mint({ network, data, claim, batchSize }) {
     (batchSize) => {
       bar.tick(batchSize)
     },
+    (error) => {
+      bar.interrupt(error.message)
+    },
     Number(batchSize),
   );
 }

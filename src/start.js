@@ -3,7 +3,9 @@ const chalk = require("chalk");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
 const { isExists } = require("./helpers");
-const { fieldTypes, parseFields } = require("./fields")
+const { fieldTypes, parseFields } = require("./fields");
+const { getFields: getOffChainFields } = require("./metadata/opensea");
+const { getFields: getOnChainFields } = require("./metadata/flow");
 
 const questions = [
   {
@@ -36,8 +38,16 @@ const questions = [
     }
   },
   {
+    type: "list",
+    name: "onChainMetadata",
+    message: "Metadata format:",
+    choices: ["on-chain", "off-chain"],
+    filter: (input) => input === "on-chain"
+  },
+  {
     type: "confirm",
     name: "startCustomFields",
+    when: (answers) => answers.onChainMetadata,
     message: "Would you like to define custom NFT fields?"
   }
 ]
@@ -84,13 +94,22 @@ async function getCustomFields(shouldStart) {
 
     customFields.push({
       name: customField.name,
-      type: customField.type
+      type: customField.type,
+      isCustom: true
     })
 
     shouldContinue = customField.continue
   }
   
   return parseFields(customFields)
+}
+
+function getFields(onChainMetadata, customFields) {
+  if (onChainMetadata) {
+    getOnChainFields(customFields)
+  }
+
+  return getOffChainFields()
 }
 
 async function start(spinner) {
@@ -100,7 +119,9 @@ async function start(spinner) {
   
   const answers = await inquirer.prompt(questions);
 
-  const customFields = await getCustomFields(answers.startCustomFields);
+  const customFields = await getCustomFields(answers.startCustomFields)
+
+  const fields = getFields(answers.onChainMetadata, customFields)
 
   spinner.start("Generating project files...");
 
@@ -116,7 +137,8 @@ async function start(spinner) {
   await generateProject(
     answers.projectName,
     formattedContractName,
-    customFields
+    answers.onChainMetadata,
+    fields
   );
 
   await generateWebAssets(answers.projectName, formattedContractName);

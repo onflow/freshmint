@@ -1,11 +1,13 @@
 module.exports = {
-  {{#if customFields}}
+  {{#if fields}}
   customFields: [
-    {{#each customFields}}
+    {{#each fields}}
+    {{#if this.isCustom}}
     {
       name: "{{ this.name }}",
       type: "{{ this.type.label }}"
     },
+    {{/if}}
     {{/each}}
   ],
   {{else}}

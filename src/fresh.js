@@ -8,10 +8,10 @@ const stdout = require('mute-stdout');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const FlowMinter = require("./flow");
 const DataStore = require("./datastore");
-const { generateMetadata, getMetadataFields } = require("./metadata");
+const { generateMetadata, getFields } = require("./metadata/opensea");
 const getConfig = require("./config");
 const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
-const { IPFSImage } = require("./fields");
+const { IPFSImage, IPFSMetadata } = require("./fields");
 
 async function MakeFresh(network) {
   const m = new Fresh(network);
@@ -79,6 +79,7 @@ class Fresh {
     withClaimKey,
     onStart,
     onBatchComplete,
+    onError,
     batchSize = 10
   ) {
     await this.flowMinter.setupAccount();
@@ -101,7 +102,7 @@ class Fresh {
 
     while (newTokens.length > 0) {
       const batch = newTokens.splice(0, batchSize)
-      batches.push(batch)    
+      batches.push(batch)
     }
 
     onStart(total, skipped, batches.length, batchSize)
@@ -114,13 +115,22 @@ class Fresh {
 
       const batchFields = groupBatchesByField(fields, processedBatch)
 
-      const results = await this.createTokenBatch(
-        batchFields, 
-        withClaimKey
-      );
+      let results 
+
+      try {
+        results = await this.createTokenBatch(
+          batchFields, 
+          withClaimKey
+        )
+      } catch(error) {
+        onError(error)
+        return
+      }
 
       const finalResults = results.map((result, index) => {
+
         const { tokenId, txId, claimKey } = result;
+
         const metadata = processedBatch[index];
         
         return {
@@ -138,7 +148,6 @@ class Fresh {
       }
 
       onBatchComplete(batchSize)
-
     }
   }
 
@@ -167,27 +176,71 @@ class Fresh {
   async processTokenValue(field, value) {
     switch (field.type) {
       case IPFSImage:
-        return this.processIPFSFile(value)
+        return this.processIPFSFile(value, "images")
+      case IPFSMetadata:
+        return this.processIPFSMetadata(value)
       default:
         return value
     }
   }
 
-  async processIPFSFile(filename) {
-    const filepath = path.resolve(
-      process.cwd(),
-      `${this.config.nftAssetPath}/images/${filename}`
-    );
+  async processIPFSFile(filename, dir) {
+
+    const fullPath = `${this.config.nftAssetPath}/${dir}/${filename}`
+
+    let filepath 
+
+    try {
+      filepath = path.resolve(process.cwd(), fullPath)
+    } catch (e) {
+      throw new Error(
+        `Failed to mint asset, file does not exist at ${fullPath}`
+      )
+    }
   
-    // Mute noisy nebulus logs
-    stdout.mute();
-
-    const cid = await this.nebulus.add(filepath);
-
-    // Unmute when done using nebulus
-    stdout.unmute();
+    const cid = await this.addIPFSData(filepath)
 
     return cid;
+  }
+
+  async addIPFSData(data) {
+    // Mute noisy nebulus logs
+    stdout.mute()
+
+    const cid = await this.nebulus.add(data);
+
+    // Unmute when done using nebulus
+    stdout.unmute()
+
+    return cid
+  }
+
+  async processIPFSMetadata(metadata) {
+
+    if (metadata.image) {
+      const image = await this.processIPFSFile(metadata.image, "images")
+      const imageURI = ensureIpfsUriPrefix(image)
+
+      metadata.image = imageURI
+    }
+
+    if (metadata.animation) {
+      const animation = await this.processIPFSFile(metadata.image, "animations")
+      const animationURI = ensureIpfsUriPrefix(animation)
+
+      // if an animation has been provided, add it to the metadata
+      // Named 'animation_url' to conform to the OpenSea's NFT schema
+      // https://docs.opensea.io/docs/metadata-standards
+      metadata.animation_url = animationURI
+    }
+
+    delete metadata.animation
+
+    const cid = await this.addIPFSData(
+      Buffer.from(JSON.stringify(metadata))
+    )
+
+    return cid 
   }
 
   async createTokenBatch(batchFields, withClaimKey) {
@@ -303,7 +356,7 @@ class Fresh {
       this.config.emulatorFlowAccount.address;
   }
 
-  /** @returns {Promise<string>} - Amoutn of tokens funded */
+  /** @returns {Promise<string>} - Amount of tokens funded */
   async fundAccount(address) {
     const result = this.flowMinter.fundAccount(address);
     return result;
@@ -349,8 +402,8 @@ class Fresh {
    */
 
   async pinTokenData(tokenId) {
-    const metadata = await this.getNFTMetadata(tokenId);
-    const fields = getMetadataFields(this.config)
+    const values = await this.getNFTMetadata(tokenId);
+    const fields = getFields(this.config.customFields)
 
     const spinner = ora();
 
@@ -364,13 +417,33 @@ class Fresh {
 
     for (const field of fields) {
       if (field.type === IPFSImage) {
-        const cid = metadata[field.name];
+        const cid = values[field.name];
         
         spinner.start(`Pinning ${field.name}...`);
 
         await pin(cid);
 
         spinner.succeed(`📌 ${field.name} was pinned!`);
+      }
+
+      if (field.type == IPFSMetadata) {
+        const cid = values[field.name]
+
+        const metadata = await this.getIPFSJSON(cid);
+
+        if (metadata.image) {
+          await pin(stripIpfsUriPrefix(metadata.image));
+        }
+
+        if (metadata.animation_url) {
+          await pin(stripIpfsUriPrefix(metadata.animation_url));
+        }
+
+        await pin(cid)
+
+        console.log(metadata)
+
+        return
       }
     }
 
