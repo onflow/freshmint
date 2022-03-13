@@ -1,26 +1,17 @@
-const fs = require("fs/promises");
 const path = require("path");
-const fetch = require("node-fetch");
-const { NFTStorage, Blob, toGatewayURL } = require("nft.storage");
+const { NFTStorage } = require("nft.storage");
 const Nebulus = require("nebulus");
-const ora = require("ora");
-const stdout = require('mute-stdout');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const FlowMinter = require("./flow");
 const DataStore = require("./datastore");
-const { generateMetadata, getFields } = require("./metadata/opensea");
 const getConfig = require("./config");
 const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
-const { IPFSImage, IPFSMetadata } = require("./fields");
+const Metadata = require("./metadata");
 
 async function MakeFresh(network) {
   const m = new Fresh(network);
   await m.init();
   return m;
-}
-
-async function MakeFlowMinter(network) {
-  return new FlowMinter(network);
 }
 
 async function MakeDataStore() {
@@ -33,8 +24,7 @@ class Fresh {
   constructor(network) {
     this.network = network
     this.config = null;
-    this.ipfs = null;
-    this.nebulus = null;
+    this.metadata = null
     this.flowMinter = null;
     this.datastore = null;
     this._initialized = false;
@@ -48,16 +38,22 @@ class Fresh {
     this.config = getConfig();
 
     this.datastore = await MakeDataStore();
-    this.flowMinter = await MakeFlowMinter(this.network);
+    this.flowMinter = new FlowMinter(this.network);
 
-    this.nebulus = new Nebulus({
+    const nebulus = new Nebulus({
       path: path.resolve(process.cwd(), this.config.nebulusPath)
     });
 
-    this.ipfs = new NFTStorage({
+    const ipfs = new NFTStorage({
       token: this.config.pinningService.key,
       endpoint: this.config.pinningService.endpoint
     });
+
+    this.metadata = new Metadata(
+      this.config, 
+      nebulus, 
+      ipfs
+    )
 
     this._initialized = true;
   }
@@ -84,7 +80,7 @@ class Fresh {
   ) {
     await this.flowMinter.setupAccount();
 
-    const { fields, tokens } = await generateMetadata(csvPath);
+    const { fields, tokens } = await this.metadata.parse(csvPath)
 
     const newTokens = []
 
@@ -111,7 +107,7 @@ class Fresh {
 
       const batchSize = batch.length
 
-      const processedBatch = await this.processTokenBatch(fields, batch)
+      const processedBatch = await this.processTokenBatch(batch)
 
       const batchFields = groupBatchesByField(fields, processedBatch)
 
@@ -131,14 +127,14 @@ class Fresh {
 
         const { tokenId, txId, claimKey } = result;
 
-        const metadata = processedBatch[index];
+        const token = processedBatch[index];
         
         return {
           tokenId,
           txId,
           pinned: false,
-          metadataHash: metadata.hash,
-          metadata: metadata.values,
+          hash: token.hash,
+          metadata: token.metadata,
           claimKey
         }
       })
@@ -152,95 +148,15 @@ class Fresh {
   }
 
   async nftExists(hash) {
-    const exists = await this.datastore.find({ metadataHash: hash });
+    const exists = await this.datastore.find({ hash });
     return (exists.length !== 0)
   }
 
-  async processTokenBatch(fields, batch) {
+  async processTokenBatch(batch) {
     return await Promise.all(batch.map(async (token) => ({
       ...token,
-      values: await this.processTokenValues(fields, token.values)
+      metadata: await this.metadata.process(token.metadata)
     })))
-  }
-
-  async processTokenValues(fields, values) {
-    const newValues = {}
-
-    for (const field of fields) {
-      newValues[field.name] = await this.processTokenValue(field, values[field.name])
-    }
-
-    return newValues
-  }
-
-  async processTokenValue(field, value) {
-    switch (field.type) {
-      case IPFSImage:
-        return this.processIPFSFile(value, "images")
-      case IPFSMetadata:
-        return this.processIPFSMetadata(value)
-      default:
-        return value
-    }
-  }
-
-  async processIPFSFile(filename, dir) {
-
-    const fullPath = `${this.config.nftAssetPath}/${dir}/${filename}`
-
-    let filepath 
-
-    try {
-      filepath = path.resolve(process.cwd(), fullPath)
-    } catch (e) {
-      throw new Error(
-        `Failed to mint asset, file does not exist at ${fullPath}`
-      )
-    }
-  
-    const cid = await this.addIPFSData(filepath)
-
-    return cid;
-  }
-
-  async addIPFSData(data) {
-    // Mute noisy nebulus logs
-    stdout.mute()
-
-    const cid = await this.nebulus.add(data);
-
-    // Unmute when done using nebulus
-    stdout.unmute()
-
-    return cid
-  }
-
-  async processIPFSMetadata(metadata) {
-
-    if (metadata.image) {
-      const image = await this.processIPFSFile(metadata.image, "images")
-      const imageURI = ensureIpfsUriPrefix(image)
-
-      metadata.image = imageURI
-    }
-
-    if (metadata.animation) {
-      const animation = await this.processIPFSFile(metadata.image, "animations")
-      const animationURI = ensureIpfsUriPrefix(animation)
-
-      // if an animation has been provided, add it to the metadata
-      // Named 'animation_url' to conform to the OpenSea's NFT schema
-      // https://docs.opensea.io/docs/metadata-standards
-      metadata.animation_url = animationURI
-    }
-
-    delete metadata.animation
-
-    const cid = await this.addIPFSData(
-      Buffer.from(JSON.stringify(metadata))
-    )
-
-    return cid 
   }
 
   async createTokenBatch(batchFields, withClaimKey) {
@@ -256,10 +172,27 @@ class Fresh {
   //////////////////////////////////////////////
 
   async getNFT(tokenId) {
-    return await this.flowMinter.getNFTDetails(
-      this.defaultOwnerAddress(),
-      tokenId
-    );
+    const results = await this.datastore.find({ tokenId });
+
+    if (results.length === 0) {
+      throw new Error(`Token ${tokenId} does not exist`);
+    }
+
+    const nft = results[0]
+
+    return {
+      id: tokenId,
+      metadata: nft.metadata
+    }
+  }
+
+  async getNFTMetadata(tokenId) {
+    const { metadata } = await this.getNFT(tokenId)
+
+    return {
+      id: tokenId,
+      metadata: await this.metadata.load(metadata)
+    }
   }
 
   async dumpNFTs(csvPath) {
@@ -298,16 +231,6 @@ class Fresh {
     await csvWriter.writeRecords(records);
 
     return nfts.length;
-  }
-
-  async getNFTMetadata(tokenId) {
-    const results = await this.datastore.find({ tokenId });
-
-    if (results.length === 0) {
-      throw new Error(`Token ${tokenId} does not exist`);
-    }
-
-    return results[0].metadata;
   }
 
   //////////////////////////////////////////////
@@ -363,33 +286,6 @@ class Fresh {
   }
 
   //////////////////////////////////////////////
-  // --------- IPFS helpers
-  //////////////////////////////////////////////
-
-  /**
-   * Get the contents of the IPFS object identified by the given CID or URI, and parse it as JSON, returning the parsed object.
-   *
-   * @param {string} cidOrURI - IPFS CID string or `ipfs://<cid>` style URI
-   * @returns {Promise<string>} - contents of the IPFS object, as a javascript object (or array, etc depending on what was stored). Fails if the content isn't valid JSON.
-   */
-  async getIPFSJSON(cidOrURI) {
-    try {
-      // Attempt to get local data from the URI
-      const metadataBytes = await this.nebulus.get(
-        stripIpfsUriPrefix(cidOrURI)
-      );
-      const metadata = JSON.parse(metadataBytes.toString());
-      return metadata;
-    } catch (e) {
-      // If we can't get local data, this NFT may have been created using the Web UI.
-      // So, we need to fetch it from IPFS...
-      const location = toGatewayURL(cidOrURI);
-      const result = await fetch(location.toString()).then((r) => r.json());
-      return result;
-    }
-  }
-
-  //////////////////////////////////////////////
   // -------- Pinning to remote services
   //////////////////////////////////////////////
 
@@ -401,51 +297,14 @@ class Fresh {
    * Fails if no token with the given id exists, or if pinning fails.
    */
 
-  async pinTokenData(tokenId) {
-    const values = await this.getNFTMetadata(tokenId);
-    const fields = getFields(this.config.customFields)
+  async pinTokenData(tokenId, onStart, onComplete) {
+    const { metadata } = await this.getNFT(tokenId);
 
-    const spinner = ora();
-
-    const pin = async (cid) => {
-      const data = await fs.readFile(
-        path.resolve(process.cwd(), `ipfs-data/ipfs/${cid}`)
-      );
-
-      return await this.ipfs.storeBlob(new Blob([data]));
-    };
-
-    for (const field of fields) {
-      if (field.type === IPFSImage) {
-        const cid = values[field.name];
-        
-        spinner.start(`Pinning ${field.name}...`);
-
-        await pin(cid);
-
-        spinner.succeed(`📌 ${field.name} was pinned!`);
-      }
-
-      if (field.type == IPFSMetadata) {
-        const cid = values[field.name]
-
-        const metadata = await this.getIPFSJSON(cid);
-
-        if (metadata.image) {
-          await pin(stripIpfsUriPrefix(metadata.image));
-        }
-
-        if (metadata.animation_url) {
-          await pin(stripIpfsUriPrefix(metadata.animation_url));
-        }
-
-        await pin(cid)
-
-        console.log(metadata)
-
-        return
-      }
-    }
+    await this.metadata.pin(
+      metadata, 
+      onStart, 
+      onComplete
+    )
 
     await this.datastore.update({ tokenId }, { pinned: true });
   }
@@ -466,7 +325,6 @@ function generateKeyPairs(count) {
 
     privateKeys.push(privateKey.toHex())
     publicKeys.push(publicKey.toHex())
-
   }
 
   return {
@@ -477,33 +335,6 @@ function generateKeyPairs(count) {
 
 function formatClaimKey(nftId, privateKey) {
   return `${privateKey}${nftId}`;
-}
-
-//////////////////////////////////////////////
-// -------- URI helpers
-//////////////////////////////////////////////
-
-/**
- * @param {string} cidOrURI either a CID string, or a URI string of the form `ipfs://${cid}`
- * @returns the input string with the `ipfs://` prefix stripped off
- */
-function stripIpfsUriPrefix(cidOrURI) {
-  if (cidOrURI.startsWith("ipfs://")) {
-    return cidOrURI.slice("ipfs://".length);
-  }
-  return cidOrURI;
-}
-
-function ensureIpfsUriPrefix(cidOrURI) {
-  let uri = cidOrURI.toString();
-  if (!uri.startsWith("ipfs://")) {
-    uri = "ipfs://" + cidOrURI;
-  }
-  // Avoid the Nyan Cat bug (https://github.com/ipfs/go-ipfs/pull/7930)
-  if (uri.startsWith("ipfs://ipfs/")) {
-    uri = uri.replace("ipfs://ipfs/", "ipfs://");
-  }
-  return uri;
 }
 
 //////////////////////////////////////////////
@@ -530,7 +361,7 @@ function formatMintResults(txOutput) {
 function groupBatchesByField(fields, batches) {
   return fields.map(field => ({
     ...field,
-    values: batches.map(batch => batch.values[field.name])
+    values: batches.map(batch => batch.metadata[field.name])
   }))
 }
 

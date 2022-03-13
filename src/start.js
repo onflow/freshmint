@@ -3,9 +3,8 @@ const chalk = require("chalk");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
 const { isExists } = require("./helpers");
-const { fieldTypes, parseFields } = require("./fields");
-const { getFields: getOffChainFields } = require("./metadata/opensea");
-const { getFields: getOnChainFields } = require("./metadata/flow");
+const { fieldTypes, parseFields } = require("./metadata/fields");
+const Metadata = require("./metadata");
 
 const questions = [
   {
@@ -104,14 +103,6 @@ async function getCustomFields(shouldStart) {
   return parseFields(customFields)
 }
 
-function getFields(onChainMetadata, customFields) {
-  if (onChainMetadata) {
-    getOnChainFields(customFields)
-  }
-
-  return getOffChainFields()
-}
-
 async function start(spinner) {
   const ui = new inquirer.ui.BottomBar();
 
@@ -121,7 +112,7 @@ async function start(spinner) {
 
   const customFields = await getCustomFields(answers.startCustomFields)
 
-  const fields = getFields(answers.onChainMetadata, customFields)
+  const fields = Metadata.getFields(answers.onChainMetadata, customFields)
 
   spinner.start("Generating project files...");
 

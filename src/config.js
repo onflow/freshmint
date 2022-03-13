@@ -2,7 +2,7 @@ const path = require("path");
 const dotenv = require('dotenv')
 
 const { withPrefix } = require("@onflow/util-address");
-const { parseFields } = require("./fields");
+const { parseFields } = require("./metadata/fields");
 
 function getConfig() {
   dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -18,6 +18,8 @@ function getConfig() {
     //////////////////////////////////////////////
     // ------ App Config
     //////////////////////////////////////////////
+
+    onChainMetadata: userConfig.metadataFormat == "on-chain",
 
     // Store IPFS NFT asset & metadata CIDs and data before pushing to the live network
     // https://github.com/rarepress/nebulus

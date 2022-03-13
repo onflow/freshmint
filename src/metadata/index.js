@@ -1,57 +1,71 @@
-const crypto = require("crypto");
-const parse = require("csv-parse/lib/sync");
-const fs = require("fs");
-const path = require("path");
+const { IPFSImage, String, IPFSMetadata } = require("./fields");
+const MetadataLoader = require("./loader");
+const MetadataParser = require("./parser");
+const MetadataPinner = require("./pinner");
+const MetadataProcessor = require("./processor");
 
-async function getMetadata(headers, rows, fields, config) {
-  const tokens = rows.map((items) => {
-    const values = {}
+const onChainFields = [
+  {
+    name: "name",
+    type: String,
+  },
+  {
+    name: "description",
+    type: String,
+  },
+  {
+    name: "image",
+    type: IPFSImage,
+  }
+]
 
-    fields.forEach((field) =>  {
-      const name = field.name
-      const value = field.type.getValue(items, headers, config)
+const offChainFields = [
+  {
+    name: "metadata",
+    type: IPFSMetadata,
+  }
+]
 
-      values[name] = value
-    })
+class Metadata {
 
-    return {
-      hash: hashMetadata(items),
-      values,
+  constructor(config, nebulus, ipfs) {
+    this.fields = Metadata.getFields(
+      config.onChainMetadata, 
+      config.customFields
+    )
+
+    this.parser = new MetadataParser(config, this.fields)
+    this.processor = new MetadataProcessor(config, nebulus)
+    this.pinner = new MetadataPinner(nebulus, ipfs)
+    this.loader = new MetadataLoader(nebulus)
+  }
+
+  static getFields(onChainMetadata, customFields) {
+    if (onChainMetadata) {
+      return [
+        ...onChainFields,
+        ...customFields,
+      ]
     }
-  })
-
-  return {
-    fields,
-    tokens
-  }
-}
-
-function hashMetadata(values) {
-  const hash = crypto.createHash("sha256")
-
-  values.forEach(value => hash.update(value))
-
-  return hash.digest('hex')
-}
-
-function readCSV(csvPath) {
-  const nftCSV = fs.readFileSync(
-    path.resolve(process.cwd(), csvPath)
-  )
-
-  const records = parse(nftCSV);
-
-  const headers = records[0];
-  const rows = records.slice(1);
   
-  return {
-    headers, 
-    rows
+    return offChainFields
+  }
+
+  async parse(csvPath) {
+    return this.parser.parse(csvPath)
+  }
+
+  async process(metadata) {
+    return this.processor.process(metadata, this.fields)
+  }
+
+  async pin(metadata, onStart, onComplete) {
+    return this.pinner.pin(metadata, this.fields, onStart, onComplete)
+  }
+
+  async load(metadata) {
+    return this.loader.load(metadata, this.fields)
   }
 }
 
-module.exports = {
-  getMetadata,
-  hashMetadata,
-  readCSV
-}
+module.exports = Metadata

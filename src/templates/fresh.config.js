@@ -1,5 +1,6 @@
 module.exports = {
-  {{#if fields}}
+  metadataFormat: {{#if onChainMetadata}}"on-chain"{{else}}"off-chain"{{/if}},
+  {{#if onChainMetadata}}
   customFields: [
     {{#each fields}}
     {{#if this.isCustom}}
@@ -10,11 +11,9 @@ module.exports = {
     {{/if}}
     {{/each}}
   ],
-  {{else}}
-  customFields: [],
   {{/if}}
   pinningService: {
     endpoint: process.env.PINNING_SERVICE_ENDPOINT,
     key: process.env.PINNING_SERVICE_KEY
-  },
+  }
 }

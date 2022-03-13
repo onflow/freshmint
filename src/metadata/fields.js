@@ -1,5 +1,3 @@
-const fs = require("fs");
-const path = require("path");
 const t = require("@onflow/types");
 
 const toNumber = (v) => Number(v)
@@ -14,11 +12,19 @@ class Field {
     this.label = label
     this.type = type;
     this.toCadence = this.type.label
-    this.placeholder = placeholder;
+    this.placeholder = placeholder
     this.toArgument = toArgument
   }
 
-  setIndex(index) {
+  setIndex(fieldName, headers) {
+    const index = headers.findIndex((element) => element === fieldName)
+      
+    if (index === -1) {
+      throw new Error(
+        `CSV file is missing required column: '${fieldName}'`
+      )
+    }
+
     this.index = index;
   }
 
@@ -31,6 +37,8 @@ class IPFSMetadataField extends Field {
   constructor() {
     super("IPFS Metadata", t.String, "");
   }
+
+  setIndex(fieldName, headers) {}
 
   getValue(items, headers, config) {
     const metadata = {}
@@ -74,7 +82,7 @@ const Fix64 = new Field("Fix64", t.Fix64, "42.0", toNumber)
 const UFix64 = new Field("UFix64", t.UFix64, "42.0", toNumber)
 
 const IPFSImage = new Field("IPFS Image", t.String, "lady.jpg")
-const IPFSMetadata = new IPFSMetadataField("IPFS Metadata", t.String, "")
+const IPFSMetadata = new IPFSMetadataField()
 
 const validFields = [
   IPFSImage,

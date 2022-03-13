@@ -50,7 +50,11 @@ async function generateProject(
     await createOffChainCSVFile(projectName, contractName)
   }
 
-  await createFreshConfig(projectName, contractName, { fields });
+  await createFreshConfig(
+    projectName, 
+    contractName, 
+    { fields, onChainMetadata }
+  );
 
   await createFlowConfig(projectName, contractName);
   await createFlowTestnetConfig(projectName, contractName);

@@ -203,16 +203,15 @@ async function getNFT(tokenId, { network }) {
   spinner.start(`Getting NFT data ...`);
 
   const fresh = await MakeFresh(network);
-  const nft = await fresh.getNFT(tokenId);
+  const { id, metadata } = await fresh.getNFTMetadata(tokenId);
 
   spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
 
   const output = [
-    ["Token ID:", chalk.green(nft.id)],
-    ["Owner Address:", chalk.yellow(nft.owner)],
-    ["Name:", chalk.blue(nft.name)],
-    ["Description:", chalk.blue(nft.description)],
-    ["Image:", chalk.blue(nft.image)]
+    ["Token ID:", chalk.green(id)],
+    ["Name:", chalk.blue(metadata.name)],
+    ["Description:", chalk.blue(metadata.description)],
+    ["Image:", chalk.blue(metadata.image)]
   ];
 
   alignOutput(output);
@@ -227,8 +226,14 @@ async function dumpNFTs(csvPath) {
 
 async function pinNFTData(tokenId, { network }) {
   const fresh = await MakeFresh(network);
-  await fresh.pinTokenData(tokenId);
-  console.log(`🌿 Pinned all data for token id ${chalk.green(tokenId)}`);
+
+  await fresh.pinTokenData(
+    tokenId,
+    (fieldName) => spinner.start(`Pinning ${fieldName}...`),
+    (fieldName) => spinner.succeed(`📌 ${fieldName} was pinned!`),
+  );
+
+  console.log(`🌿 Pinned all data for token ${chalk.green(tokenId)}`);
 }
 
 async function fundAccount(address, { network }) {
