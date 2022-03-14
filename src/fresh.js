@@ -9,46 +9,23 @@ const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
 const Metadata = require("./metadata");
 const IPFS = require("./ipfs");
 
-async function MakeFresh(network) {
-  const m = new Fresh(network);
-  await m.init();
-  return m;
-}
-
-async function MakeDataStore() {
-  const db = new DataStore();
-  await db.init("freshdb");
-  return db;
-}
-
 class Fresh {
   constructor(network) {
     this.network = network
-    this.config = null;
-    this.metadata = null
-    this.flowMinter = null;
-    this.datastore = null;
-    this._initialized = false;
-  }
 
-  async init() {
-    if (this._initialized) {
-      return;
-    }
+    this.config = getConfig()
 
-    this.config = getConfig();
-
-    this.datastore = await MakeDataStore();
-    this.flowMinter = new FlowMinter(this.network);
+    this.datastore = new DataStore("freshdb")
+    this.flowMinter = new FlowMinter(this.network)
 
     const nebulus = new Nebulus({
       path: path.resolve(process.cwd(), this.config.nebulusPath)
-    });
+    })
 
     const ipfsClient = new NFTStorage({
       token: this.config.pinningService.key,
       endpoint: this.config.pinningService.endpoint
-    });
+    })
 
     const ipfs = new IPFS(nebulus, ipfsClient)
 
@@ -56,8 +33,6 @@ class Fresh {
       this.config, 
       ipfs,
     )
-
-    this._initialized = true;
   }
 
   //////////////////////////////////////////////
@@ -371,6 +346,4 @@ function groupBatchesByField(fields, batches) {
 // -------- Exports
 //////////////////////////////////////////////
 
-module.exports = {
-  MakeFresh
-};
+module.exports = Fresh

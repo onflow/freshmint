@@ -9,7 +9,7 @@ const inquirer = require("inquirer");
 const chalk = require("chalk");
 const ora = require("ora");
 const ProgressBar = require("progress");
-const { MakeFresh } = require("./fresh");
+const Fresh = require("./fresh");
 const carlton = require("./carlton");
 const startCommand = require("./start");
 
@@ -130,13 +130,13 @@ async function start() {
 
 async function deploy({ network }) {
   spinner.start(`Deploying project to ${network} ...`);
-  const fresh = await MakeFresh(network);
+  const fresh = new Fresh(network);
   await fresh.deployContracts();
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
 async function mint({ network, data, claim, batchSize }) {
-  const fresh = await MakeFresh(network);
+  const fresh = new Fresh(network);
 
   const answer = await inquirer.prompt({
     type: "confirm",
@@ -187,14 +187,14 @@ async function mint({ network, data, claim, batchSize }) {
 
 async function startDrop(price, { network }) {
   spinner.start(`Creating drop ...`);
-  const fresh = await MakeFresh(network);
+  const fresh = new Fresh(network);
   await fresh.startDrop(price);
   spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
 async function removeDrop({ network }) {
   spinner.start(`Removing drop ...`);
-  const fresh = await MakeFresh(network);
+  const fresh = new Fresh(network);
   await fresh.removeDrop();
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
@@ -202,7 +202,7 @@ async function removeDrop({ network }) {
 async function getNFT(tokenId, { network }) {
   spinner.start(`Getting NFT data ...`);
 
-  const fresh = await MakeFresh(network);
+  const fresh = new Fresh(network);
   const { id, metadata } = await fresh.getNFTMetadata(tokenId);
 
   spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
@@ -218,14 +218,14 @@ async function getNFT(tokenId, { network }) {
 }
 
 async function dumpNFTs(csvPath) {
-  const fresh = await MakeFresh();
+  const fresh = new Fresh();
   const count = await fresh.dumpNFTs(csvPath);
   
   spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
 }
 
 async function pinNFTData(tokenId, { network }) {
-  const fresh = await MakeFresh(network);
+  const fresh = new Fresh(network);
 
   await fresh.pinTokenData(
     tokenId,
@@ -238,7 +238,7 @@ async function pinNFTData(tokenId, { network }) {
 
 async function fundAccount(address, { network }) {
   spinner.start("Funding account  ...");
-  const fresh = await MakeFresh(network);
+  const fresh = new Fresh(network);
   const result = await fresh.fundAccount(address);
   spinner.succeed(
     `💰 ${result} FLOW tokens transferred to ${chalk.green(address)}`

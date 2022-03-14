@@ -19,8 +19,6 @@ function getConfig() {
     // ------ App Config
     //////////////////////////////////////////////
 
-    onChainMetadata: userConfig.metadataFormat == "on-chain",
-
     // Store IPFS NFT asset & metadata CIDs and data before pushing to the live network
     // https://github.com/rarepress/nebulus
     nebulusPath: userConfig.ipfsDataPath || "ipfs-data",
@@ -29,7 +27,9 @@ function getConfig() {
     nftDataPath: userConfig.nftDataPath || "nfts.csv",
     nftAssetPath: userConfig.nftAssetPath || "assets",
 
-    // Metadata fields deifned by the user
+    onChainMetadata: userConfig.metadataFormat == "on-chain",
+
+    // Metadata fields defined by the user
     metadataFields: parseFields(userConfig.metadataFields || []),
 
     //////////////////////////////////////////////
