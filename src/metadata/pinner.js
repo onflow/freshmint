@@ -12,7 +12,7 @@ class MetadataPinner {
     this.ipfs = ipfs
   }
 
-  async pin(metadata, fields, onStart, onComplete) {
+  async pin(fields, metadata, onStart, onComplete) {
     for (const field of fields) {
       const value = metadata[field.name]
 

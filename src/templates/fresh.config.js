@@ -1,14 +1,12 @@
 module.exports = {
   metadataFormat: {{#if onChainMetadata}}"on-chain"{{else}}"off-chain"{{/if}},
   {{#if onChainMetadata}}
-  customFields: [
+  metadataFields: [
     {{#each fields}}
-    {{#if this.isCustom}}
     {
       name: "{{ this.name }}",
       type: "{{ this.type.label }}"
     },
-    {{/if}}
     {{/each}}
   ],
   {{/if}}

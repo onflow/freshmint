@@ -8,7 +8,7 @@ class MetadataLoader {
     this.nebulus = nebulus
   }
 
-  async load(metadata, fields) {
+  async load(fields, metadata) {
     let values = metadata
 
     for (const field of fields) {

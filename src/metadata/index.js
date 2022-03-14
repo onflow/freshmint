@@ -17,18 +17,17 @@ const offChainFields = [
 class Metadata {
 
   constructor(config, nebulus, ipfs) {
-    this.fields = Metadata.getFields(
-      config.onChainMetadata, 
-      config.customFields
-    )
+    this.fields = config.onChainMetadata ? 
+      config.metadataFields :
+      offChainFields
 
-    this.parser = new MetadataParser(config, this.fields)
+    this.parser = new MetadataParser(config)
     this.processor = new MetadataProcessor(config, nebulus)
     this.pinner = new MetadataPinner(nebulus, ipfs)
     this.loader = new MetadataLoader(nebulus)
   }
 
-  static getFields(onChainMetadata, customFields) {
+  static getDefaultFields(onChainMetadata, customFields) {
     if (onChainMetadata) {
       return [
         ...onChainFields,
@@ -40,19 +39,19 @@ class Metadata {
   }
 
   async parse(csvPath) {
-    return this.parser.parse(csvPath)
+    return this.parser.parse(this.fields, csvPath)
   }
 
   async process(metadata) {
-    return this.processor.process(metadata, this.fields)
+    return this.processor.process(this.fields, metadata)
   }
 
   async pin(metadata, onStart, onComplete) {
-    return this.pinner.pin(metadata, this.fields, onStart, onComplete)
+    return this.pinner.pin(this.fields, metadata, onStart, onComplete)
   }
 
   async load(metadata) {
-    return this.loader.load(metadata, this.fields)
+    return this.loader.load(this.fields, metadata)
   }
 }
 

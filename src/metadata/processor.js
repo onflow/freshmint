@@ -10,7 +10,7 @@ class MetadataProcessor {
     this.nebulus = nebulus
   }
 
-  async process(metadata, fields) {
+  async process(fields, metadata) {
     const values = {}
 
     for (const field of fields) {

@@ -5,15 +5,14 @@ const path = require("path");
 
 class MetadataParser {
 
-  constructor(config, fields) {
+  constructor(config) {
     this.config = config
-    this.fields = fields
   }
 
-  async parse(csvPath) {
+  async parse(fields, csvPath) {
     const { headers, rows } = readCSV(csvPath)
     
-    return this.parseTokens(headers, rows, this.fields)
+    return this.parseTokens(headers, rows, fields)
   }
 
   async parseTokens(headers, rows, fields) {

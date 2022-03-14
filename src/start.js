@@ -94,7 +94,6 @@ async function getCustomFields(shouldStart) {
     customFields.push({
       name: customField.name,
       type: customField.type,
-      isCustom: true
     })
 
     shouldContinue = customField.continue
@@ -112,7 +111,7 @@ async function start(spinner) {
 
   const customFields = await getCustomFields(answers.startCustomFields)
 
-  const fields = Metadata.getFields(answers.onChainMetadata, customFields)
+  const fields = Metadata.getDefaultFields(answers.onChainMetadata, customFields)
 
   spinner.start("Generating project files...");
 

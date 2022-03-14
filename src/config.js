@@ -29,8 +29,8 @@ function getConfig() {
     nftDataPath: userConfig.nftDataPath || "nfts.csv",
     nftAssetPath: userConfig.nftAssetPath || "assets",
 
-    // Custom NFT fields defined by the user
-    customFields: parseFields(userConfig.customFields) || [],
+    // Metadata fields deifned by the user
+    metadataFields: parseFields(userConfig.metadataFields || []),
 
     //////////////////////////////////////////////
     // ------ IPFS Config
