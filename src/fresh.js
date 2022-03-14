@@ -7,6 +7,7 @@ const DataStore = require("./datastore");
 const getConfig = require("./config");
 const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
 const Metadata = require("./metadata");
+const IPFS = require("./ipfs");
 
 async function MakeFresh(network) {
   const m = new Fresh(network);
@@ -44,15 +45,16 @@ class Fresh {
       path: path.resolve(process.cwd(), this.config.nebulusPath)
     });
 
-    const ipfs = new NFTStorage({
+    const ipfsClient = new NFTStorage({
       token: this.config.pinningService.key,
       endpoint: this.config.pinningService.endpoint
     });
 
+    const ipfs = new IPFS(nebulus, ipfsClient)
+
     this.metadata = new Metadata(
       this.config, 
-      nebulus, 
-      ipfs
+      ipfs,
     )
 
     this._initialized = true;

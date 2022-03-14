@@ -16,15 +16,15 @@ const offChainFields = [
 
 class Metadata {
 
-  constructor(config, nebulus, ipfs) {
+  constructor(config, ipfs) {
     this.fields = config.onChainMetadata ? 
       config.metadataFields :
       offChainFields
 
     this.parser = new MetadataParser(config)
-    this.processor = new MetadataProcessor(config, nebulus)
-    this.pinner = new MetadataPinner(nebulus, ipfs)
-    this.loader = new MetadataLoader(nebulus)
+    this.processor = new MetadataProcessor(config, ipfs)
+    this.pinner = new MetadataPinner(ipfs)
+    this.loader = new MetadataLoader(ipfs)
   }
 
   static getDefaultFields(onChainMetadata, customFields) {
