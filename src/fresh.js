@@ -81,7 +81,7 @@ class Fresh {
     await this.flowMinter.setupAccount();
 
     const { fields, tokens } = await this.metadata.parse(csvPath)
-
+    
     const newTokens = []
 
     for (const token of tokens) {

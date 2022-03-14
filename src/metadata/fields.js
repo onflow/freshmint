@@ -2,51 +2,42 @@ const t = require("@onflow/types");
 
 const toNumber = (v) => Number(v)
 
-class Field {
+class FieldType {
   constructor(
     label,
-    type,
+    cadenceType,
     placeholder,
     toArgument = (v) => v,
   ) {
     this.label = label
-    this.type = type;
-    this.toCadence = this.type.label
+    this.cadenceType = cadenceType;
+    this.toCadence = this.cadenceType.label
     this.placeholder = placeholder
     this.toArgument = toArgument
   }
 
-  setIndex(fieldName, headers) {
-    const index = headers.findIndex((element) => element === fieldName)
-      
-    if (index === -1) {
-      throw new Error(
-        `CSV file is missing required column: '${fieldName}'`
-      )
-    }
-
-    this.index = index;
-  }
-
-  getValue(items, headers, config) {
-    return items[this.index]
+  getValue(name, metadata) {
+    return metadata[name]
   }
 }
 
-class IPFSMetadataField extends Field {
+class Field {
+  constructor(name, type) {
+    this.name = name
+    this.type = type;
+  }
+
+  getValue(metadata) {
+    return this.type.getValue(this.name, metadata)
+  }
+}
+
+class IPFSMetadataFieldType extends FieldType {
   constructor() {
     super("IPFS Metadata", t.String, "");
   }
 
-  setIndex(fieldName, headers) {}
-
-  getValue(items, headers, config) {
-    const metadata = {}
-
-    items.forEach((value, index) => {
-      metadata[headers[index]] = value
-    })
-
+  getValue(name, metadata) {
     if (!metadata.image) {
       throw new Error(
         "Error generating metadata, must supply an 'image' property"
@@ -67,22 +58,22 @@ class IPFSMetadataField extends Field {
   }
 }
 
-const String = new Field("String", t.String, "Sample string")
-const Int = new Field("Int", t.Int, "42", toNumber)
-const Int8 = new Field("Int8", t.Int8, "42", toNumber)
-const Int16 = new Field("Int16", t.Int16, "42", toNumber)
-const Int32 = new Field("Int32", t.Int32, "42", toNumber)
-const Int64 = new Field("Int64", t.Int64, "42", toNumber)
-const UInt = new Field("UInt", t.UInt, "42", toNumber)
-const UInt8 = new Field("UInt8", t.UInt8, "42", toNumber)
-const UInt16 = new Field("UInt16", t.UInt16, "42", toNumber)
-const UInt32 = new Field("UInt32", t.UInt32, "42", toNumber)
-const UInt64 = new Field("UInt64", t.UInt64, "42", toNumber)
-const Fix64 = new Field("Fix64", t.Fix64, "42.0", toNumber)
-const UFix64 = new Field("UFix64", t.UFix64, "42.0", toNumber)
+const String = new FieldType("String", t.String, "Sample string")
+const Int = new FieldType("Int", t.Int, "42", toNumber)
+const Int8 = new FieldType("Int8", t.Int8, "42", toNumber)
+const Int16 = new FieldType("Int16", t.Int16, "42", toNumber)
+const Int32 = new FieldType("Int32", t.Int32, "42", toNumber)
+const Int64 = new FieldType("Int64", t.Int64, "42", toNumber)
+const UInt = new FieldType("UInt", t.UInt, "42", toNumber)
+const UInt8 = new FieldType("UInt8", t.UInt8, "42", toNumber)
+const UInt16 = new FieldType("UInt16", t.UInt16, "42", toNumber)
+const UInt32 = new FieldType("UInt32", t.UInt32, "42", toNumber)
+const UInt64 = new FieldType("UInt64", t.UInt64, "42", toNumber)
+const Fix64 = new FieldType("Fix64", t.Fix64, "42.0", toNumber)
+const UFix64 = new FieldType("UFix64", t.UFix64, "42.0", toNumber)
 
-const IPFSImage = new Field("IPFS Image", t.String, "lady.jpg")
-const IPFSMetadata = new IPFSMetadataField()
+const IPFSImage = new FieldType("IPFS Image", t.String, "lady.jpg")
+const IPFSMetadata = new IPFSMetadataFieldType()
 
 const validFields = [
   IPFSImage,
@@ -112,10 +103,17 @@ function getFieldType(label) {
 }
 
 function parseFields(fields) {
-  return fields.map((field) => ({ ...field, type: fieldsByLabel[field.type] }))
+  return fields.map((field) => {
+    const name = field.name
+    const type = getFieldType(field.type)
+
+    return new Field(name, type)
+  })
 }
 
 module.exports = {
+  Field,
+
   IPFSMetadata,
   IPFSImage,
   String,
@@ -133,6 +131,5 @@ module.exports = {
   UFix64,
 
   fieldTypes,
-  getFieldType,
   parseFields
 }

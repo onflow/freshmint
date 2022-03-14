@@ -1,29 +1,17 @@
-const { IPFSImage, String, IPFSMetadata } = require("./fields");
+const { IPFSImage, String, IPFSMetadata, Field } = require("./fields");
 const MetadataLoader = require("./loader");
 const MetadataParser = require("./parser");
 const MetadataPinner = require("./pinner");
 const MetadataProcessor = require("./processor");
 
 const onChainFields = [
-  {
-    name: "name",
-    type: String,
-  },
-  {
-    name: "description",
-    type: String,
-  },
-  {
-    name: "image",
-    type: IPFSImage,
-  }
+  new Field("name", String),
+  new Field("description", String),
+  new Field("image", IPFSImage)
 ]
 
 const offChainFields = [
-  {
-    name: "metadata",
-    type: IPFSMetadata,
-  }
+  new Field("metadata", IPFSMetadata)
 ]
 
 class Metadata {

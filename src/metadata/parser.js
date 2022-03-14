@@ -10,35 +10,27 @@ class MetadataParser {
     this.fields = fields
   }
 
-  getFields() {
-    return this.fields
-  }
-
-  indexFields(fields, headers) {
-    fields.forEach(field => {
-      field.type.setIndex(field.name, headers)
-    })
-  
-    return fields  
-  }
-
   async parse(csvPath) {
     const { headers, rows } = readCSV(csvPath)
-  
-    const fields = this.indexFields(this.fields, headers)
-  
-    return this.parseTokens(headers, rows, fields)
+    
+    return this.parseTokens(headers, rows, this.fields)
   }
 
   async parseTokens(headers, rows, fields) {
     const tokens = rows.map((items) => {
+      const values = {}
+
+      items.forEach((item, index) => {
+        const name = headers[index]
+        values[name] = item
+      })
+
       const metadata = {}
   
       fields.forEach((field) =>  {
-        const name = field.name
-        const value = field.type.getValue(items, headers, this.config)
+        const value = field.getValue(values)
   
-        metadata[name] = value
+        metadata[field.name] = value
       })
   
       return {

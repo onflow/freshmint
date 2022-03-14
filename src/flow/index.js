@@ -44,7 +44,7 @@ class FlowMinter {
       "./cadence/transactions/mint.cdc",
       `${this.network}-account`,
       fields.map(field => ({
-        type: t.Array(field.type.type), 
+        type: t.Array(field.type.cadenceType), 
         value: field.values.map(field.type.toArgument)
       }))
     );
@@ -54,7 +54,7 @@ class FlowMinter {
     const args = [
       { type: t.Array(t.String), value: publicKeys },
       ...fields.map(field => ({
-        type: t.Array(field.type.type), 
+        type: t.Array(field.type.cadenceType), 
         value: field.values.map(field.type.toArgument)
       }))
     ]
