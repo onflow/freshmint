@@ -5,7 +5,7 @@ module.exports = {
     {{#each fields}}
     {
       name: "{{ this.name }}",
-      type: "{{ this.type.label }}"
+      type: "{{ this.type.name }}"
     },
     {{/each}}
   ],

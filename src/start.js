@@ -3,8 +3,13 @@ const chalk = require("chalk");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
 const { isExists } = require("./helpers");
-const { fieldTypes, parseFields } = require("./metadata/fields");
+const { Field, fieldTypes } = require("./metadata/fields");
 const Metadata = require("./metadata");
+
+const fieldChoices = fieldTypes.map(fieldType => ({
+  name: fieldType.label,
+  value: fieldType
+}))
 
 const questions = [
   {
@@ -69,7 +74,7 @@ function customFieldQuestions(count) {
       type: "list",
       name: "type",
       message: `Custom field ${count} type:`,
-      choices: fieldTypes
+      choices: fieldChoices
     },
     {
       type: "confirm",
@@ -91,15 +96,14 @@ async function getCustomFields(shouldStart) {
       customFieldQuestions(count)
     )
 
-    customFields.push({
-      name: customField.name,
-      type: customField.type,
-    })
+    const field = new Field(customField.name, customField.type)
+
+    customFields.push(field)
 
     shouldContinue = customField.continue
   }
   
-  return parseFields(customFields)
+  return customFields
 }
 
 async function start(spinner) {
