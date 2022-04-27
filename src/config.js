@@ -2,7 +2,7 @@ const path = require("path");
 const dotenv = require('dotenv')
 
 const { withPrefix } = require("@onflow/util-address");
-const { parseFields } = require("./fields");
+const { parseFields } = require("./metadata/fields");
 
 function getConfig() {
   dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -29,8 +29,10 @@ function getConfig() {
     nftDataPath: userConfig.nftDataPath || "nfts.csv",
     nftAssetPath: userConfig.nftAssetPath || "assets",
 
-    // Custom NFT fields defined by the user
-    customFields: parseFields(userConfig.customFields) || [],
+    onChainMetadata: userConfig.metadataFormat == "on-chain",
+
+    // Metadata fields defined by the user
+    metadataFields: parseFields(userConfig.metadataFields || []),
 
     //////////////////////////////////////////////
     // ------ IPFS Config

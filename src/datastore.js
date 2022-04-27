@@ -2,16 +2,9 @@ const PouchDB = require("pouchdb");
 PouchDB.plugin(require("pouchdb-find"));
 
 class DataStore {
-  constructor() {
-    this.db = null;
-  }
-
-  async init(name, options) {
-    if (this._initialized) {
-      return;
-    }
-    this.db = new PouchDB(name, options);
-    this._initialized = true;
+  
+  constructor(name, options) {
+    this.db = new PouchDB(name, options)
   }
 
   async find(selector) {

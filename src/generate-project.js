@@ -3,12 +3,12 @@ const path = require("path");
 const Handlebars = require("handlebars");
 const generateWebAssets = require("./generate-web");
 const { writeFile } = require("./helpers");
-const { getFieldPlaceholders } = require("./fields");
 
 async function generateProject(
   projectName,
   contractName,
-  customFields
+  onChainMetadata,
+  fields
 ) {
 
   await createScaffold(projectName);
@@ -18,11 +18,15 @@ async function generateProject(
     `cadence/contracts/${contractName}.cdc`
   );  
 
-  await createContract(projectName, contractName, { customFields });
+  await createContract(
+    projectName,
+    contractName, 
+    { fields, onChainMetadata }
+  );
 
   await createSetupTransaction(projectName, contractName);
-  await createMintTransaction(projectName, contractName, { customFields });
-  await createMintWithClaimTransaction(projectName, contractName, { customFields });
+  await createMintTransaction(projectName, contractName, { fields });
+  await createMintWithClaimTransaction(projectName, contractName, { fields });
 
   await createClaimQueueDropTransaction(projectName, contractName);
   await createClaimAirDropTransaction(projectName, contractName);
@@ -30,16 +34,27 @@ async function generateProject(
   await createStartDropTransaction(projectName, contractName);
   await createRemoveDropTransaction(projectName, contractName);
 
-  await createGetNFTScript(projectName, contractName);
   await createGetDropScript(projectName, contractName);
     
-  await createCSVFile(
+
+  if (onChainMetadata) {
+    await createOnChainGetNFTScript(projectName, contractName);
+
+    await createOnChainCSVFile(
+      projectName, 
+      contractName,
+      { fields }
+    )
+  } else {
+    await createOffChainGetNFTScript(projectName, contractName);
+    await createOffChainCSVFile(projectName, contractName)
+  }
+
+  await createFreshConfig(
     projectName, 
     contractName, 
-    { customFields }
+    { fields, onChainMetadata }
   );
-
-  await createFreshConfig(projectName, contractName, { customFields });
 
   await createFlowConfig(projectName, contractName);
   await createFlowTestnetConfig(projectName, contractName);
@@ -159,8 +174,13 @@ const createRemoveDropTransaction = template(
   "cadence/transactions/queue/remove_drop.cdc"
 );
 
-const createGetNFTScript = template(
-  "templates/cadence/scripts/get_nft.cdc",
+const createOnChainGetNFTScript = template(
+  "templates/cadence/scripts/get_nft.on-chain.cdc",
+  "cadence/scripts/get_nft.cdc"
+);
+
+const createOffChainGetNFTScript = template(
+  "templates/cadence/scripts/get_nft.off-chain.cdc",
   "cadence/scripts/get_nft.cdc"
 );
 
@@ -169,7 +189,8 @@ const createGetDropScript = template(
   "cadence/scripts/queue/get_drop.cdc"
 );
 
-const createCSVFile = template("templates/nfts.csv", "nfts.csv");
+const createOnChainCSVFile = template("templates/nfts.on-chain.csv", "nfts.csv");
+const createOffChainCSVFile = template("templates/nfts.off-chain.csv", "nfts.csv");
 
 const createFreshConfig = template("templates/fresh.config.js", "fresh.config.js");
 

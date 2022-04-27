@@ -1,2 +1,0 @@
-name,description,image{{#each customFields}},{{ this.name }}{{/each}}
-Lady,Lady is a dog. A great dog.,lady.jpg{{#each customFields}},{{ this.type.placeholder }}{{/each}}

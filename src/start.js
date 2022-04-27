@@ -3,7 +3,13 @@ const chalk = require("chalk");
 const generateProject = require("./generate-project");
 const generateWebAssets = require("./generate-web");
 const { isExists } = require("./helpers");
-const { fieldTypes, parseFields } = require("./fields")
+const { Field, fieldTypes } = require("./metadata/fields");
+const Metadata = require("./metadata");
+
+const fieldChoices = fieldTypes.map(fieldType => ({
+  name: fieldType.label,
+  value: fieldType
+}))
 
 const questions = [
   {
@@ -36,8 +42,16 @@ const questions = [
     }
   },
   {
+    type: "list",
+    name: "onChainMetadata",
+    message: "Metadata format:",
+    choices: ["on-chain", "off-chain"],
+    filter: (input) => input === "on-chain"
+  },
+  {
     type: "confirm",
     name: "startCustomFields",
+    when: (answers) => answers.onChainMetadata,
     message: "Would you like to define custom NFT fields?"
   }
 ]
@@ -60,7 +74,7 @@ function customFieldQuestions(count) {
       type: "list",
       name: "type",
       message: `Custom field ${count} type:`,
-      choices: fieldTypes
+      choices: fieldChoices
     },
     {
       type: "confirm",
@@ -82,15 +96,14 @@ async function getCustomFields(shouldStart) {
       customFieldQuestions(count)
     )
 
-    customFields.push({
-      name: customField.name,
-      type: customField.type
-    })
+    const field = new Field(customField.name, customField.type)
+
+    customFields.push(field)
 
     shouldContinue = customField.continue
   }
   
-  return parseFields(customFields)
+  return customFields
 }
 
 async function start(spinner) {
@@ -100,7 +113,9 @@ async function start(spinner) {
   
   const answers = await inquirer.prompt(questions);
 
-  const customFields = await getCustomFields(answers.startCustomFields);
+  const customFields = await getCustomFields(answers.startCustomFields)
+
+  const fields = Metadata.getDefaultFields(answers.onChainMetadata, customFields)
 
   spinner.start("Generating project files...");
 
@@ -116,7 +131,8 @@ async function start(spinner) {
   await generateProject(
     answers.projectName,
     formattedContractName,
-    customFields
+    answers.onChainMetadata,
+    fields
   );
 
   await generateWebAssets(answers.projectName, formattedContractName);

@@ -27,41 +27,23 @@ pub contract {{ name }}: NonFungibleToken {
 
         pub let id: UInt64
 
-        // The name of the NFT image.
-        pub let name: String
-
-        // The description of the NFT image.
-        pub let description: String
-
-        // The IPFS CID of the NFT image.
-        pub let image: String
-
-        {{#if customFields}}
-        // Additional NFT fields.
-        //
-        {{#each customFields}}
+        {{#each fields}}
         pub let {{ this.name }}: {{ this.type.toCadence }}
         {{/each}}
 
-        {{/if}}
         init(
             id: UInt64,
-            name: String,
-            description: String,
-            image: String,
-            {{#each customFields}}
+            {{#each fields}}
             {{ this.name }}: {{ this.type.toCadence }},
             {{/each}}
         ) {
             self.id = id
-            self.name = name
-            self.description = description
-            self.image = image
-            {{#each customFields}}
+            {{#each fields}}
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
         }
 
+        {{#if onChainMetadata }}
         pub fun getViews(): [Type] {
             return [
                 Type<MetadataViews.Display>()
@@ -83,6 +65,7 @@ pub contract {{ name }}: NonFungibleToken {
 
             return nil
         }
+        {{/if}}
     }
 
     pub resource interface {{ name }}CollectionPublic {
@@ -187,19 +170,13 @@ pub contract {{ name }}: NonFungibleToken {
         // Mints a new NFT with a new ID
         //
         pub fun mintNFT(
-            name: String,
-            description: String,
-            image: String,
-            {{#each customFields}}
+            {{#each fields}}
             {{ this.name }}: {{ this.type.toCadence }},
             {{/each}}
         ): @{{ name }}.NFT {
             let nft <- create {{ name }}.NFT(
                 id: {{ name }}.totalSupply,
-                name: name,
-                description: description,
-                image: image,
-                {{#each customFields}}
+                {{#each fields}}
                 {{ this.name }}: {{ this.name }},
                 {{/each}}
             )
