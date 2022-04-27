@@ -7,21 +7,10 @@ const path = require("path");
 const { Command } = require("commander");
 const inquirer = require("inquirer");
 const chalk = require("chalk");
-const colorize = require("json-colorizer");
 const ora = require("ora");
 const { MakeFresh } = require("./fresh");
-const generateProject = require("./generate-project");
-const generateWebAssets = require("./generate-web");
-const { isExists } = require("./helpers");
 const carlton = require("./carlton");
-
-const colorizeOptions = {
-  pretty: true,
-  colors: {
-    STRING_KEY: "blue.bold",
-    STRING_LITERAL: "green"
-  }
-};
+const startCommand = require("./start");
 
 const program = new Command();
 const spinner = ora();
@@ -58,7 +47,7 @@ async function main() {
       "emulator"
     )
     .option("-c, --claim", "Generate a claim key for each NFT")
-    .action(batchMintNFT);
+    .action(mint);
 
   program
     .command("inspect <token-id>")
@@ -130,73 +119,7 @@ async function main() {
 // ---- command action functions
 
 async function start() {
-  const ui = new inquirer.ui.BottomBar();
-
-  ui.log.write(chalk.greenBright("Initializing new project. 🍃\n"));
-
-  const questions = [
-    {
-      type: "input",
-      name: "projectName",
-      message: "Name your new project:",
-      validate: async function (input) {
-        if (!input) {
-          return "Please enter a name for your project.";
-        }
-
-        const exists = await isExists(input);
-
-        if (exists) {
-          return "A project with that name already exists.";
-        }
-        return true;
-      }
-    },
-    {
-      type: "input",
-      name: "contractName",
-      message: "Name the NFT contract (eg. MyNFT): ",
-      validate: async function (input) {
-        if (!input) {
-          return "Please enter a name for your contract.";
-        }
-
-        return true;
-      }
-    }
-  ];
-
-  const answers = await inquirer.prompt(questions);
-
-  spinner.start("Generating project files...");
-
-  const formattedContractName = answers.contractName
-    // Remove spaces from the contract name.
-    .replace(/\s*/g, "")
-    .trim()
-    .split(" ")
-    // Ensure title-case
-    .map((word) => word[0].toUpperCase() + word.slice(1))
-    .join(" ");
-
-  await generateProject(answers.projectName, formattedContractName);
-  await generateWebAssets(answers.projectName, formattedContractName);
-
-  spinner.succeed(
-    `✨ Project initialized in ${chalk.white(`./${answers.projectName}\n`)}`
-  );
-
-  ui.log.write(
-    `Use: ${chalk.magentaBright(
-      `cd ./${answers.projectName}`
-    )} to view your new project's files.\n`
-  );
-
-  ui.log.write(
-    `Open ${chalk.blueBright(
-      `./${answers.projectName}/README.md`
-    )} to learn how to use your new project!`
-  );
+  await startCommand(spinner)
 }
 
 async function deploy({ network }) {
@@ -206,7 +129,7 @@ async function deploy({ network }) {
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
-async function batchMintNFT({ network, data, claim }) {
+async function mint({ network, data, claim }) {
   const fresh = await MakeFresh(network);
 
   const answer = await inquirer.prompt({
@@ -224,7 +147,7 @@ async function batchMintNFT({ network, data, claim }) {
     claim,
     (nft) => {
       if (nft.skipped) {
-        spinner.warn(`Skipping NFT because it already exists.`);
+        spinner.warn("Skipping NFT because it already exists.");
         return;
       }
 
@@ -257,21 +180,21 @@ async function removeDrop({ network }) {
 
 async function getNFT(tokenId, { network }) {
   spinner.start(`Getting NFT data ...`);
+
   const fresh = await MakeFresh(network);
   const nft = await fresh.getNFT(tokenId);
 
+  spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
+
   const output = [
-    ["Token ID:", chalk.green(nft.tokenId)],
-    ["Owner Address:", chalk.yellow(nft.ownerAddress)],
-    ["Metadata Address:", chalk.blue(nft.metadataURI)],
-    ["Metadata Gateway URL:", chalk.blue(nft.metadataGatewayURL)]
+    ["Token ID:", chalk.green(nft.id)],
+    ["Owner Address:", chalk.yellow(nft.owner)],
+    ["Name:", chalk.blue(nft.name)],
+    ["Description:", chalk.blue(nft.description)],
+    ["Image:", chalk.blue(nft.image)]
   ];
 
   alignOutput(output);
-
-  console.log("NFT Metadata:");
-  console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions));
-  spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
 }
 
 async function dumpNFTs(csvPath) {

@@ -39,23 +39,27 @@ class FlowMinter {
     return amount;
   }
 
-  async mint(metadata) {
+  async mint(fields) {
     return await this.flow.transaction(
       "./cadence/transactions/mint.cdc",
       `${this.network}-account`,
-      [
-        { type: t.String, value: metadata },
-      ]
+      fields.map(field => ({
+        type: field.type.type, 
+        value: field.type.toArgument(field.value)
+      }))
     );
   }
 
-  async mintWithClaimKey(metadata, publicKey) {
+  async mintWithClaimKey(publicKey, fields) {
     return await this.flow.transaction(
       "./cadence/transactions/airdrop/mint.cdc",
       `${this.network}-account`,
       [
-        { type: t.String, value: metadata },
-        { type: t.String, value: publicKey }
+        { type: t.String, value: publicKey },
+        ...fields.map(field => ({
+          type: field.type.type, 
+          value: field.type.toArgument(field.value)
+        }))
       ]
     );
   }

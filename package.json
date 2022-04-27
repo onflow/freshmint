@@ -32,7 +32,6 @@
     "fs-extra": "^10.0.0",
     "handlebars": "^4.7.7",
     "inquirer": "^8.0.0",
-    "json-colorizer": "^2.2.2",
     "multiformats": "^9.5.1",
     "mute-stdout": "^2.0.0",
     "nebulus": "0.0.11",

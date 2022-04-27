@@ -1,7 +1,14 @@
 import NonFungibleToken from "../contracts/NonFungibleToken.cdc"
 import {{ name }} from "../contracts/{{ name }}.cdc"
 
-transaction(metadata: String) {
+transaction(
+    name: String,
+    description: String,
+    image: String,
+    {{#each customFields}}
+    {{ this.name }}: {{ this.type.toCadence }},
+    {{/each}}
+) {
     
     let admin: &{{ name }}.Admin
     let receiver: &{NonFungibleToken.CollectionPublic}
@@ -17,7 +24,14 @@ transaction(metadata: String) {
     }
 
     execute {
-        let token <- self.admin.mintNFT(metadata: metadata)
+        let token <- self.admin.mintNFT(
+            name: name,
+            description: description,
+            image: image,
+            {{#each customFields}}
+            {{ this.name }}: {{ this.name }},
+            {{/each}}
+        )
         
         self.receiver.deposit(token: <- token)
     }
