@@ -23,6 +23,8 @@ class FlowCliWrapper {
 
     if (network === "testnet") {
       configs.push("flow.testnet.json");
+    } else if (network === "mainnet") {
+      configs.push("flow.mainnet.json");
     }
 
     this.network = network;
