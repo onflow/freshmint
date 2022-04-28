@@ -16,7 +16,7 @@
     "cids": "^1.1.9",
     "elliptic": "^6.5.4",
     "ipfs-only-hash": "^4.0.0",
-    "next": "^12.0.1",
+    "next": "^12.1.5",
     "next-seo": "^4.28.1",
     "nft.storage": "^3.3.0",
     "react": "17.0.2",
