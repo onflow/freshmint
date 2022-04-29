@@ -7,14 +7,26 @@ import claimNft from "../../flow/airdrop/claim_nft";
 import AirDropButton from "./AirDropButton";
 
 export default function AirDrop({ dropAddress, nftId, privateKey }) {
+
   const router = useRouter();
 
-  const user = useCurrentUser();
+  const currentUser = useCurrentUser();
 
   const [status, setStatus] = useState({ isLoading: false, error: "" });
 
+  async function getCurrentUserOrLogIn(currentUser) {
+    if (!currentUser.loggedIn) {
+      await fcl.logIn();
+      return await fcl.currentUser().snapshot();
+    }
+
+    return currentUser;
+  }
+
   async function claim() {
     setStatus({ isLoading: true });
+
+    const user = await getCurrentUserOrLogIn(currentUser);
 
     let txId;
 
