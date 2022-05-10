@@ -99,7 +99,7 @@ async function main() {
     )
     .option(
       "-n, --network <network>",
-      "Networtk to mint to. Either 'emulator', 'testnet' or 'mainnet'",
+      "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
       "emulator"
     )
     .action(pin);
