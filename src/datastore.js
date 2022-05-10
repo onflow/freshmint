@@ -32,12 +32,15 @@ class DataStore {
 
   async update(selector, value) {
     const result = await this.db.find({ selector });
+    
     if (!result.docs.length) {
       console.log(`No document found for selector ${selector}`);
       return null;
     }
+    
     const doc = result.docs[0];
     const keys = Object.keys(value);
+
     for (const key of keys) {
       doc[key] = value[key];
     }

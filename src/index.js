@@ -91,14 +91,18 @@ async function main() {
     .action(removeDrop);
 
   program
-    .command("pin <token-id>")
-    .description('"pin" the data for an NFT to a remote IPFS Pinning Service')
+    .command("pin [token-id]")
+    .description("Pin NFT metadata to a remote IPFS pinning service")
+    .option(
+      "-a, --all",
+      "Pin all minted NFTs",
+    )
     .option(
       "-n, --network <network>",
-      "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
+      "Networtk to mint to. Either 'emulator', 'testnet' or 'mainnet'",
       "emulator"
     )
-    .action(pinNFTData);
+    .action(pin);
 
   program
     .command("fund-account <address>")
@@ -224,16 +228,37 @@ async function dumpNFTs(csvPath) {
   spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
 }
 
-async function pinNFTData(tokenId, { network }) {
+async function pin(tokenId, { network, all }) {
   const fresh = new Fresh(network);
 
-  await fresh.pinTokenData(
+  if (!tokenId) {
+    if (all) {
+      const count = await fresh.pinAllNFTs(
+        (id) => spinner.start(`Pinning NFT ${id}...`),
+        (id) => spinner.succeed(`📌 Pinned NFT ${id}`),
+        (id, fieldName) => spinner.start(`Pinning NFT ${id}, ${fieldName} field...`),
+        (id, fieldName) => {},
+      );
+
+      if (count > 0) {
+        console.log(`🌿 Pinned data for ${chalk.green(count)} NFTs`);
+      } else {
+        console.log("🌿 All NFTs have already been pinned.")
+      }
+
+      return
+    }
+
+    console.error("Error: missing required argument 'token-id'\n\nAlternatively, you can use 'fresh pin --all' to pin all tokens.")
+  }
+
+  await fresh.pinNFT(
     tokenId,
     (fieldName) => spinner.start(`Pinning ${fieldName}...`),
     (fieldName) => spinner.succeed(`📌 ${fieldName} was pinned!`),
   );
 
-  console.log(`🌿 Pinned all data for token ${chalk.green(tokenId)}`);
+  console.log(`🌿 Pinned all data for NFT ${chalk.green(tokenId)}`);
 }
 
 async function fundAccount(address, { network }) {

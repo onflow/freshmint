@@ -163,6 +163,15 @@ class Fresh {
     }
   }
 
+  async getUnpinnedNFTs() {
+    const nfts = await this.datastore.find({ pinned: false });
+
+    return nfts.map(nft => ({
+      id: nft.tokenId,
+      metadata: nft.metadata
+    }))
+  }
+
   async getNFTMetadata(tokenId) {
     const { metadata } = await this.getNFT(tokenId)
 
@@ -276,16 +285,41 @@ class Fresh {
    * Fails if no token with the given id exists, or if pinning fails.
    */
 
-  async pinTokenData(tokenId, onStart, onComplete) {
+  async pinNFT(tokenId, onStart, onComplete) {
     const { metadata } = await this.getNFT(tokenId);
 
     await this.metadata.pin(
-      metadata, 
-      onStart, 
+      metadata,
+      onStart,
       onComplete
     )
 
     await this.datastore.update({ tokenId }, { pinned: true });
+  }
+
+  async pinAllNFTs(
+    onStartNFT,
+    onCompleteNFT,
+    onStartField,
+    onCompleteField
+  ) {
+    const nfts = await this.getUnpinnedNFTs();
+
+    for (const nft of nfts) {
+      onStartNFT(nft.id)
+
+      await this.metadata.pin(
+        nft.metadata,
+        (field) => onStartField(nft.id, field),
+        (field) => onCompleteField(nft.id, field),
+      )
+
+      await this.datastore.update({ tokenId: nft.tokenId }, { pinned: true });
+
+      onCompleteNFT(nft.id)
+    }
+
+    return nfts.length
   }
 }
 
