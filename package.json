@@ -1,13 +1,13 @@
 {
-  "name": "@onflow/freshmint",
-  "version": "3.0.0-alpha.2",
+  "name": "freshmint",
+  "version": "0.0.15",
   "description": "The minty fresh way to launch an NFT project.",
-  "author": "Mackenzie Kieran",
   "contributors": [
+    "Mackenzie Kieran",
     "Peter Siemens <peterjsiemens@gmail.com>"
   ],
   "license": "MIT",
-  "repository": "github:onflow/freshmint",
+  "repository": "github:packagelabs/freshmint",
   "keywords": [
     "nft",
     "blockchain"
