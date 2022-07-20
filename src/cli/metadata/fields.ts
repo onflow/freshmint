@@ -1,15 +1,22 @@
-const t = require("@onflow/types");
+// @ts-ignore
+import * as t from "@onflow/types";
 
-const toNumber = (v) => Number(v)
+const toNumber = (v: string) => Number(v)
 
 class FieldType {
+  name: string;
+  label: string;
+  cadenceType: any;
+  toCadence: any;
+  placeholder: string;
+  toArgument: (v: string) => any;
 
   constructor(
-    name,
-    label,
-    cadenceType,
-    placeholder,
-    toArgument = (v) => v,
+    name: string,
+    label: string,
+    cadenceType: any,
+    placeholder: string,
+    toArgument: (v: string) => any = (v: string) => v,
   ) {
     this.name = name
     this.label = label
@@ -19,19 +26,21 @@ class FieldType {
     this.toArgument = toArgument
   }
 
-  getValue(fieldName, metadata) {
+  getValue(fieldName: string | number, metadata: { [x: string]: any; }) {
     return metadata[fieldName]
   }
 }
 
 class Field {
+  name: any;
+  type: any;
 
-  constructor(name, type) {
+  constructor(name: any, type: any) {
     this.name = name
     this.type = type;
   }
 
-  getValue(metadata) {
+  getValue(metadata: any) {
     return this.type.getValue(this.name, metadata)
   }
 }
@@ -42,7 +51,7 @@ class IPFSMetadataFieldType extends FieldType {
     super("ipfs-metadata", "IPFS Metadata", t.String, "");
   }
 
-  getValue(fieldName, metadata) {
+  getValue(fieldName: string, metadata: { image: any; attributes: string; }) {
     if (!metadata.image) {
       throw new Error(
         "Error generating metadata, must supply an 'image' property"
@@ -98,16 +107,16 @@ const validFieldTypes = [
   UFix64
 ]
 
-const fieldTypesByName = validFieldTypes.reduce(
+const fieldTypesByName: {[key: string]: FieldType} = validFieldTypes.reduce(
   (fields, field) => ({ [field.name]: field, ...fields }),
   {}
 )
 
-function getFieldTypeByName(name) {
+function getFieldTypeByName(name: string) {
   return fieldTypesByName[name]
 }
 
-function parseFields(fields) {
+function parseFields(fields: any[]) {
   return fields.map((field) => {
     const name = field.name
     const type = getFieldTypeByName(field.type)
@@ -116,7 +125,7 @@ function parseFields(fields) {
   })
 }
 
-module.exports = {
+export {
   Field,
 
   IPFSMetadata,
@@ -135,6 +144,6 @@ module.exports = {
   Fix64,
   UFix64,
 
-  fieldTypes: validFieldTypes,
+  validFieldTypes as fieldTypes,
   parseFields
 }

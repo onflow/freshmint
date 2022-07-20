@@ -1,9 +1,9 @@
-const fs = require("fs-extra");
-const path = require("path");
-const Handlebars = require("handlebars");
-const { writeFile } = require("./helpers");
+import * as fs from "fs-extra";
+import * as path from "path";
+import * as Handlebars from "handlebars";
+import { writeFile } from "./helpers";
 
-async function generateWebAssets(dir, name) {
+export default async function generateWebAssets(dir: string, name: string) {
   await fs.copy(path.resolve(__dirname, "templates/web"), dir);
 
   const packageJSON = await fs.readFile(
@@ -40,5 +40,3 @@ async function generateWebAssets(dir, name) {
     replaceImportsScriptTemplate({ name })
   );
 }
-
-module.exports = generateWebAssets;

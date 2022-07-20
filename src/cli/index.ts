@@ -3,15 +3,16 @@
 // This file contains the main entry point for the command line `fresh` app, and the command line option parsing code.
 // See fresh.js for the core functionality.
 
-const path = require("path");
-const { Command } = require("commander");
+import * as path from 'path';
+import { Command } from "commander";
+import ora from "ora";
+import chalk from "chalk";
+import ProgressBar from "progress";
+import Fresh from "./fresh";
+import carlton from "./carlton";
+import startCommand from "./start";
+
 const inquirer = require("inquirer");
-const chalk = require("chalk");
-const ora = require("ora");
-const ProgressBar = require("progress");
-const Fresh = require("./fresh");
-const carlton = require("./carlton");
-const startCommand = require("./start");
 
 const program = new Command();
 const spinner = ora();
@@ -68,6 +69,11 @@ async function main() {
   program
     .command("dump <csv-path>")
     .description("dump all token metadata to a file")
+    .option(
+      "-n, --network <network>",
+      "Network to use. Either 'emulator', 'testnet' or 'mainnet'",
+      "emulator"
+    )
     .action(dumpNFTs);
 
   program
@@ -132,14 +138,14 @@ async function start() {
   await startCommand(spinner)
 }
 
-async function deploy({ network }) {
+async function deploy({ network }: { network: string }) {
   spinner.start(`Deploying project to ${network} ...`);
   const fresh = new Fresh(network);
   await fresh.deployContracts();
   spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
-async function mint({ network, data, claim, batchSize }) {
+async function mint({ network, data, claim, batchSize }: { network: string, data: string, claim: boolean, batchSize: string }) {
   const fresh = new Fresh(network);
 
   const answer = await inquirer.prompt({
@@ -154,12 +160,12 @@ async function mint({ network, data, claim, batchSize }) {
 
   spinner.start("Checking for duplicate NFTs ...\n");
 
-  let bar;
+  let bar: ProgressBar;
 
   await fresh.createNFTsFromCSVFile(
     data,
     claim,
-    (total, skipped, batchCount, batchSize) => {
+    (total: number, skipped: number, batchCount: number, batchSize: number) => {
       if (skipped) {
         spinner.info(`Skipped ${skipped} NFTs because they already exist.\n`);
       } else {
@@ -179,31 +185,31 @@ async function mint({ network, data, claim, batchSize }) {
 
       bar.tick(0);
     },
-    (batchSize) => {
+    (batchSize: number) => {
       bar.tick(batchSize)
     },
-    (error) => {
+    (error: Error) => {
       bar.interrupt(error.message)
     },
     Number(batchSize),
   );
 }
 
-async function startDrop(price, { network }) {
+async function startDrop(price: string, { network }: { network: string }) {
   spinner.start(`Creating drop ...`);
   const fresh = new Fresh(network);
   await fresh.startDrop(price);
   spinner.succeed(`✨ Success! Your drop is live. ✨`);
 }
 
-async function removeDrop({ network }) {
+async function removeDrop({ network }: { network: string }) {
   spinner.start(`Removing drop ...`);
   const fresh = new Fresh(network);
   await fresh.removeDrop();
   spinner.succeed(`✨ Success! Drop removed. ✨`);
 }
 
-async function getNFT(tokenId, { network }) {
+async function getNFT(tokenId: string, { network }: { network: string }) {
   spinner.start(`Getting NFT data ...`);
 
   const fresh = new Fresh(network);
@@ -221,23 +227,23 @@ async function getNFT(tokenId, { network }) {
   alignOutput(output);
 }
 
-async function dumpNFTs(csvPath) {
-  const fresh = new Fresh();
+async function dumpNFTs(csvPath: string, { network }: { network: string }) {
+  const fresh = new Fresh(network);
   const count = await fresh.dumpNFTs(csvPath);
   
   spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
 }
 
-async function pin(tokenId, { network, all }) {
+async function pin(tokenId: string, { network, all }: { network: string, all: boolean }) {
   const fresh = new Fresh(network);
 
   if (!tokenId) {
     if (all) {
       const count = await fresh.pinAllNFTs(
-        (id) => spinner.start(`Pinning NFT ${id}...`),
-        (id) => spinner.succeed(`📌 Pinned NFT ${id}`),
-        (id, fieldName) => spinner.start(`Pinning NFT ${id}, ${fieldName} field...`),
-        (id, fieldName) => {},
+        (id: string) => spinner.start(`Pinning NFT ${id}...`),
+        (id: string) => spinner.succeed(`📌 Pinned NFT ${id}`),
+        (id: string, fieldName: string) => spinner.start(`Pinning NFT ${id}, ${fieldName} field...`),
+        (id: string, fieldName: string) => {},
       );
 
       if (count > 0) {
@@ -254,14 +260,14 @@ async function pin(tokenId, { network, all }) {
 
   await fresh.pinNFT(
     tokenId,
-    (fieldName) => spinner.start(`Pinning ${fieldName}...`),
-    (fieldName) => spinner.succeed(`📌 ${fieldName} was pinned!`),
+    (fieldName: string) => spinner.start(`Pinning ${fieldName}...`),
+    (fieldName: string) => spinner.succeed(`📌 ${fieldName} was pinned!`),
   );
 
   console.log(`🌿 Pinned all data for NFT ${chalk.green(tokenId)}`);
 }
 
-async function fundAccount(address, { network }) {
+async function fundAccount(address: string, { network }: { network: string }) {
   spinner.start("Funding account  ...");
   const fresh = new Fresh(network);
   const result = await fresh.fundAccount(address);
@@ -290,7 +296,7 @@ async function fundAccount(address, { network }) {
 //   return inquirer.prompt(questions);
 // }
 
-function alignOutput(labelValuePairs) {
+function alignOutput(labelValuePairs: any[]) {
   const maxLabelLength = labelValuePairs
     .map(([l, _]) => l.length)
     .reduce((len, max) => (len > max ? len : max));

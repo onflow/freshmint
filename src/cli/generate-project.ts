@@ -1,14 +1,15 @@
-const fs = require("fs-extra");
-const path = require("path");
-const Handlebars = require("handlebars");
-const generateWebAssets = require("./generate-web");
-const { writeFile } = require("./helpers");
+import * as fs from "fs-extra";
+import * as path from "path";
+import * as Handlebars from "handlebars";
+import { writeFile } from "./helpers";
+import generateWebAssets from "./generate-web";
+import { Field } from "./metadata/fields";
 
-async function generateProject(
-  projectName,
-  contractName,
-  onChainMetadata,
-  fields
+export default async function generateProject(
+  projectName: string,
+  contractName: string,
+  onChainMetadata: boolean,
+  fields: Field[]
 ) {
 
   await createScaffold(projectName);
@@ -64,7 +65,7 @@ async function generateProject(
   await createReadme(projectName, contractName);
 }
 
-async function createScaffold(dir) {
+async function createScaffold(dir: string) {
   await fs.copy(
     path.resolve(__dirname, "templates/assets"),
     path.resolve(dir, "assets")
@@ -208,12 +209,12 @@ const createFlowMainnetConfig = template(
 
 const createReadme = template("templates/README.md", "README.md");
 
-async function createWebAssets(dir, name) {
+async function createWebAssets(dir: string, name: string) {
   await generateWebAssets(dir, name);
 }
 
-function template(src, out) {
-  return async (dir, name, fields = {}) => {
+function template(src: string, out: string) {
+  return async (dir: string, name: string, fields = {}) => {
     const templateSource = await fs.readFile(
       path.resolve(__dirname, src),
       "utf8"

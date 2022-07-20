@@ -1,12 +1,13 @@
-const { IPFSImage, IPFSMetadata } = require("./fields")
+import { Field, IPFSImage, IPFSMetadata } from "./fields";
 
-class MetadataPinner {
+export default class MetadataPinner {
+  ipfs: any;
 
-  constructor(ipfs) {
+  constructor(ipfs: any) {
     this.ipfs = ipfs
   }
 
-  async pin(fields, metadata, onStart, onComplete) {
+  async pin(fields: any, metadata: { [x: string]: any; }, onStart: (fieldName: string) => void, onComplete: (fieldName: string) => void) {
     for (const field of fields) {
       const value = metadata[field.name]
 
@@ -14,7 +15,7 @@ class MetadataPinner {
     }
   }
 
-  async pinField(field, value, onStart, onComplete) {
+  async pinField(field: Field, value: any, onStart: (fieldName: string) => void, onComplete: (fieldName: string) => void) {
     const cid = value
 
     switch (field.type) {
@@ -27,13 +28,13 @@ class MetadataPinner {
     }
   }
 
-  async pinIpfsFile(field, cid, onStart, onComplete) {    
+  async pinIpfsFile(field: Field, cid: any, onStart: (fieldName: string) => void, onComplete: (fieldName: string) => void) {    
     onStart(field.name)
     await this.ipfs.pin(cid)
     onComplete(field.name)
   }
   
-  async pinIpfsMetadata(cid, onStart, onComplete) {  
+  async pinIpfsMetadata(cid: string, onStart: any, onComplete: any) {  
     const metadata = await this.ipfs.fetchJson(cid)
   
     if (metadata.image) {

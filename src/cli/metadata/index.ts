@@ -1,8 +1,8 @@
-const { IPFSImage, String, IPFSMetadata, Field } = require("./fields");
-const MetadataLoader = require("./loader");
-const MetadataParser = require("./parser");
-const MetadataPinner = require("./pinner");
-const MetadataProcessor = require("./processor");
+import { IPFSImage, String, IPFSMetadata, Field } from "./fields";
+import MetadataLoader from "./loader";
+import MetadataParser from "./parser";
+import MetadataPinner from "./pinner";
+import MetadataProcessor from "./processor";
 
 const onChainFields = [
   new Field("name", String),
@@ -14,9 +14,14 @@ const offChainFields = [
   new Field("metadata", IPFSMetadata)
 ]
 
-class Metadata {
+export default class Metadata {
+  fields: any;
+  parser: MetadataParser;
+  processor: MetadataProcessor;
+  pinner: MetadataPinner;
+  loader: MetadataLoader;
 
-  constructor(config, ipfs) {
+  constructor(config: { onChainMetadata: boolean; metadataFields: any; nftAssetPath: string }, ipfs: any) {
     this.fields = config.onChainMetadata ? 
       config.metadataFields :
       offChainFields
@@ -27,7 +32,7 @@ class Metadata {
     this.loader = new MetadataLoader(ipfs)
   }
 
-  static getDefaultFields(onChainMetadata, customFields) {
+  static getDefaultFields(onChainMetadata: boolean, customFields: any) {
     if (onChainMetadata) {
       return [
         ...onChainFields,
@@ -38,19 +43,19 @@ class Metadata {
     return offChainFields
   }
 
-  async parse(csvPath) {
+  async parse(csvPath: string) {
     return this.parser.parse(this.fields, csvPath)
   }
 
-  async process(metadata) {
+  async process(metadata: any) {
     return this.processor.process(this.fields, metadata)
   }
 
-  async pin(metadata, onStart, onComplete) {
+  async pin(metadata: any, onStart: any, onComplete: any) {
     return this.pinner.pin(this.fields, metadata, onStart, onComplete)
   }
 
-  async load(metadata) {
+  async load(metadata: any) {
     return this.loader.load(this.fields, metadata)
   }
 }

@@ -1,13 +1,16 @@
-const PouchDB = require("pouchdb");
+import PouchDB from "pouchdb";
+
 PouchDB.plugin(require("pouchdb-find"));
 
-class DataStore {
+export default class DataStore {
   
-  constructor(name, options) {
+  db: PouchDB.Database<{}>;
+  
+  constructor(name: string, options?: PouchDB.AdapterWebSql.Configuration) {
     this.db = new PouchDB(name, options)
   }
 
-  async find(selector) {
+  async find(selector: any) {
     const result = await this.db.find({ selector });
     return result.docs;
   }
@@ -20,17 +23,17 @@ class DataStore {
 
     return result.rows
       .map(row => row.doc)
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         return parseInt(a.tokenId, 10) - parseInt(b.tokenId, 10);
       })
   }
 
-  async save(value) {
+  async save(value: any) {
     // Creates a new document with an auto-generated _id
     return await this.db.post(value);
   }
 
-  async update(selector, value) {
+  async update(selector: any, value: any) {
     const result = await this.db.find({ selector });
     
     if (!result.docs.length) {
@@ -38,7 +41,7 @@ class DataStore {
       return null;
     }
     
-    const doc = result.docs[0];
+    const doc: any = result.docs[0];
     const keys = Object.keys(value);
 
     for (const key of keys) {

@@ -1,22 +1,28 @@
-const decode = require("@onflow/decode").decode;
-const util = require("util");
+import * as util from "util";
 const exec = util.promisify(require("child_process").exec);
 
-function escapeForShell(s) {
+// @ts-ignore
+import { decode } from "@onflow/decode";
+
+function escapeForShell(s: string) {
   return '"'+s.replace(/(["$`\\])/g,'\\$1')+'"';
 };
 
-function formatArgString(args) {
+function formatArgString(args: any[]) {
   const cadenceArgs = args.map((v) => v.type.asArgument(v.value));
   return escapeForShell(JSON.stringify(cadenceArgs));
 }
 
-function formatConfigString(configs) {
+function formatConfigString(configs: string[]) {
   return configs.map((c) => `-f ${c}`).join(" ");
 }
 
-class FlowCliWrapper {
-  constructor(network) {
+export default class FlowCliWrapper {
+
+  network: string;
+  configs: string[];
+
+  constructor(network: string) {
     if (!network) network = "emulator";
 
     let configs = ["flow.json"];
@@ -50,7 +56,7 @@ class FlowCliWrapper {
     return JSON.parse(out);
   }
 
-  async transaction(path, signer, args) {
+  async transaction(path: string, signer: string, args: any[]) {
     const argString = formatArgString(args);
     const configString = formatConfigString(this.configs);
 
@@ -78,7 +84,7 @@ class FlowCliWrapper {
     return result;
   }
 
-  async script(path, args) {
+  async script(path: string, args: any[]) {
     const argString = formatArgString(args);
     const configString = formatConfigString(this.configs);
 
@@ -101,5 +107,3 @@ class FlowCliWrapper {
     return await decode(result);
   }
 }
-
-module.exports = FlowCliWrapper;

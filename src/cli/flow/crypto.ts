@@ -1,50 +1,56 @@
-const elliptic = require("elliptic")
-const { SHA3 } = require("sha3")
+import * as elliptic from "elliptic";
+import { SHA3 } from "sha3";
+import { createHash } from "crypto";
 
 const ECDSA_P256 = new elliptic.ec("p256")
 const ECDSA_secp256k1 = new elliptic.ec("secp256k1")
 
 const bufferEndianness = "be"
 
-const signatureAlgorithms = {
+export const signatureAlgorithms = {
   ECDSA_P256: "ECDSA_P256",
   ECDSA_secp256k1: "ECDSA_secp256k1"
 }
 
-function getEC(sigAlgo) {
+function getEC(sigAlgo: string) {
   switch (sigAlgo) {
     case signatureAlgorithms.ECDSA_P256:
       return ECDSA_P256
     case signatureAlgorithms.ECDSA_secp256k1:
       return ECDSA_secp256k1
   }
+
+  throw "invalid signature algorithm"
 }
 
-class ECPrivateKey {
+export class ECPrivateKey {
 
-  constructor(ecKeyPair, sigAlgo) {
+  ecKeyPair: any
+  sigAlgo: any
+
+  constructor(ecKeyPair: any, sigAlgo: any) {
     this.ecKeyPair = ecKeyPair
     this.sigAlgo = sigAlgo
   }
 
-  static generate(sigAlgo) {
+  static generate(sigAlgo: string) {
     const ec = getEC(sigAlgo)
     const ecKeyPair = ec.genKeyPair()
     return new ECPrivateKey(ecKeyPair, sigAlgo)
   }
 
-  static fromBuffer(buffer, sigAlgo) {
+  static fromBuffer(buffer: Buffer, sigAlgo: string) {
     const ec = getEC(sigAlgo)
     const ecKeyPair = ec.keyFromPrivate(buffer)
     return new ECPrivateKey(ecKeyPair, sigAlgo)
   }
 
-  static fromHex(hex, sigAlgo) {
+  static fromHex(hex: string, sigAlgo: string) {
     const buffer = Buffer.from(hex, "hex")
     return ECPrivateKey.fromBuffer(buffer, sigAlgo)
   }
 
-  sign(digest) {
+  sign(digest: string) {
     const ecSignature = this.ecKeyPair.sign(digest)
     return new ECSignature(ecSignature)
   }
@@ -67,9 +73,10 @@ class ECPrivateKey {
   }
 }
 
-class ECPublicKey {
+export class ECPublicKey {
+  ecPublicKey: any
 
-  constructor(ecPublicKey) {
+  constructor(ecPublicKey: string) {
     this.ecPublicKey = ecPublicKey
   }
 
@@ -83,17 +90,21 @@ class ECPublicKey {
 
     return Buffer.concat([x, y])
   }
+  static size(Buffer: BufferConstructor, bufferEndianness: string, size: any) {
+    throw new Error("Method not implemented.")
+  }
 
   toHex() {
     return this.toBuffer().toString("hex")
   }
 }
 
-class ECSignature {
+export class ECSignature {
 
   static n = 32
+  ecSignature: any
 
-  constructor(ecSignature) {
+  constructor(ecSignature: any) {
     this.ecSignature = ecSignature
   }
 
@@ -117,32 +128,35 @@ class ECSignature {
   }
 }
 
-class ECSigner {
+export class ECSigner {
+  privateKey: any
+  hasher: SHA2_256Hasher | SHA3_256Hasher
 
-  constructor(privateKey, hashAlgo) {
+  constructor(privateKey: any, hashAlgo: string) {
     this.privateKey = privateKey
     this.hasher = getHasher(hashAlgo)
   }
 
-  sign(message) {
+  sign(message: Buffer) {
     const digest = this.hasher.hash(message)
     return this.privateKey.sign(digest)
   }
 }
 
-const hashAlgorithms = {
+export const hashAlgorithms = {
   SHA2_256: "SHA2_256",
   SHA3_256: "SHA3_256",
 }
 
 class SHA2_256Hasher {
   static shaType = "sha256"
+  sha: any
 
   constructor() {
     this.sha = createHash(SHA2_256Hasher.shaType)
   }
 
-  hash(message) {
+  hash(message: Buffer) {
     this.sha.update(message)
     return this.sha.digest()
   }
@@ -150,31 +164,26 @@ class SHA2_256Hasher {
 
 class SHA3_256Hasher {
 
-  static size = 256
+  static size: 256;
+  sha: any
 
   constructor() {
     this.sha = new SHA3(SHA3_256Hasher.size)
   }
 
-  hash(message) {
+  hash(message: Buffer) {
     this.sha.update(message)
     return this.sha.digest()
   }
 }
 
-function getHasher(hashAlgo) {
+function getHasher(hashAlgo: string) {
   switch (hashAlgo) {
     case hashAlgorithms.SHA2_256:
       return new SHA2_256Hasher()
     case hashAlgorithms.SHA3_256:
       return new SHA3_256Hasher()
   }
-}
 
-module.exports = {
-  ECPrivateKey,
-  ECPublicKey,
-  ECSigner,
-  signatureAlgorithms,
-  hashAlgorithms
+  throw "invalid hash algorithm"
 }

@@ -1,16 +1,22 @@
-const path = require("path")
+import * as path from "path";
 
-const { IPFSImage, IPFSMetadata } = require("./fields")
+import { Field, IPFSImage, IPFSMetadata } from "./fields";
 
-class MetadataProcessor {
+export default class MetadataProcessor {
+  config: { 
+    onChainMetadata: boolean;
+    metadataFields: any;
+    nftAssetPath: string;
+  };
+  ipfs: any;
 
-  constructor(config, ipfs) {
+  constructor(config: { onChainMetadata: boolean; metadataFields: any; nftAssetPath: string }, ipfs: any) {
     this.config = config
     this.ipfs = ipfs
   }
 
-  async process(fields, metadata) {
-    const values = {}
+  async process(fields: Field[], metadata: any) {
+    const values: any = {}
 
     for (const field of fields) {
       const value = metadata[field.name]
@@ -24,7 +30,7 @@ class MetadataProcessor {
     return values
   }
 
-  async processField(field, value) {
+  async processField(field: Field, value: any) {
     switch (field.type) {
       case IPFSImage:
         return this.processIpfsFile(value, "images")
@@ -36,8 +42,8 @@ class MetadataProcessor {
   }
 
   async processIpfsFile(
-    filename, 
-    dir, 
+    filename: string, 
+    dir: string, 
     options = { withUriPrefix: false }
   ) {
 
@@ -58,7 +64,7 @@ class MetadataProcessor {
     return cid;
   }
 
-  async processIpfsMetadata(metadata) {
+  async processIpfsMetadata(metadata: any) {
 
     if (metadata.image) {
       const imageUri = await this.processIpfsFile(

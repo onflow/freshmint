@@ -1,10 +1,12 @@
-const path = require("path");
-const dotenv = require('dotenv')
+import * as path from "path";
+import * as dotenv from "dotenv";
 
-const { withPrefix } = require("@onflow/util-address");
-const { parseFields } = require("./metadata/fields");
+// @ts-ignore
+import { withPrefix } from "@onflow/util-address";
 
-function getConfig() {
+import { parseFields } from "./metadata/fields";
+
+export default function getConfig() {
   dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
   // TOOD: inform the user when config is missing
@@ -83,15 +85,13 @@ function getConfig() {
 
 // Expand template variable in flow.json
 // Ref: https://stackoverflow.com/a/58317158/3823815
-function expand(template, data) {
+function expand(template: string, data: any) {
   return template.replace(/\$\{(\w+)\}/g, (_, name) => data[name] || "?");
 }
 
-function getAccount(name, flowConfig) {
+function getAccount(name: string, flowConfig: any) {
   const account = flowConfig.accounts[name];
   const address = withPrefix(expand(account.address, process.env));
 
   return { name, address };
 }
-
-module.exports = getConfig;

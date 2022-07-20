@@ -1,16 +1,23 @@
-const fs = require("fs/promises");
-const path = require("path");
-const { Blob, toGatewayURL } = require("nft.storage");
-const fetch = require("node-fetch");
-const stdout = require('mute-stdout');
+import * as fs from "fs/promises";
+import * as path from "path";
+import fetch from "node-fetch";
 
-class IPFS {
-  constructor(nebulus, ipfsClient) {
+// @ts-ignore
+import { Blob, NFTStorage, toGatewayURL } from "nft.storage";
+
+// @ts-ignore
+import stdout from 'mute-stdout';
+
+export default class IPFS {
+  nebulus: any;
+  ipfsClient: any;
+
+  constructor(nebulus: any, ipfsClient: NFTStorage) {
       this.nebulus = nebulus
       this.ipfsClient = ipfsClient
   }
 
-  async addLocally(data, options = { withUriPrefix: false }) {
+  async addLocally(data: any, options = { withUriPrefix: false }) {
     // Mute noisy nebulus logs
     stdout.mute()
 
@@ -26,7 +33,7 @@ class IPFS {
     return cid
   }
 
-  async pin(cid) {
+  async pin(cid: string) {
     cid = stripIpfsUriPrefix(cid)
 
     const data = await fs.readFile(
@@ -36,7 +43,7 @@ class IPFS {
     return await this.ipfsClient.storeBlob(new Blob([data]));
   }
 
-  async fetchJson(cidOrUri) {
+  async fetchJson(cidOrUri: string) {
     try {
       // Attempt to get local data from the URI
       const metadataBytes = await this.nebulus.get(
@@ -57,14 +64,14 @@ class IPFS {
   }
 }
 
-function stripIpfsUriPrefix(cidOrURI) {
+function stripIpfsUriPrefix(cidOrURI: string) {
   if (cidOrURI.startsWith("ipfs://")) {
     return cidOrURI.slice("ipfs://".length);
   }
   return cidOrURI;
 }
 
-function ensureIpfsUriPrefix(cidOrURI) {
+function ensureIpfsUriPrefix(cidOrURI: string) {
   let uri = cidOrURI.toString()
 
   if (!uri.startsWith("ipfs://")) {

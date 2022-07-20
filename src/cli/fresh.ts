@@ -1,16 +1,30 @@
-const path = require("path");
-const { NFTStorage } = require("nft.storage");
-const Nebulus = require("nebulus");
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-const FlowMinter = require("./flow");
-const DataStore = require("./datastore");
-const getConfig = require("./config");
-const { ECPrivateKey, signatureAlgorithms } = require("./flow/crypto");
-const Metadata = require("./metadata");
-const IPFS = require("./ipfs");
+import * as path from "path";
 
-class Fresh {
-  constructor(network) {
+// @ts-ignore
+import { NFTStorage } from "nft.storage";
+
+// @ts-ignore
+import Nebulus from "nebulus";
+
+import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
+import FlowMinter from "./flow";
+
+import DataStore from "./datastore";
+import getConfig from "./config";
+import { ECPrivateKey, signatureAlgorithms } from "./flow/crypto";
+import Metadata from "./metadata";
+import IPFS from "./ipfs";
+import { Field } from "./metadata/fields";
+
+export default class Fresh {
+
+  network: string;
+  config: any;
+  datastore: any;
+  flowMinter: FlowMinter;
+  metadata: Metadata;
+
+  constructor(network: string) {
     this.network = network
 
     this.config = getConfig()
@@ -48,11 +62,11 @@ class Fresh {
   //////////////////////////////////////////////
 
   async createNFTsFromCSVFile(
-    csvPath,
-    withClaimKey,
-    onStart,
-    onBatchComplete,
-    onError,
+    csvPath: string,
+    withClaimKey: boolean,
+    onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
+    onBatchComplete: (batchSize: number) => void,
+    onError: (error: Error) => void,
     batchSize = 10
   ) {
     await this.flowMinter.setupAccount();
@@ -95,12 +109,12 @@ class Fresh {
           batchFields, 
           withClaimKey
         )
-      } catch(error) {
+      } catch(error: any) {
         onError(error)
         return
       }
 
-      const finalResults = results.map((result, index) => {
+      const finalResults = results.map((result: any, index: number) => {
 
         const { tokenId, txId, claimKey } = result;
 
@@ -124,19 +138,19 @@ class Fresh {
     }
   }
 
-  async nftExists(hash) {
+  async nftExists(hash: string) {
     const exists = await this.datastore.find({ hash });
     return (exists.length !== 0)
   }
 
-  async processTokenBatch(batch) {
-    return await Promise.all(batch.map(async (token) => ({
+  async processTokenBatch(batch: any) {
+    return await Promise.all(batch.map(async (token: any) => ({
       ...token,
       metadata: await this.metadata.process(token.metadata)
     })))
   }
 
-  async createTokenBatch(batchFields, withClaimKey) {
+  async createTokenBatch(batchFields: any, withClaimKey: boolean) {
     if (withClaimKey) {
       return await this.mintTokensWithClaimKey(batchFields);
     }
@@ -148,7 +162,7 @@ class Fresh {
   // -------- NFT Retreival
   //////////////////////////////////////////////
 
-  async getNFT(tokenId) {
+  async getNFT(tokenId: string) {
     const results = await this.datastore.find({ tokenId });
 
     if (results.length === 0) {
@@ -166,13 +180,13 @@ class Fresh {
   async getUnpinnedNFTs() {
     const nfts = await this.datastore.find({ pinned: false });
 
-    return nfts.map(nft => ({
+    return nfts.map((nft: any) => ({
       id: nft.tokenId,
       metadata: nft.metadata
     }))
   }
 
-  async getNFTMetadata(tokenId) {
+  async getNFTMetadata(tokenId: string) {
     const { metadata } = await this.getNFT(tokenId)
 
     return {
@@ -181,7 +195,7 @@ class Fresh {
     }
   }
 
-  async dumpNFTs(csvPath) {
+  async dumpNFTs(csvPath: string) {
     const nfts = await this.datastore.all();
 
     if (nfts.length === 0) {
@@ -204,7 +218,7 @@ class Fresh {
       ]
     });
    
-    const records = nfts.map(nft => {
+    const records = nfts.map((nft: any) => {
       return {
         tokenID: nft.tokenId,
         ...nft.metadata,
@@ -223,12 +237,12 @@ class Fresh {
   // --------- Smart contract interactions
   //////////////////////////////////////////////
 
-  async mintTokens(batchFields) {
+  async mintTokens(batchFields: any[]) {
     const minted = await this.flowMinter.mint(batchFields);
     return formatMintResults(minted);
   }
 
-  async mintTokensWithClaimKey(batchFields) {
+  async mintTokensWithClaimKey(batchFields: any[]) {
 
     const batchSize = batchFields[0].values.length
 
@@ -241,14 +255,14 @@ class Fresh {
 
     const results = formatMintResults(minted);
     
-    return results.map((result, i) => ({
+    return results.map((result: any, i: number) => ({
       txId: result.txId,
       tokenId: result.tokenId,
       claimKey: formatClaimKey(result.tokenId, privateKeys[i])
     }))
   }
 
-  async startDrop(price) {
+  async startDrop(price: string) {
     await this.flowMinter.startQueueDrop(price);
   }
 
@@ -256,9 +270,6 @@ class Fresh {
     await this.flowMinter.removeQueueDrop();
   }
 
-  /**
-   * @returns {string} - the default signing address that should own new tokens, if no owner was specified.
-   */
   defaultOwnerAddress() {
     return this.network === "testnet" ? 
       this.config.testnetFlowAccount.address : 
@@ -267,10 +278,8 @@ class Fresh {
         this.config.emulatorFlowAccount.address);
   }
 
-  /** @returns {Promise<string>} - Amount of tokens funded */
-  async fundAccount(address) {
-    const result = this.flowMinter.fundAccount(address);
-    return result;
+  async fundAccount(address: string) {
+    return this.flowMinter.fundAccount(address);
   }
 
   //////////////////////////////////////////////
@@ -285,7 +294,7 @@ class Fresh {
    * Fails if no token with the given id exists, or if pinning fails.
    */
 
-  async pinNFT(tokenId, onStart, onComplete) {
+  async pinNFT(tokenId: string, onStart: (fieldName: string) => void, onComplete: (fieldName: string) => void) {
     const { metadata } = await this.getNFT(tokenId);
 
     await this.metadata.pin(
@@ -298,10 +307,10 @@ class Fresh {
   }
 
   async pinAllNFTs(
-    onStartNFT,
-    onCompleteNFT,
-    onStartField,
-    onCompleteField
+    onStartNFT: (id: string) => void,
+    onCompleteNFT: (id: string) => void,
+    onStartField: (id: string, fieldName: string) => void,
+    onCompleteField: (id: string, fieldName: string) => void
   ) {
     const nfts = await this.getUnpinnedNFTs();
 
@@ -310,8 +319,8 @@ class Fresh {
 
       await this.metadata.pin(
         nft.metadata,
-        (field) => onStartField(nft.id, field),
-        (field) => onCompleteField(nft.id, field),
+        (fieldName: string) => onStartField(nft.id, fieldName),
+        (fieldName: string) => onCompleteField(nft.id, fieldName),
       )
 
       await this.datastore.update({ tokenId: nft.tokenId }, { pinned: true });
@@ -327,7 +336,7 @@ class Fresh {
 // -------- Crypto helpers
 //////////////////////////////////////////////
 
-function generateKeyPairs(count) {
+function generateKeyPairs(count: number) {
 
   const privateKeys = [];
   const publicKeys = [];
@@ -346,7 +355,7 @@ function generateKeyPairs(count) {
   };
 }
 
-function formatClaimKey(nftId, privateKey) {
+function formatClaimKey(nftId: string, privateKey: string) {
   return `${privateKey}${nftId}`;
 }
 
@@ -354,14 +363,14 @@ function formatClaimKey(nftId, privateKey) {
 // -------- General Helpers
 //////////////////////////////////////////////
 
-function formatMintResults(txOutput) {
-  const deposits = txOutput.events.filter((event) =>
+function formatMintResults(txOutput: any) {
+  const deposits = txOutput.events.filter((event: any) =>
     event.type.includes(".Deposit")
   );
 
-  return deposits.map(deposit => {
+  return deposits.map((deposit: any) => {
     const tokenId = deposit.values.value.fields.find(
-      (f) => f.name === "id"
+      (f: any) => f.name === "id"
     ).value;
   
     return {
@@ -371,7 +380,7 @@ function formatMintResults(txOutput) {
   })
 }
 
-function groupBatchesByField(fields, batches) {
+function groupBatchesByField(fields: Field[], batches: any[]) {
   return fields.map(field => ({
     ...field,
     values: batches.map(batch => batch.metadata[field.name])

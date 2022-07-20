@@ -1,8 +1,14 @@
-const FlowCliWrapper = require("./cli");
-const t = require("@onflow/types");
+// @ts-ignore
+import * as t from "@onflow/types";
 
-class FlowMinter {
-  constructor(network) {
+import FlowCliWrapper from "./cli";
+
+export default class FlowMinter {
+
+  network: string;
+  flow: FlowCliWrapper;
+
+  constructor(network: string) {
     this.network = network || "emulator";
     this.flow = new FlowCliWrapper(this.network);
   }
@@ -19,9 +25,7 @@ class FlowMinter {
     );
   }
 
-  async fundAccount(address, amount) {
-    amount = amount || "10.0";
-
+  async fundAccount(address: string, amount: string = "10.0") {
     await this.flow.transaction(
       "./cadence/transactions/setup_flowtoken.cdc",
       `${this.network}-account`,
@@ -39,7 +43,7 @@ class FlowMinter {
     return amount;
   }
 
-  async mint(fields) {  
+  async mint(fields: any[]) {  
     return await this.flow.transaction(
       "./cadence/transactions/mint.cdc",
       `${this.network}-account`,
@@ -50,7 +54,7 @@ class FlowMinter {
     );
   }
 
-  async mintWithClaimKey(publicKeys, fields) {
+  async mintWithClaimKey(publicKeys: string[], fields: any[]) {
     const args = [
       { type: t.Array(t.String), value: publicKeys },
       ...fields.map(field => ({
@@ -66,7 +70,7 @@ class FlowMinter {
     );
   }
 
-  async startQueueDrop(price) {
+  async startQueueDrop(price: string) {
     return await this.flow.transaction(
       "./cadence/transactions/queue/start_drop.cdc",
       `${this.network}-account`,
@@ -90,11 +94,11 @@ class FlowMinter {
     );
   }
 
-  async transfer(recipient, itemID) {
+  async transfer(recipient: string, nftId: string) {
     // TODO
   }
 
-  async getNFTDetails(address, nftId) {
+  async getNFTDetails(address: string, nftId: string) {
     return await this.flow.script("./cadence/scripts/get_nft.cdc", [
       { type: t.Address, value: address },
       { type: t.UInt64, value: Number(nftId) }

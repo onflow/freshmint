@@ -1,10 +1,12 @@
+import chalk from "chalk";
+import generateProject from "./generate-project";
+import generateWebAssets from "./generate-web";
+import { isExists } from "./helpers";
+import { Field, fieldTypes } from "./metadata/fields";
+import Metadata from "./metadata";
+import { Ora } from "ora";
+
 const inquirer = require("inquirer");
-const chalk = require("chalk");
-const generateProject = require("./generate-project");
-const generateWebAssets = require("./generate-web");
-const { isExists } = require("./helpers");
-const { Field, fieldTypes } = require("./metadata/fields");
-const Metadata = require("./metadata");
 
 const fieldChoices = fieldTypes.map(fieldType => ({
   name: fieldType.label,
@@ -16,7 +18,7 @@ const questions = [
     type: "input",
     name: "projectName",
     message: "Name your new project:",
-    validate: async function (input) {
+    validate: async function (input: string) {
       if (!input) {
         return "Please enter a name for your project.";
       }
@@ -33,7 +35,7 @@ const questions = [
     type: "input",
     name: "contractName",
     message: "Name the NFT contract (eg. MyNFT): ",
-    validate: async function (input) {
+    validate: async function (input: string) {
       if (!input) {
         return "Please enter a name for your contract.";
       }
@@ -46,23 +48,23 @@ const questions = [
     name: "onChainMetadata",
     message: "Metadata format:",
     choices: ["on-chain", "off-chain"],
-    filter: (input) => input === "on-chain"
+    filter: (input: string) => input === "on-chain"
   },
   {
     type: "confirm",
     name: "startCustomFields",
-    when: (answers) => answers.onChainMetadata,
+    when: (answers: any) => answers.onChainMetadata,
     message: "Would you like to define custom NFT fields?"
   }
 ]
 
-function customFieldQuestions(count) {
+function customFieldQuestions(count: number) {
   return [
     {
       type: "input",
       name: "name",
       message: `Custom field ${count} name:`,
-      validate: async function (input) {
+      validate: async function (input: string) {
         if (input !== input.toLowerCase()) {
           return "Fields must be lowercase."
         }
@@ -84,14 +86,14 @@ function customFieldQuestions(count) {
   ]
 }
 
-async function getCustomFields(shouldStart) {
+async function getCustomFields(shouldStart: boolean) {
 
   const customFields = []
 
   let shouldContinue = shouldStart
 
   while (shouldContinue) {
-    const count = customFields.length + 1
+    const count: number = customFields.length + 1
     const customField = await inquirer.prompt(
       customFieldQuestions(count)
     )
@@ -106,7 +108,7 @@ async function getCustomFields(shouldStart) {
   return customFields
 }
 
-async function start(spinner) {
+export default async function start(spinner: Ora) {
   const ui = new inquirer.ui.BottomBar();
 
   ui.log.write(chalk.greenBright("Initializing new project. 🍃\n"));
@@ -125,7 +127,7 @@ async function start(spinner) {
     .trim()
     .split(" ")
     // Ensure title-case
-    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .map((word: string) => word[0].toUpperCase() + word.slice(1))
     .join(" ");
 
   await generateProject(

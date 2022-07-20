@@ -1,7 +1,7 @@
-const fs = require("fs-extra");
-const path = require("path");
+import * as fs from "fs-extra";
+import * as path from "path";
 
-async function isExists(path) {
+export async function isExists(path: string) {
   try {
     await fs.access(path);
     return true;
@@ -10,7 +10,7 @@ async function isExists(path) {
   }
 }
 
-async function writeFile(filePath, data) {
+export async function writeFile(filePath: string, data: any) {
   try {
     const dirname = path.dirname(filePath);
     const exist = await isExists(dirname);
@@ -19,12 +19,7 @@ async function writeFile(filePath, data) {
     }
 
     await fs.writeFile(filePath, data, "utf8");
-  } catch (err) {
+  } catch (err: any) {
     throw new Error(err);
   }
 }
-
-module.exports = {
-  isExists,
-  writeFile
-};
