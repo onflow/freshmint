@@ -5,9 +5,10 @@ import * as t from '@onflow/types';
 
 import { Event } from '@fresh-js/core';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
-import { MetadataMap, hashMetadata } from '../metadata';
+import { MetadataMap } from '../metadata';
 import OnChainBlindGenerator from '../generators/OnChainBlindGenerator';
 import { BaseCollection } from './NFTCollection';
+import { hashMetadataWithSalt } from '../metadata/hash';
 
 type HashedNFT = {
   metadata: MetadataMap;
@@ -118,7 +119,7 @@ export default class OnChainBlindCollection extends BaseCollection {
 
   private hashNFTs(metadata: MetadataMap[]): HashedNFT[] {
     return metadata.map((metadata) => {
-      const { hash, salt } = hashMetadata(this.schema, metadata);
+      const { hash, salt } = hashMetadataWithSalt(this.schema, metadata);
 
       return {
         metadata,

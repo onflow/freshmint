@@ -8,7 +8,7 @@ import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
 import { MetadataMap } from '../metadata';
 import { BaseCollection } from './NFTCollection';
 import EditionBlindGenerator from '../generators/EditionBlindGenerator';
-import { hashWithSalt } from '../hash';
+import { hashValuesWithSalt } from '../hash';
 
 type Edition = {
   size: number;
@@ -282,5 +282,5 @@ function hashEdition(editionId: string, editionSerial: string) {
   const editionIdBuffer = Buffer.from(editionId, 'utf-8');
   const editionSerialBuffer = Buffer.from(editionSerial, 'utf-8');
 
-  return hashWithSalt([editionIdBuffer, editionSerialBuffer]);
+  return hashValuesWithSalt([editionIdBuffer, editionSerialBuffer]);
 }

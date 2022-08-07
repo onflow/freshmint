@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as crypto from "crypto";
 import parse from "csv-parse/lib/sync";
 import { metadata } from "../../lib";
+import { hashMetadata } from "../../lib/metadata";
 
 export default class MetadataParser {
 
@@ -23,7 +23,7 @@ export default class MetadataParser {
         values[name] = item
       })
 
-      const metadata: any = {}
+      const metadata: metadata.MetadataMap = {}
 
       fields.forEach((field) =>  {
         const value = field.getValue(values)
@@ -31,8 +31,10 @@ export default class MetadataParser {
         metadata[field.name] = value
       })
   
+      const hash = hashMetadata(schema, metadata).toString("hex");
+      
       return {
-        hash: hashMetadata(items),
+        hash,
         metadata,
       }
     })
@@ -42,14 +44,6 @@ export default class MetadataParser {
       tokens
     }
   }
-}
-
-function hashMetadata(values: any) {
-  const hash = crypto.createHash("sha256")
-
-  values.forEach((value: any) => hash.update(value))
-
-  return hash.digest('hex')
 }
 
 function readCSV(csvPath: string) {

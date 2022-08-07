@@ -1,6 +1,6 @@
 import { metadata } from "../../lib";
+import IPFS from "../ipfs";
 import MetadataParser from "./parser";
-import MetadataPinner from "./pinner";
 import MetadataProcessor from "./processor";
 
 export default class Metadata {
@@ -8,14 +8,12 @@ export default class Metadata {
 
   parser: MetadataParser;
   processor: MetadataProcessor;
-  pinner: MetadataPinner;
 
-  constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: any) {
+  constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: IPFS) {
     this.schema = schema;
 
     this.parser = new MetadataParser()
     this.processor = new MetadataProcessor(nftAssetPath, ipfs)
-    this.pinner = new MetadataPinner(ipfs)
   }
 
   async parse(csvPath: string) {
@@ -25,10 +23,4 @@ export default class Metadata {
   async process(metadata: metadata.MetadataMap) {
     return this.processor.process(this.schema, metadata)
   }
-
-  async pin(metadata: metadata.MetadataMap, onStart: any, onComplete: any) {
-    return this.pinner.pin(this.schema, metadata, onStart, onComplete)
-  }
 }
-
-module.exports = Metadata

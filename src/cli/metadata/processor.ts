@@ -8,7 +8,7 @@ export default class MetadataProcessor {
   nftAssetPath: string;
   ipfs: IPFS;
 
-  constructor(nftAssetPath: string, ipfs: any) {
+  constructor(nftAssetPath: string, ipfs: IPFS) {
     this.nftAssetPath = nftAssetPath
     this.ipfs = ipfs
   }
