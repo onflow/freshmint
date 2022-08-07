@@ -37,7 +37,7 @@ export default class DataStore {
     const result = await this.db.find({ selector });
     
     if (!result.docs.length) {
-      console.log(`No document found for selector ${selector}`);
+      console.error(`No document found for selector ${selector}`);
       return null;
     }
     

@@ -1,17 +1,14 @@
 import chalk from "chalk";
 import generateProject from "./generate-project";
-import generateWebAssets from "./generate-web";
 import { isExists } from "./helpers";
-import { Field, fieldTypes } from "./metadata/fields";
-import Metadata from "./metadata";
 import { Ora } from "ora";
+import inquirer from "inquirer";
+import { metadata } from "../lib";
 
-const inquirer = require("inquirer");
-
-const fieldChoices = fieldTypes.map(fieldType => ({
+const fieldChoices = metadata.fieldTypes.map(fieldType => ({
   name: fieldType.label,
   value: fieldType
-}))
+}));
 
 const questions = [
   {
@@ -44,16 +41,8 @@ const questions = [
     }
   },
   {
-    type: "list",
-    name: "onChainMetadata",
-    message: "Metadata format:",
-    choices: ["on-chain", "off-chain"],
-    filter: (input: string) => input === "on-chain"
-  },
-  {
     type: "confirm",
     name: "startCustomFields",
-    when: (answers: any) => answers.onChainMetadata,
     message: "Would you like to define custom NFT fields?"
   }
 ]
@@ -88,24 +77,22 @@ function customFieldQuestions(count: number) {
 
 async function getCustomFields(shouldStart: boolean) {
 
-  const customFields = []
+  const fields: { name: string, type: string }[] = []
 
   let shouldContinue = shouldStart
 
   while (shouldContinue) {
-    const count: number = customFields.length + 1
-    const customField = await inquirer.prompt(
+    const count: number = fields.length + 1
+    const field = await inquirer.prompt(
       customFieldQuestions(count)
     )
 
-    const field = new Field(customField.name, customField.type)
+    fields.push({ name: field.name, type: field.type })
 
-    customFields.push(field)
-
-    shouldContinue = customField.continue
+    shouldContinue = field.continue
   }
   
-  return customFields
+  return fields
 }
 
 export default async function start(spinner: Ora) {
@@ -115,9 +102,11 @@ export default async function start(spinner: Ora) {
   
   const answers = await inquirer.prompt(questions);
 
-  const customFields = await getCustomFields(answers.startCustomFields)
+  const userFields = await getCustomFields(answers.startCustomFields)
+  const userSchema = metadata.parseSchema(userFields);
 
-  const fields = Metadata.getDefaultFields(answers.onChainMetadata, customFields)
+  // Extend default schema with user fields
+  const schema = metadata.defaultSchema.extend(userSchema);
 
   spinner.start("Generating project files...");
 
@@ -133,11 +122,8 @@ export default async function start(spinner: Ora) {
   await generateProject(
     answers.projectName,
     formattedContractName,
-    answers.onChainMetadata,
-    fields
+    schema
   );
-
-  await generateWebAssets(answers.projectName, formattedContractName);
 
   spinner.succeed(
     `✨ Project initialized in ${chalk.white(`./${answers.projectName}\n`)}`

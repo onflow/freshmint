@@ -23,11 +23,15 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "prebuild": "tsc --build --clean",
     "build": "tsc",
-    "postbuild": "cpx --include-empty-dirs \"src/cli/templates/**\" dist/cli/templates",
-    "dev": "tsc --watch"
+    "postbuild": "npm run copy-cli-templates && npm run copy-lib-templates",
+    "dev": "tsc --watch",
+    "copy-cli-templates": "cpx --include-empty-dirs \"src/cli/templates/**\" dist/cli/templates",
+    "copy-lib-templates": "cpx --include-empty-dirs \"src/lib/templates/**\" dist/lib/templates"
   },
   "dependencies": {
+    "@fresh-js/crypto": "^0.0.4",
     "@onflow/decode": "0.0.11",
+    "@onflow/fcl": "^1.2.0",
     "@onflow/types": "0.0.5",
     "@onflow/util-address": "0.0.0",
     "chalk": "^4.1.0",
@@ -54,6 +58,7 @@
   "devDependencies": {
     "@types/elliptic": "^6.4.14",
     "@types/fs-extra": "^9.0.13",
+    "@types/inquirer": "^8.2.1",
     "@types/node-fetch": "^2.6.2",
     "@types/pouchdb": "^6.4.0",
     "@types/progress": "^2.0.5",

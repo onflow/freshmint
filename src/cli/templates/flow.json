@@ -38,9 +38,7 @@
         "mainnet": "0x1654653399040a61"
       }
     },
-    "{{name}}": "cadence/contracts/{{name}}.cdc",
-    "NFTQueueDrop": "cadence/contracts/NFTQueueDrop.cdc",
-    "NFTAirDrop": "cadence/contracts/NFTAirDrop.cdc"
+    "{{name}}": "cadence/contracts/{{name}}.cdc"
   },
   "networks": {
     "emulator": "127.0.0.1:3569",
@@ -58,8 +56,6 @@
       "emulator-account": [
         "NonFungibleToken",
         "MetadataViews",
-        "NFTQueueDrop",
-        "NFTAirDrop",
         "{{name}}"
       ]
     }

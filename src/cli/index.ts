@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// This file contains the main entry point for the command line `fresh` app, and the command line option parsing code.
+// This file contains the main entry point for the `fresh` command line app.
 // See fresh.js for the core functionality.
 
 import * as path from 'path';
@@ -11,8 +11,7 @@ import ProgressBar from "progress";
 import Fresh from "./fresh";
 import carlton from "./carlton";
 import startCommand from "./start";
-
-const inquirer = require("inquirer");
+import inquirer from "inquirer";
 
 const program = new Command();
 const spinner = ora();
@@ -57,7 +56,7 @@ async function main() {
     .action(mint);
 
   program
-    .command("inspect <token-id>")
+    .command("get <token-id>")
     .description("get info from Flow about an NFT using its token ID")
     .option(
       "-n, --network <network>",
@@ -75,52 +74,6 @@ async function main() {
       "emulator"
     )
     .action(dumpNFTs);
-
-  program
-    .command("start-drop <price>")
-    .description("start a new NFT drop")
-    .option(
-      "-n, --network <network>",
-      "Network to use. Either 'emulator', 'testnet' or 'mainnet'",
-      "emulator"
-    )
-    .action(startDrop);
-
-  program
-    .command("remove-drop")
-    .description("remove the current NFT drop")
-    .option(
-      "-n, --network <network>",
-      "Network to use. Either 'emulator', 'testnet' or 'mainnet'",
-      "emulator"
-    )
-    .action(removeDrop);
-
-  program
-    .command("pin [token-id]")
-    .description("Pin NFT metadata to a remote IPFS pinning service")
-    .option(
-      "-a, --all",
-      "Pin all minted NFTs",
-    )
-    .option(
-      "-n, --network <network>",
-      "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
-      "emulator"
-    )
-    .action(pin);
-
-  program
-    .command("fund-account <address>")
-    .description(
-      "transfer some tokens to an emulator account. Only works when using the emulator & dev-wallet."
-    )
-    .option(
-      "-n, --network <network>",
-      "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'",
-      "emulator"
-    )
-    .action(fundAccount);
 
   program
     .command("prince")
@@ -195,33 +148,16 @@ async function mint({ network, data, claim, batchSize }: { network: string, data
   );
 }
 
-async function startDrop(price: string, { network }: { network: string }) {
-  spinner.start(`Creating drop ...`);
-  const fresh = new Fresh(network);
-  await fresh.startDrop(price);
-  spinner.succeed(`✨ Success! Your drop is live. ✨`);
-}
-
-async function removeDrop({ network }: { network: string }) {
-  spinner.start(`Removing drop ...`);
-  const fresh = new Fresh(network);
-  await fresh.removeDrop();
-  spinner.succeed(`✨ Success! Drop removed. ✨`);
-}
-
 async function getNFT(tokenId: string, { network }: { network: string }) {
-  spinner.start(`Getting NFT data ...`);
-
   const fresh = new Fresh(network);
-  const { id, metadata } = await fresh.getNFTMetadata(tokenId);
-
-  spinner.succeed(`✨ Success! NFT data retrieved. ✨`);
+  const { id, schema, metadata } = await fresh.getNFTMetadata(tokenId);
 
   const output = [
-    ["Token ID:", chalk.green(id)],
-    ["Name:", chalk.blue(metadata.name)],
-    ["Description:", chalk.blue(metadata.description)],
-    ["Image:", chalk.blue(metadata.image)]
+    ["ID:", chalk.green(id)],
+    ["Fields:"],
+    ...schema.getFieldList().map(
+      (field) => [` ${field.name}:`, chalk.blue(field.getValue(metadata))]
+    )
   ];
 
   alignOutput(output);
@@ -234,80 +170,19 @@ async function dumpNFTs(csvPath: string, { network }: { network: string }) {
   spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
 }
 
-async function pin(tokenId: string, { network, all }: { network: string, all: boolean }) {
-  const fresh = new Fresh(network);
-
-  if (!tokenId) {
-    if (all) {
-      const count = await fresh.pinAllNFTs(
-        (id: string) => spinner.start(`Pinning NFT ${id}...`),
-        (id: string) => spinner.succeed(`📌 Pinned NFT ${id}`),
-        (id: string, fieldName: string) => spinner.start(`Pinning NFT ${id}, ${fieldName} field...`),
-        (id: string, fieldName: string) => {},
-      );
-
-      if (count > 0) {
-        console.log(`🌿 Pinned data for ${chalk.green(count)} NFTs`);
-      } else {
-        console.log("🌿 All NFTs have already been pinned.")
-      }
-
-      return
-    }
-
-    console.error("Error: missing required argument 'token-id'\n\nAlternatively, you can use 'fresh pin --all' to pin all tokens.")
-  }
-
-  await fresh.pinNFT(
-    tokenId,
-    (fieldName: string) => spinner.start(`Pinning ${fieldName}...`),
-    (fieldName: string) => spinner.succeed(`📌 ${fieldName} was pinned!`),
-  );
-
-  console.log(`🌿 Pinned all data for NFT ${chalk.green(tokenId)}`);
-}
-
-async function fundAccount(address: string, { network }: { network: string }) {
-  spinner.start("Funding account  ...");
-  const fresh = new Fresh(network);
-  const result = await fresh.fundAccount(address);
-  spinner.succeed(
-    `💰 ${result} FLOW tokens transferred to ${chalk.green(address)}`
-  );
-}
-
-// ---- helpers
-
-// Unused but could come in handy later.
-//
-// async function promptForMissing(cliOptions, prompts) {
-//   const questions = [];
-//   for (const [name, prompt] of Object.entries(prompts)) {
-//     prompt.name = name;
-//     prompt.when = (answers) => {
-//       if (cliOptions[name]) {
-//         answers[name] = cliOptions[name];
-//         return false;
-//       }
-//       return true;
-//     };
-//     questions.push(prompt);
-//   }
-//   return inquirer.prompt(questions);
-// }
-
 function alignOutput(labelValuePairs: any[]) {
   const maxLabelLength = labelValuePairs
     .map(([l, _]) => l.length)
     .reduce((len, max) => (len > max ? len : max));
   for (const [label, value] of labelValuePairs) {
-    console.log(label.padEnd(maxLabelLength + 1), value);
+    if (value) {
+      console.log(label.padEnd(maxLabelLength + 1), value);
+    } else {
+      console.log(label);
+    }
   }
 }
 
-// ---- main entry point when running as a script
-
-// make sure we catch all errors
 main()
   .then(() => {
     process.exit(0);

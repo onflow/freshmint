@@ -1,0 +1,2 @@
+{{#each schema.fields}}{{ this.name }}{{#unless @last}},{{/unless}}{{/each}}
+{{#each schema.fields}}{{ this.sampleValue }}{{#unless @last}},{{/unless}}{{/each}}

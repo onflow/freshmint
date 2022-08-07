@@ -1,2 +1,0 @@
-{{#each fields}}{{ this.name }}{{#unless @last}},{{/unless}}{{/each}}
-{{#each fields}}{{ this.type.placeholder }}{{#unless @last}},{{/unless}}{{/each}}

@@ -2,21 +2,19 @@ import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
 import parse from "csv-parse/lib/sync";
+import { metadata } from "../../lib";
 
 export default class MetadataParser {
-  config: { onChainMetadata: any; metadataFields: any; };
 
-  constructor(config: { onChainMetadata: any; metadataFields: any; }) {
-    this.config = config
-  }
-
-  async parse(fields: any, csvPath: string) {
+  async parse(schema: metadata.Schema, csvPath: string) {
     const { headers, rows } = readCSV(csvPath)
     
-    return this.parseTokens(headers, rows, fields)
+    return this.parseTokens(headers, rows, schema)
   }
 
-  async parseTokens(headers: { [x: string]: string; }, rows: any[], fields: any[]) {
+  async parseTokens(headers: { [x: string]: string; }, rows: any[], schema: metadata.Schema) {
+    const fields = schema.getFieldList()
+
     const tokens = rows.map((items) => {
       const values: any = {}
 
@@ -26,7 +24,7 @@ export default class MetadataParser {
       })
 
       const metadata: any = {}
-  
+
       fields.forEach((field) =>  {
         const value = field.getValue(values)
   

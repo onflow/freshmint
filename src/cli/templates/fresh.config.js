@@ -1,15 +1,12 @@
 module.exports = {
-  metadataFormat: {{#if onChainMetadata}}"on-chain"{{else}}"off-chain"{{/if}},
-  {{#if onChainMetadata}}
-  metadataFields: [
-    {{#each fields}}
+  schema: [
+    {{#each schema.fields}}
     {
       name: "{{ this.name }}",
-      type: "{{ this.type.name }}"
+      type: "{{ this.type.id }}"
     },
     {{/each}}
   ],
-  {{/if}}
   pinningService: {
     endpoint: process.env.PINNING_SERVICE_ENDPOINT,
     key: process.env.PINNING_SERVICE_KEY

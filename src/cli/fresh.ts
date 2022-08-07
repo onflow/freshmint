@@ -1,10 +1,5 @@
-import * as path from "path";
-
 // @ts-ignore
 import { NFTStorage } from "nft.storage";
-
-// @ts-ignore
-import Nebulus from "nebulus";
 
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 import FlowMinter from "./flow";
@@ -14,7 +9,7 @@ import getConfig from "./config";
 import { ECPrivateKey, signatureAlgorithms } from "./flow/crypto";
 import Metadata from "./metadata";
 import IPFS from "./ipfs";
-import { Field } from "./metadata/fields";
+import { metadata } from "../lib";
 
 export default class Fresh {
 
@@ -25,26 +20,23 @@ export default class Fresh {
   metadata: Metadata;
 
   constructor(network: string) {
-    this.network = network
+    this.network = network;
 
-    this.config = getConfig()
+    this.config = getConfig();
 
-    this.datastore = new DataStore("freshdb")
-    this.flowMinter = new FlowMinter(this.network)
-
-    const nebulus = new Nebulus({
-      path: path.resolve(process.cwd(), this.config.nebulusPath)
-    })
+    this.datastore = new DataStore("freshdb");
+    this.flowMinter = new FlowMinter(this.network);
 
     const ipfsClient = new NFTStorage({
       token: this.config.pinningService.key,
       endpoint: this.config.pinningService.endpoint
-    })
+    });
 
-    const ipfs = new IPFS(nebulus, ipfsClient)
+    const ipfs = new IPFS(ipfsClient);
 
     this.metadata = new Metadata(
-      this.config, 
+      this.config.schema,
+      this.config.nftAssetPath, 
       ipfs,
     )
   }
@@ -69,7 +61,6 @@ export default class Fresh {
     onError: (error: Error) => void,
     batchSize = 10
   ) {
-    await this.flowMinter.setupAccount();
 
     const { fields, tokens } = await this.metadata.parse(csvPath)
     
@@ -123,7 +114,6 @@ export default class Fresh {
         return {
           tokenId,
           txId,
-          pinned: false,
           hash: token.hash,
           metadata: token.metadata,
           claimKey
@@ -177,21 +167,13 @@ export default class Fresh {
     }
   }
 
-  async getUnpinnedNFTs() {
-    const nfts = await this.datastore.find({ pinned: false });
-
-    return nfts.map((nft: any) => ({
-      id: nft.tokenId,
-      metadata: nft.metadata
-    }))
-  }
-
-  async getNFTMetadata(tokenId: string) {
+  async getNFTMetadata(tokenId: string): Promise<{ id: string, schema: metadata.Schema, metadata: metadata.MetadataMap }> {
     const { metadata } = await this.getNFT(tokenId)
 
     return {
       id: tokenId,
-      metadata: await this.metadata.load(metadata)
+      schema: this.config.schema,
+      metadata
     }
   }
 
@@ -213,7 +195,6 @@ export default class Fresh {
         {id: 'tokenID', title: 'TOKEN ID'},
         ...metadataHeaders,
         {id: 'transactionID', title: 'TRANSACTION ID'},
-        {id: 'pinned', title: 'PINNED'},
         {id: 'claimKey', title: "CLAIM KEY"},
       ]
     });
@@ -223,7 +204,6 @@ export default class Fresh {
         tokenID: nft.tokenId,
         ...nft.metadata,
         transactionID: nft.txId,
-        pinned: nft.pinned,
         claimKey: nft.claimKey,
       }
     })
@@ -262,73 +242,12 @@ export default class Fresh {
     }))
   }
 
-  async startDrop(price: string) {
-    await this.flowMinter.startQueueDrop(price);
-  }
-
-  async removeDrop() {
-    await this.flowMinter.removeQueueDrop();
-  }
-
   defaultOwnerAddress() {
     return this.network === "testnet" ? 
       this.config.testnetFlowAccount.address : 
       (this.network === "mainnet" ?
         this.config.mainnetFlowAccount.address :
         this.config.emulatorFlowAccount.address);
-  }
-
-  async fundAccount(address: string) {
-    return this.flowMinter.fundAccount(address);
-  }
-
-  //////////////////////////////////////////////
-  // -------- Pinning to remote services
-  //////////////////////////////////////////////
-
-  /**
-   * Pins all IPFS data associated with the given tokend id to the remote pinning service.
-   *
-   * @param {string} tokenId - the ID of an NFT that was previously minted.
-   * @returns {Promise<void>} - the IPFS asset and metadata uris that were pinned.
-   * Fails if no token with the given id exists, or if pinning fails.
-   */
-
-  async pinNFT(tokenId: string, onStart: (fieldName: string) => void, onComplete: (fieldName: string) => void) {
-    const { metadata } = await this.getNFT(tokenId);
-
-    await this.metadata.pin(
-      metadata,
-      onStart,
-      onComplete
-    )
-
-    await this.datastore.update({ tokenId }, { pinned: true });
-  }
-
-  async pinAllNFTs(
-    onStartNFT: (id: string) => void,
-    onCompleteNFT: (id: string) => void,
-    onStartField: (id: string, fieldName: string) => void,
-    onCompleteField: (id: string, fieldName: string) => void
-  ) {
-    const nfts = await this.getUnpinnedNFTs();
-
-    for (const nft of nfts) {
-      onStartNFT(nft.id)
-
-      await this.metadata.pin(
-        nft.metadata,
-        (fieldName: string) => onStartField(nft.id, fieldName),
-        (fieldName: string) => onCompleteField(nft.id, fieldName),
-      )
-
-      await this.datastore.update({ tokenId: nft.tokenId }, { pinned: true });
-
-      onCompleteNFT(nft.id)
-    }
-
-    return nfts.length
   }
 }
 
@@ -380,7 +299,7 @@ function formatMintResults(txOutput: any) {
   })
 }
 
-function groupBatchesByField(fields: Field[], batches: any[]) {
+function groupBatchesByField(fields: metadata.Field[], batches: any[]) {
   return fields.map(field => ({
     ...field,
     values: batches.map(batch => batch.metadata[field.name])
