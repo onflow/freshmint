@@ -51,5 +51,3 @@ export default class DataStore {
     return await this.db.put(doc);
   }
 }
-
-module.exports = DataStore;

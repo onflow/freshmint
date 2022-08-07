@@ -51,5 +51,3 @@ export default class FlowMinter {
     ]);
   }
 }
-
-module.exports = FlowMinter;

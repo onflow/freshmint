@@ -32,7 +32,7 @@ export default class MetadataParser {
       })
   
       const hash = hashMetadata(schema, metadata).toString("hex");
-      
+
       return {
         hash,
         metadata,
@@ -61,5 +61,3 @@ function readCSV(csvPath: string) {
     rows
   }
 }
-
-module.exports = MetadataParser

@@ -57,5 +57,3 @@ export default class MetadataProcessor {
     return cid;
   }
 }
-
-module.exports = MetadataProcessor

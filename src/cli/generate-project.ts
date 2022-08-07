@@ -146,5 +146,3 @@ function template(src: string, out: string) {
     await writeFile(path.resolve(dir, out), result);
   };
 }
-
-module.exports = generateProject;

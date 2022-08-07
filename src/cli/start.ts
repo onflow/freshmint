@@ -141,5 +141,3 @@ export default async function start(spinner: Ora) {
     )} to learn how to use your new project!`
   );
 }
-
-module.exports = start

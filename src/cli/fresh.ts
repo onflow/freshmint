@@ -305,9 +305,3 @@ function groupBatchesByField(fields: metadata.Field[], batches: any[]) {
     values: batches.map(batch => batch.metadata[field.name])
   }))
 }
-
-//////////////////////////////////////////////
-// -------- Exports
-//////////////////////////////////////////////
-
-module.exports = Fresh
