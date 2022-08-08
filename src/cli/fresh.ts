@@ -1,15 +1,14 @@
 // @ts-ignore
 import { NFTStorage } from 'nft.storage';
-
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
-import FlowMinter from './flow';
 
+import FlowMinter from './flow';
 import DataStore from './datastore';
 import getConfig from './config';
-import { ECPrivateKey, signatureAlgorithms } from './flow/crypto';
 import Metadata from './metadata';
 import IPFS from './ipfs';
 import { metadata } from '../lib';
+import { formatClaimKey, generateClaimKeyPairs } from './claimKeys';
 
 export default class Fresh {
   network: string;
@@ -219,7 +218,7 @@ export default class Fresh {
   async mintTokensWithClaimKey(batchFields: any[]) {
     const batchSize = batchFields[0].values.length;
 
-    const { privateKeys, publicKeys } = generateKeyPairs(batchSize);
+    const { privateKeys, publicKeys } = generateClaimKeyPairs(batchSize);
 
     const minted = await this.flowMinter.mintWithClaimKey(publicKeys, batchFields);
 
@@ -239,32 +238,6 @@ export default class Fresh {
       ? this.config.mainnetFlowAccount.address
       : this.config.emulatorFlowAccount.address;
   }
-}
-
-//////////////////////////////////////////////
-// -------- Crypto helpers
-//////////////////////////////////////////////
-
-function generateKeyPairs(count: number) {
-  const privateKeys = [];
-  const publicKeys = [];
-
-  while (count--) {
-    const privateKey = ECPrivateKey.generate(signatureAlgorithms.ECDSA_P256);
-    const publicKey = privateKey.getPublicKey();
-
-    privateKeys.push(privateKey.toHex());
-    publicKeys.push(publicKey.toHex());
-  }
-
-  return {
-    privateKeys,
-    publicKeys,
-  };
-}
-
-function formatClaimKey(nftId: string, privateKey: string) {
-  return `${privateKey}${nftId}`;
 }
 
 //////////////////////////////////////////////
