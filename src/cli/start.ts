@@ -1,8 +1,8 @@
 import chalk from "chalk";
-import generateProject from "./generate-project";
-import { isExists } from "./helpers";
 import { Ora } from "ora";
 import inquirer from "inquirer";
+import * as fs from "fs-extra";
+import generateProject from "./generate-project";
 import { metadata } from "../lib";
 
 const fieldChoices = metadata.fieldTypes.map(fieldType => ({
@@ -20,11 +20,11 @@ const questions = [
         return "Please enter a name for your project.";
       }
 
-      const exists = await isExists(input);
-
+      const exists = await fs.pathExists(input);
       if (exists) {
         return "A project with that name already exists.";
       }
+
       return true;
     }
   },

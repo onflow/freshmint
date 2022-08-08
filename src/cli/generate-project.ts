@@ -1,7 +1,7 @@
 import * as fs from "fs-extra";
 import * as path from "path";
 import * as Handlebars from "handlebars";
-import { writeFile } from "./helpers";
+import { writeFile } from "./fs";
 import { metadata } from "../lib";
 import OnChainGenerator from "../lib/generators/OnChainGenerator";
 
@@ -145,4 +145,19 @@ function template(src: string, out: string) {
 
     await writeFile(path.resolve(dir, out), result);
   };
+}
+
+async function writeFile(filePath: string, data: any) {
+  try {
+    const dirname = path.dirname(filePath);
+    
+    const exists = await fs.pathExists(dirname);
+    if (!exists) {
+      await fs.mkdir(dirname, { recursive: true });
+    }
+
+    await fs.writeFile(filePath, data, "utf8");
+  } catch (err: any) {
+    throw new Error(err);
+  }
 }
