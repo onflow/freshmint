@@ -3,12 +3,7 @@ import OnChainBlindCollection from './collections/OnChainBlindCollection';
 import EditionBlindCollection from './collections/EditionBlindCollection';
 import EditionCollection from './collections/EditionCollection';
 
-export {
-  OnChainCollection,
-  OnChainBlindCollection,
-  EditionCollection,
-  EditionBlindCollection
-};
+export { OnChainCollection, OnChainBlindCollection, EditionCollection, EditionBlindCollection };
 
 import OnChainGenerator from './generators/OnChainGenerator';
 import OnChainBlindGenerator from './generators/OnChainBlindGenerator';

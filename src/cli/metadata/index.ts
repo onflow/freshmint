@@ -1,10 +1,10 @@
-import { metadata } from "../../lib";
-import IPFS from "../ipfs";
-import MetadataParser from "./parser";
-import MetadataProcessor from "./processor";
+import { metadata } from '../../lib';
+import IPFS from '../ipfs';
+import MetadataParser from './parser';
+import MetadataProcessor from './processor';
 
 export default class Metadata {
-  schema: metadata.Schema
+  schema: metadata.Schema;
 
   parser: MetadataParser;
   processor: MetadataProcessor;
@@ -12,15 +12,15 @@ export default class Metadata {
   constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: IPFS) {
     this.schema = schema;
 
-    this.parser = new MetadataParser()
-    this.processor = new MetadataProcessor(nftAssetPath, ipfs)
+    this.parser = new MetadataParser();
+    this.processor = new MetadataProcessor(nftAssetPath, ipfs);
   }
 
   async parse(csvPath: string) {
-    return this.parser.parse(this.schema, csvPath)
+    return this.parser.parse(this.schema, csvPath);
   }
 
   async process(metadata: metadata.MetadataMap) {
-    return this.processor.process(this.schema, metadata)
+    return this.processor.process(this.schema, metadata);
   }
 }

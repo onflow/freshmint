@@ -235,7 +235,7 @@ function formatEditionResults(events: Event[], editions: Edition[]): EditionNFT[
   return editions.flatMap((edition, i) => {
     const editionEvent: any = editionEvents[i];
     const editionId = editionEvent.data.edition.id;
-    
+
     return getEditionNFTs(editionId, edition.size);
   });
 }

@@ -1,22 +1,25 @@
-import * as path from "path";
-import * as dotenv from "dotenv";
+import * as path from 'path';
+import * as dotenv from 'dotenv';
 
 // @ts-ignore
-import { withPrefix } from "@onflow/util-address";
+import { withPrefix } from '@onflow/util-address';
 
-import { metadata } from "../lib";
+import { metadata } from '../lib';
 
 export default function getConfig() {
-  dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+  /* eslint-disable @typescript-eslint/no-var-requires */
+
+  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
   // TOOD: inform the user when config is missing
-  const userConfig = require(path.resolve(process.cwd(), "fresh.config.js"));
 
-  const flowConfig = require(path.resolve(process.cwd(), "flow.json"));
+  const userConfig = require(path.resolve(process.cwd(), 'fresh.config.js'));
 
-  const flowTestnetConfig = require(path.resolve(process.cwd(), "flow.testnet.json"));
+  const flowConfig = require(path.resolve(process.cwd(), 'flow.json'));
 
-  const flowMainnetConfig = require(path.resolve(process.cwd(), "flow.mainnet.json"));
+  const flowTestnetConfig = require(path.resolve(process.cwd(), 'flow.testnet.json'));
+
+  const flowMainnetConfig = require(path.resolve(process.cwd(), 'flow.mainnet.json'));
 
   return {
     //////////////////////////////////////////////
@@ -24,8 +27,8 @@ export default function getConfig() {
     //////////////////////////////////////////////
 
     // Location of NFT metadata and assets for minting
-    nftDataPath: userConfig.nftDataPath || "nfts.csv",
-    nftAssetPath: userConfig.nftAssetPath || "assets",
+    nftDataPath: userConfig.nftDataPath || 'nfts.csv',
+    nftAssetPath: userConfig.nftAssetPath || 'assets',
 
     // Metadata schema defined by the user
     schema: metadata.parseSchema(userConfig.schema || []),
@@ -48,7 +51,7 @@ export default function getConfig() {
     // This is the default owner address and signing key for all newly minted NFTs
     emulatorFlowAccount: userConfig.emulatorFlowAccount
       ? getAccount(userConfig.emulatorFlowAccount, flowConfig)
-      : getAccount("emulator-account", flowConfig),
+      : getAccount('emulator-account', flowConfig),
 
     //////////////////////////////////////////////
     // ------ Testnet Config
@@ -57,7 +60,7 @@ export default function getConfig() {
     // This is the default owner address and signing key for all newly minted NFTs
     testnetFlowAccount: userConfig.testnetFlowAccount
       ? getAccount(userConfig.testnetFlowAccount, flowTestnetConfig)
-      : getAccount("testnet-account", flowTestnetConfig),
+      : getAccount('testnet-account', flowTestnetConfig),
 
     //////////////////////////////////////////////
     // ------ Mainnet Configs
@@ -66,14 +69,14 @@ export default function getConfig() {
     // This is the default owner address and signing key for all newly minted NFTs
     mainnetFlowAccount: userConfig.mainnetFlowAccount
       ? getAccount(userConfig.mainnetFlowAccount, flowMainnetConfig)
-      : getAccount("mainnet-account", flowMainnetConfig)
+      : getAccount('mainnet-account', flowMainnetConfig),
   };
 }
 
 // Expand template variable in flow.json
 // Ref: https://stackoverflow.com/a/58317158/3823815
 function expand(template: string, data: any) {
-  return template.replace(/\$\{(\w+)\}/g, (_, name) => data[name] || "?");
+  return template.replace(/\$\{(\w+)\}/g, (_, name) => data[name] || '?');
 }
 
 function getAccount(name: string, flowConfig: any) {

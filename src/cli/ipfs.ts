@@ -1,11 +1,11 @@
 // @ts-ignore
-import { Blob, NFTStorage } from "nft.storage";
+import { Blob, NFTStorage } from 'nft.storage';
 
 export default class IPFS {
   ipfsClient: NFTStorage;
 
   constructor(ipfsClient: NFTStorage) {
-    this.ipfsClient = ipfsClient
+    this.ipfsClient = ipfsClient;
   }
 
   async pin(data: Buffer): Promise<string> {

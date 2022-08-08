@@ -38,7 +38,7 @@ export default class ClaimSale {
     ]);
 
     // TODO: handle error
-    const { error } = await fcl.tx(response).onceSealed();
+    const { error: _ } = await fcl.tx(response).onceSealed();
   }
 
   async stop() {
@@ -57,7 +57,7 @@ export default class ClaimSale {
     ]);
 
     // TODO: handle error
-    const { error } = await fcl.tx(response).onceSealed();
+    const { error: _ } = await fcl.tx(response).onceSealed();
   }
 
   // TODO: move this function and/or refactor this class
@@ -85,7 +85,7 @@ export default class ClaimSale {
     ]);
 
     // TODO: handle error
-    const { error, events } = await fcl.tx(response).onceSealed();
+    const { events, error: _ } = await fcl.tx(response).onceSealed();
 
     const claimedEvent: Event = events.find((event: Event) => event.type.includes('.Claimed'));
 

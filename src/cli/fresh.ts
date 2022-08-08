@@ -1,18 +1,17 @@
 // @ts-ignore
-import { NFTStorage } from "nft.storage";
+import { NFTStorage } from 'nft.storage';
 
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
-import FlowMinter from "./flow";
+import FlowMinter from './flow';
 
-import DataStore from "./datastore";
-import getConfig from "./config";
-import { ECPrivateKey, signatureAlgorithms } from "./flow/crypto";
-import Metadata from "./metadata";
-import IPFS from "./ipfs";
-import { metadata } from "../lib";
+import DataStore from './datastore';
+import getConfig from './config';
+import { ECPrivateKey, signatureAlgorithms } from './flow/crypto';
+import Metadata from './metadata';
+import IPFS from './ipfs';
+import { metadata } from '../lib';
 
 export default class Fresh {
-
   network: string;
   config: any;
   datastore: any;
@@ -24,21 +23,17 @@ export default class Fresh {
 
     this.config = getConfig();
 
-    this.datastore = new DataStore("freshdb");
+    this.datastore = new DataStore('freshdb');
     this.flowMinter = new FlowMinter(this.network);
 
     const ipfsClient = new NFTStorage({
       token: this.config.pinningService.key,
-      endpoint: this.config.pinningService.endpoint
+      endpoint: this.config.pinningService.endpoint,
     });
 
     const ipfs = new IPFS(ipfsClient);
 
-    this.metadata = new Metadata(
-      this.config.schema,
-      this.config.nftAssetPath, 
-      ipfs,
-    )
+    this.metadata = new Metadata(this.config.schema, this.config.nftAssetPath, ipfs);
   }
 
   //////////////////////////////////////////////
@@ -59,85 +54,81 @@ export default class Fresh {
     onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
-    batchSize = 10
+    batchSize = 10,
   ) {
+    const { fields, tokens } = await this.metadata.parse(csvPath);
 
-    const { fields, tokens } = await this.metadata.parse(csvPath)
-    
-    const newTokens = []
+    const newTokens = [];
 
     for (const token of tokens) {
-      const exists = await this.nftExists(token.hash)
+      const exists = await this.nftExists(token.hash);
       if (!exists) {
-        newTokens.push(token)
+        newTokens.push(token);
       }
     }
 
-    const total = newTokens.length
-    const skipped = tokens.length - newTokens.length
-    
-    const batches = []
+    const total = newTokens.length;
+    const skipped = tokens.length - newTokens.length;
+
+    const batches = [];
 
     while (newTokens.length > 0) {
-      const batch = newTokens.splice(0, batchSize)
-      batches.push(batch)
+      const batch = newTokens.splice(0, batchSize);
+      batches.push(batch);
     }
 
-    onStart(total, skipped, batches.length, batchSize)
+    onStart(total, skipped, batches.length, batchSize);
 
     for (const batch of batches) {
+      const batchSize = batch.length;
 
-      const batchSize = batch.length
+      const processedBatch = await this.processTokenBatch(batch);
 
-      const processedBatch = await this.processTokenBatch(batch)
+      const batchFields = groupBatchesByField(fields, processedBatch);
 
-      const batchFields = groupBatchesByField(fields, processedBatch)
-
-      let results 
+      let results;
 
       try {
-        results = await this.createTokenBatch(
-          batchFields, 
-          withClaimKey
-        )
-      } catch(error: any) {
-        onError(error)
-        return
+        results = await this.createTokenBatch(batchFields, withClaimKey);
+      } catch (error: any) {
+        onError(error);
+        return;
       }
 
       const finalResults = results.map((result: any, index: number) => {
-
         const { tokenId, txId, claimKey } = result;
 
         const token = processedBatch[index];
-        
+
         return {
           tokenId,
           txId,
           hash: token.hash,
           metadata: token.metadata,
-          claimKey
-        }
-      })
+          claimKey,
+        };
+      });
 
-      for (const result of finalResults) {        
+      for (const result of finalResults) {
         await this.datastore.save(result);
       }
 
-      onBatchComplete(batchSize)
+      onBatchComplete(batchSize);
     }
   }
 
   async nftExists(hash: string) {
     const exists = await this.datastore.find({ hash });
-    return (exists.length !== 0)
+    return exists.length !== 0;
   }
 
   async processTokenBatch(batch: any) {
-    return await Promise.all(batch.map(async (token: any) => ({
-      ...token,
-      metadata: await this.metadata.process(token.metadata)
-    })))
+    return await Promise.all(
+      batch.map(async (token: any) => ({
+        ...token,
+        metadata: await this.metadata.process(token.metadata),
+      })),
+    );
   }
 
   async createTokenBatch(batchFields: any, withClaimKey: boolean) {
@@ -159,22 +150,24 @@ export default class Fresh {
       throw new Error(`Token ${tokenId} does not exist`);
     }
 
-    const nft = results[0]
+    const nft = results[0];
 
     return {
       id: tokenId,
-      metadata: nft.metadata
-    }
+      metadata: nft.metadata,
+    };
   }
 
-  async getNFTMetadata(tokenId: string): Promise<{ id: string, schema: metadata.Schema, metadata: metadata.MetadataMap }> {
-    const { metadata } = await this.getNFT(tokenId)
+  async getNFTMetadata(
+    tokenId: string,
+  ): Promise<{ id: string; schema: metadata.Schema; metadata: metadata.MetadataMap }> {
+    const { metadata } = await this.getNFT(tokenId);
 
     return {
       id: tokenId,
       schema: this.config.schema,
-      metadata
-    }
+      metadata,
+    };
   }
 
   async dumpNFTs(csvPath: string) {
@@ -186,28 +179,29 @@ export default class Fresh {
 
     const firstNft = nfts[0];
 
-    const metadataHeaders = Object.keys(firstNft.metadata)
-      .map(key => { return { id: key, title: key.toUpperCase()} })
+    const metadataHeaders = Object.keys(firstNft.metadata).map((key) => {
+      return { id: key, title: key.toUpperCase() };
+    });
 
     const csvWriter = createCsvWriter({
       path: csvPath,
       header: [
-        {id: 'tokenID', title: 'TOKEN ID'},
+        { id: 'tokenID', title: 'TOKEN ID' },
         ...metadataHeaders,
-        {id: 'transactionID', title: 'TRANSACTION ID'},
-        {id: 'claimKey', title: "CLAIM KEY"},
-      ]
+        { id: 'transactionID', title: 'TRANSACTION ID' },
+        { id: 'claimKey', title: 'CLAIM KEY' },
+      ],
     });
-   
+
     const records = nfts.map((nft: any) => {
       return {
         tokenID: nft.tokenId,
         ...nft.metadata,
         transactionID: nft.txId,
         claimKey: nft.claimKey,
-      }
-    })
-  
+      };
+    });
+
     await csvWriter.writeRecords(records);
 
     return nfts.length;
@@ -223,31 +217,27 @@ export default class Fresh {
   }
 
   async mintTokensWithClaimKey(batchFields: any[]) {
-
-    const batchSize = batchFields[0].values.length
+    const batchSize = batchFields[0].values.length;
 
     const { privateKeys, publicKeys } = generateKeyPairs(batchSize);
 
-    const minted = await this.flowMinter.mintWithClaimKey(
-      publicKeys,
-      batchFields
-    );
+    const minted = await this.flowMinter.mintWithClaimKey(publicKeys, batchFields);
 
     const results = formatMintResults(minted);
-    
+
     return results.map((result: any, i: number) => ({
       txId: result.txId,
       tokenId: result.tokenId,
-      claimKey: formatClaimKey(result.tokenId, privateKeys[i])
-    }))
+      claimKey: formatClaimKey(result.tokenId, privateKeys[i]),
+    }));
   }
 
   defaultOwnerAddress() {
-    return this.network === "testnet" ? 
-      this.config.testnetFlowAccount.address : 
-      (this.network === "mainnet" ?
-        this.config.mainnetFlowAccount.address :
-        this.config.emulatorFlowAccount.address);
+    return this.network === 'testnet'
+      ? this.config.testnetFlowAccount.address
+      : this.network === 'mainnet'
+      ? this.config.mainnetFlowAccount.address
+      : this.config.emulatorFlowAccount.address;
   }
 }
 
@@ -256,7 +246,6 @@ export default class Fresh {
 //////////////////////////////////////////////
 
 function generateKeyPairs(count: number) {
-
   const privateKeys = [];
   const publicKeys = [];
 
@@ -264,8 +253,8 @@ function generateKeyPairs(count: number) {
     const privateKey = ECPrivateKey.generate(signatureAlgorithms.ECDSA_P256);
     const publicKey = privateKey.getPublicKey();
 
-    privateKeys.push(privateKey.toHex())
-    publicKeys.push(publicKey.toHex())
+    privateKeys.push(privateKey.toHex());
+    publicKeys.push(publicKey.toHex());
   }
 
   return {
@@ -283,25 +272,21 @@ function formatClaimKey(nftId: string, privateKey: string) {
 //////////////////////////////////////////////
 
 function formatMintResults(txOutput: any) {
-  const deposits = txOutput.events.filter((event: any) =>
-    event.type.includes(".Deposit")
-  );
+  const deposits = txOutput.events.filter((event: any) => event.type.includes('.Deposit'));
 
   return deposits.map((deposit: any) => {
-    const tokenId = deposit.values.value.fields.find(
-      (f: any) => f.name === "id"
-    ).value;
-  
+    const tokenId = deposit.values.value.fields.find((f: any) => f.name === 'id').value;
+
     return {
       tokenId: tokenId.value,
-      txId: txOutput.id
+      txId: txOutput.id,
     };
-  })
+  });
 }
 
 function groupBatchesByField(fields: metadata.Field[], batches: any[]) {
-  return fields.map(field => ({
+  return fields.map((field) => ({
     ...field,
-    values: batches.map(batch => batch.metadata[field.name])
-  }))
+    values: batches.map((batch) => batch.metadata[field.name]),
+  }));
 }

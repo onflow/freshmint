@@ -26,7 +26,10 @@
     "postbuild": "npm run copy-cli-templates && npm run copy-lib-templates",
     "dev": "tsc --watch",
     "copy-cli-templates": "cpx --include-empty-dirs \"src/cli/templates/**\" dist/cli/templates",
-    "copy-lib-templates": "cpx --include-empty-dirs \"src/lib/templates/**\" dist/lib/templates"
+    "copy-lib-templates": "cpx --include-empty-dirs \"src/lib/templates/**\" dist/lib/templates",
+    "lint": "eslint . --ext .ts",
+    "lint-fix": "eslint . --fix --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
     "@fresh-js/crypto": "^0.0.4",
@@ -62,6 +65,10 @@
     "@types/node-fetch": "^2.6.2",
     "@types/pouchdb": "^6.4.0",
     "@types/progress": "^2.0.5",
-    "cpx": "^1.5.0"
+    "@typescript-eslint/eslint-plugin": "^5.32.0",
+    "@typescript-eslint/parser": "^5.32.0",
+    "cpx": "^1.5.0",
+    "eslint": "^8.21.0",
+    "prettier": "^2.7.1"
   }
 }

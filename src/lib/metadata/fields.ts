@@ -43,7 +43,7 @@ export class Field {
 }
 
 type FieldType = {
-  (options?: any): Field;
+  (): Field;
   id: string;
   label: string;
 };
@@ -59,7 +59,7 @@ export function defineField({
   cadenceType: CadenceType;
   sampleValue?: string;
 }): FieldType {
-  const fieldType = (options: any = {}): Field => {
+  const fieldType = (): Field => {
     return new Field(fieldType, cadenceType, sampleValue);
   };
 

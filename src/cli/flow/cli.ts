@@ -1,12 +1,12 @@
-import * as util from "util";
-const exec = util.promisify(require("child_process").exec);
+import * as util from 'util';
+const exec = util.promisify(require('child_process').exec); // eslint-disable-line  @typescript-eslint/no-var-requires
 
 // @ts-ignore
-import { decode } from "@onflow/decode";
+import { decode } from '@onflow/decode';
 
 function escapeForShell(s: string) {
-  return '"'+s.replace(/(["$`\\])/g,'\\$1')+'"';
-};
+  return '"' + s.replace(/(["$`\\])/g, '\\$1') + '"';
+}
 
 function formatArgString(args: any[]) {
   const cadenceArgs = args.map((v) => v.type.asArgument(v.value));
@@ -14,23 +14,22 @@ function formatArgString(args: any[]) {
 }
 
 function formatConfigString(configs: string[]) {
-  return configs.map((c) => `-f ${c}`).join(" ");
+  return configs.map((c) => `-f ${c}`).join(' ');
 }
 
 export default class FlowCliWrapper {
-
   network: string;
   configs: string[];
 
   constructor(network: string) {
-    if (!network) network = "emulator";
+    if (!network) network = 'emulator';
 
-    let configs = ["flow.json"];
+    const configs = ['flow.json'];
 
-    if (network === "testnet") {
-      configs.push("flow.testnet.json");
-    } else if (network === "mainnet") {
-      configs.push("flow.mainnet.json");
+    if (network === 'testnet') {
+      configs.push('flow.testnet.json');
+    } else if (network === 'mainnet') {
+      configs.push('flow.mainnet.json');
     }
 
     this.network = network;
@@ -46,7 +45,7 @@ export default class FlowCliWrapper {
         ${configString} \
         --update \
         -o json`,
-      { cwd: process.cwd() }
+      { cwd: process.cwd() },
     );
 
     if (err) {
@@ -68,7 +67,7 @@ export default class FlowCliWrapper {
         -o json \
         --args-json ${argString} \
         ${path}`,
-      { cwd: process.cwd() }
+      { cwd: process.cwd() },
     );
 
     if (err) {
@@ -95,7 +94,7 @@ export default class FlowCliWrapper {
         -o json \
         --args-json ${argString} \
         ${path}`,
-      { cwd: process.cwd() }
+      { cwd: process.cwd() },
     );
 
     if (err) {

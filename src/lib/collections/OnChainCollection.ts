@@ -16,9 +16,7 @@ type NFTMintResult = {
 };
 
 export default class OnChainCollection extends BaseCollection {
-  async getContract(options?: {
-    saveAdminResourceToContractAccount?: boolean;
-  }): Promise<string> {
+  async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
     return OnChainGenerator.contract({
       contracts: this.config.contracts,
       contractName: this.name,
@@ -38,10 +36,10 @@ export default class OnChainCollection extends BaseCollection {
 
     const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
-    const contractCode = await this.getContract({ 
-      saveAdminResourceToContractAccount
+    const contractCode = await this.getContract({
+      saveAdminResourceToContractAccount,
     });
-    
+
     const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
     const sigAlgo = publicKey.signatureAlgorithm();
