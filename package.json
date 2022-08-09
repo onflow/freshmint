@@ -20,7 +20,7 @@
     "fresh": "dist/cli/index.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "prebuild": "tsc --build --clean",
     "build": "tsc",
     "postbuild": "npm run copy-cli-templates && npm run copy-lib-templates",
@@ -36,7 +36,7 @@
     "@fresh-js/crypto": "^0.0.5",
     "@onflow/decode": "0.0.11",
     "@onflow/fcl": "^1.2.0",
-    "@onflow/types": "0.0.5",
+    "@onflow/types": "^1.0.3",
     "@onflow/util-address": "0.0.0",
     "chalk": "^4.1.0",
     "commander": "^7.1.0",
@@ -58,6 +58,7 @@
     "@types/elliptic": "^6.4.14",
     "@types/fs-extra": "^9.0.13",
     "@types/inquirer": "^8.2.1",
+    "@types/jest": "^28.1.6",
     "@types/node-fetch": "^2.6.2",
     "@types/pouchdb": "^6.4.0",
     "@types/progress": "^2.0.5",
@@ -65,7 +66,9 @@
     "@typescript-eslint/parser": "^5.32.0",
     "cpx": "^1.5.0",
     "eslint": "^8.21.0",
+    "jest": "^28.1.3",
     "prettier": "^2.7.1",
+    "ts-jest": "^28.0.7",
     "typescript": "^4.7.4"
   }
 }
