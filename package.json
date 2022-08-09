@@ -32,7 +32,7 @@
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
-    "@fresh-js/core": "^0.0.5",
+    "@fresh-js/core": "^0.0.6",
     "@fresh-js/crypto": "^0.0.5",
     "@onflow/decode": "0.0.11",
     "@onflow/fcl": "^1.2.0",
