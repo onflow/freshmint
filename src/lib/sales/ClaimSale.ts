@@ -21,7 +21,7 @@ export default class ClaimSale {
     });
   }
 
-  async start(price: string) {
+  async start(id: string, price: string, bucket?: string) {
     const transaction = await ClaimSaleGenerator.startSale({
       contracts: this.collection.config.contracts,
       contractName: this.collection.name,
@@ -31,7 +31,11 @@ export default class ClaimSale {
 
     const response = await fcl.send([
       fcl.transaction(transaction),
-      fcl.args([fcl.arg(price, t.UFix64)]),
+      fcl.args([
+        fcl.arg(id, t.String),
+        fcl.arg(price, t.UFix64),
+        fcl.arg(bucket, t.Optional(t.String))
+      ]),
       fcl.limit(1000),
 
       ...this.collection.getAuthorizers(),
@@ -41,7 +45,7 @@ export default class ClaimSale {
     const { error: _ } = await fcl.tx(response).onceSealed();
   }
 
-  async stop() {
+  async stop(id: string) {
     const transaction = await ClaimSaleGenerator.stopSale({
       contracts: this.collection.config.contracts,
       contractName: this.collection.name,
@@ -51,6 +55,7 @@ export default class ClaimSale {
 
     const response = await fcl.send([
       fcl.transaction(transaction),
+      fcl.args([fcl.arg(id, t.String)]),
       fcl.limit(1000),
 
       ...this.collection.getAuthorizers(),
@@ -66,7 +71,7 @@ export default class ClaimSale {
   // access to the "admin" settings of a project.
   //
   // What is the best way to separate the two?
-  async claimNFT(saleAddress: string, authorizer: Authorizer): Promise<string> {
+  async claimNFT(saleAddress: string, authorizer: Authorizer, saleId: string): Promise<string> {
     const transaction = await ClaimSaleGenerator.claimNFT({
       contracts: this.collection.config.contracts,
       contractName: this.collection.name,
@@ -76,7 +81,10 @@ export default class ClaimSale {
 
     const response = await fcl.send([
       fcl.transaction(transaction),
-      fcl.args([fcl.arg(saleAddress, t.Address)]),
+      fcl.args([
+        fcl.arg(saleAddress, t.Address),
+        fcl.arg(saleId, t.String)
+      ]),
       fcl.limit(1000),
 
       fcl.payer(authorizer.toFCLAuthorizationFunction()),

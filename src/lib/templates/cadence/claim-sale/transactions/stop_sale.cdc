@@ -1,12 +1,15 @@
 import NFTClaimSale from {{{ contracts.NFTClaimSale }}}
 
-transaction {
+transaction(saleID: String) {
     
+    let sales: &NFTClaimSale.SaleCollection
+
     prepare(signer: AuthAccount) {
+        self.sales = signer.borrow<&NFTClaimSale.SaleCollection>(from: NFTClaimSale.SaleCollectionStoragePath)!
+    }
 
-        signer.unlink(NFTClaimSale.SalePublicPath)
-
-        let sale <- signer.load<@NFTClaimSale.Sale>(from: NFTClaimSale.SaleStoragePath)
+    execute {
+        let sale <- self.sales.remove(saleID: saleID)
 
         destroy sale
     }

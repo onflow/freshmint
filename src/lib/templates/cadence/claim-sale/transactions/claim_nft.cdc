@@ -5,7 +5,7 @@ import FlowToken from {{{ contracts.FlowToken }}}
 import FungibleToken from {{{ contracts.FungibleToken }}}
 import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
 
-transaction(saleAddress: Address) {
+transaction(saleAddress: Address, saleID: String) {
 
     let payment: @FungibleToken.Vault
     let receiver: &{NonFungibleToken.CollectionPublic}
@@ -28,8 +28,9 @@ transaction(saleAddress: Address) {
             .borrow<&{NonFungibleToken.CollectionPublic}>()!
 
         self.sale = getAccount(saleAddress)
-            .getCapability(NFTClaimSale.SalePublicPath)!
-            .borrow<&{NFTClaimSale.SalePublic}>()!
+            .getCapability(NFTClaimSale.SaleCollectionPublicPath)!
+            .borrow<&{NFTClaimSale.SaleCollectionPublic}>()!
+            .borrowSale(id: saleID)
 
         let vault = signer
             .borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
