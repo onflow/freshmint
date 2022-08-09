@@ -32,5 +32,5 @@ export const contractPublicKey = privateKey.getPublicKey();
 export const contractHashAlgorithm = HashAlgorithm.SHA3_256;
 
 export function randomContractName() {
-  return `Foo${new Date().getMilliseconds()}`
+  return `Foo${Math.floor(Math.random() * 1000)}`
 }
