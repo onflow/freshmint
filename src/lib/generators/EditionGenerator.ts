@@ -11,7 +11,7 @@ export default class EditionBlindGenerator extends TemplateGenerator {
     contracts: Contracts;
     contractName: string;
     schema: metadata.Schema;
-    saveAdminResourceToContractAccount: boolean;
+    saveAdminResourceToContractAccount?: boolean;
   }): Promise<string> {
     const displayView = schema.getView(metadata.DisplayView.TYPE);
 

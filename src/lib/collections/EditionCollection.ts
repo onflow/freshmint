@@ -39,7 +39,7 @@ export default class EditionCollection extends BaseCollection {
       contracts: this.config.contracts,
       contractName: this.name,
       schema: this.schema,
-      saveAdminResourceToContractAccount: options.saveAdminResourceToContractAccount
+      saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount
     });
   }
 
