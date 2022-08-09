@@ -27,7 +27,7 @@ Fresh NFT supports the following collection types:
 
 ```js
 import { TestnetConfig } from '@fresh-js/core';
-import { OnChainCollection, metadata } from '@fresh-js/nft';
+import { OnChainCollection, metadata } from 'freshmint';
 
 const collection = new OnChainCollection({
   config: TestnetConfig,
@@ -150,7 +150,7 @@ Today, a schema is simply a list of field types.
 However, Fresh NFT may support more complex schema models in the future (e.g. sets and editions).
 
 ```js
-import { metadata } from '@fresh-js/nft';
+import { metadata } from 'freshmint';
 
 // Create a schema with two fields:
 // - "foo" is a string field
@@ -190,7 +190,7 @@ You can use the default schema as a starting place
 and extend it with additional fields.
 
 ```js
-import { metadata } from '@fresh-js/nft';
+import { metadata } from 'freshmint';
 
 const schema = metadata.defaultSchema.extend([
   foo: metadata.String(),
@@ -216,7 +216,7 @@ You can define custom metadata fields using the `defineField` function.
 
 ```js
 import * as t from '@onflow/types';
-import { metadata } from '@fresh-js/nft';
+import { metadata } from 'freshmint';
 
 const MyCustomFieldType = metadata.defineField({
   id: 'my-custom-field-type',
@@ -254,7 +254,7 @@ const rawSchema = {
 Use the `parseSchema` function to convert a raw schema into a `metadata.Schema` object:
 
 ```js
-import { metadata } from '@fresh-js/nft';
+import { metadata } from 'freshmint';
 
 const schema = metadata.parseSchema(rawSchema);
 ```
@@ -278,7 +278,7 @@ on-chain metadata record.
 
 ```js
 import { TestnetConfig, Authorizer } from '@fresh-js/core';
-import { OnChainBlindCollection, metadata } from '@fresh-js/nft';
+import { OnChainBlindCollection, metadata } from 'freshmint';
 
 // Intialize your owner authorizer.
 const owner = new Authorizer(...);
@@ -494,7 +494,7 @@ only their serial numbers are different.
 
 ```js
 import { TestnetConfig, Authorizer } from '@fresh-js/core';
-import { EditionCollection, metadata } from '@fresh-js/nft';
+import { EditionCollection, metadata } from 'freshmint';
 
 // Intialize your owner authorizer.
 const owner = new Authorizer(...);
@@ -639,7 +639,7 @@ only their serial numbers are different.
 
 ```js
 import { TestnetConfig, Authorizer } from '@fresh-js/core';
-import { EditionBlindCollection, metadata } from '@fresh-js/nft';
+import { EditionBlindCollection, metadata } from 'freshmint';
 
 // Intialize your owner authorizer.
 const owner = new Authorizer(...);
@@ -825,7 +825,7 @@ In a claim sale, a user purchases an NFT from a collection but does not see the 
 until after the purchase.
 
 ```js
-import { ClaimSale } from '@fresh-js/nft';
+import { ClaimSale } from 'freshmint';
 
 const collection = new OnChainBlindCollection(...);
 
