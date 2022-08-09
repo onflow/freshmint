@@ -20,7 +20,7 @@
     "fresh": "dist/cli/index.js"
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --runInBand",
     "prebuild": "tsc --build --clean",
     "build": "tsc",
     "postbuild": "npm run copy-cli-templates && npm run copy-lib-templates",

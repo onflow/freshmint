@@ -9,24 +9,24 @@ import { MetadataMap } from '../metadata';
 import { BaseCollection } from './NFTCollection';
 import EditionGenerator from '../generators/EditionGenerator';
 
-type EditionInput = {
+export type EditionInput = {
   size: number;
   metadata: MetadataMap;
 };
 
-type EditionNFT = {
+export type EditionNFT = {
   editionId: string;
   editionSerial: string;
 };
 
-type EditionResult = {
+export type EditionResult = {
   id: string;
   metadata: MetadataMap;
   size: number;
   nfts: EditionNFT[];
 };
 
-type MintResult = {
+export type NFTMintResult = {
   id: string;
   editionId: string;
   editionSerial: string;
@@ -129,12 +129,12 @@ export default class EditionCollection extends BaseCollection {
 
   // async mintEdition(edition: )
 
-  async mintNFT(nft: EditionNFT, bucket?: string): Promise<MintResult> {
+  async mintNFT(nft: EditionNFT, bucket?: string): Promise<NFTMintResult> {
     const results = await this.mintNFTs([nft], bucket);
     return results[0];
   }
 
-  async mintNFTs(nfts: EditionNFT[], bucket?: string): Promise<MintResult[]> {
+  async mintNFTs(nfts: EditionNFT[], bucket?: string): Promise<NFTMintResult[]> {
     const editionIds = nfts.map((nft) => nft.editionId);
     const editionSerials = nfts.map((nft) => nft.editionSerial);
 
@@ -166,7 +166,7 @@ export default class EditionCollection extends BaseCollection {
   }
 }
 
-function formatMintResults(transactionId: string, events: Event[], nfts: EditionNFT[]): MintResult[] {
+function formatMintResults(transactionId: string, events: Event[], nfts: EditionNFT[]): NFTMintResult[] {
   const deposits = events.filter((event) => event.type.includes('.Minted'));
 
   return deposits.map((deposit, i) => {

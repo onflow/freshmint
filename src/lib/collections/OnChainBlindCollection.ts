@@ -9,13 +9,13 @@ import { MetadataMap, hashMetadataWithSalt } from '../metadata';
 import OnChainBlindGenerator from '../generators/OnChainBlindGenerator';
 import { BaseCollection } from './NFTCollection';
 
-type HashedNFT = {
+export type HashedNFT = {
   metadata: MetadataMap;
   metadataHash: string;
   metadataSalt: string;
 };
 
-type NFTMintResult = {
+export type NFTMintResult = {
   id: string;
   metadata: MetadataMap;
   metadataHash: string;
@@ -23,13 +23,13 @@ type NFTMintResult = {
   transactionId: string;
 };
 
-interface NFTRevealInput {
+export interface NFTRevealInput {
   id: string;
   metadata: MetadataMap;
   metadataSalt: string;
 }
 
-type NFTRevealResult = {
+export type NFTRevealResult = {
   id: string;
   transactionId: string;
 };

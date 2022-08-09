@@ -10,31 +10,31 @@ import { BaseCollection } from './NFTCollection';
 import EditionBlindGenerator from '../generators/EditionBlindGenerator';
 import { hashValuesWithSalt } from '../hash';
 
-type EditionInput = {
+export type EditionInput = {
   size: number;
   metadata: MetadataMap;
 };
 
-type EditionNFT = {
+export type EditionNFT = {
   editionId: string;
   editionSerial: string;
 };
 
-type EditionResult = {
+export type EditionResult = {
   id: string;
   metadata: MetadataMap;
   size: number;
   nfts: EditionNFT[];
 };
 
-type HashedEditionNFT = {
+export type HashedEditionNFT = {
   editionId: string;
   editionSerial: string;
   editionHash: string;
   editionSalt: string;
 };
 
-type MintResult = {
+export type NFTMintResult = {
   id: string;
   editionId: string;
   editionSerial: string;
@@ -43,19 +43,20 @@ type MintResult = {
   transactionId: string;
 };
 
-interface RevealInput {
+export interface NFTRevealInput {
   id: string;
   editionId: string;
   editionSerial: string;
   editionSalt: string;
 }
 
-type RevealResult = {
+export type NFTRevealResult = {
   id: string;
   transactionId: string;
 };
 
 export default class EditionBlindCollection extends BaseCollection {
+  
   async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
     return EditionBlindGenerator.contract({
       contracts: this.config.contracts,
@@ -150,12 +151,12 @@ export default class EditionBlindCollection extends BaseCollection {
     return formatEditionResults(events, editions);
   }
 
-  async mintNFT(nft: EditionNFT): Promise<MintResult> {
-    const results = await this.mintNFTs([nft]);
+  async mintNFT(nft: EditionNFT, bucket?: string): Promise<NFTMintResult> {
+    const results = await this.mintNFTs([nft], bucket);
     return results[0];
   }
 
-  async mintNFTs(nfts: EditionNFT[]): Promise<MintResult[]> {
+  async mintNFTs(nfts: EditionNFT[], bucket?: string): Promise<NFTMintResult[]> {
     const hashedNFTs = hashNFTs(nfts);
 
     const hashes = hashedNFTs.map((nft) => nft.editionHash);
@@ -169,7 +170,10 @@ export default class EditionBlindCollection extends BaseCollection {
 
     const response = await fcl.send([
       fcl.transaction(transaction),
-      fcl.args([fcl.arg(hashes, t.Array(t.String))]),
+      fcl.args([
+        fcl.arg(hashes, t.Array(t.String)),
+        fcl.arg(bucket, t.Optional(t.String))
+      ]),
       fcl.limit(1000),
 
       ...this.getAuthorizers(),
@@ -183,12 +187,12 @@ export default class EditionBlindCollection extends BaseCollection {
     return formatMintResults(transactionId, events, hashedNFTs);
   }
 
-  async revealNFT(nft: RevealInput): Promise<RevealResult> {
+  async revealNFT(nft: NFTRevealInput): Promise<NFTRevealResult> {
     const results = await this.revealNFTs([nft]);
     return results[0];
   }
 
-  async revealNFTs(nfts: RevealInput[]): Promise<RevealResult[]> {
+  async revealNFTs(nfts: NFTRevealInput[]): Promise<NFTRevealResult[]> {
     const nftIds = nfts.map((nft) => nft.id);
     const editionIds = nfts.map((nft) => nft.editionId);
     const editionSerials = nfts.map((nft) => nft.editionSerial);
@@ -223,7 +227,7 @@ export default class EditionBlindCollection extends BaseCollection {
   }
 }
 
-function formatMintResults(transactionId: string, events: Event[], nfts: HashedEditionNFT[]): MintResult[] {
+function formatMintResults(transactionId: string, events: Event[], nfts: HashedEditionNFT[]): NFTMintResult[] {
   const deposits = events.filter((event) => event.type.includes('.Minted'));
 
   return deposits.map((deposit, i) => {
@@ -256,7 +260,7 @@ function formatEditionResults(events: Event[], editions: EditionInput[]): Editio
   });
 }
 
-function formatRevealtResults(transactionId: string, events: Event[]): RevealResult[] {
+function formatRevealtResults(transactionId: string, events: Event[]): NFTRevealResult[] {
   const deposits = events.filter((event) => event.type.includes('.Revealed'));
 
   return deposits.map((deposit) => {

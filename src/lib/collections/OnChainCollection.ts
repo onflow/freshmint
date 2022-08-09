@@ -9,7 +9,7 @@ import { MetadataMap } from '../metadata';
 import OnChainGenerator from '../generators/OnChainGenerator';
 import { BaseCollection } from './NFTCollection';
 
-type NFTMintResult = {
+export type NFTMintResult = {
   id: string;
   metadata: MetadataMap;
   transactionId: string;

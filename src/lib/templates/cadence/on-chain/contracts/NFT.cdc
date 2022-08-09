@@ -202,27 +202,34 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    // fetch
-    // Get a reference to a {{ contractName }} from an account's Collection, if available.
-    // If an account does not have a {{ contractName }}.Collection, panic.
-    // If it has a collection but does not contain the itemID, return nil.
-    // If it has a collection and that collection contains the itemID, return a reference to that.
-    //
-    pub fun fetch(_ from: Address, itemID: UInt64): &{{ contractName }}.NFT? {
-        let collection = getAccount(from)
-            .getCapability({{ contractName }}.CollectionPublicPath)!
-            .borrow<&{ {{ contractName }}.{{ contractName }}CollectionPublic }>()
-            ?? panic("Couldn't get collection")
+    pub fun getCollectionPublicPath(collectionName: String?): PublicPath {
+        if let name = collectionName {
+            return PublicPath(identifier: "{{ contractName }}Collection_".concat(name))!
+        }
 
-        // We trust {{ contractName }}.Collection.borow{{ contractName }} to get the correct itemID
-        // (it checks it before returning it).
-        return collection.borrow{{ contractName }}(id: itemID)
+        return /public/{{ contractName }}Collection
+    }
+
+    pub fun getCollectionPrivatePath(collectionName: String?): PrivatePath {
+        if let name = collectionName {
+            return PrivatePath(identifier: "{{ contractName }}Collection_".concat(name))!
+        }
+
+        return /private/{{ contractName }}Collection
+    }
+
+    pub fun getCollectionStoragePath(collectionName: String?): StoragePath {
+        if let name = collectionName {
+            return StoragePath(identifier: "{{ contractName }}Collection_".concat(name))!
+        }
+
+        return /storage/{{ contractName }}Collection
     }
 
     priv fun initAdmin(admin: AuthAccount) {
         // Create an empty collection and save it to storage
         let collection <- {{ contractName }}.createEmptyCollection()
-        
+
         admin.save(<- collection, to: {{ contractName }}.CollectionStoragePath)
         admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
         admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
@@ -234,9 +241,9 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     init({{#unless saveAdminResourceToContractAccount }}admin: AuthAccount{{/unless}}) {
 
-        self.CollectionStoragePath = /storage/{{ contractName }}Collection
-        self.CollectionPublicPath = /public/{{ contractName }}Collection
-        self.CollectionPrivatePath = /private/{{ contractName }}Collection
+        self.CollectionPublicPath = {{ contractName }}.getCollectionPublicPath(collectionName: nil)
+        self.CollectionStoragePath = {{ contractName }}.getCollectionStoragePath(collectionName: nil)
+        self.CollectionPrivatePath = {{ contractName }}.getCollectionPrivatePath(collectionName: nil)
 
         self.AdminStoragePath = /storage/{{ contractName }}Admin
 
