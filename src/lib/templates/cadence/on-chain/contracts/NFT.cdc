@@ -222,6 +222,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     priv fun initAdmin(admin: AuthAccount) {
         // Create an empty collection and save it to storage
         let collection <- {{ contractName }}.createEmptyCollection()
+        
         admin.save(<- collection, to: {{ contractName }}.CollectionStoragePath)
         admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
         admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
@@ -231,13 +232,12 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    // initializer
-    //
     init({{#unless saveAdminResourceToContractAccount }}admin: AuthAccount{{/unless}}) {
-        // Set our named paths
+
         self.CollectionStoragePath = /storage/{{ contractName }}Collection
         self.CollectionPublicPath = /public/{{ contractName }}Collection
         self.CollectionPrivatePath = /private/{{ contractName }}Collection
+
         self.AdminStoragePath = /storage/{{ contractName }}Admin
 
         // Initialize the total supply

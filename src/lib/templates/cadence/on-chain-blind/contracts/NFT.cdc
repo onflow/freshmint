@@ -279,13 +279,27 @@ pub contract {{ contractName }}: NonFungibleToken {
         return collection.borrow{{ contractName }}(id: itemID)
     }
 
-    // initializer
-    //
-    init(admin: AuthAccount, placeholderImage: String) {
-        // Set our named paths
+    priv fun initAdmin(admin: AuthAccount) {
+        // Create an empty collection and save it to storage
+        let collection <- {{ contractName }}.createEmptyCollection()
+        
+        admin.save(<- collection, to: {{ contractName }}.CollectionStoragePath)
+
+        admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
+        admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
+        
+        // Create an admin resource and save it to storage
+        let adminResource <- create Admin()
+
+        admin.save(<- adminResource, to: self.AdminStoragePath)
+    }
+
+    init({{#unless saveAdminResourceToContractAccount }}admin: AuthAccount, {{/unless}}placeholderImage: String) {
+
         self.CollectionStoragePath = /storage/{{ contractName }}Collection
         self.CollectionPublicPath = /public/{{ contractName }}Collection
         self.CollectionPrivatePath = /private/{{ contractName }}Collection
+
         self.AdminStoragePath = /storage/{{ contractName }}Admin
 
         self.placeholderImage = placeholderImage
@@ -295,17 +309,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.metadata = {}
 
-        let collection <- {{ contractName }}.createEmptyCollection()
-        
-        admin.save(<- collection, to: {{ contractName }}.CollectionStoragePath)
-
-        admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
-
-        admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
-        
-        // Create an admin resource and save it to storage
-        let adminResource <- create Admin()
-        admin.save(<- adminResource, to: self.AdminStoragePath)
+        self.initAdmin(admin: {{#if saveAdminResourceToContractAccount }}self.account{{ else }}admin{{/if}})
 
         emit ContractInitialized()
     }

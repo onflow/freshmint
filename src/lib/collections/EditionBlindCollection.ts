@@ -10,7 +10,7 @@ import { BaseCollection } from './NFTCollection';
 import EditionBlindGenerator from '../generators/EditionBlindGenerator';
 import { hashValuesWithSalt } from '../hash';
 
-type Edition = {
+type EditionInput = {
   size: number;
   metadata: MetadataMap;
 };
@@ -18,6 +18,13 @@ type Edition = {
 type EditionNFT = {
   editionId: string;
   editionSerial: string;
+};
+
+type EditionResult = {
+  id: string;
+  metadata: MetadataMap;
+  size: number;
+  nfts: EditionNFT[];
 };
 
 type HashedEditionNFT = {
@@ -49,11 +56,12 @@ type RevealResult = {
 };
 
 export default class EditionBlindCollection extends BaseCollection {
-  async getContract(): Promise<string> {
+  async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
     return EditionBlindGenerator.contract({
       contracts: this.config.contracts,
       contractName: this.name,
       schema: this.schema,
+      saveAdminResourceToContractAccount: options.saveAdminResourceToContractAccount
     });
   }
 
@@ -67,12 +75,15 @@ export default class EditionBlindCollection extends BaseCollection {
   ): Promise<string> {
     const transaction = await EditionBlindGenerator.deploy();
 
-    const contractCode = await this.getContract();
+    const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
+
+    const contractCode = await this.getContract({
+      saveAdminResourceToContractAccount,
+    });
+
     const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
     const sigAlgo = publicKey.signatureAlgorithm();
-
-    const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
     const response = await fcl.send([
       fcl.transaction(transaction),
@@ -102,11 +113,11 @@ export default class EditionBlindCollection extends BaseCollection {
     return address;
   }
 
-  async createEdition(edition: Edition): Promise<EditionNFT[]> {
-    return this.createEditions([edition]);
+  async createEdition(edition: EditionInput): Promise<EditionResult> {
+    return (await this.createEditions([edition]))[0];
   }
 
-  async createEditions(editions: Edition[]): Promise<EditionNFT[]> {
+  async createEditions(editions: EditionInput[]): Promise<EditionResult[]> {
     const transaction = await EditionBlindGenerator.createEditions({
       contracts: this.config.contracts,
       contractName: this.name,
@@ -229,14 +240,19 @@ function formatMintResults(transactionId: string, events: Event[], nfts: HashedE
   });
 }
 
-function formatEditionResults(events: Event[], editions: Edition[]): EditionNFT[] {
+function formatEditionResults(events: Event[], editions: EditionInput[]): EditionResult[] {
   const editionEvents = events.filter((event) => event.type.includes('.EditionCreated'));
 
   return editions.flatMap((edition, i) => {
     const editionEvent: any = editionEvents[i];
     const editionId = editionEvent.data.edition.id;
 
-    return getEditionNFTs(editionId, edition.size);
+    return {
+      id: editionId,
+      metadata: edition.metadata,
+      size: edition.size,
+      nfts: getEditionNFTs(editionId, edition.size)
+    };
   });
 }
 

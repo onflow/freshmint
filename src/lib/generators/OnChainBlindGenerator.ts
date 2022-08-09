@@ -6,10 +6,12 @@ export default class OnChainBlindGenerator extends TemplateGenerator {
     contracts,
     contractName,
     schema,
+    saveAdminResourceToContractAccount,
   }: {
     contracts: Contracts;
     contractName: string;
     schema: metadata.Schema;
+    saveAdminResourceToContractAccount: boolean;
   }): Promise<string> {
     const displayView = schema.getView(metadata.DisplayView.TYPE);
 
@@ -19,6 +21,7 @@ export default class OnChainBlindGenerator extends TemplateGenerator {
       fields: schema.getFieldList(),
       // TODO: support multiple views
       displayView,
+      saveAdminResourceToContractAccount: saveAdminResourceToContractAccount ?? false,
     });
   }
 

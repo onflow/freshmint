@@ -1,19 +1,39 @@
 import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
-transaction(editionIDs: [UInt64], editionSerials: [UInt64]) {
+pub fun getOrCreateCollection(account: AuthAccount, collectionName: String?): &{NonFungibleToken.CollectionPublic} {
+
+    let storagePath = {{ contractName }}.getCollectionStoragePath(collectionName: collectionName)
+
+    if let collectionRef = account.borrow<&{NonFungibleToken.CollectionPublic}>(from: storagePath) {
+        return collectionRef
+    }
+
+    let collection <- {{ contractName }}.createEmptyCollection()
+
+    let collectionRef = &collection as &{NonFungibleToken.CollectionPublic}
+
+    let publicPath = {{ contractName }}.getCollectionPublicPath(collectionName: collectionName)
+    let privatePath = {{ contractName }}.getCollectionPrivatePath(collectionName: collectionName)
+
+    account.save(<-collection, to: storagePath)
+
+    account.link<&{{ contractName }}.Collection>(privatePath, target: storagePath)
+    account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>(publicPath, target: storagePath)
+    
+    return collectionRef
+}
+
+transaction(editionIDs: [UInt64], editionSerials: [UInt64], collectionName: String?) {
     
     let admin: &{{ contractName }}.Admin
-    let receiver: &{NonFungibleToken.CollectionPublic}
+    let collection: &{NonFungibleToken.CollectionPublic}
 
     prepare(signer: AuthAccount) {
         self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
-        self.receiver = signer
-            .getCapability({{ contractName }}.CollectionPublicPath)!
-            .borrow<&{NonFungibleToken.CollectionPublic}>()
-            ?? panic("Could not get receiver reference to the NFT Collection")
+        self.collection = getOrCreateCollection(account: signer, collectionName: collectionName)
     }
 
     pre {
@@ -27,7 +47,7 @@ transaction(editionIDs: [UInt64], editionSerials: [UInt64]) {
                 editionSerial: editionSerials[i],
             )
 
-            self.receiver.deposit(token: <- token)   
+            self.collection.deposit(token: <- token)   
         }
     }
 }

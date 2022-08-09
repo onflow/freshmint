@@ -5,10 +5,9 @@ import * as t from '@onflow/types';
 
 import { Event } from '@fresh-js/core';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
-import { MetadataMap } from '../metadata';
+import { MetadataMap, hashMetadataWithSalt } from '../metadata';
 import OnChainBlindGenerator from '../generators/OnChainBlindGenerator';
 import { BaseCollection } from './NFTCollection';
-import { hashMetadataWithSalt } from '../metadata/hash';
 
 type HashedNFT = {
   metadata: MetadataMap;
@@ -36,11 +35,12 @@ type NFTRevealResult = {
 };
 
 export default class OnChainBlindCollection extends BaseCollection {
-  async getContract(): Promise<string> {
+  async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
     return OnChainBlindGenerator.contract({
       contracts: this.config.contracts,
       contractName: this.name,
       schema: this.schema,
+      saveAdminResourceToContractAccount: options.saveAdminResourceToContractAccount ?? false
     });
   }
 
@@ -54,12 +54,15 @@ export default class OnChainBlindCollection extends BaseCollection {
   ): Promise<string> {
     const transaction = await OnChainBlindGenerator.deploy();
 
-    const contractCode = await this.getContract();
+    const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
+
+    const contractCode = await this.getContract({
+      saveAdminResourceToContractAccount,
+    });
+
     const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
     const sigAlgo = publicKey.signatureAlgorithm();
-
-    const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
     const response = await fcl.send([
       fcl.transaction(transaction),

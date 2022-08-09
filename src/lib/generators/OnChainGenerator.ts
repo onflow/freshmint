@@ -21,7 +21,7 @@ export default class OnChainGenerator extends TemplateGenerator {
       fields: schema.getFieldList(),
       // TODO: support multiple views
       displayView,
-      saveAdminResourceToContractAccount,
+      saveAdminResourceToContractAccount: saveAdminResourceToContractAccount ?? false,
     });
   }
 

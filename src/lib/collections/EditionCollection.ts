@@ -9,7 +9,7 @@ import { MetadataMap } from '../metadata';
 import { BaseCollection } from './NFTCollection';
 import EditionGenerator from '../generators/EditionGenerator';
 
-type Edition = {
+type EditionInput = {
   size: number;
   metadata: MetadataMap;
 };
@@ -17,6 +17,13 @@ type Edition = {
 type EditionNFT = {
   editionId: string;
   editionSerial: string;
+};
+
+type EditionResult = {
+  id: string;
+  metadata: MetadataMap;
+  size: number;
+  nfts: EditionNFT[];
 };
 
 type MintResult = {
@@ -27,11 +34,12 @@ type MintResult = {
 };
 
 export default class EditionCollection extends BaseCollection {
-  async getContract(): Promise<string> {
+  async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
     return EditionGenerator.contract({
       contracts: this.config.contracts,
       contractName: this.name,
       schema: this.schema,
+      saveAdminResourceToContractAccount: options.saveAdminResourceToContractAccount
     });
   }
 
@@ -44,12 +52,16 @@ export default class EditionCollection extends BaseCollection {
   ): Promise<string> {
     const transaction = await EditionGenerator.deploy();
 
-    const contractCode = await this.getContract();
+    const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
+
+    const contractCode = await this.getContract({
+      saveAdminResourceToContractAccount,
+    });
+
     const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
     const sigAlgo = publicKey.signatureAlgorithm();
 
-    const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
     const response = await fcl.send([
       fcl.transaction(transaction),
@@ -78,11 +90,11 @@ export default class EditionCollection extends BaseCollection {
     return address;
   }
 
-  async createEdition(edition: Edition): Promise<EditionNFT[]> {
-    return this.createEditions([edition]);
+  async createEdition(edition: EditionInput): Promise<EditionResult> {
+    return (await this.createEditions([edition]))[0];
   }
 
-  async createEditions(editions: Edition[]): Promise<EditionNFT[]> {
+  async createEditions(editions: EditionInput[]): Promise<EditionResult[]> {
     const transaction = await EditionGenerator.createEditions({
       contracts: this.config.contracts,
       contractName: this.name,
@@ -115,12 +127,14 @@ export default class EditionCollection extends BaseCollection {
     return formatEditionResults(events, editions);
   }
 
-  async mintNFT(nft: EditionNFT): Promise<MintResult> {
-    const results = await this.mintNFTs([nft]);
+  // async mintEdition(edition: )
+
+  async mintNFT(nft: EditionNFT, bucket?: string): Promise<MintResult> {
+    const results = await this.mintNFTs([nft], bucket);
     return results[0];
   }
 
-  async mintNFTs(nfts: EditionNFT[]): Promise<MintResult[]> {
+  async mintNFTs(nfts: EditionNFT[], bucket?: string): Promise<MintResult[]> {
     const editionIds = nfts.map((nft) => nft.editionId);
     const editionSerials = nfts.map((nft) => nft.editionSerial);
 
@@ -133,8 +147,11 @@ export default class EditionCollection extends BaseCollection {
 
     const response = await fcl.send([
       fcl.transaction(transaction),
-      fcl.args([fcl.arg(editionIds, t.Array(t.UInt64))]),
-      fcl.args([fcl.arg(editionSerials, t.Array(t.UInt64))]),
+      fcl.args([
+        fcl.arg(editionIds, t.Array(t.UInt64)),
+        fcl.arg(editionSerials, t.Array(t.UInt64)),
+        fcl.arg(bucket, t.Optional(t.String))
+      ]),
       fcl.limit(1000),
 
       ...this.getAuthorizers(),
@@ -164,14 +181,19 @@ function formatMintResults(transactionId: string, events: Event[], nfts: Edition
   });
 }
 
-function formatEditionResults(events: Event[], editions: Edition[]): EditionNFT[] {
+function formatEditionResults(events: Event[], editions: EditionInput[]): EditionResult[] {
   const editionEvents = events.filter((event) => event.type.includes('.EditionCreated'));
 
   return editions.flatMap((edition, i) => {
     const editionEvent: any = editionEvents[i];
     const editionId = editionEvent.data.edition.id;
 
-    return getEditionNFTs(editionId, edition.size);
+    return {
+      id: editionId,
+      metadata: edition.metadata,
+      size: edition.size,
+      nfts: getEditionNFTs(editionId, edition.size)
+    };
   });
 }
 
