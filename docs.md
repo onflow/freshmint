@@ -834,7 +834,7 @@ const collection = new OnChainBlindCollection(...);
 const sale = new ClaimSale(collection);
 
 // Start a new claim sale for 10 FLOW
-await sale.start("default", "10.0");
+await sale.start({ id: "default", price: "10.0" });
 
 // Stop the claim sale. 
 // The unsold NFTs stay in the collection owner's account.
@@ -852,7 +852,9 @@ const sale = new ClaimSale(collection);
 // After creating and minting editions...
 
 for (const edition in editions) {
-  await sale.start(edition.id, "10.0", { bucket: edition.id });
+  // Specify the bucket to claim from. This should be the same bucket
+  // you used to mint that edition.
+  await sale.start({ id: edition.id, price: "10.0", bucket: edition.id });
 }
 
 // Later, stop the claim sales:
