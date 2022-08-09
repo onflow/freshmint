@@ -21,7 +21,7 @@ export default class ClaimSale {
     });
   }
 
-  async start({ id, price, bucket }: { id: string, price: string, bucket?: string }) {
+  async start({ id, price, bucket }: { id: string; price: string; bucket?: string }) {
     const transaction = await ClaimSaleGenerator.startSale({
       contracts: this.collection.config.contracts,
       contractName: this.collection.name,
@@ -31,11 +31,7 @@ export default class ClaimSale {
 
     const response = await fcl.send([
       fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(id, t.String),
-        fcl.arg(price, t.UFix64),
-        fcl.arg(bucket, t.Optional(t.String))
-      ]),
+      fcl.args([fcl.arg(id, t.String), fcl.arg(price, t.UFix64), fcl.arg(bucket, t.Optional(t.String))]),
       fcl.limit(1000),
 
       ...this.collection.getAuthorizers(),
@@ -81,10 +77,7 @@ export default class ClaimSale {
 
     const response = await fcl.send([
       fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(saleAddress, t.Address),
-        fcl.arg(saleId, t.String)
-      ]),
+      fcl.args([fcl.arg(saleAddress, t.Address), fcl.arg(saleId, t.String)]),
       fcl.limit(1000),
 
       fcl.payer(authorizer.toFCLAuthorizationFunction()),

@@ -56,13 +56,12 @@ export type NFTRevealResult = {
 };
 
 export default class EditionBlindCollection extends BaseCollection {
-  
   async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
     return EditionBlindGenerator.contract({
       contracts: this.config.contracts,
       contractName: this.name,
       schema: this.schema,
-      saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount
+      saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
     });
   }
 
@@ -170,10 +169,7 @@ export default class EditionBlindCollection extends BaseCollection {
 
     const response = await fcl.send([
       fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(hashes, t.Array(t.String)),
-        fcl.arg(bucket, t.Optional(t.String))
-      ]),
+      fcl.args([fcl.arg(hashes, t.Array(t.String)), fcl.arg(bucket, t.Optional(t.String))]),
       fcl.limit(1000),
 
       ...this.getAuthorizers(),
@@ -255,7 +251,7 @@ function formatEditionResults(events: Event[], editions: EditionInput[]): Editio
       id: editionId,
       metadata: edition.metadata,
       size: edition.size,
-      nfts: getEditionNFTs(editionId, edition.size)
+      nfts: getEditionNFTs(editionId, edition.size),
     };
   });
 }

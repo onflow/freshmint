@@ -16,8 +16,8 @@ const imports = {
 
 export const config = {
   host: 'http://localhost:8888',
-  contracts: imports
-}
+  contracts: imports,
+};
 
 const PRIVATE_KEY_HEX = '4d9287571c8bff7482ffc27ef68d5b4990f9bd009a1e9fa812aae08ba167d57f';
 
@@ -32,5 +32,5 @@ export const contractPublicKey = privateKey.getPublicKey();
 export const contractHashAlgorithm = HashAlgorithm.SHA3_256;
 
 export function randomContractName() {
-  return `Foo${Math.floor(Math.random() * 1000)}`
+  return `Foo${Math.floor(Math.random() * 1000)}`;
 }

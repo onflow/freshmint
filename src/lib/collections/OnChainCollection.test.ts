@@ -3,16 +3,9 @@ import * as metadata from '../metadata';
 
 import OnChainCollection from './OnChainCollection';
 
-import { 
-  config,
-  contractHashAlgorithm,
-  contractPublicKey,
-  ownerAuthorizer,
-  randomContractName
-} from '../testHelpers';
+import { config, contractHashAlgorithm, contractPublicKey, ownerAuthorizer, randomContractName } from '../testHelpers';
 
 describe('OnChainCollection', () => {
-
   const collection = new OnChainCollection({
     config,
     name: randomContractName(),
@@ -25,10 +18,7 @@ describe('OnChainCollection', () => {
   });
 
   it('should deploy a contract', async () => {
-    await collection.deployContract(
-      contractPublicKey,
-      contractHashAlgorithm
-    );
+    await collection.deployContract(contractPublicKey, contractHashAlgorithm);
   });
 
   it('should mint NFTs', async () => {
@@ -47,25 +37,23 @@ describe('OnChainCollection', () => {
         name: 'NFT 3',
         description: 'This is the third NFT.',
         thumbnail: 'nft-3.jpeg',
-      }
+      },
     ];
 
     await collection.mintNFTs(nfts);
-  })
+  });
 
   const sale = new ClaimSale(collection);
 
   it('should start a sale', async () => {
-    await sale.start({ id: "default", price: "10.0" });
+    await sale.start({ id: 'default', price: '10.0' });
   });
 
   it('should claim an NFT', async () => {
-    await sale.claimNFT(
-      ownerAuthorizer.address, ownerAuthorizer, "default"
-    )
+    await sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, 'default');
   });
-  
+
   it('should stop a sale', async () => {
-    await sale.stop("default");
+    await sale.stop('default');
   });
 });

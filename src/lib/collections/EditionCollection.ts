@@ -39,7 +39,7 @@ export default class EditionCollection extends BaseCollection {
       contracts: this.config.contracts,
       contractName: this.name,
       schema: this.schema,
-      saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount
+      saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
     });
   }
 
@@ -61,7 +61,6 @@ export default class EditionCollection extends BaseCollection {
     const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
     const sigAlgo = publicKey.signatureAlgorithm();
-
 
     const response = await fcl.send([
       fcl.transaction(transaction),
@@ -150,7 +149,7 @@ export default class EditionCollection extends BaseCollection {
       fcl.args([
         fcl.arg(editionIds, t.Array(t.UInt64)),
         fcl.arg(editionSerials, t.Array(t.UInt64)),
-        fcl.arg(bucket, t.Optional(t.String))
+        fcl.arg(bucket, t.Optional(t.String)),
       ]),
       fcl.limit(1000),
 
@@ -192,7 +191,7 @@ function formatEditionResults(events: Event[], editions: EditionInput[]): Editio
       id: editionId,
       metadata: edition.metadata,
       size: edition.size,
-      nfts: getEditionNFTs(editionId, edition.size)
+      nfts: getEditionNFTs(editionId, edition.size),
     };
   });
 }
