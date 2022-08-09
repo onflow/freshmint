@@ -841,7 +841,7 @@ await sale.start("default", "10.0");
 await sale.stop("default");
 ```
 
-#### Claimable editions
+#### Edition-based claim sales
 
 When selling edition-based NFTs, you may want to allow
 users to claim each edition separately and at a different price.
@@ -860,7 +860,6 @@ for (const edition in editions) {
 for (const edition in editions) {
   await sale.stop(edition.id;);
 }
-
 ```
 
 ### Direct sale
