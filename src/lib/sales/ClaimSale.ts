@@ -21,7 +21,7 @@ export default class ClaimSale {
     });
   }
 
-  async start(id: string, price: string, bucket?: string) {
+  async start({ id, price, bucket }: { id: string, price: string, bucket?: string }) {
     const transaction = await ClaimSaleGenerator.startSale({
       contracts: this.collection.config.contracts,
       contractName: this.collection.name,

@@ -151,12 +151,12 @@ export default class EditionBlindCollection extends BaseCollection {
     return formatEditionResults(events, editions);
   }
 
-  async mintNFT(nft: EditionNFT, bucket?: string): Promise<NFTMintResult> {
-    const results = await this.mintNFTs([nft], bucket);
+  async mintNFT(nft: EditionNFT, { bucket }: { bucket?: string } = {}): Promise<NFTMintResult> {
+    const results = await this.mintNFTs([nft], { bucket });
     return results[0];
   }
 
-  async mintNFTs(nfts: EditionNFT[], bucket?: string): Promise<NFTMintResult[]> {
+  async mintNFTs(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}): Promise<NFTMintResult[]> {
     const hashedNFTs = hashNFTs(nfts);
 
     const hashes = hashedNFTs.map((nft) => nft.editionHash);

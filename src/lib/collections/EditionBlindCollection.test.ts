@@ -68,10 +68,10 @@ describe('EditionCollection', () => {
     edition1mintedNFTs = await collection.mintNFTs(edition1.nfts);
   });
 
-  const bucket = "edition2"
+  const edition2Bucket = "edition2"
 
   it('should mint Edition 2 NFTs into custom bucket', async () => {
-    edition2mintedNFTs = await collection.mintNFTs(edition2.nfts, bucket);
+    edition2mintedNFTs = await collection.mintNFTs(edition2.nfts, { bucket: edition2Bucket });
   });
 
   const sale = new ClaimSale(collection);
@@ -81,7 +81,7 @@ describe('EditionCollection', () => {
 
   describe('sale 1', () => {
     it('should start a sale from default bucket', async () => {
-      await sale.start(sale1, "10.0");
+      await sale.start({ id: sale1, price: "10.0" });
     });
   
     it('should claim an NFT', async () => {
@@ -97,7 +97,7 @@ describe('EditionCollection', () => {
 
   describe('sale 2', () => {
     it('should start a sale from custom bucket', async () => {
-      await sale.start(sale2, "10.0", bucket);
+      await sale.start({ id: sale2, price: "10.0", bucket: edition2Bucket });
     });
   
     it('should claim an NFT', async () => {

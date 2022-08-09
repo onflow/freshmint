@@ -59,7 +59,7 @@ describe('OnChainCollection', () => {
   const sale = new ClaimSale(collection);
 
   it('should start a sale', async () => {
-    await sale.start("default", "10.0");
+    await sale.start({ id: "default", price: "10.0" });
   });
   
   it('should claim an NFT', async () => {
