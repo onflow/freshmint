@@ -12,15 +12,12 @@ export default class OnChainGenerator extends TemplateGenerator {
     contractName: string;
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
-  }): Promise<string> {
-    const displayView = schema.getView(metadata.DisplayView.TYPE);
-
+  }): Promise<string> {    
     return this.generate('../templates/cadence/on-chain/contracts/NFT.cdc', {
       contracts,
       contractName,
       fields: schema.getFieldList(),
-      // TODO: support multiple views
-      displayView,
+      views: schema.views,
       saveAdminResourceToContractAccount: saveAdminResourceToContractAccount ?? false,
     });
   }

@@ -8,17 +8,18 @@ export interface Contracts {
   [key: string]: string;
 }
 
-Handlebars.registerHelper('viewField', function (value) {
-  if (value instanceof Field) {
-    return value.name;
-  }
+export function registerHelper(name: string, fn: Handlebars.HelperDelegate) {
+  Handlebars.registerHelper(name, fn);
+}
 
-  return value;
-});
+export function registerPartial(name: string, source: string) {
+  const templateSource = fs.readFileSync(path.resolve(__dirname, source), 'utf8');
+  Handlebars.registerPartial(name, templateSource)
+}
 
 export default class TemplateGenerator {
-  static async generate(src: string, context: any): Promise<string> {
-    const templateSource = await fs.promises.readFile(path.resolve(__dirname, src), 'utf8');
+  static async generate(source: string, context: any): Promise<string> {
+    const templateSource = await fs.promises.readFile(path.resolve(__dirname, source), 'utf8');
 
     const template = Handlebars.compile(templateSource);
 

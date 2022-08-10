@@ -44,37 +44,34 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{/each}}
         }
 
-        {{#if displayView }}
         pub fun getViews(): [Type] {
+            {{#if views }}
             return [
-                Type<MetadataViews.Display>()
+                {{#each views}}
+                {{{ this.cadenceTypeString }}}{{#unless @last}},{{/unless}}
+                {{/each}}
             ]
+            {{ else }}
+            return []
+            {{/if}}
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
+            {{#if views }}
             switch view {
-                case Type<MetadataViews.Display>():
-                    return MetadataViews.Display(
-                        name: self.{{viewField displayView.options.fields.name }},
-                        description: self.{{viewField displayView.options.fields.description }},
-                        thumbnail: MetadataViews.IPFSFile(
-                            cid: self.{{viewField displayView.options.fields.thumbnail }}, 
-                            path: nil
-                        )
-                    )
+                {{#each views}}
+                case {{{ this.cadenceTypeString }}}:
+                    {{#with this}}
+                    {{> (lookup . "id") view=this metadata="self" }}
+                    {{/with}}
+                {{/each}}
             }
 
             return nil
-        }
-        {{ else }}
-        pub fun getViews(): [Type] {
-            return []
-        }
-
-        pub fun resolveView(_ view: Type): AnyStruct? {
+            {{ else }}
             return nil
+            {{/if}}
         }
-        {{/if}}
 
         destroy() {
             emit Burned(id: self.id)

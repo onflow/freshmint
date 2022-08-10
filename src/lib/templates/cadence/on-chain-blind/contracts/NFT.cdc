@@ -85,52 +85,48 @@ pub contract {{ contractName }}: NonFungibleToken {
             return {{ contractName }}.metadata[self.id]
         }
 
-        {{#if displayView }}
         pub fun getViews(): [Type] {
+            {{#if views }}
             return [
-                Type<MetadataViews.Display>()
+                {{#each views}}
+                {{{ this.cadenceTypeString }}}{{#unless @last}},{{/unless}}
+                {{/each}}
             ]
+            {{ else }}
+            return []
+            {{/if}}
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
+            {{#if views }}
+            if let metadata = self.getMetadata() {
+                switch view {
+                    {{#each views}}
+                    case {{{ this.cadenceTypeString }}}:
+                        {{#with this}}
+                        {{> (lookup . "id") view=this metadata="metadata" }}
+                        {{/with}}
+                    {{/each}}
+                }
+            }
+
             switch view {
                 case Type<MetadataViews.Display>():
-                    return self.resolveDisplay()
-            }
-
-            return nil
-        }
-
-        pub fun resolveDisplay(): MetadataViews.Display {
-            if let metadata = self.getMetadata() {
-                return MetadataViews.Display(
-                    name: metadata.{{viewField displayView.options.fields.name }},
-                    description: metadata.{{viewField displayView.options.fields.description }},
-                    thumbnail: MetadataViews.IPFSFile(
-                        cid: metadata.{{viewField displayView.options.fields.thumbnail }}, 
-                        path: nil
+                    return MetadataViews.Display(
+                        name: "{{ contractName }}",
+                        description: "This NFT is not yet revealed.",
+                        thumbnail: MetadataViews.IPFSFile(
+                            cid: {{ contractName }}.placeholderImage, 
+                            path: nil
+                        )
                     )
-                )
             }
 
-            return MetadataViews.Display(
-                name: "{{ contractName }}",
-                description: "This NFT is not yet revealed.",
-                thumbnail: MetadataViews.IPFSFile(
-                    cid: {{ contractName }}.placeholderImage, 
-                    path: nil
-                )
-            )
-        }
-        {{ else }}
-        pub fun getViews(): [Type] {
-            return []
-        }
-
-        pub fun resolveView(_ view: Type): AnyStruct? {
             return nil
+            {{ else }}
+            return nil
+            {{/if}}
         }
-        {{/if}}
 
         destroy() {
             emit Burned(id: self.id)
