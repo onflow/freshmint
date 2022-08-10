@@ -25,7 +25,6 @@ transaction(
             account.contracts.add(
                 name: contractName,
                 code: contractCode.decodeHex(),
-                account,
                 placeholderImage,
             )
         } else {

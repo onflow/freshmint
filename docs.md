@@ -594,7 +594,7 @@ The input to each NFT is simply its edition ID and serial number.
 
 import shuffle from 'your-secure-randomization-lib';
 
-for (const edition in editions) {
+for (const edition of editions) {
   // As mentioned above, ALWAYS randomize the mint order.
   const randomizedNFTs = shuffle(edition.nfts);
 
@@ -750,7 +750,7 @@ leaking edition contents before they are revealed.**
 
 import shuffle from 'your-secure-randomization-lib';
 
-for (const edition in editions) {
+for (const edition of editions) {
   // As mentioned above, ALWAYS randomize the mint order.
   const randomizedNFTs = shuffle(edition.nfts);
 
