@@ -19,7 +19,7 @@ describe('metadata.Schema', () => {
         }),
         metadata.MediaView({
           file: fields.video,
-          mediaType: 'image/jpeg'
+          mediaType: 'video/mp4'
         })
       ],
     });
