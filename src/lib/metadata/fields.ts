@@ -16,10 +16,6 @@ export class Field {
     this.type = type
   }
 
-  setName(name: string): void {
-    this.name = name
-  }
-
   getValue(metadata: MetadataMap): MetadataValue {
     return metadata[this.name ?? ''];
   }
@@ -138,12 +134,20 @@ export const HTTPFile = defineField({
 
 export const IPFSFile = defineField({
   id: 'ipfs-file',
+  label: 'IPFS File',
+  cadenceType: t.String,
+  sampleValue: 'sample-image.jpeg',
+});
+
+// TODO: deprecate this field
+export const IPFSImage = defineField({
+  id: 'ipfs-image',
   label: 'IPFS Image',
   cadenceType: t.String,
   sampleValue: 'sample-image.jpeg',
 });
 
-export const fieldTypes: FieldType[] = [String, Int, UInt, Fix64, UFix64, Bool, HTTPFile, IPFSFile];
+export const fieldTypes: FieldType[] = [String, Int, UInt, Fix64, UFix64, Bool, IPFSImage, HTTPFile, IPFSFile];
 
 const fieldTypesById: { [key: string]: FieldType } = fieldTypes.reduce(
   (fields, field) => ({ [field.id]: field, ...fields }),
