@@ -26,7 +26,7 @@ export default class MetadataProcessor {
   }
 
   async processField(field: metadata.Field, value: metadata.MetadataValue) {
-    switch (field.type) {
+    switch (field.type.type) {
       case IPFSImage:
         return this.processIpfsFile(value as string);
       default:
