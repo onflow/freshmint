@@ -1,9 +1,7 @@
-import * as metadata from "./index";
+import * as metadata from './index';
 
 describe('metadata.Schema', () => {
-
   it('can create a schema', () => {
-
     const schema = metadata.createSchema({
       fields: {
         name: metadata.String(),
@@ -19,11 +17,9 @@ describe('metadata.Schema', () => {
         }),
         metadata.MediaView({
           file: fields.video,
-          mediaType: 'video/mp4'
-        })
+          mediaType: 'video/mp4',
+        }),
       ],
     });
-
-    
-  })
+  });
 });

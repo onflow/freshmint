@@ -1,8 +1,6 @@
-import * as Handlebars from 'handlebars';
-
 import * as path from 'path';
 import * as fs from 'fs';
-import { Field } from '../metadata';
+import * as Handlebars from 'handlebars';
 
 export interface Contracts {
   [key: string]: string;
@@ -14,7 +12,7 @@ export function registerHelper(name: string, fn: Handlebars.HelperDelegate) {
 
 export function registerPartial(name: string, source: string) {
   const templateSource = fs.readFileSync(path.resolve(__dirname, source), 'utf8');
-  Handlebars.registerPartial(name, templateSource)
+  Handlebars.registerPartial(name, templateSource);
 }
 
 export default class TemplateGenerator {
