@@ -9,11 +9,15 @@ interface CadenceType {
 
 export class Field {
   name: string;
-  type: FieldTypeInstance;
+  typeInstance: FieldTypeInstance;
 
-  constructor(name: string, type: FieldTypeInstance) {
+  constructor(name: string, typeInstance: FieldTypeInstance) {
     this.name = name;
-    this.type = type
+    this.typeInstance = typeInstance;
+  }
+
+  get type(): FieldType {
+    return this.typeInstance.type;
   }
 
   getValue(metadata: MetadataMap): MetadataValue {
@@ -21,15 +25,15 @@ export class Field {
   }
 
   asCadenceTypeObject(): CadenceType {
-    return this.type.cadenceType;
+    return this.typeInstance.cadenceType;
   }
 
   asCadenceTypeString(): string {
-    return this.type.cadenceType.label;
+    return this.typeInstance.cadenceType.label;
   }
 
   serializeValue(value: MetadataValue): Buffer {
-    return this.type.serializeValue(value);
+    return this.typeInstance.serializeValue(value);
   }
 }
 
@@ -57,7 +61,7 @@ export interface FieldType {
   label: string;
   cadenceType: CadenceType;
   sampleValue?: string;
-};
+}
 
 export function defineField({
   id,
