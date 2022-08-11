@@ -1,14 +1,14 @@
 import { Field, Fields, FieldInput, String, IPFSFile, parseFields, FieldTypes } from './fields';
 import { View, ViewInput, DisplayView, parseViews } from './views';
 
-type ViewsFunc = (fields: Fields) => View[];
+type ViewsThunk = (fields: Fields) => View[];
 
-type SchemaParameters = SimpleSchemaParameters | AdvancedSchemaParameters;
+type SchemaParameters = SimpleSchemaParameters | FullSchemaParameters;
 type SimpleSchemaParameters = FieldTypes;
-type AdvancedSchemaParameters = { fields: FieldTypes; views?: View[] | ViewsFunc };
+type FullSchemaParameters = { fields: FieldTypes; views?: View[] | ViewsThunk };
 
-function isAdvancedSchemaParameters(params: SchemaParameters): params is AdvancedSchemaParameters {
-  return (params as AdvancedSchemaParameters).fields !== undefined;
+function isFullSchemaParameters(params: SchemaParameters): params is FullSchemaParameters {
+  return (params as FullSchemaParameters).fields !== undefined;
 }
 
 export class Schema {
@@ -16,7 +16,7 @@ export class Schema {
   views: View[];
 
   public static create(params: SchemaParameters) {
-    if (isAdvancedSchemaParameters(params)) {
+    if (isFullSchemaParameters(params)) {
       const fields = Schema.prepareFields(params.fields);
       const views = Schema.prepareViews(fields, params.views ?? []);
       return new Schema(fields, views);
@@ -45,7 +45,7 @@ export class Schema {
     return Object.values(this.fields);
   }
 
-  private static prepareViews(fields: Fields, views: View[] | ViewsFunc): View[] {
+  private static prepareViews(fields: Fields, views: View[] | ViewsThunk): View[] {
     return Array.isArray(views) ? views : views(fields);
   }
 
@@ -73,7 +73,7 @@ export function createSchema(params: SchemaParameters): Schema {
   return Schema.create(params);
 }
 
-type SchemaInput = { fields: FieldInput[], views?: ViewInput[] } | FieldInput[];
+type SchemaInput = { fields: FieldInput[]; views?: ViewInput[] } | FieldInput[];
 
 export function parseSchema(input: SchemaInput): Schema {
   if (Array.isArray(input)) {
@@ -82,7 +82,7 @@ export function parseSchema(input: SchemaInput): Schema {
 
   return createSchema({
     fields: parseFields(input.fields),
-    views: input.views ? parseViews(input.views): []
+    views: input.views ? parseViews(input.views) : [],
   });
 }
 
@@ -97,6 +97,6 @@ export const defaultSchema = createSchema({
       name: fields.name,
       description: fields.description,
       thumbnail: fields.thumbnail,
-    })
-  ]
+    }),
+  ],
 });
