@@ -1,4 +1,4 @@
-import { registerHelper, registerPartial } from '../generators/TemplateGenerator';
+import { registerHelper, registerPartial } from '../generators';
 import { Field } from './fields';
 
 export class View {
