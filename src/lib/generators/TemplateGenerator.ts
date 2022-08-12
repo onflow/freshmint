@@ -1,24 +1,14 @@
-import * as Handlebars from 'handlebars';
-
 import * as path from 'path';
 import * as fs from 'fs';
-import { Field } from '../metadata';
+import * as Handlebars from 'handlebars';
 
 export interface Contracts {
   [key: string]: string;
 }
 
-Handlebars.registerHelper('viewField', function (value) {
-  if (value instanceof Field) {
-    return value.name;
-  }
-
-  return value;
-});
-
 export default class TemplateGenerator {
-  static async generate(src: string, context: any): Promise<string> {
-    const templateSource = await fs.promises.readFile(path.resolve(__dirname, src), 'utf8');
+  static async generate(source: string, context: any): Promise<string> {
+    const templateSource = await fs.promises.readFile(path.resolve(__dirname, source), 'utf8');
 
     const template = Handlebars.compile(templateSource);
 

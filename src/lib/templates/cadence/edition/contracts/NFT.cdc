@@ -84,50 +84,33 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
 
         pub fun getViews(): [Type] {
-            return [
-                {{#if displayView }}
-                Type<MetadataViews.Display>(),
-                {{/if}}
+            return [   
+                {{#each views}}
+                {{{ this.cadenceTypeString }}},
+                {{/each}}
                 Type<MetadataViews.Edition>()
             ]
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
+            let edition = self.getEdition()
+
             switch view {
-                {{#if displayView }}
-                case Type<MetadataViews.Display>():
-                    return self.resolveDisplay()
-                {{/if}}
+                {{#each views}}
+                case {{{ this.cadenceTypeString }}}:
+                    {{#with this}}
+                    {{> (lookup . "id") view=this metadata="edition" }}
+                    {{/with}}
+                {{/each}}
                 case Type<MetadataViews.Edition>():
-                    return self.resolveEdition()
+                    return MetadataViews.Edition(
+                        name: "Edition",
+                        number: self.editionSerial,
+                        max: (edition.size as! UInt64)
+                    )
             }
 
             return nil
-        }
-
-        {{#if displayView }}
-        pub fun resolveDisplay(): MetadataViews.Display {
-            let edition = self.getEdition()
-
-            return MetadataViews.Display(
-                name: edition.{{viewField displayView.options.fields.name }},
-                description: edition.{{viewField displayView.options.fields.description }},
-                thumbnail: MetadataViews.IPFSFile(
-                    cid: edition.{{viewField displayView.options.fields.thumbnail }}, 
-                    path: nil
-                )
-            )
-        }
-        {{/if}}
-
-        pub fun resolveEdition(): MetadataViews.Edition {
-            let edition = self.getEdition()
-
-            return MetadataViews.Edition(
-                name: "Edition",
-                number: self.editionSerial,
-                max: (edition.size as! UInt64)
-            )
         }
 
         destroy() {
