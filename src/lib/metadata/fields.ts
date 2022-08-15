@@ -2,10 +2,7 @@
 import * as t from '@onflow/types';
 
 import { MetadataMap, MetadataValue } from '.';
-
-interface CadenceType {
-  label: string;
-}
+import { CadenceType, getCadenceByteTemplate, serializeCadenceValue } from '../cadence/values';
 
 export class Field {
   name: string;
@@ -32,6 +29,10 @@ export class Field {
     return this.typeInstance.cadenceType.label;
   }
 
+  getCadenceByteTemplate(): string {
+    return getCadenceByteTemplate(this.asCadenceTypeObject());
+  }
+
   serializeValue(value: MetadataValue): Buffer {
     return this.typeInstance.serializeValue(value);
   }
@@ -49,9 +50,7 @@ export class FieldTypeInstance {
   }
 
   serializeValue(value: MetadataValue): Buffer {
-    // TODO: improve serialization. currently all values serializes as UTF-8 strings
-    // off-chain serialization should match on-chain serialization in Cadence
-    return Buffer.from(value as string, 'utf-8');
+    return serializeCadenceValue(this.cadenceType, value as string);
   }
 }
 
