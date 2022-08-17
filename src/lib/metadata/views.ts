@@ -1,5 +1,5 @@
 import { registerHelper, registerPartial } from '../generators';
-import { Field } from './fields';
+import { Field, HTTPFile, IPFSFile } from './fields';
 
 export class View {
   type: ViewType<any>;
@@ -23,6 +23,24 @@ export interface ViewType<ViewOptions> {
   cadenceTypeString: string;
 }
 
+const httpFilePartial = 'http-file';
+const ipfsFilePartial = 'ipfs-file';
+
+registerHelper('whichFilePartial', (field) => {
+  switch (field.type) {
+    case HTTPFile:
+      return httpFilePartial;
+    case IPFSFile:
+      return ipfsFilePartial;
+  }
+
+  // TODO: improve error message
+  throw 'field must be a file field'
+});
+
+registerPartial(httpFilePartial, '../templates/cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc');
+registerPartial(ipfsFilePartial, '../templates/cadence/metadata-views/MetadataViews.IPFSFile.partial.cdc');
+
 export function defineView<ViewOptions>({
   id,
   cadenceTypeString,
@@ -44,22 +62,10 @@ export function defineView<ViewOptions>({
   return viewType;
 }
 
-// Views can reference fields by name or by passing the actual Field object.
-//
-// The contract only requires the name. This helper ensures that the
-// name is always returned.
-registerHelper('viewField', function (value) {
-  if (value instanceof Field) {
-    return value.name;
-  }
-
-  return value;
-});
-
 export const DisplayView = defineView<{
-  name: Field | string;
-  description: Field | string;
-  thumbnail: Field | string;
+  name: Field;
+  description: Field;
+  thumbnail: Field;
 }>({
   id: 'display',
   cadenceTypeString: 'Type<MetadataViews.Display>()',

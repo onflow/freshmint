@@ -1,7 +1,4 @@
 return MetadataViews.Media(
-    file: MetadataViews.IPFSFile(
-        cid: {{ metadata }}.{{viewField view.options.file }}, 
-        path: nil
-    ),
+    file: {{> (whichFilePartial view.options.file) metadata=metadata field=view.options.file }},
     mediaType: "{{ view.options.mediaType }}"
 )

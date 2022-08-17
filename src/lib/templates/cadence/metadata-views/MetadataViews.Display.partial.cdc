@@ -1,8 +1,5 @@
 return MetadataViews.Display(
-    name: {{ metadata }}.{{viewField view.options.name }},
-    description: {{ metadata }}.{{viewField view.options.description }},
-    thumbnail: MetadataViews.IPFSFile(
-        cid: {{ metadata }}.{{viewField view.options.thumbnail }}, 
-        path: nil
-    )
+    name: {{ metadata }}.{{ view.options.name.name }},
+    description: {{ metadata }}.{{ view.options.description.name }},
+    thumbnail: {{> (whichFilePartial view.options.thumbnail) metadata=metadata field=view.options.thumbnail }}
 )
