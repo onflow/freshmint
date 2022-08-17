@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@fresh-js/core": "^0.0.6",
-    "@fresh-js/crypto": "^0.0.5",
+    "@fresh-js/crypto": "^0.0.7",
     "@onflow/decode": "0.0.11",
     "@onflow/fcl": "^1.2.0",
     "@onflow/types": "^1.0.3",
