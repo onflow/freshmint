@@ -21,7 +21,8 @@ transaction(
 
         for id in ids {
 
-            let metadataSalt = metadataSalts[i]
+            // Convert salt from hex string to byte array
+            let metadataSalt = metadataSalts[i].decodeHex()
 
             let metadata = {{ contractName }}.Metadata(
                 metadataSalt: metadataSalt,
@@ -29,7 +30,7 @@ transaction(
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
             )
-        
+
             self.admin.revealNFT(
                 id: id,
                 metadata: metadata,

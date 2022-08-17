@@ -24,7 +24,8 @@ transaction(
                 id: id,
                 editionID: editionIDs[i],
                 editionSerial: editionSerials[i],
-                editionSalt: editionSalts[i]
+                // Convert salt from hex string to byte array
+                editionSalt: editionSalts[i].decodeHex()
             )
         
             i = i +1
