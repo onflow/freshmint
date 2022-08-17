@@ -38,7 +38,7 @@ transaction(editionHashes: [String], collectionName: String?) {
 
     execute {
         for editionHash in editionHashes {
-            let token <- self.admin.mintNFT(editionHash: editionHash)
+            let token <- self.admin.mintNFT(editionHash: editionHash.decodeHex())
 
             self.collection.deposit(token: <- token)
         }
