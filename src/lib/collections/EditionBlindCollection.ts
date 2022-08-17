@@ -96,7 +96,7 @@ export default class EditionBlindCollection extends BaseCollection {
         fcl.arg(placeholderImage, t.String),
         fcl.arg(saveAdminResourceToContractAccount, t.Bool),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
@@ -139,7 +139,7 @@ export default class EditionBlindCollection extends BaseCollection {
           );
         }),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
@@ -170,7 +170,7 @@ export default class EditionBlindCollection extends BaseCollection {
     const response = await fcl.send([
       fcl.transaction(transaction),
       fcl.args([fcl.arg(hashes, t.Array(t.String)), fcl.arg(bucket, t.Optional(t.String))]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
@@ -209,7 +209,7 @@ export default class EditionBlindCollection extends BaseCollection {
         fcl.arg(editionSerials, t.Array(t.UInt64)),
         fcl.arg(editionSalts, t.Array(t.String)),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);

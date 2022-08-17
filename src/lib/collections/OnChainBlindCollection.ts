@@ -75,7 +75,7 @@ export default class OnChainBlindCollection extends BaseCollection {
         fcl.arg(placeholderImage, t.String),
         fcl.arg(saveAdminResourceToContractAccount, t.Bool),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
@@ -107,7 +107,7 @@ export default class OnChainBlindCollection extends BaseCollection {
     const response = await fcl.send([
       fcl.transaction(transaction),
       fcl.args([fcl.arg(hashes, t.Array(t.String))]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
@@ -172,7 +172,7 @@ export default class OnChainBlindCollection extends BaseCollection {
           );
         }),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);

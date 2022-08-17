@@ -54,7 +54,7 @@ export default class OnChainCollection extends BaseCollection {
         fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
         fcl.arg(saveAdminResourceToContractAccount, t.Bool),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
@@ -90,7 +90,7 @@ export default class OnChainCollection extends BaseCollection {
           );
         }),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);

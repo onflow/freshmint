@@ -32,7 +32,7 @@ export default class ClaimSale {
     const response = await fcl.send([
       fcl.transaction(transaction),
       fcl.args([fcl.arg(id, t.String), fcl.arg(price, t.UFix64), fcl.arg(bucket, t.Optional(t.String))]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.collection.getAuthorizers(),
     ]);
@@ -52,7 +52,7 @@ export default class ClaimSale {
     const response = await fcl.send([
       fcl.transaction(transaction),
       fcl.args([fcl.arg(id, t.String)]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.collection.getAuthorizers(),
     ]);
@@ -78,7 +78,7 @@ export default class ClaimSale {
     const response = await fcl.send([
       fcl.transaction(transaction),
       fcl.args([fcl.arg(saleAddress, t.Address), fcl.arg(saleId, t.String)]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       fcl.payer(authorizer.toFCLAuthorizationFunction()),
       fcl.proposer(authorizer.toFCLAuthorizationFunction()),

@@ -72,7 +72,7 @@ export default class EditionCollection extends BaseCollection {
         fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
         fcl.arg(saveAdminResourceToContractAccount, t.Bool),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
@@ -115,7 +115,7 @@ export default class EditionCollection extends BaseCollection {
           );
         }),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
@@ -151,7 +151,7 @@ export default class EditionCollection extends BaseCollection {
         fcl.arg(editionSerials, t.Array(t.UInt64)),
         fcl.arg(bucket, t.Optional(t.String)),
       ]),
-      fcl.limit(1000),
+      fcl.limit(9999),
 
       ...this.getAuthorizers(),
     ]);
