@@ -9,9 +9,10 @@ export { EditionCollection } from './collections/EditionCollection';
 
 export { OnChainGenerator } from './generators/OnChainGenerator';
 export { OnChainBlindGenerator } from './generators/OnChainBlindGenerator';
+export { EditionGenerator } from './generators/EditionGenerator';
+export { EditionBlindGenerator } from './generators/EditionBlindGenerator';
 
 export { ClaimSale } from './sales/ClaimSale';
-
 export { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 
 export * as metadata from './metadata';
