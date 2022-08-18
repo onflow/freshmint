@@ -1,12 +1,8 @@
-// @ts-ignore
-import * as fcl from '@onflow/fcl';
-
-import { Authorizer, Config } from '@fresh-js/core';
+import { Authorizer } from '@fresh-js/core';
 import * as metadata from '../metadata';
+import { TransactionSigners } from '../transactions';
 
 export default interface NFTCollection {
-  config: Config;
-
   name: string;
   address?: string;
 
@@ -16,7 +12,7 @@ export default interface NFTCollection {
   payer?: Authorizer;
   proposer?: Authorizer;
 
-  getAuthorizers(): any;
+  getSigners(): TransactionSigners;
 }
 
 export type CollectionAuthorizers = {
@@ -27,8 +23,6 @@ export type CollectionAuthorizers = {
 };
 
 export class BaseCollection implements NFTCollection {
-  config: Config;
-
   name: string;
   address?: string;
 
@@ -39,7 +33,6 @@ export class BaseCollection implements NFTCollection {
   proposer?: Authorizer;
 
   constructor({
-    config,
     name,
     address,
     schema,
@@ -47,7 +40,6 @@ export class BaseCollection implements NFTCollection {
     payer,
     proposer,
   }: {
-    config: Config;
     name: string;
     address?: string;
     schema: metadata.Schema;
@@ -55,8 +47,6 @@ export class BaseCollection implements NFTCollection {
     payer?: Authorizer;
     proposer?: Authorizer;
   }) {
-    this.config = config;
-
     this.name = name;
     this.address = address;
 
@@ -65,11 +55,6 @@ export class BaseCollection implements NFTCollection {
     this.owner = owner;
     this.payer = payer;
     this.proposer = proposer;
-
-    // TODO: find a better way to set this.
-    //
-    // Global config is messy but FCL requires it
-    fcl.config().put('accessNode.api', this.config.host);
   }
 
   setOwner(authorizer: Authorizer) {
@@ -88,20 +73,20 @@ export class BaseCollection implements NFTCollection {
     this.address = address;
   }
 
-  getAuthorizers() {
-    const ownerAuth = this.owner;
-    if (!ownerAuth) {
+  getSigners(): TransactionSigners {
+    const owner = this.owner;
+    if (!owner) {
       // TODO: improve error message
       throw 'must specify owner';
     }
 
-    const payerAuth = this.payer ?? ownerAuth;
-    const proposerAuth = this.proposer ?? ownerAuth;
+    const payer = this.payer ?? owner;
+    const proposer = this.proposer ?? owner;
 
-    return [
-      fcl.payer(payerAuth.toFCLAuthorizationFunction()),
-      fcl.proposer(proposerAuth.toFCLAuthorizationFunction()),
-      fcl.authorizations([ownerAuth.toFCLAuthorizationFunction()]),
-    ];
+    return {
+      payer,
+      proposer,
+      authorizers: [owner],
+    };
   }
 }

@@ -32,8 +32,6 @@ pub contract {{ contractName }}: NonFungibleToken {
     //
     pub var totalEditions: UInt64
 
-    pub var version = 
-
     pub struct Edition {
         pub let id: UInt64
         pub let size: UInt

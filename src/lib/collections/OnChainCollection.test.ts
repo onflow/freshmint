@@ -3,22 +3,28 @@ import * as metadata from '../metadata';
 
 import OnChainCollection from './OnChainCollection';
 
-import { config, contractHashAlgorithm, contractPublicKey, ownerAuthorizer, randomContractName } from '../testHelpers';
+import {
+  client,
+  config,
+  contractHashAlgorithm,
+  contractPublicKey,
+  ownerAuthorizer,
+  randomContractName,
+} from '../testHelpers';
 
 describe('OnChainCollection', () => {
   const collection = new OnChainCollection({
-    config,
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    await collection.getContract();
+    collection.getContract(config.imports);
   });
 
   it('should deploy a contract', async () => {
-    await collection.deployContract(contractPublicKey, contractHashAlgorithm);
+    await client.send(collection.deployContract(contractPublicKey, contractHashAlgorithm));
   });
 
   it('should mint NFTs', async () => {
@@ -40,7 +46,7 @@ describe('OnChainCollection', () => {
       },
     ];
 
-    await collection.mintNFTs(nfts);
+    await client.send(collection.mintNFTs(nfts));
   });
 
   const sale = new ClaimSale(collection);

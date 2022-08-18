@@ -2,7 +2,7 @@ import * as metadata from '../metadata';
 import TemplateGenerator, { Contracts } from './TemplateGenerator';
 
 export default class EditionBlindGenerator extends TemplateGenerator {
-  static async contract({
+  static contract({
     contracts,
     contractName,
     schema,
@@ -12,7 +12,7 @@ export default class EditionBlindGenerator extends TemplateGenerator {
     contractName: string;
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
-  }): Promise<string> {
+  }): string {
     return this.generate('../templates/cadence/edition/contracts/NFT.cdc', {
       contracts,
       contractName,
@@ -22,11 +22,11 @@ export default class EditionBlindGenerator extends TemplateGenerator {
     });
   }
 
-  static async deploy(): Promise<string> {
+  static deploy(): string {
     return this.generate('../templates/cadence/edition/transactions/deploy.cdc', {});
   }
 
-  static async createEditions({
+  static createEditions({
     contracts,
     contractName,
     contractAddress,
@@ -36,7 +36,7 @@ export default class EditionBlindGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
     schema: metadata.Schema;
-  }): Promise<string> {
+  }): string {
     return this.generate('../templates/cadence/edition/transactions/create_editions.cdc', {
       contracts,
       contractName,
@@ -45,7 +45,7 @@ export default class EditionBlindGenerator extends TemplateGenerator {
     });
   }
 
-  static async mint({
+  static mint({
     contracts,
     contractName,
     contractAddress,
@@ -53,7 +53,7 @@ export default class EditionBlindGenerator extends TemplateGenerator {
     contracts: Contracts;
     contractName: string;
     contractAddress: string;
-  }): Promise<string> {
+  }): string {
     return this.generate('../templates/cadence/edition/transactions/mint.cdc', {
       contracts,
       contractName,

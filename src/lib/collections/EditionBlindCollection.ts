@@ -9,6 +9,8 @@ import { MetadataMap } from '../metadata';
 import { BaseCollection } from './NFTCollection';
 import EditionBlindGenerator from '../generators/EditionBlindGenerator';
 import { hashValuesWithSalt } from '../hash';
+import { Config, ContractImports } from '../config';
+import { Transaction, TransactionResult } from '../transactions';
 
 export type EditionInput = {
   size: number;
@@ -56,174 +58,188 @@ export type NFTRevealResult = {
 };
 
 export default class EditionBlindCollection extends BaseCollection {
-  async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
+  getContract(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
     return EditionBlindGenerator.contract({
-      contracts: this.config.contracts,
+      contracts: imports,
       contractName: this.name,
       schema: this.schema,
       saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
     });
   }
 
-  async deployContract(
+  deployContract(
     publicKey: PublicKey,
     hashAlgo: HashAlgorithm,
     placeholderImage: string,
     options?: {
       saveAdminResourceToContractAccount?: boolean;
     },
-  ): Promise<string> {
-    const transaction = await EditionBlindGenerator.deploy();
+  ): Transaction<string> {
+    return new Transaction(
+      (config: Config) => {
+        const script = EditionBlindGenerator.deploy();
 
-    const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
+        const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
-    const contractCode = await this.getContract({
-      saveAdminResourceToContractAccount,
-    });
+        const contractCode = this.getContract(config.imports, { saveAdminResourceToContractAccount });
+        const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
-    const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
+        const sigAlgo = publicKey.signatureAlgorithm();
 
-    const sigAlgo = publicKey.signatureAlgorithm();
+        return {
+          script,
+          args: [
+            fcl.arg(this.name, t.String),
+            fcl.arg(contractCodeHex, t.String),
+            fcl.arg(publicKey.toHex(), t.String),
+            fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
+            fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
+            fcl.arg(placeholderImage, t.String),
+            fcl.arg(saveAdminResourceToContractAccount, t.Bool),
+          ],
+          computeLimit: 1000,
+          signers: this.getSigners(),
+        };
+      },
+      ({ events }: TransactionResult) => {
+        const accountCreatedEvent = events.find((event: Event) => event.type === 'flow.AccountCreated');
 
-    const response = await fcl.send([
-      fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(this.name, t.String),
-        fcl.arg(contractCodeHex, t.String),
-        fcl.arg(publicKey.toHex(), t.String),
-        fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
-        fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
-        fcl.arg(placeholderImage, t.String),
-        fcl.arg(saveAdminResourceToContractAccount, t.Bool),
-      ]),
-      fcl.limit(9999),
+        const address = accountCreatedEvent?.data['address'];
 
-      ...this.getAuthorizers(),
-    ]);
+        this.setAddress(address);
 
-    // TODO: handle error
-    const { events, error: _ } = await fcl.tx(response).onceSealed();
-
-    const accountCreatedEvent: Event = events.find((event: Event) => event.type === 'flow.AccountCreated');
-
-    const address = accountCreatedEvent.data['address'];
-
-    this.setAddress(address);
-
-    return address;
+        return address;
+      },
+    );
   }
 
-  async createEdition(edition: EditionInput): Promise<EditionResult> {
-    return (await this.createEditions([edition]))[0];
+  createEdition(edition: EditionInput): Transaction<EditionResult> {
+    const editions = [edition];
+
+    return new Transaction(
+      this.makeCreateEditionsTransaction(editions),
+      (result: TransactionResult) => formatEditionResults(result, editions)[0],
+    );
   }
 
-  async createEditions(editions: EditionInput[]): Promise<EditionResult[]> {
-    const transaction = await EditionBlindGenerator.createEditions({
-      contracts: this.config.contracts,
-      contractName: this.name,
-      // TODO: return error if contract address is not set
-      contractAddress: this.address ?? '',
-      schema: this.schema,
-    });
-
-    const sizes = editions.map((edition) => edition.size);
-
-    const response = await fcl.send([
-      fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(sizes, t.Array(t.UInt)),
-        ...this.schema.getFieldList().map((field) => {
-          return fcl.arg(
-            editions.map((edition) => field.getValue(edition.metadata)),
-            t.Array(field.asCadenceTypeObject()),
-          );
-        }),
-      ]),
-      fcl.limit(9999),
-
-      ...this.getAuthorizers(),
-    ]);
-
-    // TODO: handle error
-    const { events, error: _ } = await fcl.tx(response).onceSealed();
-
-    return formatEditionResults(events, editions);
+  createEditions(editions: EditionInput[]): Transaction<EditionResult[]> {
+    return new Transaction(this.makeCreateEditionsTransaction(editions), (result: TransactionResult) =>
+      formatEditionResults(result, editions),
+    );
   }
 
-  async mintNFT(nft: EditionNFT, { bucket }: { bucket?: string } = {}): Promise<NFTMintResult> {
-    const results = await this.mintNFTs([nft], { bucket });
-    return results[0];
+  private makeCreateEditionsTransaction(editions: EditionInput[]) {
+    return (config: Config) => {
+      const script = EditionBlindGenerator.createEditions({
+        contracts: config.imports,
+        contractName: this.name,
+        // TODO: return error if contract address is not set
+        contractAddress: this.address ?? '',
+        schema: this.schema,
+      });
+
+      const sizes = editions.map((edition) => edition.size.toString(10));
+
+      return {
+        script,
+        args: [
+          fcl.arg(sizes, t.Array(t.UInt)),
+          ...this.schema.getFieldList().map((field) => {
+            return fcl.arg(
+              editions.map((edition) => field.getValue(edition.metadata)),
+              t.Array(field.asCadenceTypeObject()),
+            );
+          }),
+        ],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    };
   }
 
-  async mintNFTs(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}): Promise<NFTMintResult[]> {
+  mintNFT(nft: EditionNFT, { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult> {
+    const nfts = [nft];
     const hashedNFTs = hashNFTs(nfts);
 
-    const hashes = hashedNFTs.map((nft) => nft.editionHash);
-
-    const transaction = await EditionBlindGenerator.mint({
-      contracts: this.config.contracts,
-      contractName: this.name,
-      // TODO: return error if contract address is not set
-      contractAddress: this.address ?? '',
-    });
-
-    const response = await fcl.send([
-      fcl.transaction(transaction),
-      fcl.args([fcl.arg(hashes, t.Array(t.String)), fcl.arg(bucket, t.Optional(t.String))]),
-      fcl.limit(9999),
-
-      ...this.getAuthorizers(),
-    ]);
-
-    const { transactionId } = response;
-
-    // TODO: handle error
-    const { events, error: _ } = await fcl.tx(response).onceSealed();
-
-    return formatMintResults(transactionId, events, hashedNFTs);
+    return new Transaction(
+      this.makeMintNFTsTransaction(hashedNFTs, { bucket }),
+      (result: TransactionResult) => formatMintResults(result, hashedNFTs)[0],
+    );
   }
 
-  async revealNFT(nft: NFTRevealInput): Promise<NFTRevealResult> {
-    const results = await this.revealNFTs([nft]);
-    return results[0];
+  mintNFTs(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult[]> {
+    const hashedNFTs = hashNFTs(nfts);
+
+    return new Transaction(this.makeMintNFTsTransaction(hashedNFTs, { bucket }), (result: TransactionResult) =>
+      formatMintResults(result, hashedNFTs),
+    );
   }
 
-  async revealNFTs(nfts: NFTRevealInput[]): Promise<NFTRevealResult[]> {
-    const nftIds = nfts.map((nft) => nft.id);
-    const editionIds = nfts.map((nft) => nft.editionId);
-    const editionSerials = nfts.map((nft) => nft.editionSerial);
-    const editionSalts = nfts.map((nft) => nft.editionSalt);
+  private makeMintNFTsTransaction(hashedNFTs: HashedEditionNFT[], { bucket }: { bucket?: string } = {}) {
+    return (config: Config) => {
+      const script = EditionBlindGenerator.mint({
+        contracts: config.imports,
+        contractName: this.name,
+        // TODO: return error if contract address is not set
+        contractAddress: this.address ?? '',
+      });
 
-    const transaction = await EditionBlindGenerator.reveal({
-      contracts: this.config.contracts,
-      contractName: this.name,
-      // TODO: return error if contract address is not set
-      contractAddress: this.address ?? '',
-    });
+      const hashes = hashedNFTs.map((nft) => nft.editionHash);
 
-    const response = await fcl.send([
-      fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(nftIds, t.Array(t.UInt64)),
-        fcl.arg(editionIds, t.Array(t.UInt64)),
-        fcl.arg(editionSerials, t.Array(t.UInt64)),
-        fcl.arg(editionSalts, t.Array(t.String)),
-      ]),
-      fcl.limit(9999),
+      return {
+        script,
+        args: [fcl.arg(hashes, t.Array(t.String)), fcl.arg(bucket, t.Optional(t.String))],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    };
+  }
 
-      ...this.getAuthorizers(),
-    ]);
+  revealNFT(nft: NFTRevealInput): Transaction<NFTRevealResult> {
+    const nfts = [nft];
 
-    const { transactionId } = response;
+    return new Transaction(
+      this.makeRevealNFTsTransaction(nfts),
+      (result: TransactionResult) => formatRevealResults(result)[0],
+    );
+  }
 
-    // TODO: handle error
-    const { events, error: _ } = await fcl.tx(response).onceSealed();
+  revealNFTs(nfts: NFTRevealInput[]): Transaction<NFTRevealResult[]> {
+    return new Transaction(this.makeRevealNFTsTransaction(nfts), (result: TransactionResult) =>
+      formatRevealResults(result),
+    );
+  }
 
-    return formatRevealtResults(transactionId, events);
+  private makeRevealNFTsTransaction(nfts: NFTRevealInput[]) {
+    return (config: Config) => {
+      const script = EditionBlindGenerator.reveal({
+        contracts: config.imports,
+        contractName: this.name,
+        // TODO: return error if contract address is not set
+        contractAddress: this.address ?? '',
+      });
+
+      const nftIds = nfts.map((nft) => nft.id);
+      const editionIds = nfts.map((nft) => nft.editionId);
+      const editionSerials = nfts.map((nft) => nft.editionSerial);
+      const editionSalts = nfts.map((nft) => nft.editionSalt);
+
+      return {
+        script,
+        args: [
+          fcl.arg(nftIds, t.Array(t.UInt64)),
+          fcl.arg(editionIds, t.Array(t.UInt64)),
+          fcl.arg(editionSerials, t.Array(t.UInt64)),
+          fcl.arg(editionSalts, t.Array(t.String)),
+        ],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    };
   }
 }
 
-function formatMintResults(transactionId: string, events: Event[], nfts: HashedEditionNFT[]): NFTMintResult[] {
+function formatMintResults({ transactionId, events }: TransactionResult, nfts: HashedEditionNFT[]): NFTMintResult[] {
   const deposits = events.filter((event) => event.type.includes('.Minted'));
 
   return deposits.map((deposit, i) => {
@@ -240,7 +256,7 @@ function formatMintResults(transactionId: string, events: Event[], nfts: HashedE
   });
 }
 
-function formatEditionResults(events: Event[], editions: EditionInput[]): EditionResult[] {
+function formatEditionResults({ events }: TransactionResult, editions: EditionInput[]): EditionResult[] {
   const editionEvents = events.filter((event) => event.type.includes('.EditionCreated'));
 
   return editions.flatMap((edition, i) => {
@@ -256,7 +272,7 @@ function formatEditionResults(events: Event[], editions: EditionInput[]): Editio
   });
 }
 
-function formatRevealtResults(transactionId: string, events: Event[]): NFTRevealResult[] {
+function formatRevealResults({ transactionId, events }: TransactionResult): NFTRevealResult[] {
   const deposits = events.filter((event) => event.type.includes('.Revealed'));
 
   return deposits.map((deposit) => {

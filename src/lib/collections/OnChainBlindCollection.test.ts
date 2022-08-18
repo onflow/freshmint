@@ -3,22 +3,28 @@ import * as metadata from '../metadata';
 
 import OnChainBlindCollection, { NFTMintResult } from './OnChainBlindCollection';
 
-import { config, contractHashAlgorithm, contractPublicKey, ownerAuthorizer, randomContractName } from '../testHelpers';
+import {
+  client,
+  config,
+  contractHashAlgorithm,
+  contractPublicKey,
+  ownerAuthorizer,
+  randomContractName,
+} from '../testHelpers';
 
 describe('OnChainCollection', () => {
   const collection = new OnChainBlindCollection({
-    config,
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    await collection.getContract();
+    collection.getContract(config.imports);
   });
 
   it('should deploy a contract', async () => {
-    await collection.deployContract(contractPublicKey, contractHashAlgorithm, 'sample-image.jpeg');
+    await client.send(collection.deployContract(contractPublicKey, contractHashAlgorithm, 'sample-image.jpeg'));
   });
 
   let mintedNFTs: NFTMintResult[];
@@ -42,24 +48,24 @@ describe('OnChainCollection', () => {
       },
     ];
 
-    mintedNFTs = await collection.mintNFTs(nfts);
+    mintedNFTs = await client.send(collection.mintNFTs(nfts));
   });
 
   const sale = new ClaimSale(collection);
 
   it('should start a sale', async () => {
-    await sale.start({ id: 'default', price: '10.0' });
+    await client.send(sale.start({ id: 'default', price: '10.0' }));
   });
 
   it('should claim an NFT', async () => {
-    await sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, 'default');
+    await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, 'default'));
   });
 
   it('should stop a sale', async () => {
-    await sale.stop('default');
+    await client.send(sale.stop('default'));
   });
 
   it('should reveal NFTs', async () => {
-    await collection.revealNFTs(mintedNFTs);
+    await client.send(collection.revealNFTs(mintedNFTs));
   });
 });

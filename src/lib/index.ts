@@ -21,3 +21,5 @@ import ClaimSaleGenerator from './generators/ClaimSaleGenerator';
 export { ClaimSaleGenerator };
 
 export * as metadata from './metadata';
+
+export { Config } from './config';

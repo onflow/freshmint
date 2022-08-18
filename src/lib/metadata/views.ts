@@ -35,7 +35,7 @@ registerHelper('whichFilePartial', (field) => {
   }
 
   // TODO: improve error message
-  throw 'field must be a file field'
+  throw 'field must be a file field';
 });
 
 registerPartial(httpFilePartial, '../templates/cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc');

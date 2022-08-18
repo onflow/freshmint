@@ -8,8 +8,8 @@ export interface Contracts {
 }
 
 export default class TemplateGenerator {
-  static async generate(source: string, context: any): Promise<string> {
-    const templateSource = await fs.promises.readFile(path.resolve(__dirname, source), 'utf8');
+  static generate(source: string, context: any): string {
+    const templateSource = fs.readFileSync(path.resolve(__dirname, source), 'utf8');
 
     const template = Handlebars.compile(templateSource);
 

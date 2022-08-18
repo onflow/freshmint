@@ -2,7 +2,7 @@ import * as metadata from '../metadata';
 import TemplateGenerator, { Contracts } from './TemplateGenerator';
 
 export default class OnChainBlindGenerator extends TemplateGenerator {
-  static async contract({
+  static contract({
     contracts,
     contractName,
     schema,
@@ -12,7 +12,7 @@ export default class OnChainBlindGenerator extends TemplateGenerator {
     contractName: string;
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
-  }): Promise<string> {
+  }): string {
     return this.generate('../templates/cadence/on-chain-blind/contracts/NFT.cdc', {
       contracts,
       contractName,
@@ -22,11 +22,11 @@ export default class OnChainBlindGenerator extends TemplateGenerator {
     });
   }
 
-  static async deploy(): Promise<string> {
+  static deploy(): string {
     return this.generate('../templates/cadence/on-chain-blind/transactions/deploy.cdc', {});
   }
 
-  static async mint({
+  static mint({
     contracts,
     contractName,
     contractAddress,
@@ -34,7 +34,7 @@ export default class OnChainBlindGenerator extends TemplateGenerator {
     contracts: Contracts;
     contractName: string;
     contractAddress: string;
-  }): Promise<string> {
+  }): string {
     return this.generate('../templates/cadence/on-chain-blind/transactions/mint.cdc', {
       contracts,
       contractName,
@@ -42,7 +42,7 @@ export default class OnChainBlindGenerator extends TemplateGenerator {
     });
   }
 
-  static async reveal({
+  static reveal({
     contracts,
     contractName,
     contractAddress,
@@ -52,7 +52,7 @@ export default class OnChainBlindGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
     schema: metadata.Schema;
-  }): Promise<string> {
+  }): string {
     return this.generate('../templates/cadence/on-chain-blind/transactions/reveal.cdc', {
       contracts,
       contractName,
