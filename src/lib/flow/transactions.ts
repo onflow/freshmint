@@ -26,6 +26,7 @@ export class Transaction<T> {
   private create: (config: FlowConfig) => TransactionBody | Promise<TransactionBody>;
   private onResult: TransactionResultTransformer<T>;
 
+  /* eslint-disable @typescript-eslint/no-empty-function */
   static VoidResult = () => {};
 
   constructor(
