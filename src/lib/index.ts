@@ -1,3 +1,5 @@
+export { version } from './version';
+
 import OnChainCollection from './collections/OnChainCollection';
 import OnChainBlindCollection from './collections/OnChainBlindCollection';
 import EditionBlindCollection from './collections/EditionBlindCollection';

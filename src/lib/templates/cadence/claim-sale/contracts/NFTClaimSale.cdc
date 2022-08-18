@@ -3,6 +3,8 @@ import FungibleToken from {{{ contracts.FungibleToken }}}
 
 pub contract NFTClaimSale {
 
+    pub let version: String
+
     pub event Claimed(nftType: Type, nftID: UInt64)
 
     pub let SaleCollectionStoragePath: StoragePath
@@ -138,6 +140,8 @@ pub contract NFTClaimSale {
     }
 
     init() {
+        self.version = "{{ freshmintVersion }}"
+
         self.SaleCollectionStoragePath = /storage/NFTClaimSale
         self.SaleCollectionPublicPath = /public/NFTClaimSale
     }

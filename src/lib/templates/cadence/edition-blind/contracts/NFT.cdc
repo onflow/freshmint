@@ -4,6 +4,8 @@ import FungibleToken from {{{ contracts.FungibleToken }}}
 
 pub contract {{ contractName }}: NonFungibleToken {
 
+    pub let version: String
+    
     // Events
     //
     pub event ContractInitialized()
@@ -388,6 +390,8 @@ pub contract {{ contractName }}: NonFungibleToken {
     }
 
     init({{#unless saveAdminResourceToContractAccount }}admin: AuthAccount, {{/unless}}placeholderImage: String) {
+
+        self.version = "{{ freshmintVersion }}"
 
         self.CollectionPublicPath = {{ contractName }}.getCollectionPublicPath(collectionName: nil)
         self.CollectionStoragePath = {{ contractName }}.getCollectionStoragePath(collectionName: nil)
