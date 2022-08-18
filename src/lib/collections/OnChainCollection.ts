@@ -8,7 +8,8 @@ import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
 import { MetadataMap } from '../metadata';
 import OnChainGenerator from '../generators/OnChainGenerator';
 import { BaseCollection } from './NFTCollection';
-import { FlowConfig, ContractImports, Transaction, TransactionResult } from '../flow';
+import { Config, ContractImports } from '../config';
+import { Transaction, TransactionResult } from '../transactions';
 
 export type NFTMintResult = {
   id: string;
@@ -34,7 +35,7 @@ export default class OnChainCollection extends BaseCollection {
     },
   ): Transaction<string> {
     return new Transaction(
-      (config: FlowConfig) => {
+      (config: Config) => {
         const script = OnChainGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
@@ -72,7 +73,7 @@ export default class OnChainCollection extends BaseCollection {
 
   mintNFTs(metadata: MetadataMap[]): Transaction<NFTMintResult[]> {
     return new Transaction(
-      (config: FlowConfig) => {
+      (config: Config) => {
         const script = OnChainGenerator.mint({
           contracts: config.imports,
           contractName: this.name,

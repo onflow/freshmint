@@ -9,7 +9,8 @@ import { MetadataMap } from '../metadata';
 import { BaseCollection } from './NFTCollection';
 import EditionBlindGenerator from '../generators/EditionBlindGenerator';
 import { hashValuesWithSalt } from '../hash';
-import { FlowConfig, ContractImports, Transaction, TransactionResult } from '../flow';
+import { Config, ContractImports } from '../config';
+import { Transaction, TransactionResult } from '../transactions';
 
 export type EditionInput = {
   size: number;
@@ -75,7 +76,7 @@ export default class EditionBlindCollection extends BaseCollection {
     },
   ): Transaction<string> {
     return new Transaction(
-      (config: FlowConfig) => {
+      (config: Config) => {
         const script = EditionBlindGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
@@ -128,7 +129,7 @@ export default class EditionBlindCollection extends BaseCollection {
   }
 
   private makeCreateEditionsTransaction(editions: EditionInput[]) {
-    return (config: FlowConfig) => {
+    return (config: Config) => {
       const script = EditionBlindGenerator.createEditions({
         contracts: config.imports,
         contractName: this.name,
@@ -175,7 +176,7 @@ export default class EditionBlindCollection extends BaseCollection {
   }
 
   private makeMintNFTsTransaction(hashedNFTs: HashedEditionNFT[], { bucket }: { bucket?: string } = {}) {
-    return (config: FlowConfig) => {
+    return (config: Config) => {
       const script = EditionBlindGenerator.mint({
         contracts: config.imports,
         contractName: this.name,
@@ -210,7 +211,7 @@ export default class EditionBlindCollection extends BaseCollection {
   }
 
   private makeRevealNFTsTransaction(nfts: NFTRevealInput[]) {
-    return (config: FlowConfig) => {
+    return (config: Config) => {
       const script = EditionBlindGenerator.reveal({
         contracts: config.imports,
         contractName: this.name,

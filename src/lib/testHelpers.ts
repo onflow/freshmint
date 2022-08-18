@@ -1,9 +1,11 @@
+// @ts-ignore
+import * as fcl from '@onflow/fcl';
+
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from '@fresh-js/crypto';
 import { Authorizer } from '@fresh-js/core';
 
-// @ts-ignore
-import * as fcl from '@onflow/fcl';
-import { FlowClient, FlowConfig } from './flow';
+import { Config } from './config';
+import { FlowClient } from './client';
 
 fcl.config().put('accessNode.api', 'http://localhost:8888');
 
@@ -15,7 +17,7 @@ const imports = {
   NFTClaimSale: '0xf8d6e0586b0a20c7', // TODO: replace with real address
 };
 
-export const config: FlowConfig = {
+export const config: Config = {
   imports: imports,
 };
 

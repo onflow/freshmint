@@ -1,6 +1,6 @@
 import { Authorizer } from '@fresh-js/core';
 import * as metadata from '../metadata';
-import { TransactionSigners } from '../flow';
+import { TransactionSigners } from '../transactions';
 
 export default interface NFTCollection {
   name: string;

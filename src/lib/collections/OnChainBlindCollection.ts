@@ -8,7 +8,8 @@ import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
 import { MetadataMap, hashMetadataWithSalt } from '../metadata';
 import OnChainBlindGenerator from '../generators/OnChainBlindGenerator';
 import { BaseCollection } from './NFTCollection';
-import { FlowConfig, ContractImports, Transaction, TransactionResult } from '../flow';
+import { Config, ContractImports } from '../config';
+import { Transaction, TransactionResult } from '../transactions';
 
 export type HashedNFT = {
   metadata: MetadataMap;
@@ -54,7 +55,7 @@ export default class OnChainBlindCollection extends BaseCollection {
     },
   ): Transaction<string> {
     return new Transaction(
-      (config: FlowConfig) => {
+      (config: Config) => {
         const script = OnChainBlindGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
@@ -96,7 +97,7 @@ export default class OnChainBlindCollection extends BaseCollection {
     const hashes = hashedNFTs.map((nft) => nft.metadataHash);
 
     return new Transaction(
-      (config: FlowConfig) => {
+      (config: Config) => {
         const script = OnChainBlindGenerator.mint({
           contracts: config.imports,
           contractName: this.name,
@@ -148,7 +149,7 @@ export default class OnChainBlindCollection extends BaseCollection {
     const salts = nfts.map((nft) => nft.metadataSalt);
 
     return new Transaction(
-      (config: FlowConfig) => {
+      (config: Config) => {
         const script = OnChainBlindGenerator.reveal({
           contracts: config.imports,
           contractName: this.name,

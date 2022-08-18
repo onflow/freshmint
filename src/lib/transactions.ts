@@ -1,5 +1,5 @@
 import { Authorizer, Event } from '@fresh-js/core';
-import { FlowConfig } from './config';
+import { Config } from './config';
 import { FCL, FCLTransaction } from './fcl';
 
 export interface TransactionResult {
@@ -23,21 +23,21 @@ export type TransactionBody = {
 };
 
 export class Transaction<T> {
-  private create: (config: FlowConfig) => TransactionBody | Promise<TransactionBody>;
+  private create: (config: Config) => TransactionBody | Promise<TransactionBody>;
   private onResult: TransactionResultTransformer<T>;
 
   /* eslint-disable @typescript-eslint/no-empty-function */
   static VoidResult = () => {};
 
   constructor(
-    create: (config: FlowConfig) => TransactionBody | Promise<TransactionBody>,
+    create: (config: Config) => TransactionBody | Promise<TransactionBody>,
     onResult: TransactionResultTransformer<T>,
   ) {
     this.create = create;
     this.onResult = onResult;
   }
 
-  async toFCLTransaction(fcl: FCL, config: FlowConfig): Promise<FCLTransaction> {
+  async toFCLTransaction(fcl: FCL, config: Config): Promise<FCLTransaction> {
     const { script, args, computeLimit, signers } = await this.create(config);
 
     return [fcl.transaction(script), fcl.args(args), fcl.limit(computeLimit), ...this.getAuthorizations(fcl, signers)];

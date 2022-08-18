@@ -7,7 +7,8 @@ import * as t from '@onflow/types';
 import ClaimSaleGenerator from '../generators/ClaimSaleGenerator';
 import { Authorizer, Event } from '@fresh-js/core';
 import NFTCollection from '../collections/NFTCollection';
-import { FlowConfig, ContractImports, Transaction, TransactionResult } from '../flow';
+import { Config, ContractImports } from '../config';
+import { Transaction, TransactionResult } from '../transactions';
 
 export default class ClaimSale {
   collection: NFTCollection;
@@ -23,7 +24,7 @@ export default class ClaimSale {
   }
 
   start({ id, price, bucket }: { id: string; price: string; bucket?: string }): Transaction<void> {
-    return new Transaction((config: FlowConfig) => {
+    return new Transaction((config: Config) => {
       const script = ClaimSaleGenerator.startSale({
         contracts: config.imports,
         contractName: this.collection.name,
@@ -41,7 +42,7 @@ export default class ClaimSale {
   }
 
   stop(id: string): Transaction<void> {
-    return new Transaction((config: FlowConfig) => {
+    return new Transaction((config: Config) => {
       const script = ClaimSaleGenerator.stopSale({
         contracts: config.imports,
         contractName: this.collection.name,
@@ -66,7 +67,7 @@ export default class ClaimSale {
   // What is the best way to separate the two?
   claimNFT(saleAddress: string, authorizer: Authorizer, saleId: string): Transaction<string> {
     return new Transaction(
-      (config: FlowConfig) => {
+      (config: Config) => {
         const script = ClaimSaleGenerator.claimNFT({
           contracts: config.imports,
           contractName: this.collection.name,

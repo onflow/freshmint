@@ -8,7 +8,8 @@ import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
 import { MetadataMap } from '../metadata';
 import { BaseCollection } from './NFTCollection';
 import EditionGenerator from '../generators/EditionGenerator';
-import { FlowConfig, ContractImports, Transaction, TransactionResult } from '../flow';
+import { Config, ContractImports } from '../config';
+import { Transaction, TransactionResult } from '../transactions';
 
 export type EditionInput = {
   size: number;
@@ -52,7 +53,7 @@ export default class EditionCollection extends BaseCollection {
     },
   ): Transaction<string> {
     return new Transaction(
-      (config: FlowConfig) => {
+      (config: Config) => {
         const script = EditionGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
@@ -104,7 +105,7 @@ export default class EditionCollection extends BaseCollection {
   }
 
   private makeCreateEditionsTransaction(editions: EditionInput[]) {
-    return (config: FlowConfig) => {
+    return (config: Config) => {
       const script = EditionGenerator.createEditions({
         contracts: config.imports,
         contractName: this.name,
@@ -148,7 +149,7 @@ export default class EditionCollection extends BaseCollection {
   }
 
   private makeMintNFTsTransaction(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}) {
-    return (config: FlowConfig) => {
+    return (config: Config) => {
       const script = EditionGenerator.mint({
         contracts: config.imports,
         contractName: this.name,
