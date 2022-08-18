@@ -1,25 +1,17 @@
 export { version } from './version';
 
-import OnChainCollection from './collections/OnChainCollection';
-import OnChainBlindCollection from './collections/OnChainBlindCollection';
-import EditionBlindCollection from './collections/EditionBlindCollection';
-import EditionCollection from './collections/EditionCollection';
+export { Config } from './config';
 
-export { OnChainCollection, OnChainBlindCollection, EditionCollection, EditionBlindCollection };
+export { OnChainCollection } from './collections/OnChainCollection';
+export { OnChainBlindCollection } from './collections/OnChainBlindCollection';
+export { EditionBlindCollection } from './collections/EditionBlindCollection';
+export { EditionCollection } from './collections/EditionCollection';
 
-import OnChainGenerator from './generators/OnChainGenerator';
-import OnChainBlindGenerator from './generators/OnChainBlindGenerator';
+export { OnChainGenerator } from './generators/OnChainGenerator';
+export { OnChainBlindGenerator } from './generators/OnChainBlindGenerator';
 
-export { OnChainGenerator, OnChainBlindGenerator };
+export { ClaimSale } from './sales/ClaimSale';
 
-import ClaimSale from './sales/ClaimSale';
-
-export { ClaimSale };
-
-import ClaimSaleGenerator from './generators/ClaimSaleGenerator';
-
-export { ClaimSaleGenerator };
+export { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 
 export * as metadata from './metadata';
-
-export { Config } from './config';

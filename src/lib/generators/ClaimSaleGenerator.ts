@@ -1,6 +1,6 @@
 import TemplateGenerator, { Contracts } from './TemplateGenerator';
 
-export default class ClaimSaleGenerator extends TemplateGenerator {
+export class ClaimSaleGenerator extends TemplateGenerator {
   static contract({ contracts }: { contracts: Contracts }): string {
     return this.generate('../templates/cadence/claim-sale/contracts/NFTClaimSale.cdc', {
       contracts,

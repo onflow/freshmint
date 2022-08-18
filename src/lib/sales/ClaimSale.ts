@@ -4,13 +4,13 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import ClaimSaleGenerator from '../generators/ClaimSaleGenerator';
+import { ClaimSaleGenerator } from '../generators/ClaimSaleGenerator';
 import { Authorizer, Event } from '@fresh-js/core';
 import NFTCollection from '../collections/NFTCollection';
 import { Config, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
 
-export default class ClaimSale {
+export class ClaimSale {
   collection: NFTCollection;
 
   constructor(collection: NFTCollection) {

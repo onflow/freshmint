@@ -6,8 +6,8 @@ import * as t from '@onflow/types';
 import { Event } from '@fresh-js/core';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
 import { MetadataMap } from '../metadata';
-import OnChainGenerator from '../generators/OnChainGenerator';
-import { BaseCollection } from './NFTCollection';
+import { OnChainGenerator } from '../generators/OnChainGenerator';
+import NFTCollection from './NFTCollection';
 import { Config, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
 
@@ -17,7 +17,7 @@ export type NFTMintResult = {
   transactionId: string;
 };
 
-export default class OnChainCollection extends BaseCollection {
+export class OnChainCollection extends NFTCollection {
   getContract(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
     return OnChainGenerator.contract({
       contracts: imports,

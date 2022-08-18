@@ -2,27 +2,7 @@ import { Authorizer } from '@fresh-js/core';
 import * as metadata from '../metadata';
 import { TransactionSigners } from '../transactions';
 
-export default interface NFTCollection {
-  name: string;
-  address?: string;
-
-  schema: metadata.Schema;
-
-  owner?: Authorizer;
-  payer?: Authorizer;
-  proposer?: Authorizer;
-
-  getSigners(): TransactionSigners;
-}
-
-export type CollectionAuthorizers = {
-  default?: Authorizer;
-  minter?: Authorizer;
-  payer?: Authorizer;
-  proposer?: Authorizer;
-};
-
-export class BaseCollection implements NFTCollection {
+export default abstract class NFTCollection {
   name: string;
   address?: string;
 

@@ -1,7 +1,7 @@
-import ClaimSale from '../sales/ClaimSale';
+import { ClaimSale } from '../sales/ClaimSale';
 import * as metadata from '../metadata';
 
-import OnChainCollection from './OnChainCollection';
+import { OnChainCollection } from './OnChainCollection';
 
 import {
   client,

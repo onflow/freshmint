@@ -6,8 +6,8 @@ import * as t from '@onflow/types';
 import { Event } from '@fresh-js/core';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
 import { MetadataMap } from '../metadata';
-import { BaseCollection } from './NFTCollection';
-import EditionBlindGenerator from '../generators/EditionBlindGenerator';
+import NFTCollection from './NFTCollection';
+import { EditionBlindGenerator } from '../generators/EditionBlindGenerator';
 import { hashValuesWithSalt } from '../hash';
 import { Config, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
@@ -57,7 +57,7 @@ export type NFTRevealResult = {
   transactionId: string;
 };
 
-export default class EditionBlindCollection extends BaseCollection {
+export class EditionBlindCollection extends NFTCollection {
   getContract(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
     return EditionBlindGenerator.contract({
       contracts: imports,

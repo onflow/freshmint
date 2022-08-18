@@ -1,7 +1,7 @@
-import ClaimSale from '../sales/ClaimSale';
+import { ClaimSale } from '../sales/ClaimSale';
 import * as metadata from '../metadata';
 
-import EditionCollection, { EditionResult } from './EditionCollection';
+import { EditionCollection, EditionResult } from './EditionCollection';
 
 import {
   client,

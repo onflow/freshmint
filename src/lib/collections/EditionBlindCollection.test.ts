@@ -1,7 +1,7 @@
-import ClaimSale from '../sales/ClaimSale';
+import { ClaimSale } from '../sales/ClaimSale';
 import * as metadata from '../metadata';
 
-import EditionBlindCollection, { EditionResult, NFTMintResult } from './EditionBlindCollection';
+import { EditionBlindCollection, EditionResult, NFTMintResult } from './EditionBlindCollection';
 
 import {
   client,

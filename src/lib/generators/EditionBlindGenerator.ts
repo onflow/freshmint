@@ -1,7 +1,7 @@
 import * as metadata from '../metadata';
 import TemplateGenerator, { Contracts } from './TemplateGenerator';
 
-export default class EditionBlindGenerator extends TemplateGenerator {
+export class EditionBlindGenerator extends TemplateGenerator {
   static contract({
     contracts,
     contractName,

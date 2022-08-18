@@ -1,7 +1,7 @@
 import * as metadata from '../metadata';
 import TemplateGenerator, { Contracts } from './TemplateGenerator';
 
-export default class OnChainGenerator extends TemplateGenerator {
+export class OnChainGenerator extends TemplateGenerator {
   static contract({
     contracts,
     contractName,
