@@ -2,7 +2,7 @@ import * as metadata from './index';
 
 describe('metadata.Schema', () => {
   it('can create a schema', () => {
-    const schema = metadata.createSchema({
+    metadata.createSchema({
       fields: {
         name: metadata.String(),
         description: metadata.String(),
