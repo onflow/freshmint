@@ -37,7 +37,7 @@ export default class ClaimSale {
         computeLimit: 9999,
         signers: this.collection.getSigners(),
       };
-    });
+    }, Transaction.VoidResult);
   }
 
   stop(id: string): Transaction<void> {
@@ -55,7 +55,7 @@ export default class ClaimSale {
         computeLimit: 9999,
         signers: this.collection.getSigners(),
       };
-    });
+    }, Transaction.VoidResult);
   }
 
   // TODO: move this function and/or refactor this class

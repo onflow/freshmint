@@ -26,9 +26,11 @@ export class Transaction<T> {
   private create: (config: FlowConfig) => TransactionBody | Promise<TransactionBody>;
   private onResult: TransactionResultTransformer<T>;
 
+  static VoidResult = () => {};
+
   constructor(
     create: (config: FlowConfig) => TransactionBody | Promise<TransactionBody>,
-    onResult?: TransactionResultTransformer<T>,
+    onResult: TransactionResultTransformer<T>,
   ) {
     this.create = create;
     this.onResult = onResult;
@@ -40,10 +42,8 @@ export class Transaction<T> {
     return [fcl.transaction(script), fcl.args(args), fcl.limit(computeLimit), ...this.getAuthorizations(fcl, signers)];
   }
 
-  async transformResult(result: TransactionResult): Promise<T | void> {
-    if (this.onResult) {
-      return await this.onResult(result);
-    }
+  async transformResult(result: TransactionResult): Promise<T> {
+    return await this.onResult(result);
   }
 
   private getAuthorizations(fcl: FCL, signers: TransactionSigners | undefined) {
