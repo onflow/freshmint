@@ -8,6 +8,7 @@ import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
 import { MetadataMap } from '../metadata';
 import { BaseCollection } from './NFTCollection';
 import EditionGenerator from '../generators/EditionGenerator';
+import { FlowConfig, ContractImports, Transaction, TransactionResult } from '../flow';
 
 export type EditionInput = {
   size: number;
@@ -34,153 +35,145 @@ export type NFTMintResult = {
 };
 
 export default class EditionCollection extends BaseCollection {
-  async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
+  getContract(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
     return EditionGenerator.contract({
-      contracts: this.config.contracts,
+      contracts: imports,
       contractName: this.name,
       schema: this.schema,
       saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
     });
   }
 
-  async deployContract(
+  deployContract(
     publicKey: PublicKey,
     hashAlgo: HashAlgorithm,
     options?: {
       saveAdminResourceToContractAccount?: boolean;
     },
-  ): Promise<string> {
-    const transaction = await EditionGenerator.deploy();
+  ): Transaction<string> {
+    return new Transaction(
+      (config: FlowConfig) => {
+        const script = EditionGenerator.deploy();
 
-    const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
+        const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
-    const contractCode = await this.getContract({
-      saveAdminResourceToContractAccount,
-    });
+        const contractCode = this.getContract(config.imports, { saveAdminResourceToContractAccount });
+        const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
-    const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
+        const sigAlgo = publicKey.signatureAlgorithm();
 
-    const sigAlgo = publicKey.signatureAlgorithm();
+        return {
+          script,
+          args: [
+            fcl.arg(this.name, t.String),
+            fcl.arg(contractCodeHex, t.String),
+            fcl.arg(publicKey.toHex(), t.String),
+            fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
+            fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
+            fcl.arg(saveAdminResourceToContractAccount, t.Bool),
+          ],
+          computeLimit: 9999,
+          signers: this.getSigners(),
+        };
+      },
+      ({ events }: TransactionResult) => {
+        const accountCreatedEvent = events.find((event: Event) => event.type === 'flow.AccountCreated');
 
-    const response = await fcl.send([
-      fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(this.name, t.String),
-        fcl.arg(contractCodeHex, t.String),
-        fcl.arg(publicKey.toHex(), t.String),
-        fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
-        fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
-        fcl.arg(saveAdminResourceToContractAccount, t.Bool),
-      ]),
-      fcl.limit(9999),
+        const address = accountCreatedEvent?.data['address'];
 
-      ...this.getAuthorizers(),
-    ]);
+        this.setAddress(address);
 
-    // TODO: handle error
-    const { events, error: _ } = await fcl.tx(response).onceSealed();
-
-    const accountCreatedEvent: Event = events.find((event: Event) => event.type === 'flow.AccountCreated');
-
-    const address = accountCreatedEvent.data['address'];
-
-    this.setAddress(address);
-
-    return address;
+        return address;
+      },
+    );
   }
 
-  async createEdition(edition: EditionInput): Promise<EditionResult> {
-    return (await this.createEditions([edition]))[0];
+  createEdition(edition: EditionInput): Transaction<EditionResult> {
+    const editions = [edition];
+
+    return new Transaction(
+      this.makeCreateEditionsTransaction(editions),
+      (result: TransactionResult) => formatEditionResults(result, editions)[0],
+    );
   }
 
-  async createEditions(editions: EditionInput[]): Promise<EditionResult[]> {
-    const transaction = await EditionGenerator.createEditions({
-      contracts: this.config.contracts,
-      contractName: this.name,
-      // TODO: return error if contract address is not set
-      contractAddress: this.address ?? '',
-      schema: this.schema,
-    });
-
-    const sizes = editions.map((edition) => edition.size);
-
-    const response = await fcl.send([
-      fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(sizes, t.Array(t.UInt)),
-        ...this.schema.getFieldList().map((field) => {
-          return fcl.arg(
-            editions.map((edition) => field.getValue(edition.metadata)),
-            t.Array(field.asCadenceTypeObject()),
-          );
-        }),
-      ]),
-      fcl.limit(9999),
-
-      ...this.getAuthorizers(),
-    ]);
-
-    // TODO: handle error
-    const { events, error: _ } = await fcl.tx(response).onceSealed();
-
-    return formatEditionResults(events, editions);
+  createEditions(editions: EditionInput[]): Transaction<EditionResult[]> {
+    return new Transaction(this.makeCreateEditionsTransaction(editions), (result: TransactionResult) =>
+      formatEditionResults(result, editions),
+    );
   }
 
-  // async mintEdition(edition: )
+  private makeCreateEditionsTransaction(editions: EditionInput[]) {
+    return (config: FlowConfig) => {
+      const script = EditionGenerator.createEditions({
+        contracts: config.imports,
+        contractName: this.name,
+        // TODO: return error if contract address is not set
+        contractAddress: this.address ?? '',
+        schema: this.schema,
+      });
 
-  async mintNFT(nft: EditionNFT, { bucket }: { bucket?: string } = {}): Promise<NFTMintResult> {
-    const results = await this.mintNFTs([nft], { bucket });
-    return results[0];
-  }
+      const sizes = editions.map((edition) => edition.size.toString(10));
 
-  async mintNFTs(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}): Promise<NFTMintResult[]> {
-    const editionIds = nfts.map((nft) => nft.editionId);
-    const editionSerials = nfts.map((nft) => nft.editionSerial);
-
-    const transaction = await EditionGenerator.mint({
-      contracts: this.config.contracts,
-      contractName: this.name,
-      // TODO: return error if contract address is not set
-      contractAddress: this.address ?? '',
-    });
-
-    const response = await fcl.send([
-      fcl.transaction(transaction),
-      fcl.args([
-        fcl.arg(editionIds, t.Array(t.UInt64)),
-        fcl.arg(editionSerials, t.Array(t.UInt64)),
-        fcl.arg(bucket, t.Optional(t.String)),
-      ]),
-      fcl.limit(9999),
-
-      ...this.getAuthorizers(),
-    ]);
-
-    const { transactionId } = response;
-
-    // TODO: handle error
-    const { events, error: _ } = await fcl.tx(response).onceSealed();
-
-    return formatMintResults(transactionId, events, nfts);
-  }
-}
-
-function formatMintResults(transactionId: string, events: Event[], nfts: EditionNFT[]): NFTMintResult[] {
-  const deposits = events.filter((event) => event.type.includes('.Minted'));
-
-  return deposits.map((deposit, i) => {
-    const { editionId, editionSerial } = nfts[i];
-
-    return {
-      id: deposit.data.id,
-      editionId,
-      editionSerial,
-      transactionId,
+      return {
+        script,
+        args: [
+          fcl.arg(sizes, t.Array(t.UInt)),
+          ...this.schema.getFieldList().map((field) => {
+            return fcl.arg(
+              editions.map((edition) => field.getValue(edition.metadata)),
+              t.Array(field.asCadenceTypeObject()),
+            );
+          }),
+        ],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
     };
-  });
+  }
+
+  mintNFT(nft: EditionNFT, { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult> {
+    const nfts = [nft];
+
+    return new Transaction(
+      this.makeMintNFTsTransaction(nfts, { bucket }),
+      (result: TransactionResult) => formatMintResults(result, nfts)[0],
+    );
+  }
+
+  mintNFTs(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult[]> {
+    return new Transaction(this.makeMintNFTsTransaction(nfts, { bucket }), (result: TransactionResult) =>
+      formatMintResults(result, nfts),
+    );
+  }
+
+  private makeMintNFTsTransaction(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}) {
+    return (config: FlowConfig) => {
+      const script = EditionGenerator.mint({
+        contracts: config.imports,
+        contractName: this.name,
+        // TODO: return error if contract address is not set
+        contractAddress: this.address ?? '',
+      });
+
+      const editionIds = nfts.map((nft) => nft.editionId);
+      const editionSerials = nfts.map((nft) => nft.editionSerial);
+
+      return {
+        script,
+        args: [
+          fcl.arg(editionIds, t.Array(t.UInt64)),
+          fcl.arg(editionSerials, t.Array(t.UInt64)),
+          fcl.arg(bucket, t.Optional(t.String)),
+        ],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    };
+  }
 }
 
-function formatEditionResults(events: Event[], editions: EditionInput[]): EditionResult[] {
+function formatEditionResults({ events }: TransactionResult, editions: EditionInput[]): EditionResult[] {
   const editionEvents = events.filter((event) => event.type.includes('.EditionCreated'));
 
   return editions.flatMap((edition, i) => {
@@ -192,6 +185,21 @@ function formatEditionResults(events: Event[], editions: EditionInput[]): Editio
       metadata: edition.metadata,
       size: edition.size,
       nfts: getEditionNFTs(editionId, edition.size),
+    };
+  });
+}
+
+function formatMintResults({ transactionId, events }: TransactionResult, nfts: EditionNFT[]): NFTMintResult[] {
+  const deposits = events.filter((event) => event.type.includes('.Minted'));
+
+  return deposits.map((deposit, i) => {
+    const { editionId, editionSerial } = nfts[i];
+
+    return {
+      id: deposit.data.id,
+      editionId,
+      editionSerial,
+      transactionId,
     };
   });
 }
