@@ -107,7 +107,7 @@ export default class OnChainBlindCollection extends BaseCollection {
         return {
           script,
           args: [fcl.arg(hashes, t.Array(t.String))],
-          computeLimit: 1000,
+          computeLimit: 9999,
           signers: this.getSigners(),
         };
       },
@@ -169,7 +169,7 @@ export default class OnChainBlindCollection extends BaseCollection {
               );
             }),
           ],
-          computeLimit: 1000,
+          computeLimit: 9999,
           signers: this.getSigners(),
         };
       },
