@@ -115,6 +115,8 @@ export class EditionMinter {
   async getOrCreateEditions(
     editionInputs: { size: number; hash: string; metadata: metadata.MetadataMap }[],
   ): Promise<models.Edition[]> {
+    // TODO: improve this function
+
     const editionMap: { [hash: string]: models.Edition } = {};
 
     const newEditions = [];
@@ -128,19 +130,23 @@ export class EditionMinter {
       }
     }
 
-    const sizes = newEditions.map((edition) => edition.size);
+    const processedEditions = await Promise.all(newEditions.map(async (edition) => ({
+      ...edition,
+      metadata: await this.processor.process(edition.metadata)
+    })));
 
     const fields = this.schema.getFieldList();
 
-    // TODO: process metadata
+    const sizes = processedEditions.map((edition) => edition.size);
+
     const values = fields.map((field) => ({
       cadenceType: field.asCadenceTypeObject(),
-      values: newEditions.map((edition) => field.getValue(edition.metadata)),
+      values: processedEditions.map((edition) => field.getValue(edition.metadata)),
     }));
 
     const result = await this.flowMinter.createEditions(sizes, values);
 
-    const createdEditions = formatEditionResults(result.id, result.events, newEditions);
+    const createdEditions = formatEditionResults(result.id, result.events, processedEditions);
 
     for (const createdEdition of createdEditions) {
       editionMap[createdEdition.hash] = createdEdition;
