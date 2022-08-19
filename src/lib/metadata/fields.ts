@@ -97,7 +97,7 @@ export const String = defineField({
   id: 'string',
   label: 'String',
   cadenceType: t.String,
-  sampleValue: 'Hello, World!',
+  sampleValue: 'This is a sample string.',
 });
 
 export const Int = defineField({
