@@ -51,7 +51,7 @@ export class Config {
   }
 
   get nftAssetPath(): string {
-    return this.#config.nftAssetPath ?? 'assets.csv';
+    return this.#config.nftAssetPath ?? 'assets';
   }
   
   get ipfsPinningService(): IPFSPinningServiceConfig {
