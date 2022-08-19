@@ -1,4 +1,3 @@
-// @ts-ignore
 import { NFTStorage } from 'nft.storage';
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 
