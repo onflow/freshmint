@@ -2,12 +2,13 @@ import chalk from 'chalk';
 import { Ora } from 'ora';
 import inquirer from 'inquirer';
 import * as fs from 'fs-extra';
-import generateProject from './generate-project';
+import { Config, ContractType } from './config';
 import { metadata } from '../lib';
+import { generateProject } from './generateProject';
 
 const fieldChoices = metadata.fieldTypes.map((fieldType) => ({
   name: fieldType.label,
-  value: fieldType,
+  value: fieldType.id,
 }));
 
 const questions = [
@@ -39,6 +40,21 @@ const questions = [
 
       return true;
     },
+  },
+  {
+    type: 'list',
+    name: 'contractType',
+    message: 'Contract type:',
+    choices: [
+      {
+        name: 'Standard NFT',
+        value: ContractType.Standard,
+      },
+      {
+        name: 'Edition NFT',
+        value: ContractType.Edition,
+      },
+    ],
   },
   {
     type: 'confirm',
@@ -100,27 +116,48 @@ export default async function start(spinner: Ora) {
   const answers = await inquirer.prompt(questions);
 
   const userFields = await getCustomFields(answers.startCustomFields);
+
+  console.log(userFields);
+
   const userSchema = metadata.parseSchema(userFields);
 
   // Extend default schema with user fields
   const schema = metadata.defaultSchema.extend(userSchema);
 
+  const config = new Config({
+    contract: {
+      name: sanitizeContractName(answers.contractName),
+      type: answers.contractType,
+      schema,
+    },
+    ipfsPinningService: {
+      endpoint: '${PINNING_SERVICE_ENDPOINT}',
+      key: '${PINNING_SERVICE_KEY}',
+    },
+  });
+
   spinner.start('Generating project files...');
 
-  const formattedContractName = answers.contractName
-    // Remove spaces from the contract name.
-    .replace(/\s*/g, '')
-    .trim()
-    .split(' ')
-    // Ensure title-case
-    .map((word: string) => word[0].toUpperCase() + word.slice(1))
-    .join(' ');
+  const dir = answers.projectName;
 
-  await generateProject(answers.projectName, formattedContractName, schema);
+  await generateProject(dir, config);
 
   spinner.succeed(`✨ Project initialized in ${chalk.white(`./${answers.projectName}\n`)}`);
 
   ui.log.write(`Use: ${chalk.magentaBright(`cd ./${answers.projectName}`)} to view your new project's files.\n`);
 
   ui.log.write(`Open ${chalk.blueBright(`./${answers.projectName}/README.md`)} to learn how to use your new project!`);
+}
+
+function sanitizeContractName(name: string): string {
+  return (
+    name
+      // Remove spaces from the contract name.
+      .replace(/\s*/g, '')
+      .trim()
+      .split(' ')
+      // Ensure title-case
+      .map((word: string) => word[0].toUpperCase() + word.slice(1))
+      .join(' ')
+  );
 }

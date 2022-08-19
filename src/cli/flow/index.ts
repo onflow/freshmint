@@ -21,7 +21,7 @@ export default class FlowMinter {
       './cadence/transactions/mint.cdc',
       `${this.network}-account`,
       fields.map((field) => ({
-        type: t.Array(field.cadenceType),
+        type: t.Array(field.typeInstance.cadenceType),
         value: field.values,
       })),
     );
@@ -42,7 +42,7 @@ export default class FlowMinter {
   async getNFTDetails(address: string, nftId: string) {
     return await this.flow.script('./cadence/scripts/get_nft.cdc', [
       { type: t.Address, value: address },
-      { type: t.UInt64, value: Number(nftId) },
+      { type: t.UInt64, value: nftId },
     ]);
   }
 }

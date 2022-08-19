@@ -1,87 +1,126 @@
 import * as path from 'path';
 import * as dotenv from 'dotenv';
-
-// @ts-ignore
-import { withPrefix } from '@onflow/util-address';
+import * as fs from 'fs-extra';
+import * as yaml from 'js-yaml';
+import envsubst from '@tuplo/envsubst';
 
 import { metadata } from '../lib';
 
-export default function getConfig() {
-  /* eslint-disable @typescript-eslint/no-var-requires */
+export enum ContractType {
+  Standard = 'standard',
+  Edition = 'edition',
+}
 
+export type ContractConfig = {
+  name: string;
+  type: ContractType;
+  schema: metadata.Schema;
+};
+
+export type IPFSPinningServiceConfig = {
+  endpoint: string;
+  key: string;
+};
+
+export class Config {
+  contract: ContractConfig;
+
+  nftDataPath: string;
+  nftAssetPath: string;
+
+  ipfsPinningService?: IPFSPinningServiceConfig;
+
+  constructor({
+    contract,
+    nftDataPath,
+    nftAssetPath,
+    ipfsPinningService,
+  }: {
+    contract: ContractConfig;
+
+    nftDataPath?: string;
+    nftAssetPath?: string;
+
+    ipfsPinningService?: IPFSPinningServiceConfig;
+  }) {
+    this.contract = contract;
+
+    this.nftDataPath = nftDataPath ?? 'nfts.csv';
+    this.nftAssetPath = nftAssetPath ?? 'assets';
+
+    this.ipfsPinningService = ipfsPinningService;
+  }
+
+  static load(): Config {
+    const rawConfig = loadRawConfig(configFilename);
+
+    return new Config({
+      contract: {
+        name: rawConfig.contract.name,
+        type: ContractType[rawConfig.contract.type],
+        schema: metadata.parseSchema(rawConfig.contract.schema || []),
+      },
+
+      ipfsPinningService: rawConfig.ipfsPinningService,
+
+      nftDataPath: rawConfig.nftDataPath || 'nfts.csv',
+      nftAssetPath: rawConfig.nftAssetPath || 'assets',
+    });
+  }
+
+  save(basePath?: string) {
+    const rawConfig = {
+      contract: {
+        name: this.contract.name,
+        type: this.contract.type,
+        schema: this.contract.schema.export(),
+      },
+
+      ipfsPinningService: this.ipfsPinningService,
+
+      nftDataPath: this.nftDataPath,
+      nftAssetPath: this.nftAssetPath,
+    };
+
+    saveRawConfig(configFilename, rawConfig, basePath);
+  }
+}
+
+type RawConfig = {
+  contract: {
+    name: string;
+    type: string;
+    schema: metadata.SchemaInput;
+  };
+
+  ipfsPinningService: {
+    endpoint: string;
+    key: string;
+  };
+
+  nftDataPath: string;
+  nftAssetPath: string;
+};
+
+const configFilename = 'freshmint.yaml';
+
+function loadRawConfig(filename: string, basePath?: string): RawConfig {
   dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-  // TOOD: inform the user when config is missing
+  const filepath = path.resolve(basePath ?? process.cwd(), filename);
+  const contents = fs.readFileSync(filepath, 'utf8');
 
-  const userConfig = require(path.resolve(process.cwd(), 'fresh.config.js'));
+  const substitutedContents = envsubst(contents);
 
-  const flowConfig = require(path.resolve(process.cwd(), 'flow.json'));
+  const config = yaml.load(substitutedContents);
 
-  const flowTestnetConfig = require(path.resolve(process.cwd(), 'flow.testnet.json'));
-
-  const flowMainnetConfig = require(path.resolve(process.cwd(), 'flow.mainnet.json'));
-
-  return {
-    //////////////////////////////////////////////
-    // ------ App Config
-    //////////////////////////////////////////////
-
-    // Location of NFT metadata and assets for minting
-    nftDataPath: userConfig.nftDataPath || 'nfts.csv',
-    nftAssetPath: userConfig.nftAssetPath || 'assets',
-
-    // Metadata schema defined by the user
-    schema: metadata.parseSchema(userConfig.schema || []),
-
-    //////////////////////////////////////////////
-    // ------ IPFS Config
-    //////////////////////////////////////////////
-
-    pinningService: userConfig.pinningService,
-
-    // pinningService: {
-    //   endpoint: "PINNING_SERVICE_ENDPOINT",
-    //   key: "PINNING_SERVICE_KEY"
-    // },
-
-    //////////////////////////////////////////////
-    // ------ Emulator Config
-    //////////////////////////////////////////////
-
-    // This is the default owner address and signing key for all newly minted NFTs
-    emulatorFlowAccount: userConfig.emulatorFlowAccount
-      ? getAccount(userConfig.emulatorFlowAccount, flowConfig)
-      : getAccount('emulator-account', flowConfig),
-
-    //////////////////////////////////////////////
-    // ------ Testnet Config
-    //////////////////////////////////////////////
-
-    // This is the default owner address and signing key for all newly minted NFTs
-    testnetFlowAccount: userConfig.testnetFlowAccount
-      ? getAccount(userConfig.testnetFlowAccount, flowTestnetConfig)
-      : getAccount('testnet-account', flowTestnetConfig),
-
-    //////////////////////////////////////////////
-    // ------ Mainnet Configs
-    //////////////////////////////////////////////
-
-    // This is the default owner address and signing key for all newly minted NFTs
-    mainnetFlowAccount: userConfig.mainnetFlowAccount
-      ? getAccount(userConfig.mainnetFlowAccount, flowMainnetConfig)
-      : getAccount('mainnet-account', flowMainnetConfig),
-  };
+  return config as RawConfig;
 }
 
-// Expand template variable in flow.json
-// Ref: https://stackoverflow.com/a/58317158/3823815
-function expand(template: string, data: any) {
-  return template.replace(/\$\{(\w+)\}/g, (_, name) => data[name] || '?');
-}
+function saveRawConfig(filename: string, config: RawConfig, basePath?: string) {
+  const filepath = path.resolve(basePath ?? process.cwd(), filename);
 
-function getAccount(name: string, flowConfig: any) {
-  const account = flowConfig.accounts[name];
-  const address = withPrefix(expand(account.address, process.env));
+  const contents = yaml.dump(config);
 
-  return { name, address };
+  fs.writeFileSync(filepath, contents, 'utf8');
 }

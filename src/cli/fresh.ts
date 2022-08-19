@@ -4,35 +4,35 @@ import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 
 import FlowMinter from './flow';
 import DataStore from './datastore';
-import getConfig from './config';
 import Metadata from './metadata';
 import IPFS from './ipfs';
 import { metadata } from '../lib';
 import { formatClaimKey, generateClaimKeyPairs } from './claimKeys';
+import { Config } from './config';
 
 export default class Fresh {
   network: string;
-  config: any;
-  datastore: any;
+  config: Config;
+  datastore: DataStore;
   flowMinter: FlowMinter;
   metadata: Metadata;
 
   constructor(network: string) {
     this.network = network;
 
-    this.config = getConfig();
+    this.config = Config.load();
 
     this.datastore = new DataStore('freshdb');
     this.flowMinter = new FlowMinter(this.network);
 
     const ipfsClient = new NFTStorage({
-      token: this.config.pinningService.key,
-      endpoint: this.config.pinningService.endpoint,
+      token: this.config.ipfsPinningService.key,
+      endpoint: new URL(this.config.ipfsPinningService.endpoint),
     });
 
     const ipfs = new IPFS(ipfsClient);
 
-    this.metadata = new Metadata(this.config.schema, this.config.nftAssetPath, ipfs);
+    this.metadata = new Metadata(this.config.contract.schema, this.config.nftAssetPath, ipfs);
   }
 
   //////////////////////////////////////////////
@@ -164,7 +164,7 @@ export default class Fresh {
 
     return {
       id: tokenId,
-      schema: this.config.schema,
+      schema: this.config.contract.schema,
       metadata,
     };
   }
@@ -229,14 +229,6 @@ export default class Fresh {
       tokenId: result.tokenId,
       claimKey: formatClaimKey(result.tokenId, privateKeys[i]),
     }));
-  }
-
-  defaultOwnerAddress() {
-    return this.network === 'testnet'
-      ? this.config.testnetFlowAccount.address
-      : this.network === 'mainnet'
-      ? this.config.mainnetFlowAccount.address
-      : this.config.emulatorFlowAccount.address;
   }
 }
 

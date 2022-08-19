@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { metadata } from '../../lib';
-import { IPFSImage } from '../../lib/metadata';
+import { IPFSFile } from '../../lib/metadata';
 import IPFS from '../ipfs';
 
 export default class MetadataProcessor {
@@ -27,7 +27,7 @@ export default class MetadataProcessor {
 
   async processField(field: metadata.Field, value: metadata.MetadataValue) {
     switch (field.type) {
-      case IPFSImage:
+      case IPFSFile:
         return this.processIpfsFile(value as string);
       default:
         return value;
