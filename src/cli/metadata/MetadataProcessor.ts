@@ -5,18 +5,20 @@ import { IPFSFile } from '../../lib/metadata';
 import IPFS from '../ipfs';
 
 export default class MetadataProcessor {
+  schema: metadata.Schema;
   nftAssetPath: string;
   ipfs: IPFS;
 
-  constructor(nftAssetPath: string, ipfs: IPFS) {
+  constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: IPFS) {
+    this.schema = schema;
     this.nftAssetPath = nftAssetPath;
     this.ipfs = ipfs;
   }
 
-  async process(schema: metadata.Schema, metadata: metadata.MetadataMap) {
+  async process(metadata: metadata.MetadataMap) {
     const values: any = {};
 
-    for (const field of schema.getFieldList()) {
+    for (const field of this.schema.getFieldList()) {
       const value = metadata[field.name];
 
       values[field.name] = await this.processField(field, value);

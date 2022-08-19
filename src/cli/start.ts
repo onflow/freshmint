@@ -41,22 +41,21 @@ const questions = [
       return true;
     },
   },
-  // TODO: implement edition support
-  // {
-  //   type: 'list',
-  //   name: 'contractType',
-  //   message: 'Contract type:',
-  //   choices: [
-  //     {
-  //       name: 'Standard NFT',
-  //       value: ContractType.Standard,
-  //     },
-  //     {
-  //       name: 'Edition NFT',
-  //       value: ContractType.Edition,
-  //     },
-  //   ],
-  // },
+  {
+    type: 'list',
+    name: 'contractType',
+    message: 'Contract type:',
+    choices: [
+      {
+        name: 'Standard NFT',
+        value: ContractType.Standard,
+      },
+      {
+        name: 'Edition NFT',
+        value: ContractType.Edition,
+      },
+    ],
+  },
   {
     type: 'confirm',
     name: 'startCustomFields',
@@ -126,7 +125,7 @@ export default async function start(spinner: Ora) {
   const config = new Config({
     contract: {
       name: sanitizeContractName(answers.contractName),
-      type: ContractType.Standard, // TODO: implement edition support
+      type: answers.contractType,
       schema,
     },
     ipfsPinningService: {

@@ -32,10 +32,9 @@ export type ConfigParameters = {
     endpoint: string;
     key: string;
   };
-}
+};
 
 export class Config {
-
   #config: ConfigParameters;
 
   constructor(config: ConfigParameters) {
@@ -53,7 +52,7 @@ export class Config {
   get nftAssetPath(): string {
     return this.#config.nftAssetPath ?? 'assets';
   }
-  
+
   get ipfsPinningService(): IPFSPinningServiceConfig {
     const endpoint = envsubst(this.#config.ipfsPinningService.endpoint);
     const key = envsubst(this.#config.ipfsPinningService.key);
@@ -61,7 +60,7 @@ export class Config {
     return {
       endpoint: new URL(endpoint),
       key,
-    }
+    };
   }
 
   static load(): Config {
@@ -70,7 +69,7 @@ export class Config {
     return new Config({
       contract: {
         name: rawConfig.contract.name,
-        type: ContractType[rawConfig.contract.type],
+        type: rawConfig.contract.type as ContractType,
         schema: metadata.parseSchema(rawConfig.contract.schema || []),
       },
 
@@ -134,8 +133,4 @@ function saveRawConfig(filename: string, config: RawConfig, basePath?: string) {
   const contents = yaml.dump(config);
 
   fs.writeFileSync(filepath, contents, 'utf8');
-}
-
-function expand(template: string, data: any) {
-  return template.replace(/\$\{(\w+)\}/g, (_, name) => data[name] || '?');
 }

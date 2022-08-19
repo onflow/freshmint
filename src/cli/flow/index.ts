@@ -45,4 +45,24 @@ export default class FlowMinter {
       { type: t.UInt64, value: nftId },
     ]);
   }
+
+  async createEditions(sizes: number[], fields: any[]) {
+    const args = [
+      { type: t.Array(t.UInt), value: sizes.map((size) => size.toString(10)) },
+      ...fields.map((field) => ({
+        type: t.Array(field.cadenceType),
+        value: field.values,
+      })),
+    ];
+
+    return await this.flow.transaction('./cadence/transactions/createEdition.cdc', `${this.network}-account`, args);
+  }
+
+  async mintEdition(editionIds: string[], editionSerials: string[]) {
+    return await this.flow.transaction('./cadence/transactions/mint.cdc', `${this.network}-account`, [
+      { type: t.Array(t.UInt64), value: editionIds },
+      { type: t.Array(t.UInt64), value: editionSerials },
+      { type: t.Optional(t.String), value: null },
+    ]);
+  }
 }

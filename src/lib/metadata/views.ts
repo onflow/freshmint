@@ -27,14 +27,12 @@ export class View {
     const exportedOptions = {};
 
     for (const key in this.options) {
-      if (this.options.hasOwnProperty(key)) {
-        const option = this.options[key];
+      const option = this.options[key];
 
-        if (option instanceof Field) {
-          exportedOptions[key] = option.name;
-        } else {
-          exportedOptions[key] = option;
-        }
+      if (option instanceof Field) {
+        exportedOptions[key] = option.name;
+      } else {
+        exportedOptions[key] = option;
       }
     }
 

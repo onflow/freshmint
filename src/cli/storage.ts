@@ -2,7 +2,61 @@ import PouchDB from 'pouchdb';
 
 PouchDB.plugin(require('pouchdb-find')); // eslint-disable-line  @typescript-eslint/no-var-requires
 
-export default class DataStore {
+import * as models from './models';
+
+export class Storage {
+  private nfts: Database;
+  private editions: Database;
+
+  constructor() {
+    this.nfts = new Database('nfts');
+    this.editions = new Database('editions');
+  }
+
+  async saveEdition(edition: models.Edition): Promise<void> {
+    await this.editions.save(edition);
+  }
+
+  async loadEditionByHash(hash: string): Promise<models.Edition | null> {
+    const results = await this.editions.find({ hash });
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    return results[0];
+  }
+
+  async saveNFT(nft: models.NFT): Promise<void> {
+    await this.nfts.save(nft);
+  }
+
+  async loadNFTByHash(hash: string): Promise<models.NFT | null> {
+    const results = await this.nfts.find({ hash });
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    return results[0];
+  }
+
+  async loadNFTById(tokenId: string): Promise<models.NFT | null> {
+    const results = await this.nfts.find({ tokenId });
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    return results[0];
+  }
+
+  async loadAllNFTs(): Promise<models.NFT[]> {
+    return await this.nfts.all();
+  }
+}
+
+export class Database {
   db: PouchDB.Database<any>;
 
   constructor(name: string, options?: PouchDB.AdapterWebSql.Configuration) {
