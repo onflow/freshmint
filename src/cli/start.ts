@@ -41,21 +41,22 @@ const questions = [
       return true;
     },
   },
-  {
-    type: 'list',
-    name: 'contractType',
-    message: 'Contract type:',
-    choices: [
-      {
-        name: 'Standard NFT',
-        value: ContractType.Standard,
-      },
-      {
-        name: 'Edition NFT',
-        value: ContractType.Edition,
-      },
-    ],
-  },
+  // TODO: implement edition support
+  // {
+  //   type: 'list',
+  //   name: 'contractType',
+  //   message: 'Contract type:',
+  //   choices: [
+  //     {
+  //       name: 'Standard NFT',
+  //       value: ContractType.Standard,
+  //     },
+  //     {
+  //       name: 'Edition NFT',
+  //       value: ContractType.Edition,
+  //     },
+  //   ],
+  // },
   {
     type: 'confirm',
     name: 'startCustomFields',
@@ -117,8 +118,6 @@ export default async function start(spinner: Ora) {
 
   const userFields = await getCustomFields(answers.startCustomFields);
 
-  console.log(userFields);
-
   const userSchema = metadata.parseSchema(userFields);
 
   // Extend default schema with user fields
@@ -127,7 +126,7 @@ export default async function start(spinner: Ora) {
   const config = new Config({
     contract: {
       name: sanitizeContractName(answers.contractName),
-      type: answers.contractType,
+      type: ContractType.Standard, // TODO: implement edition support
       schema,
     },
     ipfsPinningService: {

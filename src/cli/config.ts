@@ -18,37 +18,50 @@ export type ContractConfig = {
 };
 
 export type IPFSPinningServiceConfig = {
-  endpoint: string;
+  endpoint: URL;
   key: string;
 };
 
-export class Config {
+export type ConfigParameters = {
   contract: ContractConfig;
 
-  nftDataPath: string;
-  nftAssetPath: string;
+  nftDataPath?: string;
+  nftAssetPath?: string;
 
-  ipfsPinningService?: IPFSPinningServiceConfig;
+  ipfsPinningService?: {
+    endpoint: string;
+    key: string;
+  };
+}
 
-  constructor({
-    contract,
-    nftDataPath,
-    nftAssetPath,
-    ipfsPinningService,
-  }: {
-    contract: ContractConfig;
+export class Config {
 
-    nftDataPath?: string;
-    nftAssetPath?: string;
+  #config: ConfigParameters;
 
-    ipfsPinningService?: IPFSPinningServiceConfig;
-  }) {
-    this.contract = contract;
+  constructor(config: ConfigParameters) {
+    this.#config = config;
+  }
 
-    this.nftDataPath = nftDataPath ?? 'nfts.csv';
-    this.nftAssetPath = nftAssetPath ?? 'assets';
+  get contract(): ContractConfig {
+    return this.#config.contract;
+  }
 
-    this.ipfsPinningService = ipfsPinningService;
+  get nftDataPath(): string {
+    return this.#config.nftDataPath ?? 'nfts.csv';
+  }
+
+  get nftAssetPath(): string {
+    return this.#config.nftAssetPath ?? 'assets.csv';
+  }
+  
+  get ipfsPinningService(): IPFSPinningServiceConfig {
+    const endpoint = envsubst(this.#config.ipfsPinningService.endpoint);
+    const key = envsubst(this.#config.ipfsPinningService.key);
+
+    return {
+      endpoint: new URL(endpoint),
+      key,
+    }
   }
 
   static load(): Config {
@@ -63,23 +76,23 @@ export class Config {
 
       ipfsPinningService: rawConfig.ipfsPinningService,
 
-      nftDataPath: rawConfig.nftDataPath || 'nfts.csv',
-      nftAssetPath: rawConfig.nftAssetPath || 'assets',
+      nftDataPath: rawConfig.nftDataPath,
+      nftAssetPath: rawConfig.nftAssetPath,
     });
   }
 
   save(basePath?: string) {
     const rawConfig = {
       contract: {
-        name: this.contract.name,
-        type: this.contract.type,
-        schema: this.contract.schema.export(),
+        name: this.#config.contract.name,
+        type: this.#config.contract.type,
+        schema: this.#config.contract.schema.export(),
       },
 
-      ipfsPinningService: this.ipfsPinningService,
+      ipfsPinningService: this.#config.ipfsPinningService,
 
-      nftDataPath: this.nftDataPath,
-      nftAssetPath: this.nftAssetPath,
+      nftDataPath: this.#config.nftDataPath,
+      nftAssetPath: this.#config.nftAssetPath,
     };
 
     saveRawConfig(configFilename, rawConfig, basePath);
@@ -110,9 +123,7 @@ function loadRawConfig(filename: string, basePath?: string): RawConfig {
   const filepath = path.resolve(basePath ?? process.cwd(), filename);
   const contents = fs.readFileSync(filepath, 'utf8');
 
-  const substitutedContents = envsubst(contents);
-
-  const config = yaml.load(substitutedContents);
+  const config = yaml.load(contents);
 
   return config as RawConfig;
 }
@@ -123,4 +134,8 @@ function saveRawConfig(filename: string, config: RawConfig, basePath?: string) {
   const contents = yaml.dump(config);
 
   fs.writeFileSync(filepath, contents, 'utf8');
+}
+
+function expand(template: string, data: any) {
+  return template.replace(/\$\{(\w+)\}/g, (_, name) => data[name] || '?');
 }
