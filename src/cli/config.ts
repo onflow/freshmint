@@ -11,6 +11,10 @@ export enum ContractType {
   Edition = 'edition',
 }
 
+const defaultDataPathStandard = 'nfts.csv';
+const defaultDataPathEdition = 'editions.csv';
+const defaultAssetPath = 'assets';
+
 export type ContractConfig = {
   name: string;
   type: ContractType;
@@ -46,11 +50,20 @@ export class Config {
   }
 
   get nftDataPath(): string {
-    return this.#config.nftDataPath ?? 'nfts.csv';
+    return this.#config.nftDataPath ?? this.getDefaultDataPath();
+  }
+
+  private getDefaultDataPath(): string {
+    switch (this.contract.type) {
+      case ContractType.Standard:
+        return defaultDataPathStandard;
+      case ContractType.Edition:
+        return defaultDataPathEdition;
+    }
   }
 
   get nftAssetPath(): string {
-    return this.#config.nftAssetPath ?? 'assets';
+    return this.#config.nftAssetPath ?? defaultAssetPath;
   }
 
   get ipfsPinningService(): IPFSPinningServiceConfig {

@@ -27,8 +27,6 @@ export async function generateProject(dir: string, config: Config) {
 
   await createGetNFTScript(dir, config.contract.name);
 
-  await createCSVFile(dir, config.contract.name, { schema: config.contract.schema });
-
   await createFlowConfig(dir, config.contract.name);
   await createFlowTestnetConfig(dir, config.contract.name);
   await createFlowMainnetConfig(dir, config.contract.name);
@@ -61,6 +59,8 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
+
+  await createNFTsCSVFile(dir, config.contract.name, { schema: config.contract.schema });
 }
 
 async function generateEditionProject(dir: string, config: Config, imports: ContractImports) {
@@ -101,6 +101,8 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
+
+  await createEditionsCSVFile(dir, config.contract.name, { schema: config.contract.schema });
 }
 
 async function createScaffold(dir: string) {
@@ -133,7 +135,8 @@ async function createScaffold(dir: string) {
 
 const createGetNFTScript = template('templates/cadence/scripts/get_nft.cdc', 'cadence/scripts/get_nft.cdc');
 
-const createCSVFile = template('templates/nfts.csv', 'nfts.csv');
+const createNFTsCSVFile = template('templates/nfts.csv', 'nfts.csv');
+const createEditionsCSVFile = template('templates/editions.csv', 'editions.csv');
 
 const createFlowConfig = template('templates/flow.json', 'flow.json');
 

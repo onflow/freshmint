@@ -1,0 +1,2 @@
+edition_size,{{#each schema.fields}}{{ this.name }}{{#unless @last}},{{/unless}}{{/each}}
+10,{{#each schema.fields}}{{ this.type.sampleValue }}{{#unless @last}},{{/unless}}{{/each}}

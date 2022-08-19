@@ -4,7 +4,6 @@ import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 
 import FlowMinter from './flow';
 import IPFS from './ipfs';
-import { metadata } from '../lib';
 import { Config } from './config';
 import { Minter, createMinter } from './minters';
 import { Storage } from './storage';
@@ -68,18 +67,6 @@ export default class Fresh {
     return {
       id: tokenId,
       metadata: nft.metadata,
-    };
-  }
-
-  async getNFTMetadata(
-    tokenId: string,
-  ): Promise<{ id: string; schema: metadata.Schema; metadata: metadata.MetadataMap }> {
-    const { metadata } = await this.getNFT(tokenId);
-
-    return {
-      id: tokenId,
-      schema: this.config.contract.schema,
-      metadata,
     };
   }
 

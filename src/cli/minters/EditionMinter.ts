@@ -130,10 +130,12 @@ export class EditionMinter {
       }
     }
 
-    const processedEditions = await Promise.all(newEditions.map(async (edition) => ({
-      ...edition,
-      metadata: await this.processor.process(edition.metadata)
-    })));
+    const processedEditions = await Promise.all(
+      newEditions.map(async (edition) => ({
+        ...edition,
+        metadata: await this.processor.process(edition.metadata),
+      })),
+    );
 
     const fields = this.schema.getFieldList();
 
