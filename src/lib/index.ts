@@ -1,6 +1,6 @@
 export { version } from './version';
 
-export { Config } from './config';
+export { Config, ContractImports } from './config';
 
 export { OnChainCollection } from './collections/OnChainCollection';
 export { OnChainBlindCollection } from './collections/OnChainBlindCollection';
