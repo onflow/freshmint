@@ -179,16 +179,16 @@ export default class Fresh {
     const firstNft = nfts[0];
 
     const metadataHeaders = Object.keys(firstNft.metadata).map((key) => {
-      return { id: key, title: key.toUpperCase() };
+      return { id: key, title: key };
     });
 
     const csvWriter = createCsvWriter({
       path: csvPath,
       header: [
-        { id: 'tokenID', title: 'TOKEN ID' },
+        { id: 'tokenID', title: 'token_id' },
         ...metadataHeaders,
-        { id: 'transactionID', title: 'TRANSACTION ID' },
-        { id: 'claimKey', title: 'CLAIM KEY' },
+        { id: 'transactionID', title: 'transaction_id' },
+        { id: 'claimKey', title: 'claim_key' },
       ],
     });
 
