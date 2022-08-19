@@ -9,6 +9,11 @@
     "rootDir": "./src",
     "declaration": true
   },
-  "exclude": ["node_modules", "**/*.test.ts", "src/lib/testHelpers.ts"],
-  "include": ["./src"]
+  "include": ["./src"],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/lib/testHelpers.ts",
+    "**/benchmarks/**"
+  ]
 }

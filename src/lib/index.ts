@@ -2,6 +2,8 @@ export { version } from './version';
 
 export { Config, ContractImports } from './config';
 
+export { FlowClient } from './client';
+
 export { OnChainCollection } from './collections/OnChainCollection';
 export { OnChainBlindCollection } from './collections/OnChainBlindCollection';
 export { EditionBlindCollection } from './collections/EditionBlindCollection';
