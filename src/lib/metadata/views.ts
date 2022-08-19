@@ -15,6 +15,31 @@ export class View {
     this.id = type.id;
     this.cadenceTypeString = type.cadenceTypeString;
   }
+
+  export(): ViewInput {
+    return {
+      type: this.type.id,
+      options: this.exportOptions(),
+    };
+  }
+
+  private exportOptions(): ViewOptionsInput {
+    const exportedOptions = {};
+
+    for (const key in this.options) {
+      if (this.options.hasOwnProperty(key)) {
+        const option = this.options[key];
+
+        if (option instanceof Field) {
+          exportedOptions[key] = option.name;
+        } else {
+          exportedOptions[key] = option;
+        }
+      }
+    }
+
+    return exportedOptions;
+  }
 }
 
 export interface ViewType<ViewOptions> {
@@ -93,6 +118,7 @@ function getViewTypeById(id: string): ViewType<any> {
 }
 
 export type ViewInput = { type: string; options: any };
+export type ViewOptionsInput = { [key: string]: string };
 
 export function parseViews(views: ViewInput[]): View[] {
   return views.map((view: ViewInput) => {

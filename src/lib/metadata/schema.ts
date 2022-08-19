@@ -67,13 +67,22 @@ export class Schema {
   getView(viewType: new (...a: any) => View): View | undefined {
     return this.views.find((view: View) => view instanceof viewType);
   }
+
+  export(): SchemaInput {
+    const fields = this.getFieldList();
+
+    return {
+      fields: fields.map((field) => field.export()),
+      views: this.views.map((view) => view.export()),
+    };
+  }
 }
 
 export function createSchema(params: SchemaParameters): Schema {
   return Schema.create(params);
 }
 
-type SchemaInput = { fields: FieldInput[]; views?: ViewInput[] } | FieldInput[];
+export type SchemaInput = { fields: FieldInput[]; views?: ViewInput[] } | FieldInput[];
 
 export function parseSchema(input: SchemaInput): Schema {
   if (Array.isArray(input)) {

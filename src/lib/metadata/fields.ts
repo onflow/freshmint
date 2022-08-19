@@ -36,6 +36,13 @@ export class Field {
   serializeValue(value: MetadataValue): Buffer {
     return this.typeInstance.serializeValue(value);
   }
+
+  export(): FieldInput {
+    return {
+      name: this.name,
+      type: this.type.id,
+    };
+  }
 }
 
 export class FieldTypeInstance {
