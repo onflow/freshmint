@@ -20,7 +20,7 @@ export default class Fresh {
 
     this.flowMinter = new FlowMinter(this.network);
 
-    this.storage = new Storage('freshdb');
+    this.storage = new Storage('freshdb', { baseSelector: { network: this.network } });
 
     const ipfsClient = new NFTStorage({
       token: config.ipfsPinningService.key,
