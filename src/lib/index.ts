@@ -17,6 +17,8 @@ export { BlindEditionNFTGenerator } from './generators/BlindEditionNFTGenerator'
 export { ClaimSaleContract } from './contracts/ClaimSaleContract';
 export { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 
+export { NFTAirDropGenerator } from './generators/NFTAirDropGenerator';
+
 export { OnChainCollection } from './collections/OnChainCollection';
 export { OnChainBlindCollection } from './collections/OnChainBlindCollection';
 export { EditionBlindCollection } from './collections/EditionBlindCollection';

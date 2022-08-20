@@ -1,9 +1,8 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
-import { ContractImports, StandardNFTGenerator, EditionNFTGenerator } from '../lib';
+import { ContractImports, StandardNFTGenerator, EditionNFTGenerator, NFTAirDropGenerator } from '../lib';
 import { Config, ContractType } from './config';
-import { NFTAirDropGenerator } from '../lib/generators/NFTAirDropGenerator';
 
 export async function generateProject(dir: string, config: Config) {
   await createScaffold(dir);

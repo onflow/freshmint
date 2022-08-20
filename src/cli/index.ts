@@ -8,10 +8,11 @@ import { Command } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
 import ProgressBar from 'progress';
+import inquirer from 'inquirer';
+
 import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
-import inquirer from 'inquirer';
 import { Config, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
@@ -20,13 +21,11 @@ const program = new Command();
 const spinner = ora();
 
 async function main() {
-  // commands
-
   program.command('start').description('initialize a new project').action(start);
 
   program
     .command('mint')
-    .description('create multiple NFTs using data from a csv file')
+    .description('mint NFTs using data from a CSV file')
     .option('-d, --data <csv-path>', 'The location of the csv file to use for minting')
     .option('-b, --batch-size <number>', 'The number of NFTs to mint per batch', '10')
     .option('-c, --claim', 'Generate a claim key for each NFT')
@@ -35,19 +34,19 @@ async function main() {
 
   program
     .command('get <token-id>')
-    .description('get info from Flow about an NFT using its token ID')
+    .description('fetch the information for an NFT')
     .option('-n, --network <network>', "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
     .action(getNFT);
 
   program
     .command('dump <csv-path>')
-    .description('dump all token metadata to a file')
+    .description('dump all NFT data to a CSV file')
     .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
     .action(dumpNFTs);
 
-  const generate = program.command('generate');
+  const generate = program.command('generate').description('regenerate project files from config');
 
-  generate.command('cadence').description('generate project Cadence files').action(generateCadence);
+  generate.command('cadence').description('regenerate project Cadence files').action(generateCadence);
 
   program
     .command('prince')
@@ -58,8 +57,6 @@ async function main() {
 
   await program.parseAsync(process.argv);
 }
-
-// ---- command action functions
 
 async function start() {
   await startCommand(spinner);
@@ -80,7 +77,7 @@ async function mint({
   const fresh = new Fresh(config, network);
 
   if (!data) {
-    data = fresh.config.nftDataPath;
+    data = config.nftDataPath;
   }
 
   const answer = await inquirer.prompt({
@@ -131,12 +128,12 @@ async function getNFT(tokenId: string, { network }: { network: string }) {
   const config = Config.load();
   const fresh = new Fresh(config, network);
 
-  const schema = fresh.config.contract.schema;
+  const schema = config.contract.schema;
   const fields = schema.getFieldList();
 
   const { id, metadata } = await fresh.getNFT(tokenId);
 
-  const output = getNFTOutput(fresh.config.contract.type, id, metadata, fields);
+  const output = getNFTOutput(config.contract.type, id, metadata, fields);
 
   alignOutput(output);
 }
@@ -177,7 +174,7 @@ async function generateCadence() {
 
   await generateProjectCadence('./', config);
 
-  spinner.succeed(`✨ Success! Generated Cadence files. ✨`);
+  spinner.succeed(`✨ Success! Regenerated Cadence files. ✨`);
 }
 
 function alignOutput(labelValuePairs: any[]) {
