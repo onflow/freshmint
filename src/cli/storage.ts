@@ -1,3 +1,5 @@
+import * as fs from 'fs-extra';
+import * as path from 'path';
 import PouchDB from 'pouchdb';
 
 PouchDB.plugin(require('pouchdb-find')); // eslint-disable-line  @typescript-eslint/no-var-requires
@@ -8,9 +10,15 @@ export class Storage {
   private nfts: Database;
   private editions: Database;
 
-  constructor() {
-    this.nfts = new Database('nfts');
-    this.editions = new Database('editions');
+  constructor(basePath: string) {
+
+    const exists = fs.pathExistsSync(basePath);
+    if (!exists) {
+      fs.mkdirSync(basePath, { recursive: true });
+    }
+
+    this.nfts = new Database(path.resolve(basePath, 'nfts'));
+    this.editions = new Database(path.resolve(basePath, 'editions'));
   }
 
   async saveEdition(edition: models.Edition): Promise<void> {

@@ -21,7 +21,7 @@ export default class Fresh {
 
     this.flowMinter = new FlowMinter(this.network);
 
-    this.storage = new Storage();
+    this.storage = new Storage('freshdb');
 
     const ipfsClient = new NFTStorage({
       token: this.config.ipfsPinningService.key,
