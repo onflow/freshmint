@@ -36,8 +36,8 @@ function generateNFT(schema: metadata.Schema): metadata.MetadataMap {
   return metadata;
 }
 
-const MINTER_ADDRESS = process.env.MINTER_ADDRESS!;
-const MINTER_PRIVATE_KEY = process.env.MINTER_PRIVATE_KEY!;
+const MINTER_ADDRESS = process.env.MINTER_ADDRESS!; // eslint-disable-line  @typescript-eslint/no-non-null-assertion
+const MINTER_PRIVATE_KEY = process.env.MINTER_PRIVATE_KEY!; // eslint-disable-line  @typescript-eslint/no-non-null-assertion
 
 const privateKey = InMemoryECPrivateKey.fromHex(MINTER_PRIVATE_KEY, SignatureAlgorithm.ECDSA_P256);
 const signer = new InMemoryECSigner(privateKey, HashAlgorithm.SHA3_256);
