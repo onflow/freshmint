@@ -18,7 +18,7 @@ export async function generateProject(dir: string, config: Config) {
   await createReadme(dir, config.contract.name, { nftDataPath: config.nftDataPath });
 }
 
-export async function generateProjectCadence(dir: string, config: Config, includeCSVFile: boolean = true) {
+export async function generateProjectCadence(dir: string, config: Config, includeCSVFile = true) {
   const imports = {
     NonFungibleToken: `"./NonFungibleToken.cdc"`,
     MetadataViews: `"./MetadataViews.cdc"`,
@@ -41,7 +41,7 @@ export async function generateProjectCadence(dir: string, config: Config, includ
   await createGetNFTScript(dir, config.contract.name);
 }
 
-async function generateStandardProject(dir: string, config: Config, imports: ContractImports, includeCSVFile: boolean = true) {
+async function generateStandardProject(dir: string, config: Config, imports: ContractImports, includeCSVFile = true) {
   const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
 
   const contract = StandardNFTGenerator.contract({
@@ -84,7 +84,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
   }
 }
 
-async function generateEditionProject(dir: string, config: Config, imports: ContractImports, includeCSVFile: boolean = true) {
+async function generateEditionProject(dir: string, config: Config, imports: ContractImports, includeCSVFile = true) {
   const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
 
   const contract = EditionNFTGenerator.contract({
