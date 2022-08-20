@@ -6,18 +6,19 @@ import IPFS from './ipfs';
 import { Config } from './config';
 import { Minter, createMinter } from './minters';
 import { Storage } from './storage';
+import { generateProjectCadence } from './generateProject';
 
 export default class Fresh {
-  network: string;
   config: Config;
+  network: string;
+
   flowMinter: FlowMinter;
   storage: Storage;
   minter: Minter;
 
-  constructor(network: string) {
+  constructor(config: Config, network: string) {
+    this.config = config;
     this.network = network;
-
-    this.config = Config.load();
 
     this.flowMinter = new FlowMinter(this.network);
 

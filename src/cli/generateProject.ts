@@ -12,8 +12,6 @@ export async function generateProject(dir: string, config: Config) {
 
   await generateProjectCadence(dir, config);
 
-  await createGetNFTScript(dir, config.contract.name);
-
   await createFlowConfig(dir, config.contract.name);
   await createFlowTestnetConfig(dir, config.contract.name);
   await createFlowMainnetConfig(dir, config.contract.name);
@@ -27,7 +25,7 @@ export async function generateProjectCadence(dir: string, config: Config) {
     MetadataViews: `"./MetadataViews.cdc"`,
     FungibleToken: `"./FungibleToken.cdc"`,
     FlowToken: `"./FlowToken.cdc"`,
-    NFTAirDrop: `"./NFTAirDrop.cdc"`
+    NFTAirDrop: `"./NFTAirDrop.cdc"`,
   };
 
   switch (config.contract.type) {
@@ -40,9 +38,11 @@ export async function generateProjectCadence(dir: string, config: Config) {
   }
 
   await writeFile(
-    path.resolve(dir, `cadence/contracts/NFTAirDrop.cdc`), 
-    NFTAirDropGenerator.contract({ contracts: imports })
+    path.resolve(dir, `cadence/contracts/NFTAirDrop.cdc`),
+    NFTAirDropGenerator.contract({ contracts: imports }),
   );
+
+  await createGetNFTScript(dir, config.contract.name);
 }
 
 async function generateStandardProject(dir: string, config: Config, imports: ContractImports) {
@@ -72,14 +72,13 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
     schema: config.contract.schema,
   });
 
-
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
 
   const mintWithClaimKeyTransaction = StandardNFTGenerator.mintWithClaimKey({
     contracts,
     contractName: config.contract.name,
     contractAddress,
-    schema: config.contract.schema
+    schema: config.contract.schema,
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
@@ -105,7 +104,7 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
     // Find a better solution.
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
     NFTAirDrop: `"../contracts/NFTAirDrop.cdc"`,
-  }
+  };
 
   const createEditionTransaction = EditionNFTGenerator.createEditions({
     contracts,
@@ -113,11 +112,6 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
     contractAddress,
     schema: config.contract.schema,
   });
-
-  console.log(config.contract.schema);
-  console.log(createEditionTransaction);
-
-  console.log(path.resolve(dir, 'cadence/transactions/createEdition.cdc'))
 
   await writeFile(path.resolve(dir, 'cadence/transactions/createEdition.cdc'), createEditionTransaction);
 
@@ -208,8 +202,6 @@ async function writeFile(filePath: string, data: any) {
     if (!exists) {
       await fs.mkdir(dirname, { recursive: true });
     }
-
-    console.log("WRITING", filePath, data)
 
     await fs.writeFile(filePath, data, 'utf8');
   } catch (err: any) {

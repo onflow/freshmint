@@ -12,8 +12,9 @@ import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
 import inquirer from 'inquirer';
-import { ContractType } from './config';
+import { Config, ContractType } from './config';
 import { metadata } from '../lib';
+import { generateProjectCadence } from './generateProject';
 
 const program = new Command();
 const spinner = ora();
@@ -44,6 +45,10 @@ async function main() {
     .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
     .action(dumpNFTs);
 
+  const generate = program.command('generate');
+
+  generate.command('cadence').description('generate project Cadence files').action(generateCadence);
+
   program
     .command('prince')
     .description('in West Philadelphia born and raised...')
@@ -71,7 +76,8 @@ async function mint({
   claim: boolean;
   batchSize: string;
 }) {
-  const fresh = new Fresh(network);
+  const config = Config.load();
+  const fresh = new Fresh(config, network);
 
   if (!data) {
     data = fresh.config.nftDataPath;
@@ -122,7 +128,8 @@ async function mint({
 }
 
 async function getNFT(tokenId: string, { network }: { network: string }) {
-  const fresh = new Fresh(network);
+  const config = Config.load();
+  const fresh = new Fresh(config, network);
 
   const schema = fresh.config.contract.schema;
   const fields = schema.getFieldList();
@@ -157,10 +164,20 @@ function getNFTOutput(
 }
 
 async function dumpNFTs(csvPath: string, { network }: { network: string }) {
-  const fresh = new Fresh(network);
+  const config = Config.load();
+  const fresh = new Fresh(config, network);
+
   const count = await fresh.dumpNFTs(csvPath);
 
   spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
+}
+
+async function generateCadence() {
+  const config = Config.load();
+
+  await generateProjectCadence('./', config);
+
+  spinner.succeed(`✨ Success! Generated Cadence files. ✨`);
 }
 
 function alignOutput(labelValuePairs: any[]) {
