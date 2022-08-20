@@ -32,7 +32,11 @@ export default class FlowMinter {
       })),
     ];
 
-    return await this.flow.transaction('./cadence/transactions/mint_with_claim_key.cdc', `${this.network}-account`, args);
+    return await this.flow.transaction(
+      './cadence/transactions/mint_with_claim_key.cdc',
+      `${this.network}-account`,
+      args,
+    );
   }
 
   async getNFTDetails(address: string, nftId: string) {

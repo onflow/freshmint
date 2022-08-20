@@ -169,7 +169,7 @@ export class EditionMinter {
 
         metadata[field.name] = value;
       });
-      
+
       const hash = hashMetadata(this.schema, metadata).toString('hex');
 
       const size = parseInt(values.edition_size, 10);
@@ -190,7 +190,6 @@ export class EditionMinter {
     return await this.mintTokens(batchFields);
   }
 
-
   async mintTokens(batchFields: { editionIds: string[]; editionSerials: string[] }) {
     const minted = await this.flowMinter.mintEdition(batchFields.editionIds, batchFields.editionSerials);
     return formatMintResults(minted);
@@ -201,7 +200,11 @@ export class EditionMinter {
 
     const { privateKeys, publicKeys } = generateClaimKeyPairs(batchSize);
 
-    const minted = await this.flowMinter.mintEditionWithClaimKey(publicKeys, batchFields.editionIds, batchFields.editionSerials);
+    const minted = await this.flowMinter.mintEditionWithClaimKey(
+      publicKeys,
+      batchFields.editionIds,
+      batchFields.editionSerials,
+    );
 
     const results = formatMintResults(minted);
 

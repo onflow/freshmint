@@ -11,7 +11,6 @@ export class Storage {
   private editions: Database;
 
   constructor(basePath: string) {
-
     const exists = fs.pathExistsSync(basePath);
     if (!exists) {
       fs.mkdirSync(basePath, { recursive: true });
