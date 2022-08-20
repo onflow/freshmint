@@ -16,7 +16,6 @@ export default class Fresh {
   minter: Minter;
 
   constructor(config: Config, network: string) {
-    this.config = config;
     this.network = network;
 
     this.flowMinter = new FlowMinter(this.network);
@@ -24,20 +23,16 @@ export default class Fresh {
     this.storage = new Storage('freshdb');
 
     const ipfsClient = new NFTStorage({
-      token: this.config.ipfsPinningService.key,
-      endpoint: new URL(this.config.ipfsPinningService.endpoint),
+      token: config.ipfsPinningService.key,
+      endpoint: new URL(config.ipfsPinningService.endpoint),
     });
 
     const ipfs = new IPFS(ipfsClient);
 
-    this.minter = createMinter(this.config.contract, this.config.nftAssetPath, ipfs, this.flowMinter, this.storage);
+    this.minter = createMinter(config.contract, config.nftAssetPath, ipfs, this.flowMinter, this.storage);
   }
 
-  //////////////////////////////////////////////
-  // ------ NFT Creation
-  //////////////////////////////////////////////
-
-  async createNFTsFromCSVFile(
+  async mintNFTsFromCSVFile(
     csvPath: string,
     withClaimKey: boolean,
     onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
@@ -48,11 +43,8 @@ export default class Fresh {
     await this.minter.mint(csvPath, withClaimKey, onStart, onBatchComplete, onError, batchSize);
   }
 
-  //////////////////////////////////////////////
-  // -------- NFT Retreival
-  //////////////////////////////////////////////
-
   async getNFT(tokenId: string) {
+    // TODO: display user-friendly message if token not found
     const nft = await this.storage.loadNFTById(tokenId);
 
     return {

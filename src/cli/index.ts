@@ -94,7 +94,7 @@ async function mint({
 
   let bar: ProgressBar;
 
-  await fresh.createNFTsFromCSVFile(
+  await fresh.mintNFTsFromCSVFile(
     data,
     claim,
     (total: number, skipped: number, batchCount: number, batchSize: number) => {
