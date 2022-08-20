@@ -31,7 +31,7 @@ export async function generateProject(dir: string, config: Config) {
   await createFlowTestnetConfig(dir, config.contract.name);
   await createFlowMainnetConfig(dir, config.contract.name);
 
-  await createReadme(dir, config.contract.name);
+  await createReadme(dir, config.contract.name, { nftDataPath: config.nftDataPath });
 }
 
 async function generateStandardProject(dir: string, config: Config, imports: ContractImports) {
