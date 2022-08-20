@@ -36,25 +36,6 @@ export default class FlowCliWrapper {
     this.configs = configs;
   }
 
-  async deploy() {
-    const configString = formatConfigString(this.configs);
-
-    const { stdout: out, stderr: err } = await exec(
-      `flow project deploy \
-        --network=${this.network} \
-        ${configString} \
-        --update \
-        -o json`,
-      { cwd: process.cwd() },
-    );
-
-    if (err) {
-      throw err;
-    }
-
-    return JSON.parse(out);
-  }
-
   async transaction(path: string, signer: string, args: any[]) {
     const argString = formatArgString(args);
     const configString = formatConfigString(this.configs);

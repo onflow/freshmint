@@ -12,10 +12,6 @@ export default class FlowMinter {
     this.flow = new FlowCliWrapper(this.network);
   }
 
-  async deployContracts() {
-    await this.flow.deploy();
-  }
-
   async mint(fields: any[]) {
     return await this.flow.transaction(
       './cadence/transactions/mint.cdc',

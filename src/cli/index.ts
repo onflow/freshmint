@@ -24,12 +24,6 @@ async function main() {
   program.command('start').description('initialize a new project').action(start);
 
   program
-    .command('deploy')
-    .description('deploy an instance of the FreshMint NFT contract')
-    .option('-n, --network <network>', "Network to deploy to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
-    .action(deploy);
-
-  program
     .command('mint')
     .description('create multiple NFTs using data from a csv file')
     .option('-d, --data <csv-path>', 'The location of the csv file to use for minting')
@@ -64,13 +58,6 @@ async function main() {
 
 async function start() {
   await startCommand(spinner);
-}
-
-async function deploy({ network }: { network: string }) {
-  spinner.start(`Deploying project to ${network} ...`);
-  const fresh = new Fresh(network);
-  await fresh.deployContracts();
-  spinner.succeed(`✨ Success! Project deployed to ${network} ✨`);
 }
 
 async function mint({
