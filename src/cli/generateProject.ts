@@ -3,27 +3,14 @@ import * as path from 'path';
 import * as Handlebars from 'handlebars';
 import { ContractImports, StandardNFTGenerator, EditionNFTGenerator } from '../lib';
 import { Config, ContractType } from './config';
+import { NFTAirDropGenerator } from '../lib/generators/NFTAirDropGenerator';
 
 export async function generateProject(dir: string, config: Config) {
   await createScaffold(dir);
 
-  const imports = {
-    NonFungibleToken: `"./NonFungibleToken.cdc"`,
-    MetadataViews: `"./MetadataViews.cdc"`,
-    FungibleToken: `"./FungibleToken.cdc"`,
-    FlowToken: `"./FlowToken.cdc"`,
-  };
-
-  switch (config.contract.type) {
-    case ContractType.Standard:
-      generateStandardProject(dir, config, imports);
-      break;
-    case ContractType.Edition:
-      generateEditionProject(dir, config, imports);
-      break;
-  }
-
   config.save(dir);
+
+  await generateProjectCadence(dir, config);
 
   await createGetNFTScript(dir, config.contract.name);
 
@@ -32,6 +19,30 @@ export async function generateProject(dir: string, config: Config) {
   await createFlowMainnetConfig(dir, config.contract.name);
 
   await createReadme(dir, config.contract.name, { nftDataPath: config.nftDataPath });
+}
+
+export async function generateProjectCadence(dir: string, config: Config) {
+  const imports = {
+    NonFungibleToken: `"./NonFungibleToken.cdc"`,
+    MetadataViews: `"./MetadataViews.cdc"`,
+    FungibleToken: `"./FungibleToken.cdc"`,
+    FlowToken: `"./FlowToken.cdc"`,
+    NFTAirDrop: `"./NFTAirDrop.cdc"`
+  };
+
+  switch (config.contract.type) {
+    case ContractType.Standard:
+      await generateStandardProject(dir, config, imports);
+      break;
+    case ContractType.Edition:
+      await generateEditionProject(dir, config, imports);
+      break;
+  }
+
+  await writeFile(
+    path.resolve(dir, `cadence/contracts/NFTAirDrop.cdc`), 
+    NFTAirDropGenerator.contract({ contracts: imports })
+  );
 }
 
 async function generateStandardProject(dir: string, config: Config, imports: ContractImports) {
@@ -46,19 +57,32 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
 
   await writeFile(path.resolve(dir, `cadence/contracts/${config.contract.name}.cdc`), contract);
 
+  const contracts = {
+    ...imports,
+    // TODO: this is a workaround to fix the relative import in this file.
+    // Find a better solution.
+    NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
+    NFTAirDrop: `"../contracts/NFTAirDrop.cdc"`,
+  };
+
   const mintTransaction = StandardNFTGenerator.mint({
-    contracts: {
-      ...imports,
-      // TODO: this is a workaround to fix the relative import in this file.
-      // Find a better solution.
-      NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    },
+    contracts,
     contractName: config.contract.name,
     contractAddress,
     schema: config.contract.schema,
   });
 
+
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
+
+  const mintWithClaimKeyTransaction = StandardNFTGenerator.mintWithClaimKey({
+    contracts,
+    contractName: config.contract.name,
+    contractAddress,
+    schema: config.contract.schema
+  });
+
+  await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   await createNFTsCSVFile(dir, config.contract.name, { schema: config.contract.schema });
 }
@@ -75,32 +99,43 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
 
   await writeFile(path.resolve(dir, `cadence/contracts/${config.contract.name}.cdc`), contract);
 
+  const contracts = {
+    ...imports,
+    // TODO: this is a workaround to fix the relative import in this file.
+    // Find a better solution.
+    NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
+    NFTAirDrop: `"../contracts/NFTAirDrop.cdc"`,
+  }
+
   const createEditionTransaction = EditionNFTGenerator.createEditions({
-    contracts: {
-      ...imports,
-      // TODO: this is a workaround to fix the relative import in this file.
-      // Find a better solution.
-      NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    },
+    contracts,
     contractName: config.contract.name,
     contractAddress,
     schema: config.contract.schema,
   });
 
+  console.log(config.contract.schema);
+  console.log(createEditionTransaction);
+
+  console.log(path.resolve(dir, 'cadence/transactions/createEdition.cdc'))
+
   await writeFile(path.resolve(dir, 'cadence/transactions/createEdition.cdc'), createEditionTransaction);
 
   const mintTransaction = EditionNFTGenerator.mint({
-    contracts: {
-      ...imports,
-      // TODO: this is a workaround to fix the relative import in this file.
-      // Find a better solution.
-      NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    },
+    contracts,
     contractName: config.contract.name,
     contractAddress,
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
+
+  const mintWithClaimKeyTransaction = EditionNFTGenerator.mintWithClaimKey({
+    contracts,
+    contractName: config.contract.name,
+    contractAddress,
+  });
+
+  await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   await createEditionsCSVFile(dir, config.contract.name, { schema: config.contract.schema });
 }
@@ -173,6 +208,8 @@ async function writeFile(filePath: string, data: any) {
     if (!exists) {
       await fs.mkdir(dirname, { recursive: true });
     }
+
+    console.log("WRITING", filePath, data)
 
     await fs.writeFile(filePath, data, 'utf8');
   } catch (err: any) {

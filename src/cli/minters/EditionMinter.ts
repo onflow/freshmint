@@ -8,6 +8,7 @@ import { hashValues } from '../../lib/hash';
 import { UInt64Value } from '../../lib/cadence/values';
 import { Storage } from '../storage';
 import * as models from '../models';
+import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 
 type EditionNFT = {
   editionId: string;
@@ -74,8 +75,6 @@ export class EditionMinter {
     for (const batch of batches) {
       const batchSize = batch.length;
 
-      // const processedBatch = await this.processTokenBatch(batch);
-
       const batchFields = {
         editionIds: batch.map((nft: EditionNFT) => nft.editionId),
         editionSerials: batch.map((nft: EditionNFT) => nft.editionSerial),
@@ -84,7 +83,7 @@ export class EditionMinter {
       let results;
 
       try {
-        results = await this.createTokenBatch(batchFields);
+        results = await this.createTokenBatch(withClaimKey, batchFields);
       } catch (error: any) {
         onError(error);
         return;
@@ -170,7 +169,7 @@ export class EditionMinter {
 
         metadata[field.name] = value;
       });
-
+      
       const hash = hashMetadata(this.schema, metadata).toString('hex');
 
       const size = parseInt(values.edition_size, 10);
@@ -183,13 +182,34 @@ export class EditionMinter {
     });
   }
 
-  async createTokenBatch(batchFields: { editionIds: string[]; editionSerials: string[] }) {
+  async createTokenBatch(withClaimKey: boolean, batchFields: { editionIds: string[]; editionSerials: string[] }) {
+    if (withClaimKey) {
+      return await this.mintTokensWithClaimKey(batchFields);
+    }
+
     return await this.mintTokens(batchFields);
   }
+
 
   async mintTokens(batchFields: { editionIds: string[]; editionSerials: string[] }) {
     const minted = await this.flowMinter.mintEdition(batchFields.editionIds, batchFields.editionSerials);
     return formatMintResults(minted);
+  }
+
+  async mintTokensWithClaimKey(batchFields: { editionIds: string[]; editionSerials: string[] }) {
+    const batchSize = batchFields.editionIds.length;
+
+    const { privateKeys, publicKeys } = generateClaimKeyPairs(batchSize);
+
+    const minted = await this.flowMinter.mintEditionWithClaimKey(publicKeys, batchFields.editionIds, batchFields.editionSerials);
+
+    const results = formatMintResults(minted);
+
+    return results.map((result: any, i: number) => ({
+      txId: result.txId,
+      tokenId: result.tokenId,
+      claimKey: formatClaimKey(result.tokenId, privateKeys[i]),
+    }));
   }
 }
 

@@ -6,9 +6,10 @@ export function generateClaimKeyPairs(count: number) {
   const publicKeys = [];
 
   const ec = new elliptic.ec('p256');
-  const ecKeyPair = ec.genKeyPair();
 
   while (count--) {
+    const ecKeyPair = ec.genKeyPair();
+
     const privateKey = InMemoryECPrivateKey.fromElliptic(ecKeyPair, SignatureAlgorithm.ECDSA_P256);
     const publicKey = privateKey.getPublicKey();
 

@@ -44,4 +44,23 @@ export class StandardNFTGenerator extends TemplateGenerator {
       fields: schema.getFieldList(),
     });
   }
+
+  static mintWithClaimKey({
+    contracts,
+    contractName,
+    contractAddress,
+    schema,
+  }: {
+    contracts: Contracts;
+    contractName: string;
+    contractAddress: string;
+    schema: metadata.Schema;
+  }): string {
+    return this.generate('../templates/cadence/on-chain/transactions/mint_with_claim_key.cdc', {
+      contracts,
+      contractName,
+      contractAddress,
+      fields: schema.getFieldList(),
+    });
+  }
 }

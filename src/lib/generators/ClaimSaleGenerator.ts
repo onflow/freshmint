@@ -2,7 +2,7 @@ import TemplateGenerator, { Contracts } from './TemplateGenerator';
 
 export class ClaimSaleGenerator extends TemplateGenerator {
   static contract({ contracts }: { contracts: Contracts }): string {
-    return this.generate('../templates/cadence/claim-sale/contracts/NFTClaimSale.cdc', {
+    return this.generate('../templates/cadence/nft-claim-sale/contracts/NFTClaimSale.cdc', {
       contracts,
     });
   }
@@ -16,7 +16,7 @@ export class ClaimSaleGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../templates/cadence/claim-sale/transactions/start_sale.cdc', {
+    return this.generate('../templates/cadence/nft-claim-sale/transactions/start_sale.cdc', {
       contracts,
       contractName,
       contractAddress,
@@ -32,7 +32,7 @@ export class ClaimSaleGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../templates/cadence/claim-sale/transactions/stop_sale.cdc', {
+    return this.generate('../templates/cadence/nft-claim-sale/transactions/stop_sale.cdc', {
       contracts,
       contractName,
       contractAddress,
@@ -48,7 +48,7 @@ export class ClaimSaleGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../templates/cadence/claim-sale/transactions/claim_nft.cdc', {
+    return this.generate('../templates/cadence/nft-claim-sale/transactions/claim_nft.cdc', {
       contracts,
       contractName,
       contractAddress,

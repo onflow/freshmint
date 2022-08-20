@@ -27,12 +27,12 @@ export default class FlowMinter {
     const args = [
       { type: t.Array(t.String), value: publicKeys },
       ...fields.map((field) => ({
-        type: t.Array(field.cadenceType),
+        type: t.Array(field.typeInstance.cadenceType),
         value: field.values,
       })),
     ];
 
-    return await this.flow.transaction('./cadence/transactions/airdrop/mint.cdc', `${this.network}-account`, args);
+    return await this.flow.transaction('./cadence/transactions/mint_with_claim_key.cdc', `${this.network}-account`, args);
   }
 
   async getNFTDetails(address: string, nftId: string) {
@@ -56,6 +56,15 @@ export default class FlowMinter {
 
   async mintEdition(editionIds: string[], editionSerials: string[]) {
     return await this.flow.transaction('./cadence/transactions/mint.cdc', `${this.network}-account`, [
+      { type: t.Array(t.UInt64), value: editionIds },
+      { type: t.Array(t.UInt64), value: editionSerials },
+      { type: t.Optional(t.String), value: null },
+    ]);
+  }
+
+  async mintEditionWithClaimKey(publicKeys: string[], editionIds: string[], editionSerials: string[]) {
+    return await this.flow.transaction('./cadence/transactions/mint_with_claim_key.cdc', `${this.network}-account`, [
+      { type: t.Array(t.String), value: publicKeys },
       { type: t.Array(t.UInt64), value: editionIds },
       { type: t.Array(t.UInt64), value: editionSerials },
       { type: t.Optional(t.String), value: null },

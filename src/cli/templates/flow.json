@@ -38,6 +38,7 @@
         "mainnet": "0x1654653399040a61"
       }
     },
+    "NFTAirDrop": "cadence/contracts/NFTAirDrop.cdc",
     "{{name}}": "cadence/contracts/{{name}}.cdc"
   },
   "networks": {
@@ -56,6 +57,7 @@
       "emulator-account": [
         "NonFungibleToken",
         "MetadataViews",
+        "NFTAirDrop",
         "{{name}}"
       ]
     }

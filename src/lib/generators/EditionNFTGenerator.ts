@@ -60,4 +60,20 @@ export class EditionNFTGenerator extends TemplateGenerator {
       contractAddress,
     });
   }
+
+  static mintWithClaimKey({
+    contracts,
+    contractName,
+    contractAddress,
+  }: {
+    contracts: Contracts;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate('../templates/cadence/edition/transactions/mint_with_claim_key.cdc', {
+      contracts,
+      contractName,
+      contractAddress,
+    });
+  }
 }
