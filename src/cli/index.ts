@@ -172,7 +172,7 @@ async function dumpNFTs(csvPath: string, { network }: { network: string }) {
 async function generateCadence() {
   const config = Config.load();
 
-  await generateProjectCadence('./', config);
+  await generateProjectCadence('./', config, false);
 
   spinner.succeed(`✨ Success! Regenerated Cadence files. ✨`);
 }
