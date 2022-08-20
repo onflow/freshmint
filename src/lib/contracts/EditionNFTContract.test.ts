@@ -1,31 +1,30 @@
 import * as metadata from '../metadata';
 
-import { EditionBlindCollection } from './EditionBlindCollection';
-import { EditionResult, NFTMintResult } from '../contracts/BlindEditionNFTContract';
-import { ClaimSale } from '../sales/ClaimSale';
+import { EditionNFTContract, EditionResult } from './EditionNFTContract';
+import { ClaimSaleContract } from './ClaimSaleContract';
 
 import {
-  legacyConfig,
+  client,
+  config,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
   randomContractName,
 } from '../testHelpers';
 
-describe('EditionBlindCollection', () => {
-  const collection = new EditionBlindCollection({
-    config: legacyConfig,
+describe('EditionNFTContract', () => {
+  const contract = new EditionNFTContract({
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    await collection.getContract();
+    contract.getSource(config.imports);
   });
 
   it('should deploy a contract', async () => {
-    await collection.deployContract(contractPublicKey, contractHashAlgorithm, 'sample-image.jpeg');
+    await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm));
   });
 
   let edition1: EditionResult;
@@ -41,7 +40,7 @@ describe('EditionBlindCollection', () => {
       },
     };
 
-    edition1 = await collection.createEdition(editionMetadata1);
+    edition1 = await client.send(contract.createEdition(editionMetadata1));
   });
 
   it('should create edition 2', async () => {
@@ -54,60 +53,49 @@ describe('EditionBlindCollection', () => {
       },
     };
 
-    edition2 = await collection.createEdition(editionMetadata2);
+    edition2 = await client.send(contract.createEdition(editionMetadata2));
   });
 
-  let edition1mintedNFTs: NFTMintResult[];
-  let edition2mintedNFTs: NFTMintResult[];
-
   it('should mint Edition 1 NFTs into default bucket', async () => {
-    edition1mintedNFTs = await collection.mintNFTs(edition1.nfts);
+    await client.send(contract.mintNFTs(edition1.nfts));
   });
 
   const edition2Bucket = 'edition2';
 
   it('should mint Edition 2 NFTs into custom bucket', async () => {
-    edition2mintedNFTs = await collection.mintNFTs(edition2.nfts, { bucket: edition2Bucket });
+    await client.send(contract.mintNFTs(edition2.nfts, { bucket: edition2Bucket }));
   });
 
-  const sale = new ClaimSale(collection);
+  const sale = new ClaimSaleContract(contract);
 
   const sale1 = 'sale1';
   const sale2 = 'sale2';
 
   describe('sale 1', () => {
     it('should start a sale from default bucket', async () => {
-      await sale.start({ id: sale1, price: '10.0' });
+      await client.send(sale.start({ id: sale1, price: '10.0' }));
     });
 
     it('should claim an NFT', async () => {
-      await sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, sale1);
+      await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, sale1));
     });
 
     it('should stop a sale', async () => {
-      await sale.stop(sale1);
+      await client.send(sale.stop(sale1));
     });
   });
 
   describe('sale 2', () => {
     it('should start a sale from custom bucket', async () => {
-      await sale.start({ id: sale2, price: '10.0', bucket: edition2Bucket });
+      await client.send(sale.start({ id: sale2, price: '10.0', bucket: edition2Bucket }));
     });
 
     it('should claim an NFT', async () => {
-      await sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, sale2);
+      await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, sale2));
     });
 
     it('should stop a sale', async () => {
-      await sale.stop(sale2);
+      await client.send(sale.stop(sale2));
     });
-  });
-
-  it('should reveal edition 1 NFTs', async () => {
-    await collection.revealNFTs(edition1mintedNFTs);
-  });
-
-  it('should reveal edition 2 NFTs', async () => {
-    await collection.revealNFTs(edition2mintedNFTs);
   });
 });

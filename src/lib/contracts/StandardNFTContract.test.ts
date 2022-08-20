@@ -1,34 +1,31 @@
 import * as metadata from '../metadata';
 
-import { OnChainBlindCollection } from './OnChainBlindCollection';
-import { NFTMintResult } from '../contracts/BlindNFTContract';
-import { ClaimSale } from '../sales/ClaimSale';
+import { StandardNFTContract } from './StandardNFTContract';
+import { ClaimSaleContract } from './ClaimSaleContract';
 
 import {
-  legacyConfig,
+  client,
+  config,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
   randomContractName,
 } from '../testHelpers';
 
-describe('OnChainBlindCollection', () => {
-  const collection = new OnChainBlindCollection({
-    config: legacyConfig,
+describe('StandardNFTContract', () => {
+  const contract = new StandardNFTContract({
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    await collection.getContract();
+    contract.getSource(config.imports);
   });
 
   it('should deploy a contract', async () => {
-    await collection.deployContract(contractPublicKey, contractHashAlgorithm, 'sample-image.jpeg');
+    await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm));
   });
-
-  let mintedNFTs: NFTMintResult[];
 
   it('should mint NFTs', async () => {
     const nfts = [
@@ -49,24 +46,20 @@ describe('OnChainBlindCollection', () => {
       },
     ];
 
-    mintedNFTs = await collection.mintNFTs(nfts);
+    await client.send(contract.mintNFTs(nfts));
   });
 
-  const sale = new ClaimSale(collection);
+  const sale = new ClaimSaleContract(contract);
 
   it('should start a sale', async () => {
-    await sale.start({ id: 'default', price: '10.0' });
+    await client.send(sale.start({ id: 'default', price: '10.0' }));
   });
 
   it('should claim an NFT', async () => {
-    await sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, 'default');
+    await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, 'default'));
   });
 
   it('should stop a sale', async () => {
-    await sale.stop('default');
-  });
-
-  it('should reveal NFTs', async () => {
-    await collection.revealNFTs(mintedNFTs);
+    await client.send(sale.stop('default'));
   });
 });

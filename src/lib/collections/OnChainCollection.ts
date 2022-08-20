@@ -1,114 +1,67 @@
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
-// @ts-ignore
-import * as t from '@onflow/types';
 
-import { Event } from '@fresh-js/core';
-import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
-import { MetadataMap } from '../metadata';
-import { OnChainGenerator } from '../generators/OnChainGenerator';
+import { Authorizer, Config } from '@fresh-js/core';
+import { PublicKey, HashAlgorithm } from '@fresh-js/crypto';
+
+import * as metadata from '../metadata';
+import { StandardNFTContract, NFTMintResult } from '../contracts/StandardNFTContract';
+import { FlowClient } from '../client';
 import NFTCollection from './NFTCollection';
-import { Config, ContractImports } from '../config';
-import { Transaction, TransactionResult } from '../transactions';
 
-export type NFTMintResult = {
-  id: string;
-  metadata: MetadataMap;
-  transactionId: string;
-};
+export class OnChainCollection implements NFTCollection {
+  config: Config;
+  client: FlowClient;
+  contract: StandardNFTContract;
 
-export class OnChainCollection extends NFTCollection {
-  getContract(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
-    return OnChainGenerator.contract({
-      contracts: imports,
-      contractName: this.name,
-      schema: this.schema,
-      saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
+  constructor({
+    config,
+    name,
+    address,
+    schema,
+    owner,
+    payer,
+    proposer,
+  }: {
+    config: Config;
+    name: string;
+    address?: string;
+    schema: metadata.Schema;
+    owner?: Authorizer;
+    payer?: Authorizer;
+    proposer?: Authorizer;
+  }) {
+    this.config = config;
+
+    fcl.config().put('accessNode.api', config.host);
+
+    this.client = FlowClient.fromFCL(fcl, { imports: config.contracts });
+
+    this.contract = new StandardNFTContract({
+      name,
+      address,
+      schema,
+      owner,
+      payer,
+      proposer,
     });
   }
 
-  deployContract(
+  async getContract(options?: { saveAdminResourceToContractAccount?: boolean }): Promise<string> {
+    return this.contract.getSource(this.config.contracts, options);
+  }
+
+  async deployContract(
     publicKey: PublicKey,
     hashAlgo: HashAlgorithm,
     options?: {
       saveAdminResourceToContractAccount?: boolean;
     },
-  ): Transaction<string> {
-    return new Transaction(
-      (config: Config) => {
-        const script = OnChainGenerator.deploy();
-
-        const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
-
-        const contractCode = this.getContract(config.imports, { saveAdminResourceToContractAccount });
-        const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
-
-        const sigAlgo = publicKey.signatureAlgorithm();
-
-        return {
-          script,
-          args: [
-            fcl.arg(this.name, t.String),
-            fcl.arg(contractCodeHex, t.String),
-            fcl.arg(publicKey.toHex(), t.String),
-            fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
-            fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
-            fcl.arg(saveAdminResourceToContractAccount, t.Bool),
-          ],
-          computeLimit: 9999,
-          signers: this.getSigners(),
-        };
-      },
-      ({ events }: TransactionResult) => {
-        const accountCreatedEvent = events.find((event: Event) => event.type === 'flow.AccountCreated');
-
-        const address = accountCreatedEvent?.data['address'];
-
-        this.setAddress(address);
-
-        return address;
-      },
-    );
+  ): Promise<string> {
+    return this.client.send(this.contract.deploy(publicKey, hashAlgo, options));
   }
 
-  mintNFTs(metadata: MetadataMap[]): Transaction<NFTMintResult[]> {
-    return new Transaction(
-      (config: Config) => {
-        const script = OnChainGenerator.mint({
-          contracts: config.imports,
-          contractName: this.name,
-          // TODO: return error if contract address is not set
-          contractAddress: this.address ?? '',
-          schema: this.schema,
-        });
-
-        return {
-          script,
-          args: [
-            ...this.schema.getFieldList().map((field) => {
-              return fcl.arg(
-                metadata.map((values) => field.getValue(values)),
-                t.Array(field.asCadenceTypeObject()),
-              );
-            }),
-          ],
-          computeLimit: 9999,
-          signers: this.getSigners(),
-        };
-      },
-      (result) => this.formatMintResults(result, metadata),
-    );
-  }
-
-  private formatMintResults({ events, transactionId }: TransactionResult, metadata: MetadataMap[]): NFTMintResult[] {
-    const deposits = events.filter((event) => event.type.includes('.Minted'));
-
-    return deposits.map((deposit, i) => {
-      return {
-        id: deposit.data.id,
-        metadata: metadata[i],
-        transactionId,
-      };
-    });
+  async mintNFTs(metadata: metadata.MetadataMap[]): Promise<NFTMintResult[]> {
+    return this.client.send(this.contract.mintNFTs(metadata));
   }
 }

@@ -1,7 +1,7 @@
 import * as metadata from '../metadata';
 import TemplateGenerator, { Contracts } from './TemplateGenerator';
 
-export class EditionBlindGenerator extends TemplateGenerator {
+export class BlindNFTGenerator extends TemplateGenerator {
   static contract({
     contracts,
     contractName,
@@ -13,7 +13,7 @@ export class EditionBlindGenerator extends TemplateGenerator {
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
   }): string {
-    return this.generate('../templates/cadence/edition-blind/contracts/NFT.cdc', {
+    return this.generate('../templates/cadence/on-chain-blind/contracts/NFT.cdc', {
       contracts,
       contractName,
       fields: schema.getFieldList(),
@@ -23,26 +23,7 @@ export class EditionBlindGenerator extends TemplateGenerator {
   }
 
   static deploy(): string {
-    return this.generate('../templates/cadence/edition-blind/transactions/deploy.cdc', {});
-  }
-
-  static createEditions({
-    contracts,
-    contractName,
-    contractAddress,
-    schema,
-  }: {
-    contracts: Contracts;
-    contractName: string;
-    contractAddress: string;
-    schema: metadata.Schema;
-  }): string {
-    return this.generate('../templates/cadence/edition-blind/transactions/create_editions.cdc', {
-      contracts,
-      contractName,
-      contractAddress,
-      fields: schema.getFieldList(),
-    });
+    return this.generate('../templates/cadence/on-chain-blind/transactions/deploy.cdc', {});
   }
 
   static mint({
@@ -54,7 +35,7 @@ export class EditionBlindGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../templates/cadence/edition-blind/transactions/mint.cdc', {
+    return this.generate('../templates/cadence/on-chain-blind/transactions/mint.cdc', {
       contracts,
       contractName,
       contractAddress,
@@ -65,15 +46,18 @@ export class EditionBlindGenerator extends TemplateGenerator {
     contracts,
     contractName,
     contractAddress,
+    schema,
   }: {
     contracts: Contracts;
     contractName: string;
     contractAddress: string;
+    schema: metadata.Schema;
   }): string {
-    return this.generate('../templates/cadence/edition-blind/transactions/reveal.cdc', {
+    return this.generate('../templates/cadence/on-chain-blind/transactions/reveal.cdc', {
       contracts,
       contractName,
       contractAddress,
+      fields: schema.getFieldList(),
     });
   }
 }

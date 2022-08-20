@@ -1,94 +1,32 @@
-// @ts-ignore
-import * as fcl from '@onflow/fcl';
-
-// @ts-ignore
-import * as t from '@onflow/types';
-
-import { ClaimSaleGenerator } from '../generators/ClaimSaleGenerator';
-import { Authorizer, Event } from '@fresh-js/core';
+import { Authorizer, Config } from '@fresh-js/core';
 import NFTCollection from '../collections/NFTCollection';
-import { Config, ContractImports } from '../config';
-import { Transaction, TransactionResult } from '../transactions';
+import { ClaimSaleContract } from '../contracts/ClaimSaleContract';
+import { FlowClient } from '../client';
 
 export class ClaimSale {
-  collection: NFTCollection;
+  config: Config;
+  client: FlowClient;
+  sale: ClaimSaleContract;
 
   constructor(collection: NFTCollection) {
-    this.collection = collection;
+    this.config = collection.config;
+    this.client = collection.client;
+    this.sale = new ClaimSaleContract(collection.contract);
   }
 
-  getContract(imports: ContractImports): string {
-    return ClaimSaleGenerator.contract({
-      contracts: imports,
-    });
+  async getContract(): Promise<string> {
+    return this.sale.getSource(this.config.contracts);
   }
 
-  start({ id, price, bucket }: { id: string; price: string; bucket?: string }): Transaction<void> {
-    return new Transaction((config: Config) => {
-      const script = ClaimSaleGenerator.startSale({
-        contracts: config.imports,
-        contractName: this.collection.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.collection.address ?? '',
-      });
-
-      return {
-        script,
-        args: [fcl.arg(id, t.String), fcl.arg(price, t.UFix64), fcl.arg(bucket, t.Optional(t.String))],
-        computeLimit: 9999,
-        signers: this.collection.getSigners(),
-      };
-    }, Transaction.VoidResult);
+  async start({ id, price, bucket }: { id: string; price: string; bucket?: string }): Promise<void> {
+    return this.client.send(this.sale.start({ id, price, bucket }));
   }
 
-  stop(id: string): Transaction<void> {
-    return new Transaction((config: Config) => {
-      const script = ClaimSaleGenerator.stopSale({
-        contracts: config.imports,
-        contractName: this.collection.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.collection.address ?? '',
-      });
-
-      return {
-        script,
-        args: [fcl.arg(id, t.String)],
-        computeLimit: 9999,
-        signers: this.collection.getSigners(),
-      };
-    }, Transaction.VoidResult);
+  async stop(id: string): Promise<void> {
+    return this.client.send(this.sale.stop(id));
   }
 
-  // TODO: move this function and/or refactor this class
-  //
-  // This is a transaction that is only executed by client, who does not need
-  // access to the "admin" settings of a project.
-  //
-  // What is the best way to separate the two?
-  claimNFT(saleAddress: string, authorizer: Authorizer, saleId: string): Transaction<string> {
-    return new Transaction(
-      (config: Config) => {
-        const script = ClaimSaleGenerator.claimNFT({
-          contracts: config.imports,
-          contractName: this.collection.name,
-          // TODO: return error if contract address is not set
-          contractAddress: this.collection.address ?? '',
-        });
-
-        return {
-          script,
-          args: [fcl.arg(saleAddress, t.Address), fcl.arg(saleId, t.String)],
-          computeLimit: 9999,
-          signers: this.collection.getSigners(),
-        };
-      },
-      ({ events }: TransactionResult) => {
-        const claimedEvent: Event = events.find((event: Event) => event.type.includes('.Claimed'));
-
-        const nftId = claimedEvent.data['nftID'];
-
-        return nftId;
-      },
-    );
+  async claimNFT(saleAddress: string, authorizer: Authorizer, saleId: string): Promise<string> {
+    return this.client.send(this.sale.claimNFT(saleAddress, authorizer, saleId));
   }
 }

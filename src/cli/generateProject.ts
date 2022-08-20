@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
-import { ContractImports, OnChainGenerator, EditionGenerator } from '../lib';
+import { ContractImports, StandardNFTGenerator, EditionNFTGenerator } from '../lib';
 import { Config, ContractType } from './config';
 
 export async function generateProject(dir: string, config: Config) {
@@ -37,7 +37,7 @@ export async function generateProject(dir: string, config: Config) {
 async function generateStandardProject(dir: string, config: Config, imports: ContractImports) {
   const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
 
-  const contract = OnChainGenerator.contract({
+  const contract = StandardNFTGenerator.contract({
     contracts: imports,
     contractName: config.contract.name,
     schema: config.contract.schema,
@@ -46,7 +46,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
 
   await writeFile(path.resolve(dir, `cadence/contracts/${config.contract.name}.cdc`), contract);
 
-  const mintTransaction = OnChainGenerator.mint({
+  const mintTransaction = StandardNFTGenerator.mint({
     contracts: {
       ...imports,
       // TODO: this is a workaround to fix the relative import in this file.
@@ -66,7 +66,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
 async function generateEditionProject(dir: string, config: Config, imports: ContractImports) {
   const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
 
-  const contract = EditionGenerator.contract({
+  const contract = EditionNFTGenerator.contract({
     contracts: imports,
     contractName: config.contract.name,
     schema: config.contract.schema,
@@ -75,7 +75,7 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
 
   await writeFile(path.resolve(dir, `cadence/contracts/${config.contract.name}.cdc`), contract);
 
-  const createEditionTransaction = EditionGenerator.createEditions({
+  const createEditionTransaction = EditionNFTGenerator.createEditions({
     contracts: {
       ...imports,
       // TODO: this is a workaround to fix the relative import in this file.
@@ -89,7 +89,7 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
 
   await writeFile(path.resolve(dir, 'cadence/transactions/createEdition.cdc'), createEditionTransaction);
 
-  const mintTransaction = EditionGenerator.mint({
+  const mintTransaction = EditionNFTGenerator.mint({
     contracts: {
       ...imports,
       // TODO: this is a workaround to fix the relative import in this file.

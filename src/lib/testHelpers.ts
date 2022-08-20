@@ -9,19 +9,13 @@ import { FlowClient } from './client';
 
 fcl.config().put('accessNode.api', 'http://localhost:8888');
 
-const imports = {
-  FungibleToken: '0xee82856bf20e2aa6',
-  NonFungibleToken: '0xf8d6e0586b0a20c7',
-  FlowToken: '0x0ae53cb6e3f42a79',
-  MetadataViews: '0xf8d6e0586b0a20c7',
-  NFTClaimSale: '0xf8d6e0586b0a20c7', // TODO: replace with real address
-};
+export const config = Config.EMULATOR;
+export const client = FlowClient.fromFCL(fcl, config);
 
-export const config: Config = {
-  imports: imports,
+export const legacyConfig = {
+  host: 'http://localhost:8888',
+  contracts: config.imports,
 };
-
-export const client = FlowClient.fromFCL(fcl, { imports });
 
 const PRIVATE_KEY_HEX = '4d9287571c8bff7482ffc27ef68d5b4990f9bd009a1e9fa812aae08ba167d57f';
 

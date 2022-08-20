@@ -1,7 +1,7 @@
 import * as metadata from '../metadata';
 import TemplateGenerator, { Contracts } from './TemplateGenerator';
 
-export class EditionGenerator extends TemplateGenerator {
+export class EditionNFTGenerator extends TemplateGenerator {
   static contract({
     contracts,
     contractName,

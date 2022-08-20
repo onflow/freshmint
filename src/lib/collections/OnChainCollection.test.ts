@@ -1,11 +1,10 @@
-import { ClaimSale } from '../sales/ClaimSale';
 import * as metadata from '../metadata';
 
 import { OnChainCollection } from './OnChainCollection';
+import { ClaimSale } from '../sales/ClaimSale';
 
 import {
-  client,
-  config,
+  legacyConfig,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
@@ -14,17 +13,18 @@ import {
 
 describe('OnChainCollection', () => {
   const collection = new OnChainCollection({
+    config: legacyConfig,
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    collection.getContract(config.imports);
+    await collection.getContract();
   });
 
   it('should deploy a contract', async () => {
-    await client.send(collection.deployContract(contractPublicKey, contractHashAlgorithm));
+    await collection.deployContract(contractPublicKey, contractHashAlgorithm);
   });
 
   it('should mint NFTs', async () => {
@@ -46,7 +46,7 @@ describe('OnChainCollection', () => {
       },
     ];
 
-    await client.send(collection.mintNFTs(nfts));
+    await collection.mintNFTs(nfts);
   });
 
   const sale = new ClaimSale(collection);

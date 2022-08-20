@@ -4,7 +4,7 @@ import * as fcl from '@onflow/fcl';
 import { Authorizer } from '@fresh-js/core';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from '@fresh-js/crypto';
 
-import { Config, FlowClient, OnChainBlindCollection, metadata } from '../lib';
+import { Config, FlowClient, metadata, BlindNFTContract } from '../lib';
 
 function makeId(length: number) {
   let result = '';
@@ -59,12 +59,11 @@ const schema = metadata.defaultSchema.extend({
 });
 
 async function main() {
-
   fcl.config().put('accessNode.api', 'https://rest-testnet.onflow.org');
 
-  const client = FlowClient.fromFCL(fcl, Config.TESTNET)
+  const client = FlowClient.fromFCL(fcl, Config.TESTNET);
 
-  const collection = new OnChainBlindCollection({
+  const contract = new BlindNFTContract({
     name: 'Foo',
     schema,
     address: '0xaa105a75e3cbf1a1',
@@ -75,11 +74,11 @@ async function main() {
 
   for (let i = 0; i < 26; i++) {
     const draftNFTs = generateNFTs(schema, batchSize);
-    const mintedNFTs = await client.send(collection.mintNFTs(draftNFTs));
+    const mintedNFTs = await client.send(contract.mintNFTs(draftNFTs));
 
     console.log(`total minted: ${(i + 1) * batchSize}`);
 
-    await client.send(collection.revealNFTs(mintedNFTs));
+    await client.send(contract.revealNFTs(mintedNFTs));
 
     console.log(`total revealed: ${(i + 1) * batchSize}`);
   }
