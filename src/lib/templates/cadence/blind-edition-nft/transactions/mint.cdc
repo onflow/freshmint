@@ -1,4 +1,4 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
 pub fun getOrCreateCollection(account: AuthAccount, collectionName: String?): &{NonFungibleToken.CollectionPublic} {

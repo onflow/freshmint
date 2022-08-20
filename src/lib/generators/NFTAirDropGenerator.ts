@@ -1,23 +1,24 @@
-import TemplateGenerator, { Contracts } from './TemplateGenerator';
+import { ContractImports } from '../config';
+import TemplateGenerator from './TemplateGenerator';
 
 export class NFTAirDropGenerator extends TemplateGenerator {
-  static contract({ contracts }: { contracts: Contracts }): string {
+  static contract({ imports }: { imports: ContractImports }): string {
     return this.generate('../templates/cadence/nft-air-drop/contracts/NFTAirDrop.cdc', {
-      contracts,
+      imports,
     });
   }
 
   static claimNFT({
-    contracts,
+    imports,
     contractName,
     contractAddress,
   }: {
-    contracts: Contracts;
+    imports: ContractImports;
     contractName: string;
     contractAddress: string;
   }): string {
     return this.generate('../templates/cadence/nft-air-drop/transactions/claim_nft.cdc', {
-      contracts,
+      imports,
       contractName,
       contractAddress,
     });

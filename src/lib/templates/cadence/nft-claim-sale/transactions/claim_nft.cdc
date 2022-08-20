@@ -1,9 +1,9 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-import NFTClaimSale from {{{ contracts.NFTClaimSale }}}
-import FlowToken from {{{ contracts.FlowToken }}}
-import FungibleToken from {{{ contracts.FungibleToken }}}
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
+import NFTClaimSale from {{{ imports.NFTClaimSale }}}
+import FlowToken from {{{ imports.FlowToken }}}
+import FungibleToken from {{{ imports.FungibleToken }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 
 transaction(saleAddress: Address, saleID: String) {
 

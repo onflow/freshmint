@@ -39,7 +39,7 @@ export type NFTMintResult = {
 export class EditionNFTContract extends NFTContract {
   getSource(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
     return EditionNFTGenerator.contract({
-      contracts: imports,
+      imports,
       contractName: this.name,
       schema: this.schema,
       saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
@@ -54,12 +54,12 @@ export class EditionNFTContract extends NFTContract {
     },
   ): Transaction<string> {
     return new Transaction(
-      (config: Config) => {
+      ({ imports }: Config) => {
         const script = EditionNFTGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
-        const contractCode = this.getSource(config.imports, { saveAdminResourceToContractAccount });
+        const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
         const sigAlgo = publicKey.signatureAlgorithm();
@@ -106,9 +106,9 @@ export class EditionNFTContract extends NFTContract {
   }
 
   private makeCreateEditionsTransaction(editions: EditionInput[]) {
-    return (config: Config) => {
+    return ({ imports }: Config) => {
       const script = EditionNFTGenerator.createEditions({
-        contracts: config.imports,
+        imports,
         contractName: this.name,
         // TODO: return error if contract address is not set
         contractAddress: this.address ?? '',
@@ -150,9 +150,9 @@ export class EditionNFTContract extends NFTContract {
   }
 
   private makeMintNFTsTransaction(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}) {
-    return (config: Config) => {
+    return ({ imports }: Config) => {
       const script = EditionNFTGenerator.mint({
-        contracts: config.imports,
+        imports,
         contractName: this.name,
         // TODO: return error if contract address is not set
         contractAddress: this.address ?? '',

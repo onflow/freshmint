@@ -1,11 +1,11 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
-import MetadataViews from {{{ contracts.MetadataViews }}}
-import FungibleToken from {{{ contracts.FungibleToken }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
+import FungibleToken from {{{ imports.FungibleToken }}}
 
 pub contract {{ contractName }}: NonFungibleToken {
 
     pub let version: String
-    
+
     // Events
     //
     pub event ContractInitialized()

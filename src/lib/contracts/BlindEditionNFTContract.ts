@@ -61,7 +61,7 @@ export type NFTRevealResult = {
 export class BlindEditionNFTContract extends NFTContract {
   getSource(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
     return BlindEditionNFTGenerator.contract({
-      contracts: imports,
+      imports,
       contractName: this.name,
       schema: this.schema,
       saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
@@ -77,12 +77,12 @@ export class BlindEditionNFTContract extends NFTContract {
     },
   ): Transaction<string> {
     return new Transaction(
-      (config: Config) => {
+      ({ imports }: Config) => {
         const script = BlindEditionNFTGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
-        const contractCode = this.getSource(config.imports, { saveAdminResourceToContractAccount });
+        const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
         const sigAlgo = publicKey.signatureAlgorithm();
@@ -130,9 +130,9 @@ export class BlindEditionNFTContract extends NFTContract {
   }
 
   private makeCreateEditionsTransaction(editions: EditionInput[]) {
-    return (config: Config) => {
+    return ({ imports }: Config) => {
       const script = BlindEditionNFTGenerator.createEditions({
-        contracts: config.imports,
+        imports,
         contractName: this.name,
         // TODO: return error if contract address is not set
         contractAddress: this.address ?? '',
@@ -177,9 +177,9 @@ export class BlindEditionNFTContract extends NFTContract {
   }
 
   private makeMintNFTsTransaction(hashedNFTs: HashedEditionNFT[], { bucket }: { bucket?: string } = {}) {
-    return (config: Config) => {
+    return ({ imports }: Config) => {
       const script = BlindEditionNFTGenerator.mint({
-        contracts: config.imports,
+        imports,
         contractName: this.name,
         // TODO: return error if contract address is not set
         contractAddress: this.address ?? '',
@@ -212,9 +212,9 @@ export class BlindEditionNFTContract extends NFTContract {
   }
 
   private makeRevealNFTsTransaction(nfts: NFTRevealInput[]) {
-    return (config: Config) => {
+    return ({ imports }: Config) => {
       const script = BlindEditionNFTGenerator.reveal({
-        contracts: config.imports,
+        imports,
         contractName: this.name,
         // TODO: return error if contract address is not set
         contractAddress: this.address ?? '',

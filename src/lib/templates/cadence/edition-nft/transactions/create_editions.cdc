@@ -1,9 +1,7 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(
-    ids: [UInt64],
-    metadataSalts: [String],
+    sizes: [UInt],
     {{#each fields}}
     {{ this.name }}: [{{ this.asCadenceTypeString }}],
     {{/each}}
@@ -16,27 +14,14 @@ transaction(
             ?? panic("Could not borrow a reference to the NFT admin")
     }
 
-    execute {
-        var i = 0
-
-        for id in ids {
-
-            // Convert salt from hex string to byte array
-            let metadataSalt = metadataSalts[i].decodeHex()
-
-            let metadata = {{ contractName }}.Metadata(
-                metadataSalt: metadataSalt,
+    execute {        
+        for i, size in sizes {
+            self.admin.createEdition(
+                size: size,
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
-            )
-
-            self.admin.revealNFT(
-                id: id,
-                metadata: metadata,
-            )
-        
-            i = i +1
+            )        
         }
     }
 }

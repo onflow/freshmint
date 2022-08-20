@@ -41,7 +41,7 @@ export type NFTRevealResult = {
 export class BlindNFTContract extends NFTContract {
   getSource(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
     return BlindNFTGenerator.contract({
-      contracts: imports,
+      imports,
       contractName: this.name,
       schema: this.schema,
       saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
@@ -57,12 +57,12 @@ export class BlindNFTContract extends NFTContract {
     },
   ): Transaction<string> {
     return new Transaction(
-      (config: Config) => {
+      ({ imports }: Config) => {
         const script = BlindNFTGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
-        const contractCode = this.getSource(config.imports, { saveAdminResourceToContractAccount });
+        const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
         const sigAlgo = publicKey.signatureAlgorithm();
@@ -99,9 +99,9 @@ export class BlindNFTContract extends NFTContract {
     const hashes = hashedNFTs.map((nft) => nft.metadataHash);
 
     return new Transaction(
-      (config: Config) => {
+      ({ imports }: Config) => {
         const script = BlindNFTGenerator.mint({
-          contracts: config.imports,
+          imports,
           contractName: this.name,
           // TODO: return error if contract address is not set
           contractAddress: this.address ?? '',
@@ -151,9 +151,9 @@ export class BlindNFTContract extends NFTContract {
     const salts = nfts.map((nft) => nft.metadataSalt);
 
     return new Transaction(
-      (config: Config) => {
+      ({ imports }: Config) => {
         const script = BlindNFTGenerator.reveal({
-          contracts: config.imports,
+          imports,
           contractName: this.name,
           // TODO: return error if contract address is not set
           contractAddress: this.address ?? '',

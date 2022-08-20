@@ -36,10 +36,7 @@ export async function generateProjectCadence(dir: string, config: Config) {
       break;
   }
 
-  await writeFile(
-    path.resolve(dir, `cadence/contracts/NFTAirDrop.cdc`),
-    NFTAirDropGenerator.contract({ contracts: imports }),
-  );
+  await writeFile(path.resolve(dir, `cadence/contracts/NFTAirDrop.cdc`), NFTAirDropGenerator.contract({ imports }));
 
   await createGetNFTScript(dir, config.contract.name);
 }
@@ -48,7 +45,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
   const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
 
   const contract = StandardNFTGenerator.contract({
-    contracts: imports,
+    imports,
     contractName: config.contract.name,
     schema: config.contract.schema,
     saveAdminResourceToContractAccount: true,
@@ -56,7 +53,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
 
   await writeFile(path.resolve(dir, `cadence/contracts/${config.contract.name}.cdc`), contract);
 
-  const contracts = {
+  const adjustedImports = {
     ...imports,
     // TODO: this is a workaround to fix the relative import in this file.
     // Find a better solution.
@@ -65,7 +62,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
   };
 
   const mintTransaction = StandardNFTGenerator.mint({
-    contracts,
+    imports: adjustedImports,
     contractName: config.contract.name,
     contractAddress,
     schema: config.contract.schema,
@@ -74,7 +71,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
 
   const mintWithClaimKeyTransaction = StandardNFTGenerator.mintWithClaimKey({
-    contracts,
+    imports: adjustedImports,
     contractName: config.contract.name,
     contractAddress,
     schema: config.contract.schema,
@@ -89,7 +86,7 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
   const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
 
   const contract = EditionNFTGenerator.contract({
-    contracts: imports,
+    imports,
     contractName: config.contract.name,
     schema: config.contract.schema,
     saveAdminResourceToContractAccount: true,
@@ -97,7 +94,7 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
 
   await writeFile(path.resolve(dir, `cadence/contracts/${config.contract.name}.cdc`), contract);
 
-  const contracts = {
+  const adjustedImports = {
     ...imports,
     // TODO: this is a workaround to fix the relative import in this file.
     // Find a better solution.
@@ -105,17 +102,17 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
     NFTAirDrop: `"../contracts/NFTAirDrop.cdc"`,
   };
 
-  const createEditionTransaction = EditionNFTGenerator.createEditions({
-    contracts,
+  const createEditionsTransaction = EditionNFTGenerator.createEditions({
+    imports: adjustedImports,
     contractName: config.contract.name,
     contractAddress,
     schema: config.contract.schema,
   });
 
-  await writeFile(path.resolve(dir, 'cadence/transactions/createEdition.cdc'), createEditionTransaction);
+  await writeFile(path.resolve(dir, 'cadence/transactions/create_editions.cdc'), createEditionsTransaction);
 
   const mintTransaction = EditionNFTGenerator.mint({
-    contracts,
+    imports: adjustedImports,
     contractName: config.contract.name,
     contractAddress,
   });
@@ -123,7 +120,7 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
 
   const mintWithClaimKeyTransaction = EditionNFTGenerator.mintWithClaimKey({
-    contracts,
+    imports: adjustedImports,
     contractName: config.contract.name,
     contractAddress,
   });

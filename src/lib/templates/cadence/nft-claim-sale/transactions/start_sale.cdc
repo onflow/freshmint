@@ -1,8 +1,8 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-import NFTClaimSale from {{{ contracts.NFTClaimSale }}}
-import FungibleToken from {{{ contracts.FungibleToken }}}
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
+import NFTClaimSale from {{{ imports.NFTClaimSale }}}
+import FungibleToken from {{{ imports.FungibleToken }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 
 pub fun getOrCreateSaleCollection(account: AuthAccount): &NFTClaimSale.SaleCollection {
     if let collectionRef = account.borrow<&NFTClaimSale.SaleCollection>(from: NFTClaimSale.SaleCollectionStoragePath) {

@@ -1,11 +1,7 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
-transaction(
-    {{#each fields}}
-    {{ this.name }}: [{{ this.asCadenceTypeString }}],
-    {{/each}}
-) {
+transaction(metadataHashes: [String]) {
     
     let admin: &{{ contractName }}.Admin
     let receiver: &{NonFungibleToken.CollectionPublic}
@@ -21,19 +17,10 @@ transaction(
     }
 
     execute {
-        var i = 0
-        
-        while i < {{ fields.[0].name }}.length {
+        for metadataHash in metadataHashes {
+            let token <- self.admin.mintNFT(metadataHash: metadataHash.decodeHex())
 
-            let token <- self.admin.mintNFT(
-                {{#each fields}}
-                {{ this.name }}: {{ this.name }}[i],
-                {{/each}}
-            )
-        
             self.receiver.deposit(token: <- token)
-
-            i = i +1
         }
     }
 }

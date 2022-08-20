@@ -1,5 +1,5 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
-import NFTAirDrop from {{{ contracts.NFTAirDrop }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import NFTAirDrop from {{{ imports.NFTAirDrop }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
 pub fun getOrCreateDrop(account: AuthAccount): &NFTAirDrop.Drop {
@@ -28,39 +28,31 @@ pub fun getOrCreateDrop(account: AuthAccount): &NFTAirDrop.Drop {
 
 transaction(
     publicKeys: [String],
-    {{#each fields}}
-    {{ this.name }}: [{{ this.asCadenceTypeString }}],
-    {{/each}}
+    editionIDs: [UInt64],
+    editionSerials: [UInt64]
 ) {
     
     let admin: &{{ contractName }}.Admin
     let drop: &NFTAirDrop.Drop
 
     prepare(signer: AuthAccount) {
-        self.admin = signer
-            .borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
+        self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
         self.drop = getOrCreateDrop(signer)
     }
 
     execute {
-        var i = 0
-        
-        while i < {{ fields.[0].name }}.length {
-
+        for i, publicKey in publicKeys {
             let token <- self.admin.mintNFT(
-                {{#each fields}}
-                {{ this.name }}: {{ this.name }}[i],
-                {{/each}}
+                editionID: editionIDs[i],
+                editionSerial: editionSerials[i],
             )
-        
+
             self.drop.deposit(
                 token: <- token, 
-                publicKey: publicKeys[i].decodeHex()
+                publicKey: publicKey.decodeHex()
             )
-
-            i = i +1
         }
     }
 }

@@ -20,14 +20,14 @@ export class ClaimSaleContract {
 
   getSource(imports: ContractImports): string {
     return ClaimSaleGenerator.contract({
-      contracts: imports,
+      imports,
     });
   }
 
   start({ id, price, bucket }: { id: string; price: string; bucket?: string }): Transaction<void> {
-    return new Transaction((config: Config) => {
+    return new Transaction(({ imports }: Config) => {
       const script = ClaimSaleGenerator.startSale({
-        contracts: config.imports,
+        imports,
         contractName: this.nftContract.name,
         // TODO: return error if contract address is not set
         contractAddress: this.nftContract.address ?? '',
@@ -43,9 +43,9 @@ export class ClaimSaleContract {
   }
 
   stop(id: string): Transaction<void> {
-    return new Transaction((config: Config) => {
+    return new Transaction(({ imports }: Config) => {
       const script = ClaimSaleGenerator.stopSale({
-        contracts: config.imports,
+        imports,
         contractName: this.nftContract.name,
         // TODO: return error if contract address is not set
         contractAddress: this.nftContract.address ?? '',
@@ -68,9 +68,9 @@ export class ClaimSaleContract {
   // What is the best way to separate the two?
   claimNFT(saleAddress: string, authorizer: Authorizer, saleId: string): Transaction<string> {
     return new Transaction(
-      (config: Config) => {
+      ({ imports }: Config) => {
         const script = ClaimSaleGenerator.claimNFT({
-          contracts: config.imports,
+          imports,
           contractName: this.nftContract.name,
           // TODO: return error if contract address is not set
           contractAddress: this.nftContract.address ?? '',

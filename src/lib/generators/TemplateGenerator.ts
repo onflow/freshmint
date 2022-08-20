@@ -3,10 +3,6 @@ import * as fs from 'fs';
 import * as Handlebars from 'handlebars';
 import { version } from '../version';
 
-export interface Contracts {
-  [key: string]: string;
-}
-
 export default class TemplateGenerator {
   static generate(source: string, context: any): string {
     const templateSource = fs.readFileSync(path.resolve(__dirname, source), 'utf8');

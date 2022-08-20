@@ -1,20 +1,21 @@
 import * as metadata from '../metadata';
-import TemplateGenerator, { Contracts } from './TemplateGenerator';
+import { ContractImports } from '../config';
+import TemplateGenerator from './TemplateGenerator';
 
 export class StandardNFTGenerator extends TemplateGenerator {
   static contract({
-    contracts,
+    imports,
     contractName,
     schema,
     saveAdminResourceToContractAccount,
   }: {
-    contracts: Contracts;
+    imports: ContractImports;
     contractName: string;
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
   }): string {
-    return this.generate('../templates/cadence/on-chain/contracts/NFT.cdc', {
-      contracts,
+    return this.generate('../templates/cadence/standard-nft/contracts/NFT.cdc', {
+      imports,
       contractName,
       fields: schema.getFieldList(),
       views: schema.views,
@@ -23,22 +24,22 @@ export class StandardNFTGenerator extends TemplateGenerator {
   }
 
   static deploy(): string {
-    return this.generate('../templates/cadence/on-chain/transactions/deploy.cdc', {});
+    return this.generate('../templates/cadence/standard-nft/transactions/deploy.cdc', {});
   }
 
   static mint({
-    contracts,
+    imports,
     contractName,
     contractAddress,
     schema,
   }: {
-    contracts: Contracts;
+    imports: ContractImports;
     contractName: string;
     contractAddress: string;
     schema: metadata.Schema;
   }): string {
-    return this.generate('../templates/cadence/on-chain/transactions/mint.cdc', {
-      contracts,
+    return this.generate('../templates/cadence/standard-nft/transactions/mint.cdc', {
+      imports,
       contractName,
       contractAddress,
       fields: schema.getFieldList(),
@@ -46,18 +47,18 @@ export class StandardNFTGenerator extends TemplateGenerator {
   }
 
   static mintWithClaimKey({
-    contracts,
+    imports,
     contractName,
     contractAddress,
     schema,
   }: {
-    contracts: Contracts;
+    imports: ContractImports;
     contractName: string;
     contractAddress: string;
     schema: metadata.Schema;
   }): string {
-    return this.generate('../templates/cadence/on-chain/transactions/mint_with_claim_key.cdc', {
-      contracts,
+    return this.generate('../templates/cadence/standard-nft/transactions/mint_with_claim_key.cdc', {
+      imports,
       contractName,
       contractAddress,
       fields: schema.getFieldList(),

@@ -1,5 +1,5 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
-import NFTAirDrop from {{{ contracts.NFTAirDrop }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import NFTAirDrop from {{{ imports.NFTAirDrop }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(dropAddress: Address, id: UInt64, signature: String) {

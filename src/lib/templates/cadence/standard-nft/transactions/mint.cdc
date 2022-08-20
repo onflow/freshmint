@@ -1,8 +1,7 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(
-    sizes: [UInt],
     {{#each fields}}
     {{ this.name }}: [{{ this.asCadenceTypeString }}],
     {{/each}}
@@ -26,13 +25,14 @@ transaction(
         
         while i < {{ fields.[0].name }}.length {
 
-            self.admin.createEdition(
-                size: sizes[i],
+            let token <- self.admin.mintNFT(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
             )
         
+            self.receiver.deposit(token: <- token)
+
             i = i +1
         }
     }

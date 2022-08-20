@@ -1,4 +1,4 @@
-import NFTClaimSale from {{{ contracts.NFTClaimSale }}}
+import NFTClaimSale from {{{ imports.NFTClaimSale }}}
 
 transaction(saleID: String) {
     

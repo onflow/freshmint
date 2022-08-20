@@ -21,7 +21,7 @@ export type NFTMintResult = {
 export class StandardNFTContract extends NFTContract {
   getSource(imports: ContractImports, options?: { saveAdminResourceToContractAccount?: boolean }): string {
     return StandardNFTGenerator.contract({
-      contracts: imports,
+      imports,
       contractName: this.name,
       schema: this.schema,
       saveAdminResourceToContractAccount: options?.saveAdminResourceToContractAccount,
@@ -36,12 +36,12 @@ export class StandardNFTContract extends NFTContract {
     },
   ): Transaction<string> {
     return new Transaction(
-      (config: Config) => {
+      ({ imports }: Config) => {
         const script = StandardNFTGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
 
-        const contractCode = this.getSource(config.imports, { saveAdminResourceToContractAccount });
+        const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
         const sigAlgo = publicKey.signatureAlgorithm();
@@ -74,9 +74,9 @@ export class StandardNFTContract extends NFTContract {
 
   mintNFTs(metadata: MetadataMap[]): Transaction<NFTMintResult[]> {
     return new Transaction(
-      (config: Config) => {
+      ({ imports }: Config) => {
         const script = StandardNFTGenerator.mint({
-          contracts: config.imports,
+          imports,
           contractName: this.name,
           // TODO: return error if contract address is not set
           contractAddress: this.address ?? '',

@@ -1,4 +1,3 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(
@@ -16,10 +15,7 @@ transaction(
     }
 
     execute {
-        var i = 0
-
-        for id in ids {
-        
+        for i, id in ids {
             self.admin.revealNFT(
                 id: id,
                 editionID: editionIDs[i],
@@ -27,8 +23,6 @@ transaction(
                 // Convert salt from hex string to byte array
                 editionSalt: editionSalts[i].decodeHex()
             )
-        
-            i = i +1
         }
     }
 }

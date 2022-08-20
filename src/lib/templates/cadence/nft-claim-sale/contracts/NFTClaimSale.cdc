@@ -1,5 +1,5 @@
-import NonFungibleToken from {{{ contracts.NonFungibleToken }}}
-import FungibleToken from {{{ contracts.FungibleToken }}}
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import FungibleToken from {{{ imports.FungibleToken }}}
 
 pub contract NFTClaimSale {
 
