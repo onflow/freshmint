@@ -23,41 +23,23 @@ export class Storage {
   }
 
   async saveEdition(edition: models.Edition): Promise<void> {
-    await this.editions.save(edition);
+    await this.editions.insert(edition);
   }
 
   async loadEditionByHash(hash: string): Promise<models.Edition | null> {
-    const results = await this.editions.find({ hash });
-
-    if (results.length === 0) {
-      return null;
-    }
-
-    return results[0];
+    return await this.editions.get({ hash });
   }
 
   async saveNFT(nft: models.NFT): Promise<void> {
-    await this.nfts.save(nft);
+    await this.nfts.insert(nft);
   }
 
   async loadNFTByHash(hash: string): Promise<models.NFT | null> {
-    const results = await this.nfts.find({ hash });
-
-    if (results.length === 0) {
-      return null;
-    }
-
-    return results[0];
+    return await this.nfts.get({ hash });
   }
 
   async loadNFTById(tokenId: string): Promise<models.NFT | null> {
-    const results = await this.nfts.find({ tokenId });
-
-    if (results.length === 0) {
-      return null;
-    }
-
-    return results[0];
+    return await this.nfts.get({ tokenId });
   }
 
   async loadAllNFTs(): Promise<models.NFT[]> {
@@ -70,33 +52,38 @@ export class Storage {
 }
 
 export class Database {
-  db: PouchDB.Database<any>;
-  baseSelector: KeyValuePairs;
+  #db: PouchDB.Database<any>;
+  #baseSelector: KeyValuePairs;
 
   constructor(name: string, baseSelector: KeyValuePairs = {}) {
-    this.db = new PouchDB(name);
-    this.baseSelector = baseSelector;
+    this.#db = new PouchDB(name);
+    this.#baseSelector = baseSelector;
   }
 
   #applyBaseSelector(selector: KeyValuePairs): KeyValuePairs {
     return {
-      ...this.baseSelector,
+      ...this.#baseSelector,
       ...selector,
     };
   }
 
-  async find(selector: KeyValuePairs) {
-    const result = await this.db.find({ selector: this.#applyBaseSelector(selector) });
-    return result.docs;
+  async insert(value: KeyValuePairs) {
+    // Creates a new document with an auto-generated _id
+    return await this.#db.post(this.#applyBaseSelector(value));
+  }
+
+  async get(selector: KeyValuePairs) {
+    const { docs } = await this.#db.find({ selector: this.#applyBaseSelector(selector) });
+
+    if (docs.length === 0) {
+      return null;
+    }
+
+    return docs[0];
   }
 
   async all() {
-    const result = await this.db.find({ selector: this.baseSelector });
-    return result.docs;
-  }
-
-  async save(value: KeyValuePairs) {
-    // Creates a new document with an auto-generated _id
-    return await this.db.post(this.#applyBaseSelector(value));
+    const { docs } = await this.#db.find({ selector: this.#baseSelector });
+    return docs;
   }
 }
