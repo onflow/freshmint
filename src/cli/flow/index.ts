@@ -3,7 +3,7 @@ import * as t from '@onflow/types';
 
 import FlowCliWrapper from './cli';
 
-export default class FlowMinter {
+export default class FlowGateway {
   network: string;
   flow: FlowCliWrapper;
 

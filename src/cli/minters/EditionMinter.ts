@@ -2,7 +2,7 @@ import { metadata } from '../../lib';
 import { hashMetadata } from '../../lib/metadata';
 import { Entry, parseCSVEntries } from '../metadata/parse';
 import MetadataProcessor from '../metadata/MetadataProcessor';
-import FlowMinter from '../flow';
+import FlowGateway from '../flow';
 import IPFS from '../ipfs';
 import { hashValues } from '../../lib/hash';
 import { UInt64Value } from '../../lib/cadence/values';
@@ -20,13 +20,13 @@ type EditionNFT = {
 export class EditionMinter {
   schema: metadata.Schema;
   processor: MetadataProcessor;
-  flowMinter: FlowMinter;
+  flowGateway: FlowGateway;
   storage: Storage;
 
-  constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: IPFS, flowMinter: FlowMinter, storage: Storage) {
+  constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: IPFS, flowGateway: FlowGateway, storage: Storage) {
     this.schema = schema;
     this.processor = new MetadataProcessor(schema, nftAssetPath, ipfs);
-    this.flowMinter = flowMinter;
+    this.flowGateway = flowGateway;
 
     this.storage = storage;
   }
@@ -145,7 +145,7 @@ export class EditionMinter {
       values: processedEditions.map((edition) => field.getValue(edition.metadata)),
     }));
 
-    const result = await this.flowMinter.createEditions(sizes, values);
+    const result = await this.flowGateway.createEditions(sizes, values);
 
     const createdEditions = formatEditionResults(result.id, result.events, processedEditions);
 
@@ -191,7 +191,7 @@ export class EditionMinter {
   }
 
   async mintTokens(batchFields: { editionIds: string[]; editionSerials: string[] }) {
-    const minted = await this.flowMinter.mintEdition(batchFields.editionIds, batchFields.editionSerials);
+    const minted = await this.flowGateway.mintEdition(batchFields.editionIds, batchFields.editionSerials);
     return formatMintResults(minted);
   }
 
@@ -200,7 +200,7 @@ export class EditionMinter {
 
     const { privateKeys, publicKeys } = generateClaimKeyPairs(batchSize);
 
-    const minted = await this.flowMinter.mintEditionWithClaimKey(
+    const minted = await this.flowGateway.mintEditionWithClaimKey(
       publicKeys,
       batchFields.editionIds,
       batchFields.editionSerials,

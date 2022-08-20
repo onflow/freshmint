@@ -1,5 +1,5 @@
 import { ContractConfig, ContractType } from '../config';
-import FlowMinter from '../flow';
+import FlowGateway from '../flow';
 import IPFS from '../ipfs';
 import { EditionMinter } from './EditionMinter';
 import { StandardMinter } from './StandardMinter';
@@ -20,13 +20,13 @@ export function createMinter(
   contract: ContractConfig,
   nftAssetPath: string,
   ipfs: IPFS,
-  flowMinter: FlowMinter,
+  flowGateway: FlowGateway,
   storage: Storage,
 ): Minter {
   switch (contract.type) {
     case ContractType.Standard:
-      return new StandardMinter(contract.schema, nftAssetPath, ipfs, flowMinter, storage);
+      return new StandardMinter(contract.schema, nftAssetPath, ipfs, flowGateway, storage);
     case ContractType.Edition:
-      return new EditionMinter(contract.schema, nftAssetPath, ipfs, flowMinter, storage);
+      return new EditionMinter(contract.schema, nftAssetPath, ipfs, flowGateway, storage);
   }
 }

@@ -1,7 +1,7 @@
 import { NFTStorage } from 'nft.storage';
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 
-import FlowMinter from './flow';
+import FlowGateway from './flow';
 import IPFS from './ipfs';
 import { Config } from './config';
 import { Minter, createMinter } from './minters';
@@ -11,14 +11,14 @@ export default class Fresh {
   config: Config;
   network: string;
 
-  flowMinter: FlowMinter;
+  flowGateway: FlowGateway;
   storage: Storage;
   minter: Minter;
 
   constructor(config: Config, network: string) {
     this.network = network;
 
-    this.flowMinter = new FlowMinter(this.network);
+    this.flowGateway = new FlowGateway(this.network);
 
     this.storage = new Storage('freshdb', { baseSelector: { network: this.network } });
 
@@ -29,7 +29,7 @@ export default class Fresh {
 
     const ipfs = new IPFS(ipfsClient);
 
-    this.minter = createMinter(config.contract, config.nftAssetPath, ipfs, this.flowMinter, this.storage);
+    this.minter = createMinter(config.contract, config.nftAssetPath, ipfs, this.flowGateway, this.storage);
   }
 
   async mintNFTsFromCSVFile(

@@ -3,7 +3,7 @@ import { hashMetadata } from '../../lib/metadata';
 import { Entry, parseCSVEntries } from '../metadata/parse';
 import MetadataProcessor from '../metadata/MetadataProcessor';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import FlowMinter from '../flow';
+import FlowGateway from '../flow';
 import IPFS from '../ipfs';
 import { Storage } from '../storage';
 import * as models from '../models';
@@ -11,13 +11,13 @@ import * as models from '../models';
 export class StandardMinter {
   schema: metadata.Schema;
   processor: MetadataProcessor;
-  flowMinter: FlowMinter;
+  flowGateway: FlowGateway;
   storage: Storage;
 
-  constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: IPFS, flowMinter: FlowMinter, storage: Storage) {
+  constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: IPFS, flowGateway: FlowGateway, storage: Storage) {
     this.schema = schema;
     this.processor = new MetadataProcessor(schema, nftAssetPath, ipfs);
-    this.flowMinter = flowMinter;
+    this.flowGateway = flowGateway;
     this.storage = storage;
   }
 
@@ -133,7 +133,7 @@ export class StandardMinter {
   }
 
   async mintTokens(batchFields: any[]) {
-    const minted = await this.flowMinter.mint(batchFields);
+    const minted = await this.flowGateway.mint(batchFields);
     return formatMintResults(minted);
   }
 
@@ -142,7 +142,7 @@ export class StandardMinter {
 
     const { privateKeys, publicKeys } = generateClaimKeyPairs(batchSize);
 
-    const minted = await this.flowMinter.mintWithClaimKey(publicKeys, batchFields);
+    const minted = await this.flowGateway.mintWithClaimKey(publicKeys, batchFields);
 
     const results = formatMintResults(minted);
 

@@ -1,4 +1,3 @@
-// @ts-ignore
 import { Blob, NFTStorage } from 'nft.storage';
 
 export default class IPFS {
