@@ -2,53 +2,186 @@
 
 The package provides the core pieces needed to deploy,
 mint and distribute NFTs on Flow.
-It also powers the [Freshmint CLI](https://github.com/packagelabs/freshmint).
 
-## Install
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [Installation](#installation)
+- [Create & deploy an NFT contract](#create--deploy-an-nft-contract)
+  - [Define a metadata schema](#define-a-metadata-schema)
+    - [Default schema](#default-schema)
+    - [Supported metadata fields](#supported-metadata-fields)
+    - [Parse a raw metadata schema](#parse-a-raw-metadata-schema)
+  - [Create a contract](#create-a-contract)
+  - [Configure the contract owner](#configure-the-contract-owner)
+    - [Define an authorizer](#define-an-authorizer)
+    - [Set the owner](#set-the-owner)
+    - [Use a separate payer or proposer](#use-a-separate-payer-or-proposer)
+    - [Specify authorizers in the constructor](#specify-authorizers-in-the-constructor)
+  - [Deploy the contract](#deploy-the-contract)
+- [Mint NFTs](#mint-nfts)
+  - [Standard NFTs](#standard-nfts)
+    - [Deploy the contract](#deploy-the-contract-1)
+    - [Mint the NFTs](#mint-the-nfts)
+  - [Edition NFTs](#edition-nfts)
+    - [Deploy the contract](#deploy-the-contract-2)
+    - [Step 1: Create one or more editions](#step-1-create-one-or-more-editions)
+    - [Step 2: Mint NFTs](#step-2-mint-nfts)
+  - [Blind NFTs](#blind-nfts)
+    - [Deploy the contract](#deploy-the-contract-3)
+    - [Step 1: Mint NFTs](#step-1-mint-nfts)
+      - [Randomized minting](#randomized-minting)
+    - [Step 2: Reveal NFTs](#step-2-reveal-nfts)
+  - [Blind Edition NFTs](#blind-edition-nfts)
+    - [Deploy the contract](#deploy-the-contract-4)
+    - [Step 1: Create one or more editions](#step-1-create-one-or-more-editions-1)
+    - [Step 2: Mint NFTs](#step-2-mint-nfts-1)
+    - [Step 3: Reveal NFTs](#step-3-reveal-nfts)
+- [Distribute NFTs](#distribute-nfts)
+  - [Claim sale](#claim-sale)
+    - [Edition-based claim sales](#edition-based-claim-sales)
+    - [Reveal on claim](#reveal-on-claim)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Installation
 
 ```sh
 npm i freshmint
 ```
 
-## Create an NFT collection
+## Create & deploy an NFT contract
 
-An NFT collection is a set of NFTs that share the same type structure.
-A collection is defined by a Cadence contract that implements the [Flow NFT interface](https://github.com/onflow/flow-nft).
-All NFTs in a collection are minted by the same contract.
+NFTs on Flow are defined by a Cadence contract that 
+implements the [Flow NFT interface](https://github.com/onflow/flow-nft).
 
-Fresh NFT supports the following collection types:
+Freshmint includes several NFT contract templates:
 
-|Name                    |Metadata Format|Metadata Views Support|Blind Minting Support|
-|------------------------|---------------|----------------------|---------------------|
-|`OnChainCollection`     |On-chain       |Yes                   |No                   |
-|`OnChainBlindCollection`|On-chain       |Yes                   |Yes                  |
-|`EditionCollection`     |On-chain       |Yes                   |No                  |
-|`EditionBlindCollection`|On-chain       |Yes                   |Yes                  |
+- `StandardNFTContract`
+- `BlindNFTContract`
+- `EditionNFTContract`
+- `BlindEditionNFTContract`
+
+### Define a metadata schema
+
+Before creating a contract, you'll need to define its metadata schema.
+The schema is a list of fields that define the structure
+of an NFT and the data it contains. You'll then use the schema to generate
+your custom contract.
 
 ```js
-import { TestnetConfig } from '@fresh-js/core';
-import { OnChainCollection, metadata } from 'freshmint';
+import { metadata } from 'freshmint';
 
-const collection = new OnChainCollection({
-  config: TestnetConfig,
-  name: 'MyNFTContract',
-  address: '0xf8d6e0586b0a20c7', // Optional: will be set after call to deployContract()
-  schema: metadata.defaultSchema.extend({
-    foo: metadata.String(),
-    bar: metadata.Int()
-  }),
+// Create a schema with two fields:
+// - "foo" is a string field
+// - "bar" is an integer field
+const schema = metadata.createSchema({
+  foo: metadata.String(),
+  bar: metadata.Int()
 });
 ```
 
-Read more: [defining a metadata schema](#metadata-schemas).
+#### Default schema
 
-## Configure the collection owner
+Freshmint ships with a default metadata schema.
+This is the minimum set of fields required to
+implement the [Display](https://github.com/onflow/flow-nft#list-of-common-views)
+metadata view.
 
-You will need to configure a collection owner before you can
-deploy a contract or mint NFTs. The owner is the account that will
+```js
+const defaultSchema = metadata.createSchema({
+  fields: {
+    name: metadata.String(),
+    description: metadata.String(),
+    thumbnail: metadata.IPFSImage()
+  },
+  // The default schema implements the MetadataViews.Display view.
+  views: [
+    (fields) => metadata.DisplayView({
+      name: fields.name,
+      description: fields.description,
+      thumbnail: fields.thumbnail
+    })
+  ]
+});
+```
+
+You can use the default schema as a base and 
+extend it with additional fields:
+
+```js
+import { metadata } from 'freshmint';
+
+const schema = metadata.defaultSchema.extend({
+  foo: metadata.String(),
+  bar: metadata.Int()
+});
+```
+
+#### Supported metadata fields
+
+|Name|Identifier|
+|----|----------|
+|String|`string`|
+|Bool|`bool`|
+|Int|`int`|
+|UInt|`uint`|
+|Fix64|`fix64`|
+|UFix64|`ufix64`|
+|IPFSFile|`ipfs-file`|
+
+#### Parse a raw metadata schema
+
+You can represent a metadata schema as a plain JavaScript object,
+which can easily by serialized to JSON, YAML or other format.
+
+The `type` field must match a field identifier from the table above.
+
+```js
+const rawSchema = {
+  fields: [
+    {
+      name: 'foo',
+      type: 'string'
+    },
+    {
+      name: 'bar',
+      type: 'int'
+    }
+  ]
+};
+```
+
+Use the `parseSchema` function to convert a raw schema into a `metadata.Schema` object:
+
+```js
+import { metadata } from 'freshmint';
+
+const schema = metadata.parseSchema(rawSchema);
+```
+
+### Create a contract
+
+```js
+import { StandardNFTContract, metadata } from 'freshmint';
+
+const contract = new StandardNFTContract({
+  name: 'MyNFTContract',
+  schema: metadata.defaultSchema.extend({
+    foo: metadata.String(),
+    bar: metadata.Int()
+  })
+});
+```
+
+### Configure the contract owner
+
+You will need to configure the contract owner before you can
+deploy the contract or mint NFTs. The owner is the account that will
 mint, reveal and manage your NFTs.
 
-### Define an authorizer
+#### Define an authorizer
 
 The owner is defined as an `Authorizer`, an object that can authorize transactions for a specific Flow account.
 
@@ -76,23 +209,23 @@ const authorizer = new Authorizer({
 });
 ```
 
-### Set the owner
+#### Set the owner
 
 ```js
-const collection = new OnChainCollection(...);
+const contract = new StandardNFTContract(...);
 
 // ...
 
-collection.setOwner(authorizer);
+contract.setOwner(authorizer);
 ```
 
-### Use a separate payer or proposer
+#### Use a separate payer or proposer
 
 You can optionally specify separate payer or proposer authorizers.
-This is useful if you would like to create multiple collections, 
+This is useful if you would like to create multiple contracts, 
 each with a separate owner, but pay for all fees from a central account.
 
-An NFT collection has three authorizer roles:
+An NFT contract has three authorizer roles:
 
 |Role|Actions|
 |----|-------|
@@ -100,22 +233,22 @@ An NFT collection has three authorizer roles:
 |Payer|Pays fees for all transactions.|
 |Proposer|Signs as the proposer on all transactions.|
 
-Note: the collection owner will sign for any role that is not explicitly set.
+Note: the contract owner will sign for any role that is not explicitly set.
 
 ```js
-collection.setOwner(ownerAuthorizer);
+contract.setOwner(ownerAuthorizer);
 
-collection.setPayer(payerAuthorizer);
+contract.setPayer(payerAuthorizer);
 
-collection.setProposer(proposerAuthorizer);
+contract.setProposer(proposerAuthorizer);
 ```
 
-### Specify authorizers in the constructor
+#### Specify authorizers in the constructor
 
-For convenience, you can pass the authorizers directly in the collection constructor:
+For convenience, you can pass the authorizers directly in the contract constructor:
 
 ```js
-const collection = new OnChainCollection({
+const contract = new StandardNFTContract({
   // ...
   owner: ownerAuthorizer, 
   payer: payerAuthorizer
@@ -123,177 +256,60 @@ const collection = new OnChainCollection({
 });
 ```
 
-## Deploy a collection
+### Deploy the contract
 
-Deploy a collection's contract using the `deployContract()` method:
+First create a `FlowClient` instance using FCL as a base.
+
+```js
+import * as fcl from '@onflow/fcl';
+import { FlowClient, Config } from 'freshmint';
+
+const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+```
+
+Then deploy the contract using the `deploy()` transaction method.
 
 ```js
 import { HashAlgorithm } from '@fresh-js/crypto';
 
-const collection = new OnChainCollection(...);
+const contract = new StandardNFTContract(...);
 
 // Specify a public key (with hash algorithm)
 // to attach to the contract account.
 const publicKey = privateKey.getPublicKey();
 const hashAlgorithm = HashAlgorithm.SHA3_256;
 
-// Note: the call to deployContract() will 
-// automatically update collection.address.
-const contractAddress = await collection.deployContract(publicKey, hashAlgorithm);
+// Note: contract.address will automatically update once the transaction succeeds.
+const deployTransaction = contract.deploy(publicKey, hashAlgorithm);
+
+const contractAddress = await client.send(deployTransaction);
 ```
 
-## Create a metadata schema
+## Mint NFTs
 
-A metadata schema defines the structure of an NFT collection.
+### Standard NFTs
 
-Today, a schema is simply a list of field types. 
-However, Fresh NFT may support more complex schema models in the future (e.g. sets and editions).
-
-```js
-import { metadata } from 'freshmint';
-
-// Create a schema with two fields:
-// - "foo" is a string field
-// - "bar" is an integer field
-const schema = metadata.createSchema({
-  foo: metadata.String(),
-  bar: metadata.Int()
-});
-```
-
-### Default schema
-
-Fresh NFT defines a default schema.
-This is the minimum set of fields required to
-implement the [Display](https://github.com/onflow/flow-nft#list-of-common-views)
-metadata view.
+The `StandardNFTContract` allows you to mint simple one-of-a-kind NFTs.
 
 ```js
-const defaultSchema = metadata.createSchema({
-  fields: {
-    name: metadata.String(),
-    description: metadata.String(),
-    thumbnail: metadata.IPFSImage(),
-  },
-  // The default schema implements the MetadataViews.Display view.
-  views: [
-    (fields) => metadata.DisplayView({
-      name: fields.name,
-      description: fields.description,
-      thumbnail: fields.thumbnail,
-    })
-  ]
-});
-```
-
-You can use the default schema as a starting place
-and extend it with additional fields.
-
-```js
-import { metadata } from 'freshmint';
-
-const schema = metadata.defaultSchema.extend([
-  foo: metadata.String(),
-  bar: metadata.Int(),
-]);
-```
-
-### Supported metadata fields
-
-|Name|Identifier|
-|----|----------|
-|String|`string`|
-|Bool|`bool`|
-|Int|`int`|
-|UInt|`uint`|
-|Fix64|`fix64`|
-|UFix64|`ufix64`|
-|IPFSImage|`ipfs-image`|
-
-### Custom metadata fields
-
-You can define custom metadata fields using the `defineField` function.
-
-```js
-import * as t from '@onflow/types';
-import { metadata } from 'freshmint';
-
-const MyCustomFieldType = metadata.defineField({
-  id: 'my-custom-field-type',
-  label: 'My Custom Field Type',
-  cadenceType: t.String,
-  sampleValue: 'This is a custom field!',
-})
-
-const schema = metadata.createSchema({
-  foo: metadata.String(),
-  bar: MyCustomFieldType(),
-});
-```
-
-### Parse a raw metadata schema
-
-You can represent a metadata schema as a raw JavaScript (or JSON) object.
-The `type` field must match a field identifier from the table above.
-
-```js
-const rawSchema = {
-  fields: [
-    {
-      name: 'foo',
-      type: 'string'
-    },
-    {
-      name: 'bar',
-      type: 'int'
-    }
-  ]
-};
-```
-
-Use the `parseSchema` function to convert a raw schema into a `metadata.Schema` object:
-
-```js
-import { metadata } from 'freshmint';
-
-const schema = metadata.parseSchema(rawSchema);
-```
-
-## Blind mint NFTs
-
-Use an `OnChainBlindCollection` to create NFTs that can be blindly minted.
-In a blind mint, NFTs are initially minted as partial objects with their metadata hidden.
-The collection owner can then reveal the metadata at a later point in time.
-
-Fresh NFT implements blind minting using two separate mint and reveal transactions:
-
-1. The first transaction mints an NFT in its hidden form. 
-A hidden NFT contains a SHA256 hash of the complete metadata that 
-can later be used to verify the integrity of the revealed metadata.
-2. The second transaction publishes the NFT metadata to the blockchain.
-The hidden NFT is converted into a full NFT containing a complete
-on-chain metadata record.
-
-### Set up a blind collection
-
-```js
-import { TestnetConfig, Authorizer } from '@fresh-js/core';
-import { OnChainBlindCollection, metadata } from 'freshmint';
+import { Authorizer } from '@fresh-js/core';
+import { StandardNFTContract, metadata } from 'freshmint';
 
 // Intialize your owner authorizer.
 const owner = new Authorizer(...);
 
-const collection = new OnChainBlindCollection({
-  config: TestnetConfig,
-  name: 'MyNFTContract',
+const contract = new StandardNFTContract({
+  name: 'MyEditionNFTContract',
   schema: metadata.defaultSchema,
-  owner,
+  owner
 });
 ```
 
-### Deploy the contract
+#### Deploy the contract
 
 ```js
+import * as fcl from '@onflow/fcl';
+import { FlowClient, Config } from 'freshmint';
 import { HashAlgorithm } from '@fresh-js/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -301,18 +317,15 @@ import { HashAlgorithm } from '@fresh-js/crypto';
 const publicKey = privateKey.getPublicKey();
 const hashAlgorithm = HashAlgorithm.SHA3_256;
 
-// Specify the IPFS hash of an image (JPEG, PNG, etc)
-// to be used as a placeholder for hidden NFTs.
-const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam';
+const client = FlowClient.fromFCL(fcl, Config.TESTNET);
 
-const address = await collection.deployContract(
+const address = await client.send(contract.deploy(
   publicKey,
-  hashAlgorithm,
-  placeholderImage
-);
+  hashAlgorithm
+));
 ```
 
-### Step 1: Mint NFTs
+#### Mint the NFTs
 
 ```js
 // Note: the metadata fields provided must match those
@@ -330,7 +343,265 @@ const nfts = [
   },
 ];
 
-const mintedNFTs = await collection.mintNFTs(nfts);
+const mintedNFTs = await client.send(contract.mintNFTs(nfts));
+
+console.log(mintedNFTs);
+```
+
+This will print:
+
+```
+[
+  {
+    id: "0",
+    metadata: {
+      name: "NFT 1",
+      description: "NFT 1 is awesome.",
+      thumbnail: "bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam"
+    },
+    transactionId: "20d0c77028d9a23347330956e8cd253fbe96a225e5cb42a4450fdc2e5cefa8c1"
+  },
+  {
+    id: "1",
+    metadata: {
+      name: "NFT 2",
+      description: "NFT 2 is even better.",
+      thumbnail: "bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam"
+    },
+    transactionId: "20d0c77028d9a23347330956e8cd253fbe96a225e5cb42a4450fdc2e5cefa8c1"
+  }
+]
+```
+
+### Edition NFTs
+
+The `EditionNFTContract` allows you to mint edition-based NFTs.
+
+In this model, a contract can define multiple editions.
+All NFTs in an editions share the same metadata;
+only their serial numbers are different.
+
+```js
+import { Authorizer } from '@fresh-js/core';
+import { EditionNFTContract, metadata } from 'freshmint';
+
+// Intialize your owner authorizer.
+const owner = new Authorizer(...);
+
+const contract = new EditionNFTContract({
+  name: 'MyEditionNFTContract',
+  schema: metadata.defaultSchema,
+  owner
+});
+```
+
+#### Deploy the contract
+
+```js
+import * as fcl from '@onflow/fcl';
+import { FlowClient, Config } from 'freshmint';
+import { HashAlgorithm } from '@fresh-js/crypto';
+
+// Specify a public key (with hash algorithm)
+// to attach to the contract account.
+const publicKey = privateKey.getPublicKey();
+const hashAlgorithm = HashAlgorithm.SHA3_256;
+
+const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+
+const address = await client.send(contract.deploy(
+  publicKey,
+  hashAlgorithm
+));
+```
+
+#### Step 1: Create one or more editions
+
+```js
+const edition1 = {
+  // This edition will contain 5 NFTs.
+  size: 5,
+  // Note: the metadata fields provided must match those
+  // defined in your metadata schema.
+  metadata: {
+    name: 'Edition 1',
+    description: 'This is the first edition',
+    thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
+  }
+};
+
+const edition2 = {
+  // This edition will contain 5 NFTs.
+  size: 5,
+  // Note: the metadata fields provided must match those
+  // defined in your metadata schema.
+  metadata: {
+    name: 'Edition 2',
+    description: 'This is the second edition',
+    thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
+  }
+};
+
+// This function submits a transaction that publishes
+// this edition to the blockchain. 
+// 
+// Once you create an edition, its metadata becomes publicly viewable.
+const editions = await client.send(contract.createEditions([edition1, edition2]));
+
+console.log(editions);
+```
+
+This will print:
+
+```
+[
+  {
+    id: '0',
+    size: 5,
+    metadata: {
+      name: 'Edition 1',
+      description: 'This is the first edition',
+      thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
+    },
+    nfts: [
+      { editionId: '0', editionSerial: '1' },
+      { editionId: '0', editionSerial: '2' },
+      { editionId: '0', editionSerial: '3' },
+      { editionId: '0', editionSerial: '4' },
+      { editionId: '0', editionSerial: '5' },
+    ]
+  },
+  {
+    id: '1',
+    size: 5,
+    metadata: {
+      name: 'Edition 2',
+      description: 'This is the second edition',
+      thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
+    },
+    nfts: [
+      { editionId: '1', editionSerial: '1' },
+      { editionId: '1', editionSerial: '2' },
+      { editionId: '1', editionSerial: '3' },
+      { editionId: '1', editionSerial: '4' },
+      { editionId: '1', editionSerial: '5' },
+    ]
+  }
+]
+```
+
+#### Step 2: Mint NFTs
+
+You can mint NFTs to any existing edition.
+The input to each NFT is simply its edition ID and serial number.
+
+```js
+// This example shows how to mint editions into separate buckets.
+
+for (const edition of editions) {
+  // Mint each edition into its own bucket.
+  const mintedNFTs = await client.send(contract.mintNFTs(
+    edition.nfts,
+    { bucket: edition.id }
+  ));
+
+  console.log(mintedNFTs);
+}
+```
+
+This will print:
+
+```
+[
+  {
+    id: '0',
+    editionId: '0',
+    editionSerial: '1',
+    transactionId: 'e648c662c3eb8550030c95c0dcc01d6d179925b9fc33fbaabe90715555d78ead'
+  },
+  {
+    id: '1',
+    editionId: '0',
+    editionSerial: '2',
+    transactionId: 'e648c662c3eb8550030c95c0dcc01d6d179925b9fc33fbaabe90715555d78ead'
+  },
+  ...
+]
+```
+
+### Blind NFTs
+
+Use a `BlindNFTContract` to create NFTs that can be blindly minted.
+In a blind mint, NFTs are initially minted as partial objects with their metadata hidden.
+The contract owner can then reveal the metadata at a later point in time.
+
+Freshmint implements blind minting using two separate mint and reveal transactions:
+
+1. The first transaction mints an NFT in its hidden form. 
+A hidden NFT contains a SHA256 hash of the complete metadata that 
+can later be used to verify the integrity of the revealed metadata.
+2. The second transaction publishes the NFT metadata to the blockchain.
+The hidden NFT is converted into a full NFT containing a complete
+on-chain metadata record.
+
+```js
+import { Authorizer } from '@fresh-js/core';
+import { BlindNFTContract, metadata } from 'freshmint';
+
+// Intialize your owner authorizer.
+const owner = new Authorizer(...);
+
+const contract = new BlindNFTContract({
+  name: 'MyNFTContract',
+  schema: metadata.defaultSchema,
+  owner
+});
+```
+
+#### Deploy the contract
+
+```js
+import * as fcl from '@onflow/fcl';
+import { FlowClient, Config } from 'freshmint';
+import { HashAlgorithm } from '@fresh-js/crypto';
+
+// Specify a public key (with hash algorithm)
+// to attach to the contract account.
+const publicKey = privateKey.getPublicKey();
+const hashAlgorithm = HashAlgorithm.SHA3_256;
+
+// Specify the IPFS hash of an image (JPEG, PNG, etc)
+// to be used as a placeholder for hidden NFTs.
+const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam';
+
+const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+
+const address = await client.send(contract.deploy(
+  publicKey,
+  hashAlgorithm,
+  placeholderImage
+));
+```
+
+#### Step 1: Mint NFTs
+
+```js
+// Note: the metadata fields provided must match those
+// defined in your metadata schema.
+const nfts = [
+  {
+    name: 'NFT 1',
+    description: 'NFT 1 is awesome.',
+    thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
+  },
+  {
+    name: 'NFT 2',
+    description: 'NFT 2 is even better.',
+    thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
+  },
+];
+
+const mintedNFTs = await client.send(contract.mintNFTs(nfts));
 
 console.log(mintedNFTs);
 ```
@@ -371,16 +642,16 @@ against a known set of possible metadata values.
 Important: you **must** save the `id`, `metadata` and `metadataSalt` fields for each NFT.
 You'll need them to later reveal the NFTs.
 
-#### Randomized minting
+##### Randomized minting
 
 Blind NFTs are often minted in a random order. To randomize your mint,
 shuffle your input array before calling `mintNFTs()`.
-Fresh NFT does not support automatic randomization at this point.
+Freshmint does not support automatic randomization.
 
 It's important to note that this will only randomize the NFT metadata.
 The minted NFT IDs will still be sequential (i.e. 0, 1, 2, etc).
 
-### Step 2: Reveal NFTs
+#### Step 2: Reveal NFTs
 
 You can reveal your NFTs at any time.
 You also have the option to reveal NFTs one by one, all at once, or in batches.
@@ -407,109 +678,61 @@ const nft1 = {
 }
 
 // Reveal a single NFT
-await collection.revealNFTs([nft0]);
+await client.send(contract.revealNFTs([nft0]));
 
 // Reveal multiple NFTs
-await collection.revealNFTs([nft0, nft1]);
+await client.send(contract.revealNFTs([nft0, nft1]));
 ```
 
-## NFT reveal strategies
+### Blind Edition NFTs
 
-As a collection owner, there are multiple ways you can reveal your NFTs.
+The `BlindEditionNFTContract` allows you to mint edition-based NFTs
+that are hidden at mint time and revealed at a later date.
 
-### Bulk manual reveal
-
-This is the simplest strategy. You can choose a point in time to reveal
-all NFTs at once (usually once the collection is sold out).
-
-All users see their NFTs at the same time.
+In this model, a contract can define multiple editions.
+All NFTs in an edition share the same metadata;
+only their serial numbers are different.
 
 ```js
-async function bulkReveal() {
-  // This implementation assumes that you have stored all NFT metadata
-  // and salt values in your database.
-  const nfts = await loadNFTsFromDatabase();
-  
-  console.log(nfts);
+import { Authorizer } from '@fresh-js/core';
+import { BlindEditionNFTContract, metadata } from 'freshmint';
 
-  // [
-  //  { 
-  //    id: '0',
-  //    metadata: { ... },
-  //    metadataSalt: '727ca86ae4a338f21e83ec330f490bcf'
-  //  },
-  //  ...
-  // ]
+// Intialize your owner authorizer.
+const owner = new Authorizer(...);
 
-  await collection.revealNFTs(nfts);
-}
+const contract = new BlindEditionNFTContract({
+  name: 'MyEditionNFTContract',
+  schema: metadata.defaultSchema,
+  owner
+});
 ```
 
-### Reveal on purchase
-
-In this strategy, each NFT is revealed immediately after it is claimed by a buyer.
-The NFTs are revealed one by one until all NFTs are claimed.
-
-An individual user sees their revealed NFT shortly after they buy it.
-
-This strategy assumes you are using the [claim sale](#claim-sale) distribution method.
+#### Deploy the contract
 
 ```js
 import * as fcl from '@onflow/fcl';
+import { FlowClient, Config } from 'freshmint';
+import { HashAlgorithm } from '@fresh-js/crypto';
 
-// This implementation assumes you have the transaction ID
-// of the buyer's claim transaction (i.e. by capturing on your frontend).
-//
-// An alternate and more robust implementation would subscribe
-// to 'NFTClaimSale.Claimed' events and trigger a reveal.
-async function revealAfterPurchase(transactionId) {
-  const { events } = await fcl.tx({ transationId }).onceSealed();
-  
-  const claimEvent = events.find(
-    // Note: this is the event ID for testnet.
-    (event) => event.type === 'A.f6908f3ab6c14d81.NFTClaimSale.Claimed'
-  );
+// Specify a public key (with hash algorithm)
+// to attach to the contract account.
+const publicKey = privateKey.getPublicKey();
+const hashAlgorithm = HashAlgorithm.SHA3_256;
 
-  const nftId = claimEvent.data['nftID'];
+// Specify the IPFS hash of an image (JPEG, PNG, etc)
+// to be used as a placeholder for hidden NFTs.
+const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam';
 
-  // This implementation assumes that you have stored the NFT metadata
-  // and salt in your database.
-  const { metadata, metadataSalt } = await loadNFTFromDatabase(nftId);
+const client = FlowClient.fromFCL(fcl, Config.TESTNET);
 
-  await collection.reveal([{
-    id: nftId,
-    metadata,
-    metadataSalt
-  }]);
-}
+const address = await client.send(contract.deploy(
+  publicKey,
+  hashAlgorithm,
+  placeholderImage
+));
 ```
 
-## Mint edition NFTs
-
-The `EditionCollection` allows developers to mint edition-based NFTs.
-
-In this model, a collection can contain multiple editions.
-All NFTs in an addition share the same metadata;
-only their serial numbers are different.
-
-```js
-import { TestnetConfig, Authorizer } from '@fresh-js/core';
-import { EditionCollection, metadata } from 'freshmint';
-
-// Intialize your owner authorizer.
-const owner = new Authorizer(...);
-
-// An edition collection uses the same configuration as normal collections,
-// including the metadata schema.
-const collection = new EditionCollection({
-  config: TestnetConfig,
-  name: 'MyEditionNFTContract',
-  schema: metadata.defaultSchema,
-  owner,
-});
-```
-
-### Step 1: Create one or more editions
+#### Step 1: Create one or more editions
 
 ```js
 const edition1 = {
@@ -539,8 +762,8 @@ const edition2 = {
 // This function submits a transaction that publishes
 // this edition to the blockchain. 
 // 
-// Once you create an edition, its metadata is publicly-viewable.
-const editions = await collection.createEditions([edition1, edition2]);
+// Once you create an edition, its metadata becomes publicly viewable.
+const editions = await client.send(contract.createEditions([edition1, edition2]));
 
 console.log(editions);
 ```
@@ -584,152 +807,7 @@ This will print:
 ]
 ```
 
-### Step 2: Mint NFTs
-
-You can mint NFTs to any existing edition.
-The input to each NFT is simply its edition ID and serial number.
-
-```js
-// This example shows how to mint editions into separate buckets.
-
-import shuffle from 'your-secure-randomization-lib';
-
-for (const edition of editions) {
-  // As mentioned above, ALWAYS randomize the mint order.
-  const randomizedNFTs = shuffle(edition.nfts);
-
-  // Mint each edition into its own bucket.
-  const mintedNFTs = await collection.mintNFTs(
-    randomizedNFTs,
-    { bucket: edition.id }
-  );
-
-  console.log(mintedNFTs);
-}
-```
-
-This will print:
-
-```
-[
-  {
-    id: '0',
-    editionId: '0',
-    editionSerial: '1',
-    transactionId: 'e648c662c3eb8550030c95c0dcc01d6d179925b9fc33fbaabe90715555d78ead'
-  },
-  {
-    id: '1',
-    editionId: '0',
-    editionSerial: '2',
-    transactionId: 'e648c662c3eb8550030c95c0dcc01d6d179925b9fc33fbaabe90715555d78ead'
-  },
-  ...
-]
-```
-
-## Mint blind edition NFTs
-
-The `EditionBlindCollection` allows developers to mint edition-based NFTs
-that are hidden at mint time and revealed at a later date.
-
-In this model, a collection can contain multiple editions.
-All NFTs in an addition share the same metadata;
-only their serial numbers are different.
-
-```js
-import { TestnetConfig, Authorizer } from '@fresh-js/core';
-import { EditionBlindCollection, metadata } from 'freshmint';
-
-// Intialize your owner authorizer.
-const owner = new Authorizer(...);
-
-// An edition collection uses the same configuration as normal collections,
-// including the metadata schema.
-const collection = new EditionBlindCollection({
-  config: TestnetConfig,
-  name: 'MyEditionNFTContract',
-  schema: metadata.defaultSchema,
-  owner,
-});
-```
-
-### Step 1: Create one or more editions
-
-```js
-const edition1 = {
-  // This edition will contain 5 NFTs.
-  size: 5,
-  // Note: the metadata fields provided must match those
-  // defined in your metadata schema.
-  metadata: {
-    name: 'Edition 1',
-    description: 'This is the first edition',
-    thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
-  }
-};
-
-const edition2 = {
-  // This edition will contain 5 NFTs.
-  size: 5,
-  // Note: the metadata fields provided must match those
-  // defined in your metadata schema.
-  metadata: {
-    name: 'Edition 2',
-    description: 'This is the second edition',
-    thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
-  }
-};
-
-// This function submits a transaction that publishes
-// this edition to the blockchain. 
-// 
-// Once you create an edition, its metadata is publicly-viewable.
-const editions = await collection.createEditions([edition1, edition2]);
-
-console.log(editions);
-```
-
-This will print:
-
-```
-[
-  {
-    id: '0',
-    size: 5,
-    metadata: {
-      name: 'Edition 1',
-      description: 'This is the first edition',
-      thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
-    },
-    nfts: [
-      { editionId: '0', editionSerial: '1' },
-      { editionId: '0', editionSerial: '2' },
-      { editionId: '0', editionSerial: '3' },
-      { editionId: '0', editionSerial: '4' },
-      { editionId: '0', editionSerial: '5' },
-    ]
-  },
-  {
-    id: '1',
-    size: 5,
-    metadata: {
-      name: 'Edition 2',
-      description: 'This is the second edition',
-      thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
-    },
-    nfts: [
-      { editionId: '1', editionSerial: '1' },
-      { editionId: '1', editionSerial: '2' },
-      { editionId: '1', editionSerial: '3' },
-      { editionId: '1', editionSerial: '4' },
-      { editionId: '1', editionSerial: '5' },
-    ]
-  }
-]
-```
-
-### Step 2: Mint NFTs
+#### Step 2: Mint NFTs
 
 You can mint NFTs to any existing edition.
 The input to each NFT is simply its edition ID and serial number.
@@ -755,10 +833,10 @@ for (const edition of editions) {
   const randomizedNFTs = shuffle(edition.nfts);
 
   // Mint each edition into its own bucket.
-  const mintedNFTs = await collection.mintNFTs(
+  const mintedNFTs = await client.send(contract.mintNFTs(
     randomizedNFTs,
     { bucket: edition.id }
-  );
+  ));
 
   console.log(mintedNFTs);
 }
@@ -788,7 +866,7 @@ This will print:
 ]
 ```
 
-### Step 3: Reveal NFTs
+#### Step 3: Reveal NFTs
 
 Reveal edition NFTs by publishing their edition ID, serial number and unique salt.
 
@@ -808,37 +886,46 @@ const nft1 = {
 };
 
 // Reveal a single NFT
-await collection.revealNFT(nft0);
+await client.send(contract.revealNFT(nft0));
 
 // Reveal multiple NFTs
-await collection.revealNFTs([nft0, nft1]);
+await client.send(contract.revealNFTs([nft0, nft1]));
 ```
 
-## NFT distribution
+## Distribute NFTs
 
-Fresh NFT provides several distribution methods that you can use
-after minting your NFT collection.
+Freshmint provides several distribution methods that you can use
+after minting your NFTs.
 
 ### Claim sale
 
-In a claim sale, a user purchases an NFT from a collection but does not see the NFT
-until after the purchase.
+In a claim sale, a user purchases an NFT from a contract but does not get to pick
+the specific NFT.
 
 ```js
-import { ClaimSale } from 'freshmint';
+import * as fcl from '@onflow/fcl';
+import {
+  FlowClient,
+  Config,
+  ClaimSaleContract,
+  StandardNFTContract
+} from 'freshmint';
 
-const collection = new OnChainBlindCollection(...);
+const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+
+const contract = new StandardNFTContract(...);
 
 // After minting your NFTs...
 
-const sale = new ClaimSale(collection);
+const sale = new ClaimSaleContract(contract);
+
 
 // Start a new claim sale for 10 FLOW
-await sale.start({ id: "default", price: "10.0" });
+await client.send(sale.start({ id: "default", price: "10.0" }));
 
 // Stop the claim sale. 
-// The unsold NFTs stay in the collection owner's account.
-await sale.stop("default");
+// The unsold NFTs stay in the contract owner's account.
+await client.send(sale.stop("default"));
 ```
 
 #### Edition-based claim sales
@@ -847,23 +934,75 @@ When selling edition-based NFTs, you may want to allow
 users to claim each edition separately and at a different price.
 
 ```js
-const sale = new ClaimSale(collection);
+import * as fcl from '@onflow/fcl';
+
+import { FlowClient, Config } from 'freshmint';
+import {
+  FlowClient,
+  Config,
+  ClaimSaleContract,
+  EditionNFTContract
+} from 'freshmint';
+
+const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+
+const contract = new EditionNFTContract(...);
+
+const sale = new ClaimSale(contract);
 
 // After creating and minting editions...
 
 for (const edition in editions) {
   // Specify the bucket to claim from. This should be the same bucket
   // you used to mint that edition.
-  await sale.start({ id: edition.id, price: "10.0", bucket: edition.id });
+  await client.send(sale.start({ id: edition.id, price: "10.0", bucket: edition.id }));
 }
 
 // Later, stop the claim sales:
 
 for (const edition in editions) {
-  await sale.stop(edition.id;);
+  await client.send(sale.stop(edition.id));
 }
 ```
 
-### Direct sale
+#### Reveal on claim
 
-Coming soon!
+In this strategy, each NFT is revealed immediately after it is claimed by a buyer.
+The NFTs are revealed one by one until all NFTs are claimed.
+
+An individual user sees their revealed NFT shortly after they buy it.
+
+This strategy assumes you are using the [claim sale](#claim-sale) distribution method.
+
+```js
+import * as fcl from '@onflow/fcl';
+import { FlowClient, Config } from 'freshmint';
+
+const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+
+// This implementation assumes you have the transaction ID
+// of the buyer's claim transaction (i.e. by capturing on your frontend).
+//
+// An alternate and more robust implementation would subscribe
+// to 'NFTClaimSale.Claimed' events and trigger a reveal.
+async function revealAfterPurchase(transactionId) {
+  const { events } = await fcl.tx({ transationId }).onceSealed();
+  
+  const claimEvent = events.find(
+    // Note: this is the event ID for testnet.
+    (event) => event.type === 'A.f6908f3ab6c14d81.NFTClaimSale.Claimed'
+  );
+
+  const nftId = claimEvent.data['nftID'];
+
+  // This implementation assumes that you have stored the NFT metadata
+  // and salt in your database.
+  const { metadata, metadataSalt } = await loadNFTFromDatabase(nftId);
+
+  await client.send(contract.reveal([{
+    id: nftId,
+    metadata,
+    metadataSalt
+  }]));
+}
+```
