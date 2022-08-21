@@ -61,8 +61,8 @@ registerHelper('whichFilePartial', (field) => {
   throw 'field must be a file field';
 });
 
-registerPartial(httpFilePartial, '../templates/cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc');
-registerPartial(ipfsFilePartial, '../templates/cadence/metadata-views/MetadataViews.IPFSFile.partial.cdc');
+registerPartial(httpFilePartial, '../../../cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc');
+registerPartial(ipfsFilePartial, '../../../cadence/metadata-views/MetadataViews.IPFSFile.partial.cdc');
 
 export function defineView<ViewOptions>({
   id,
@@ -92,7 +92,7 @@ export const DisplayView = defineView<{
 }>({
   id: 'display',
   cadenceTypeString: 'Type<MetadataViews.Display>()',
-  cadenceTemplatePath: '../templates/cadence/metadata-views/MetadataViews.Display.partial.cdc',
+  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Display.partial.cdc',
 });
 
 export const MediaView = defineView<{
@@ -101,7 +101,7 @@ export const MediaView = defineView<{
 }>({
   id: 'media',
   cadenceTypeString: 'Type<MetadataViews.Media>()',
-  cadenceTemplatePath: '../templates/cadence/metadata-views/MetadataViews.Media.partial.cdc',
+  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Media.partial.cdc',
 });
 
 export const viewsTypes: ViewType<any>[] = [DisplayView, MediaView];

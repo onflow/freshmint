@@ -14,7 +14,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
   }): string {
-    return this.generate('../templates/cadence/standard-nft/contracts/NFT.cdc', {
+    return this.generate('../../../cadence/standard-nft/StandardNFT.template.cdc', {
       imports,
       contractName,
       fields: schema.getFieldList(),
@@ -24,7 +24,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
   }
 
   static deploy(): string {
-    return this.generate('../templates/cadence/standard-nft/transactions/deploy.cdc', {});
+    return this.generate('../../../cadence/standard-nft/transactions/deploy.cdc', {});
   }
 
   static mint({
@@ -38,7 +38,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
     contractAddress: string;
     schema: metadata.Schema;
   }): string {
-    return this.generate('../templates/cadence/standard-nft/transactions/mint.cdc', {
+    return this.generate('../../../cadence/standard-nft/transactions/mint.template.cdc', {
       imports,
       contractName,
       contractAddress,
@@ -57,7 +57,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
     contractAddress: string;
     schema: metadata.Schema;
   }): string {
-    return this.generate('../templates/cadence/standard-nft/transactions/mint_with_claim_key.cdc', {
+    return this.generate('../../../cadence/standard-nft/transactions/mint_with_claim_key.template.cdc', {
       imports,
       contractName,
       contractAddress,

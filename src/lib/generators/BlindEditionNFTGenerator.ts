@@ -14,7 +14,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
   }): string {
-    return this.generate('../templates/cadence/blind-edition-nft/contracts/NFT.cdc', {
+    return this.generate('../../../cadence/blind-edition-nft/BlindEditionNFT.template.cdc', {
       imports,
       contractName,
       fields: schema.getFieldList(),
@@ -24,7 +24,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
   }
 
   static deploy(): string {
-    return this.generate('../templates/cadence/blind-edition-nft/transactions/deploy.cdc', {});
+    return this.generate('../../../cadence/blind-edition-nft/transactions/deploy.cdc', {});
   }
 
   static createEditions({
@@ -38,7 +38,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     contractAddress: string;
     schema: metadata.Schema;
   }): string {
-    return this.generate('../templates/cadence/blind-edition-nft/transactions/create_editions.cdc', {
+    return this.generate('../../../cadence/blind-edition-nft/transactions/create_editions.template.cdc', {
       imports,
       contractName,
       contractAddress,
@@ -55,7 +55,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../templates/cadence/blind-edition-nft/transactions/mint.cdc', {
+    return this.generate('../../../cadence/blind-edition-nft/transactions/mint.template.cdc', {
       imports,
       contractName,
       contractAddress,
@@ -71,7 +71,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../templates/cadence/blind-edition-nft/transactions/reveal.cdc', {
+    return this.generate('../../../cadence/blind-edition-nft/transactions/reveal.template.cdc', {
       imports,
       contractName,
       contractAddress,
