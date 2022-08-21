@@ -17,7 +17,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
     return this.generate('../../../cadence/standard-nft/StandardNFT.template.cdc', {
       imports,
       contractName,
-      fields: schema.getFieldList(),
+      fields: schema.fields,
       views: schema.views,
       saveAdminResourceToContractAccount: saveAdminResourceToContractAccount ?? false,
     });
@@ -42,7 +42,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
       imports,
       contractName,
       contractAddress,
-      fields: schema.getFieldList(),
+      fields: schema.fields,
     });
   }
 
@@ -61,7 +61,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
       imports,
       contractName,
       contractAddress,
-      fields: schema.getFieldList(),
+      fields: schema.fields,
     });
   }
 }

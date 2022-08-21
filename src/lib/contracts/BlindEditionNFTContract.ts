@@ -145,7 +145,7 @@ export class BlindEditionNFTContract extends NFTContract {
         script,
         args: [
           fcl.arg(sizes, t.Array(t.UInt)),
-          ...this.schema.getFieldList().map((field) => {
+          ...this.schema.fields.map((field) => {
             return fcl.arg(
               editions.map((edition) => field.getValue(edition.metadata)),
               t.Array(field.asCadenceTypeObject()),

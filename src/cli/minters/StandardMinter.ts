@@ -29,8 +29,6 @@ export class StandardMinter {
     onError: (error: Error) => void,
     batchSize = 10,
   ) {
-    const fields = this.schema.getFieldList();
-
     const entries = parseCSVEntries(csvPath);
 
     const tokens = this.prepare(entries);
@@ -61,7 +59,7 @@ export class StandardMinter {
 
       const processedBatch = await this.processTokenBatch(batch);
 
-      const batchFields = groupBatchesByField(fields, processedBatch);
+      const batchFields = groupBatchesByField(this.schema.fields, processedBatch);
 
       let results;
 
@@ -95,12 +93,10 @@ export class StandardMinter {
   }
 
   prepare(entries: Entry[]) {
-    const fields = this.schema.getFieldList();
-
     return entries.map((values) => {
       const metadata: metadata.MetadataMap = {};
 
-      fields.forEach((field) => {
+      this.schema.fields.forEach((field) => {
         const value = field.getValue(values);
 
         metadata[field.name] = value;

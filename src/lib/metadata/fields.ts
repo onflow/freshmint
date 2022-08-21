@@ -168,14 +168,14 @@ function getFieldTypeById(id: string): FieldType {
   return fieldTypesById[id];
 }
 
-export type Fields = { [key: string]: Field };
+export type FieldMap = { [name: string]: Field };
 export type FieldTypes = { [name: string]: FieldTypeInstance };
 export type FieldInput = { name: string; type: string };
 
 export function parseFields(fields: FieldInput[]): FieldTypes {
-  return fields.reduce((fieldMap: FieldTypes, field) => {
+  return fields.reduce((fieldTypeMap: FieldTypes, field) => {
     const fieldType = getFieldTypeById(field.type);
-    fieldMap[field.name] = fieldType();
-    return fieldMap;
+    fieldTypeMap[field.name] = fieldType();
+    return fieldTypeMap;
   }, {});
 }

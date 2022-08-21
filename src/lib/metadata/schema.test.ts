@@ -9,7 +9,7 @@ describe('metadata.Schema', () => {
         thumbnail: metadata.String(),
         video: metadata.HTTPFile(),
       },
-      views: (fields: metadata.Fields) => [
+      views: (fields: metadata.FieldMap) => [
         metadata.DisplayView({
           name: fields.name,
           description: fields.description,

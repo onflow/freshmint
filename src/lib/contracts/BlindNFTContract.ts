@@ -165,7 +165,7 @@ export class BlindNFTContract extends NFTContract {
           args: [
             fcl.arg(ids, t.Array(t.UInt64)),
             fcl.arg(salts, t.Array(t.String)),
-            ...this.schema.getFieldList().map((field) => {
+            ...this.schema.fields.map((field) => {
               return fcl.arg(
                 nfts.map((nft) => field.getValue(nft.metadata)),
                 t.Array(field.asCadenceTypeObject()),

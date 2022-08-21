@@ -1,7 +1,7 @@
-import { Field, Fields, FieldInput, String, IPFSFile, parseFields, FieldTypes } from './fields';
+import { Field, FieldMap, FieldInput, String, IPFSFile, parseFields, FieldTypes } from './fields';
 import { View, ViewInput, DisplayView, parseViews } from './views';
 
-type ViewsThunk = (fields: Fields) => View[];
+type ViewsThunk = (fields: FieldMap) => View[];
 
 type SchemaParameters = SimpleSchemaParameters | FullSchemaParameters;
 type SimpleSchemaParameters = FieldTypes;
@@ -12,67 +12,67 @@ function isFullSchemaParameters(params: SchemaParameters): params is FullSchemaP
 }
 
 export class Schema {
-  fields: Fields;
+  #fieldMap: FieldMap;
   views: View[];
 
   public static create(params: SchemaParameters) {
     if (isFullSchemaParameters(params)) {
-      const fields = Schema.prepareFields(params.fields);
-      const views = Schema.prepareViews(fields, params.views ?? []);
-      return new Schema(fields, views);
+      const fieldMap = Schema.prepareFields(params.fields);
+      const views = Schema.prepareViews(fieldMap, params.views ?? []);
+      return new Schema(fieldMap, views);
     }
 
-    const fields = Schema.prepareFields(params);
-    return new Schema(fields, []);
+    const fieldMap = Schema.prepareFields(params);
+
+    return new Schema(fieldMap, []);
   }
 
-  private constructor(fields: Fields, views: View[]) {
-    this.fields = fields;
+  private constructor(fieldMap: FieldMap, views: View[]) {
+    this.#fieldMap = fieldMap;
     this.views = views;
   }
 
-  private static prepareFields(fieldTypes: FieldTypes): Fields {
-    const fields = {};
+  private static prepareFields(fieldTypes: FieldTypes): FieldMap {
+    const fieldMap = {};
 
     for (const name in fieldTypes) {
-      fields[name] = new Field(name, fieldTypes[name]);
+      const field = new Field(name, fieldTypes[name]);
+      fieldMap[name] = field;
     }
 
-    return fields;
+    return fieldMap;
   }
 
-  getFieldList(): Field[] {
-    return Object.values(this.fields);
+  private static prepareViews(fieldMap: FieldMap, views: View[] | ViewsThunk): View[] {
+    return Array.isArray(views) ? views : views(fieldMap);
   }
 
-  private static prepareViews(fields: Fields, views: View[] | ViewsThunk): View[] {
-    return Array.isArray(views) ? views : views(fields);
+  get fields(): Field[] {
+    return Object.values(this.#fieldMap);
+  }
+
+  getFieldsByName(): FieldMap {
+    return this.#fieldMap;
   }
 
   // TODO: include options in extend
   extend(schema: Schema | FieldTypes) {
-    let fields: Fields;
+    let fieldMap: FieldMap;
 
     if (schema instanceof Schema) {
-      fields = schema.fields;
+      fieldMap = schema.getFieldsByName();
     } else {
-      fields = Schema.prepareFields(schema);
+      fieldMap = Schema.prepareFields(schema);
     }
 
-    const newFields = Object.assign({}, this.fields, fields);
+    const newFieldMap = Object.assign({}, this.#fieldMap, fieldMap);
 
-    return new Schema(newFields, this.views);
-  }
-
-  getView(viewType: new (...a: any) => View): View | undefined {
-    return this.views.find((view: View) => view instanceof viewType);
+    return new Schema(newFieldMap, this.views);
   }
 
   export(): SchemaInput {
-    const fields = this.getFieldList();
-
     return {
-      fields: fields.map((field) => field.export()),
+      fields: this.fields.map((field) => field.export()),
       views: this.views.map((view) => view.export()),
     };
   }
@@ -101,7 +101,7 @@ export const defaultSchema = createSchema({
     description: String(),
     thumbnail: IPFSFile(),
   },
-  views: (fields: Fields) => [
+  views: (fields: FieldMap) => [
     DisplayView({
       name: fields.name,
       description: fields.description,

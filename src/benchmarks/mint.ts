@@ -29,7 +29,7 @@ function generateNFTs(schema: metadata.Schema, count: number): metadata.Metadata
 function generateNFT(schema: metadata.Schema): metadata.MetadataMap {
   const metadata = {};
 
-  schema.getFieldList().forEach((field) => {
+  schema.fields.forEach((field) => {
     metadata[field.name] = makeId(100);
   });
 

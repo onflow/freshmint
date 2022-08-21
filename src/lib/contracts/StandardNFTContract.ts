@@ -86,7 +86,7 @@ export class StandardNFTContract extends NFTContract {
         return {
           script,
           args: [
-            ...this.schema.getFieldList().map((field) => {
+            ...this.schema.fields.map((field) => {
               return fcl.arg(
                 metadata.map((values) => field.getValue(values)),
                 t.Array(field.asCadenceTypeObject()),

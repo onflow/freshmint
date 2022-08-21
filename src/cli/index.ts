@@ -129,11 +129,10 @@ async function getNFT(tokenId: string, { network }: { network: string }) {
   const fresh = new Fresh(config, network);
 
   const schema = config.contract.schema;
-  const fields = schema.getFieldList();
 
   const { id, metadata } = await fresh.getNFT(tokenId);
 
-  const output = getNFTOutput(config.contract.type, id, metadata, fields);
+  const output = getNFTOutput(config.contract.type, id, metadata, schema.fields);
 
   alignOutput(output);
 }

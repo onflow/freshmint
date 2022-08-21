@@ -18,7 +18,7 @@ export default class MetadataProcessor {
   async process(metadata: metadata.MetadataMap) {
     const values: any = {};
 
-    for (const field of this.schema.getFieldList()) {
+    for (const field of this.schema.fields) {
       const value = metadata[field.name];
 
       values[field.name] = await this.processField(field, value);

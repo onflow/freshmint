@@ -17,7 +17,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     return this.generate('../../../cadence/blind-edition-nft/BlindEditionNFT.template.cdc', {
       imports,
       contractName,
-      fields: schema.getFieldList(),
+      fields: schema.fields,
       views: schema.views,
       saveAdminResourceToContractAccount: saveAdminResourceToContractAccount ?? false,
     });
@@ -42,7 +42,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
       imports,
       contractName,
       contractAddress,
-      fields: schema.getFieldList(),
+      fields: schema.fields,
     });
   }
 

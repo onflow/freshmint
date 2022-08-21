@@ -136,11 +136,9 @@ export class EditionMinter {
       })),
     );
 
-    const fields = this.schema.getFieldList();
-
     const sizes = processedEditions.map((edition) => edition.size);
 
-    const values = fields.map((field) => ({
+    const values = this.schema.fields.map((field) => ({
       cadenceType: field.asCadenceTypeObject(),
       values: processedEditions.map((edition) => field.getValue(edition.metadata)),
     }));
@@ -159,12 +157,10 @@ export class EditionMinter {
   }
 
   prepare(entries: Entry[]) {
-    const fields = this.schema.getFieldList();
-
     return entries.map((values) => {
       const metadata: metadata.MetadataMap = {};
 
-      fields.forEach((field) => {
+      this.schema.fields.forEach((field) => {
         const value = field.getValue(values);
 
         metadata[field.name] = value;

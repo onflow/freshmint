@@ -13,7 +13,7 @@ export function hashMetadataWithSalt(schema: Schema, metadata: MetadataMap): { h
 }
 
 function serializeMetadata(schema: Schema, metadata: MetadataMap): Buffer[] {
-  const fields = schema.getFieldList();
+  const fields = schema.fields;
 
   return fields.map((field) => {
     const value = field.getValue(metadata);
