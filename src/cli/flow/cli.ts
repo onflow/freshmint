@@ -13,7 +13,7 @@ function formatArgString(args: any[]) {
   return escapeForShell(JSON.stringify(cadenceArgs));
 }
 
-function formatFreshmintConfigString(configs: string[]) {
+function formatConfigString(configs: string[]) {
   return configs.map((c) => `-f ${c}`).join(' ');
 }
 
@@ -38,7 +38,7 @@ export default class FlowCliWrapper {
 
   async transaction(path: string, signer: string, args: any[]) {
     const argString = formatArgString(args);
-    const configString = formatFreshmintConfigString(this.configs);
+    const configString = formatConfigString(this.configs);
 
     const { stdout: out, stderr: err } = await exec(
       `flow transactions send \
@@ -66,7 +66,7 @@ export default class FlowCliWrapper {
 
   async script(path: string, args: any[]) {
     const argString = formatArgString(args);
-    const configString = formatFreshmintConfigString(this.configs);
+    const configString = formatConfigString(this.configs);
 
     const { stdout: out, stderr: err } = await exec(
       `flow scripts execute \

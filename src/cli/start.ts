@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { Ora } from 'ora';
 import inquirer from 'inquirer';
 import * as fs from 'fs-extra';
-import { FreshmintConfig, ContractType } from './config';
+import { Config, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProject } from './generateProject';
 
@@ -122,7 +122,7 @@ export default async function start(spinner: Ora) {
   // Extend default schema with user fields
   const schema = metadata.defaultSchema.extend(userSchema);
 
-  const config = new FreshmintConfig({
+  const config = new Config({
     contract: {
       name: sanitizeContractName(answers.contractName),
       type: answers.contractType,

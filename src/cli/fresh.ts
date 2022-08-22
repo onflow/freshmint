@@ -3,19 +3,19 @@ import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 
 import FlowGateway from './flow';
 import IPFS from './ipfs';
-import { FreshmintConfig } from './config';
+import { Config } from './config';
 import { Minter, createMinter } from './minters';
 import { Storage } from './storage';
 
 export default class Fresh {
-  config: FreshmintConfig;
+  config: Config;
   network: string;
 
   flowGateway: FlowGateway;
   storage: Storage;
   minter: Minter;
 
-  constructor(config: FreshmintConfig, network: string) {
+  constructor(config: Config, network: string) {
     this.network = network;
 
     this.flowGateway = new FlowGateway(this.network);

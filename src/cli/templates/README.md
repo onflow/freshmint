@@ -18,7 +18,7 @@ This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) f
 flow run
 ```
 
-### FreshmintConfigure your pinning service
+### Configure your pinning service
 
 Freshmint is compatible with [NFT.Storage](https://nft.storage), [Pinata](https://www.pinata.cloud/) and any other pinning service that implements the [IPFS Remote Pinning API](https://ipfs.github.io/pinning-services-api-spec).
 
