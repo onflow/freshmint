@@ -137,7 +137,7 @@ export const Bool = defineField({
 
 export const HTTPFile = defineField({
   id: 'http-file',
-  label: 'HTTP Image',
+  label: 'HTTP File',
   cadenceType: t.String,
   sampleValue: 'sample-image.jpeg',
 });
