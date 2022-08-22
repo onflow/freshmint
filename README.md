@@ -21,7 +21,8 @@ After creating a new project, follow the steps in your project README to get it 
 
 ## Documentation
 
-_TODO: link to documentation_
+- Freshmint CLI user manaul
+- [Node.js usage documentation](docs/nodejs.md)
 
 ## Acknowledgments
 
