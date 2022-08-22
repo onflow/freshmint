@@ -97,8 +97,8 @@ const defaultSchema = metadata.createSchema({
     thumbnail: metadata.IPFSImage()
   },
   // The default schema implements the MetadataViews.Display view.
-  views: [
-    (fields) => metadata.DisplayView({
+  views: (fields) => [
+    metadata.DisplayView({
       name: fields.name,
       description: fields.description,
       thumbnail: fields.thumbnail
