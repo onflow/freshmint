@@ -11,7 +11,7 @@ Freshmint is a framework for building NFT-based applications on Flow.
 ## Quick start 
 
 ```sh
-npm install -g freshmint
+npm install -g freshmint@alpha
 
 # Create a new Freshmint project in ./my-project
 fresh start my-project

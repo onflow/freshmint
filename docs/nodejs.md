@@ -48,7 +48,7 @@ mint and distribute NFTs on Flow from a Node.js application.
 ## Installation
 
 ```sh
-npm i freshmint
+npm i freshmint@alpha
 ```
 
 ## Create & deploy an NFT contract
