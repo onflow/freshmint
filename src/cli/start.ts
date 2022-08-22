@@ -7,10 +7,12 @@ import { Config, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProject } from './generateProject';
 
-const fieldChoices = metadata.fieldTypes.map((fieldType) => ({
-  name: fieldType.label,
-  value: fieldType.id,
-}));
+const fieldChoices = metadata.fieldTypes
+  .filter((fieldType) => fieldType !== metadata.IPFSImage)
+  .map((fieldType) => ({
+    name: fieldType.label,
+    value: fieldType.id,
+  }));
 
 const questions = [
   {
