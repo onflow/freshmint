@@ -134,7 +134,7 @@ const schema = metadata.defaultSchema.extend({
 #### Parse a raw metadata schema
 
 You can represent a metadata schema as a plain JavaScript object,
-which can easily by serialized to JSON, YAML or other format.
+which can easily be serialized to JSON, YAML or other formats.
 
 The `type` field must match a field identifier from the table above.
 
