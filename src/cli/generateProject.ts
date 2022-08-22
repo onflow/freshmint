@@ -185,7 +185,7 @@ function template(src: string, out: string) {
       { name, ...fields },
       {
         allowedProtoMethods: {
-          type: true
+          type: true,
         },
       },
     );

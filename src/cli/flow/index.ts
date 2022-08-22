@@ -55,11 +55,7 @@ export default class FlowGateway {
       })),
     ];
 
-    return await this.flow.transaction(
-      './cadence/transactions/create_editions.cdc',
-      `${this.network}-account`,
-      args,
-    );
+    return await this.flow.transaction('./cadence/transactions/create_editions.cdc', `${this.network}-account`, args);
   }
 
   async mintEdition(editionIds: string[], editionSerials: string[]) {
