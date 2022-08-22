@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@fresh-js/core": "^0.0.6",
-    "@fresh-js/crypto": "^0.0.7",
     "@onflow/decode": "0.0.11",
     "@onflow/fcl": "^1.2.0",
     "@onflow/types": "^1.0.3",
@@ -53,7 +52,8 @@
     "ora": "^5.4.1",
     "pouchdb": "^7.2.2",
     "pouchdb-find": "^7.2.2",
-    "progress": "^2.0.3"
+    "progress": "^2.0.3",
+    "sha3": "^2.1.4"
   },
   "devDependencies": {
     "@types/elliptic": "^6.4.14",

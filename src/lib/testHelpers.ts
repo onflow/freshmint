@@ -1,11 +1,11 @@
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
 
-import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from '@fresh-js/crypto';
 import { Authorizer } from '@fresh-js/core';
 
 import { FreshmintConfig } from './config';
 import { FreshmintClient } from './client';
+import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from './crypto';
 
 fcl.config().put('accessNode.api', 'http://localhost:8888');
 

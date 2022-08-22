@@ -2,7 +2,7 @@
 import * as fcl from '@onflow/fcl';
 
 import { Authorizer, Config } from '@fresh-js/core';
-import { PublicKey, HashAlgorithm } from '@fresh-js/crypto';
+import { PublicKey, HashAlgorithm } from '../crypto';
 
 import * as metadata from '../metadata';
 import { StandardNFTContract, NFTMintResult } from '../contracts/StandardNFTContract';

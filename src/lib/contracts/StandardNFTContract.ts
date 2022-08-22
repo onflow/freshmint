@@ -4,7 +4,7 @@ import * as fcl from '@onflow/fcl';
 import * as t from '@onflow/types';
 
 import { Event } from '@fresh-js/core';
-import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
+import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
 
 import NFTContract from './NFTContract';
 import { MetadataMap } from '../metadata';

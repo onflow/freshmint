@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { SHA3_256Hasher } from '@fresh-js/crypto';
+import { SHA3_256Hasher } from './crypto';
 
 export function hashValues(values: Buffer[]): Buffer {
   const hasher = new SHA3_256Hasher();

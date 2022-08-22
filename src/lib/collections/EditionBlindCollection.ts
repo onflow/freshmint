@@ -2,7 +2,6 @@
 import * as fcl from '@onflow/fcl';
 
 import { Authorizer, Config } from '@fresh-js/core';
-import { PublicKey, HashAlgorithm } from '@fresh-js/crypto';
 
 import * as metadata from '../metadata';
 import {
@@ -16,6 +15,7 @@ import {
 } from '../contracts/BlindEditionNFTContract';
 import { FreshmintClient } from '../client';
 import NFTCollection from './NFTCollection';
+import { HashAlgorithm, PublicKey } from '../crypto';
 
 export class EditionBlindCollection implements NFTCollection {
   config: Config;

@@ -2,7 +2,7 @@
 import * as fcl from '@onflow/fcl';
 
 import { Authorizer, Config } from '@fresh-js/core';
-import { PublicKey, HashAlgorithm } from '@fresh-js/crypto';
+import { PublicKey, HashAlgorithm } from '../crypto';
 
 import { FreshmintClient } from '../client';
 import { BlindNFTContract, NFTMintResult, NFTRevealInput, NFTRevealResult } from '../contracts/BlindNFTContract';
