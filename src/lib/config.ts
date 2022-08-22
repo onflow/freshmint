@@ -4,6 +4,13 @@ export type FreshmintConfig = {
   imports: ContractImports;
 };
 
+export type LegacyFreshmintConfig = {
+  host: string;
+  contracts: {
+    [key: string]: string;
+  };
+};
+
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace FreshmintConfig {
   export const EMULATOR = {

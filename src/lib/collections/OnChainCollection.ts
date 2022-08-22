@@ -1,16 +1,16 @@
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
 
-import { Authorizer, Config } from '@fresh-js/core';
-import { PublicKey, HashAlgorithm } from '../crypto';
-
-import * as metadata from '../metadata';
+import { LegacyFreshmintConfig } from '../config';
+import NFTCollection from './NFTCollection';
 import { StandardNFTContract, NFTMintResult } from '../contracts/StandardNFTContract';
 import { FreshmintClient } from '../client';
-import NFTCollection from './NFTCollection';
+import * as metadata from '../metadata';
+import { PublicKey, HashAlgorithm } from '../crypto';
+import { TransactionAuthorizer } from '../transactions';
 
 export class OnChainCollection implements NFTCollection {
-  config: Config;
+  config: LegacyFreshmintConfig;
   client: FreshmintClient;
   contract: StandardNFTContract;
 
@@ -23,13 +23,13 @@ export class OnChainCollection implements NFTCollection {
     payer,
     proposer,
   }: {
-    config: Config;
+    config: LegacyFreshmintConfig;
     name: string;
     address?: string;
     schema: metadata.Schema;
-    owner?: Authorizer;
-    payer?: Authorizer;
-    proposer?: Authorizer;
+    owner?: TransactionAuthorizer;
+    payer?: TransactionAuthorizer;
+    proposer?: TransactionAuthorizer;
   }) {
     this.config = config;
 

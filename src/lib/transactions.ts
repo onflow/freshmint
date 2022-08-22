@@ -1,18 +1,57 @@
-import { Authorizer, Event } from '@fresh-js/core';
+// @ts-ignore
+import { withPrefix, sansPrefix } from '@onflow/util-address';
+
 import { FreshmintConfig } from './config';
+import { Signer } from './crypto';
 import { FCL, FCLTransaction } from './fcl';
+
+const toHex = (buffer: Buffer) => buffer.toString('hex');
+const fromHex = (hex: string) => Buffer.from(hex, 'hex');
 
 export interface TransactionResult {
   transactionId: string;
-  events: Event[];
+  events: TransactionEvent[];
+}
+
+export type TransactionEvent = {
+  type: string;
+  data: { [key: string]: string };
+};
+
+export class TransactionAuthorizer {
+  address: string;
+  keyIndex: number;
+  signer: Signer;
+
+  constructor({ address, keyIndex, signer }: { address: string; keyIndex: number; signer: Signer }) {
+    this.address = address;
+    this.keyIndex = keyIndex;
+    this.signer = signer;
+  }
+
+  toFCLAuthorizationFunction() {
+    return async (account = {}) => {
+      return {
+        ...account,
+        tempId: 'SIGNER',
+        addr: sansPrefix(this.address),
+        keyId: this.keyIndex,
+        signingFunction: (data: { message: string }) => ({
+          addr: withPrefix(this.address),
+          keyId: this.keyIndex,
+          signature: toHex(this.signer.sign(fromHex(data.message))),
+        }),
+      };
+    };
+  }
 }
 
 export type TransactionResultTransformer<T> = (result: TransactionResult) => T;
 
 export type TransactionSigners = {
-  payer: Authorizer;
-  proposer: Authorizer;
-  authorizers: Authorizer[];
+  payer: TransactionAuthorizer;
+  proposer: TransactionAuthorizer;
+  authorizers: TransactionAuthorizer[];
 };
 
 export type TransactionBody = {

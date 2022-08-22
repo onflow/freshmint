@@ -3,7 +3,6 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { Event } from '@fresh-js/core';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
 
 import NFTContract from './NFTContract';
@@ -61,7 +60,7 @@ export class StandardNFTContract extends NFTContract {
         };
       },
       ({ events }: TransactionResult) => {
-        const accountCreatedEvent = events.find((event: Event) => event.type === 'flow.AccountCreated');
+        const accountCreatedEvent = events.find((event) => event.type === 'flow.AccountCreated');
 
         const address = accountCreatedEvent?.data['address'];
 

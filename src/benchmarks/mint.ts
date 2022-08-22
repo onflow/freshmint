@@ -1,10 +1,9 @@
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
 
-import { Authorizer } from '@fresh-js/core';
-import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from '@fresh-js/crypto';
-
 import { FreshmintConfig, FreshmintClient, metadata, BlindNFTContract } from '../lib';
+import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from '../lib/crypto';
+import { TransactionAuthorizer } from '../lib/transactions';
 
 function makeId(length: number) {
   let result = '';
@@ -42,7 +41,7 @@ const MINTER_PRIVATE_KEY = process.env.MINTER_PRIVATE_KEY!; // eslint-disable-li
 const privateKey = InMemoryECPrivateKey.fromHex(MINTER_PRIVATE_KEY, SignatureAlgorithm.ECDSA_P256);
 const signer = new InMemoryECSigner(privateKey, HashAlgorithm.SHA3_256);
 
-const ownerAuthorizer = new Authorizer({ address: MINTER_ADDRESS, keyIndex: 0, signer });
+const ownerAuthorizer = new TransactionAuthorizer({ address: MINTER_ADDRESS, keyIndex: 0, signer });
 
 const schema = metadata.defaultSchema.extend({
   aa: metadata.String(),

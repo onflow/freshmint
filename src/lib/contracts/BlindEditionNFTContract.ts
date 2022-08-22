@@ -3,15 +3,13 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { Event } from '@fresh-js/core';
-import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
-
 import NFTContract from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { BlindEditionNFTGenerator } from '../generators/BlindEditionNFTGenerator';
 import { hashValuesWithSalt } from '../hash';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
+import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
 
 export type EditionInput = {
   size: number;
@@ -103,7 +101,7 @@ export class BlindEditionNFTContract extends NFTContract {
         };
       },
       ({ events }: TransactionResult) => {
-        const accountCreatedEvent = events.find((event: Event) => event.type === 'flow.AccountCreated');
+        const accountCreatedEvent = events.find((event) => event.type === 'flow.AccountCreated');
 
         const address = accountCreatedEvent?.data['address'];
 

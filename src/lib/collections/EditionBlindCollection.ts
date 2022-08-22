@@ -1,9 +1,8 @@
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
 
-import { Authorizer, Config } from '@fresh-js/core';
-
-import * as metadata from '../metadata';
+import { LegacyFreshmintConfig } from '../config';
+import NFTCollection from './NFTCollection';
 import {
   BlindEditionNFTContract,
   EditionInput,
@@ -14,11 +13,12 @@ import {
   NFTRevealResult,
 } from '../contracts/BlindEditionNFTContract';
 import { FreshmintClient } from '../client';
-import NFTCollection from './NFTCollection';
 import { HashAlgorithm, PublicKey } from '../crypto';
+import * as metadata from '../metadata';
+import { TransactionAuthorizer } from '../transactions';
 
 export class EditionBlindCollection implements NFTCollection {
-  config: Config;
+  config: LegacyFreshmintConfig;
   client: FreshmintClient;
   contract: BlindEditionNFTContract;
 
@@ -31,13 +31,13 @@ export class EditionBlindCollection implements NFTCollection {
     payer,
     proposer,
   }: {
-    config: Config;
+    config: LegacyFreshmintConfig;
     name: string;
     address?: string;
     schema: metadata.Schema;
-    owner?: Authorizer;
-    payer?: Authorizer;
-    proposer?: Authorizer;
+    owner?: TransactionAuthorizer;
+    payer?: TransactionAuthorizer;
+    proposer?: TransactionAuthorizer;
   }) {
     this.config = config;
 

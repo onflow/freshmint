@@ -1,10 +1,11 @@
-import { Authorizer, Config } from '@fresh-js/core';
-import NFTCollection from '../collections/NFTCollection';
-import { ClaimSaleContract } from '../contracts/ClaimSaleContract';
+import { LegacyFreshmintConfig } from '../config';
 import { FreshmintClient } from '../client';
+import { ClaimSaleContract } from '../contracts/ClaimSaleContract';
+import NFTCollection from '../collections/NFTCollection';
+import { TransactionAuthorizer } from '../transactions';
 
 export class ClaimSale {
-  config: Config;
+  config: LegacyFreshmintConfig;
   client: FreshmintClient;
   sale: ClaimSaleContract;
 
@@ -26,7 +27,7 @@ export class ClaimSale {
     return this.client.send(this.sale.stop(id));
   }
 
-  async claimNFT(saleAddress: string, authorizer: Authorizer, saleId: string): Promise<string> {
+  async claimNFT(saleAddress: string, authorizer: TransactionAuthorizer, saleId: string): Promise<string> {
     return this.client.send(this.sale.claimNFT(saleAddress, authorizer, saleId));
   }
 }

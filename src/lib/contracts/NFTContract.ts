@@ -1,6 +1,5 @@
-import { Authorizer } from '@fresh-js/core';
 import * as metadata from '../metadata';
-import { TransactionSigners } from '../transactions';
+import { TransactionAuthorizer, TransactionSigners } from '../transactions';
 
 export default abstract class NFTContract {
   name: string;
@@ -8,9 +7,9 @@ export default abstract class NFTContract {
 
   schema: metadata.Schema;
 
-  owner?: Authorizer;
-  payer?: Authorizer;
-  proposer?: Authorizer;
+  owner?: TransactionAuthorizer;
+  payer?: TransactionAuthorizer;
+  proposer?: TransactionAuthorizer;
 
   constructor({
     name,
@@ -23,9 +22,9 @@ export default abstract class NFTContract {
     name: string;
     address?: string;
     schema: metadata.Schema;
-    owner?: Authorizer;
-    payer?: Authorizer;
-    proposer?: Authorizer;
+    owner?: TransactionAuthorizer;
+    payer?: TransactionAuthorizer;
+    proposer?: TransactionAuthorizer;
   }) {
     this.name = name;
     this.address = address;
@@ -37,15 +36,15 @@ export default abstract class NFTContract {
     this.proposer = proposer;
   }
 
-  setOwner(authorizer: Authorizer) {
+  setOwner(authorizer: TransactionAuthorizer) {
     this.owner = authorizer;
   }
 
-  setPayer(authorizer: Authorizer) {
+  setPayer(authorizer: TransactionAuthorizer) {
     this.payer = authorizer;
   }
 
-  setProposer(authorizer: Authorizer) {
+  setProposer(authorizer: TransactionAuthorizer) {
     this.proposer = authorizer;
   }
 

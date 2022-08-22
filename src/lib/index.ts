@@ -4,6 +4,8 @@ export { FreshmintConfig, ContractImports } from './config';
 
 export { FreshmintClient } from './client';
 
+export { Transaction, TransactionAuthorizer, TransactionResult, TransactionEvent } from './transactions';
+
 export { StandardNFTContract } from './contracts/StandardNFTContract';
 export { BlindNFTContract } from './contracts/BlindNFTContract';
 export { EditionNFTContract } from './contracts/EditionNFTContract';

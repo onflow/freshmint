@@ -1,10 +1,9 @@
-import { Config } from '@fresh-js/core';
-
+import { LegacyFreshmintConfig } from '../config';
 import { FreshmintClient } from '../client';
 import NFTContract from '../contracts/NFTContract';
 
 export default interface NFTCollection {
-  config: Config;
+  config: LegacyFreshmintConfig;
   client: FreshmintClient;
   contract: NFTContract;
 }

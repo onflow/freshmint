@@ -5,11 +5,10 @@ import * as fcl from '@onflow/fcl';
 import * as t from '@onflow/types';
 
 import { ClaimSaleGenerator } from '../generators/ClaimSaleGenerator';
-import { Authorizer, Event } from '@fresh-js/core';
 
 import NFTContract from './NFTContract';
 import { FreshmintConfig, ContractImports } from '../config';
-import { Transaction, TransactionResult } from '../transactions';
+import { Transaction, TransactionAuthorizer, TransactionResult } from '../transactions';
 
 export class ClaimSaleContract {
   nftContract: NFTContract;
@@ -66,7 +65,7 @@ export class ClaimSaleContract {
   // access to the "admin" settings of a project.
   //
   // What is the best way to separate the two?
-  claimNFT(saleAddress: string, authorizer: Authorizer, saleId: string): Transaction<string> {
+  claimNFT(saleAddress: string, authorizer: TransactionAuthorizer, saleId: string): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
         const script = ClaimSaleGenerator.claimNFT({
@@ -80,11 +79,15 @@ export class ClaimSaleContract {
           script,
           args: [fcl.arg(saleAddress, t.Address), fcl.arg(saleId, t.String)],
           computeLimit: 9999,
-          signers: this.nftContract.getSigners(),
+          signers: {
+            payer: authorizer,
+            proposer: authorizer,
+            authorizers: [authorizer],
+          },
         };
       },
       ({ events }: TransactionResult) => {
-        const claimedEvent: Event = events.find((event: Event) => event.type.includes('.Claimed'));
+        const claimedEvent = events.find((event) => event.type.includes('.Claimed'));
 
         const nftId = claimedEvent.data['nftID'];
 

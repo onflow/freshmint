@@ -1,5 +1,5 @@
 import * as elliptic from 'elliptic';
-import { InMemoryECPrivateKey, SignatureAlgorithm } from '@fresh-js/crypto';
+import { InMemoryECPrivateKey, SignatureAlgorithm } from '../lib/crypto';
 
 export function generateClaimKeyPairs(count: number) {
   const privateKeys = [];
