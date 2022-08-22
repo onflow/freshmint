@@ -80,7 +80,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   if (includeCSVFile) {
-    await createNFTsCSVFile(dir, config.contract.name, { schema: config.contract.schema });
+    await createNFTsCSVFile(dir, config.contract.name, { fields: config.contract.schema.fields });
   }
 }
 
@@ -130,7 +130,7 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   if (includeCSVFile) {
-    await createEditionsCSVFile(dir, config.contract.name, { schema: config.contract.schema });
+    await createEditionsCSVFile(dir, config.contract.name, { fields: config.contract.schema.fields });
   }
 }
 
@@ -185,7 +185,7 @@ function template(src: string, out: string) {
       { name, ...fields },
       {
         allowedProtoMethods: {
-          type: true,
+          type: true
         },
       },
     );
