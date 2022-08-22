@@ -183,18 +183,18 @@ mint, reveal and manage your NFTs.
 
 #### Define an authorizer
 
-The owner is defined as an `Authorizer`, an object that can authorize transactions for a specific Flow account.
+The owner is defined as a `TransactionAuthorizer`, an object that can authorize transactions for a specific Flow account.
 
 The snippet below shows how to define an authorizer from an ECDSA private key.
 
 ```js
-import { Authorizer } from '@fresh-js/core';
+import { TransactionAuthorizer } from 'freshmint';
 import { 
   InMemoryECPrivateKey, 
   InMemoryECSigner, 
   HashAlgorithm,
   SignatureAlgorithm
-} from '@fresh-js/crypto';
+} from 'freshmint/crypto';
 
 const privateKey = InMemoryECPrivateKey.fromHex(
   process.env.PRIVATE_KEY, 
@@ -202,7 +202,7 @@ const privateKey = InMemoryECPrivateKey.fromHex(
 );
 const signer = new InMemoryECSigner(privateKey, HashAlgorithm.SHA3_256);
 
-const authorizer = new Authorizer({ 
+const authorizer = new TransactionAuthorizer({ 
   address: '0xf8d6e0586b0a20c7',
   keyIndex: 0,
   signer,
@@ -270,7 +270,7 @@ const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 Then deploy the contract using the `deploy()` transaction method.
 
 ```js
-import { HashAlgorithm } from '@fresh-js/crypto';
+import { HashAlgorithm } from 'freshmint/crypto';
 
 const contract = new StandardNFTContract(...);
 
@@ -292,11 +292,10 @@ const contractAddress = await client.send(deployTransaction);
 The `StandardNFTContract` allows you to mint simple one-of-a-kind NFTs.
 
 ```js
-import { Authorizer } from '@fresh-js/core';
-import { StandardNFTContract, metadata } from 'freshmint';
+import { StandardNFTContract, TransactionAuthorizer, metadata } from 'freshmint';
 
 // Intialize your owner authorizer.
-const owner = new Authorizer(...);
+const owner = new TransactionAuthorizer(...);
 
 const contract = new StandardNFTContract({
   name: 'MyEditionNFTContract',
@@ -310,7 +309,7 @@ const contract = new StandardNFTContract({
 ```js
 import * as fcl from '@onflow/fcl';
 import { FreshmintClient, FreshmintConfig } from 'freshmint';
-import { HashAlgorithm } from '@fresh-js/crypto';
+import { HashAlgorithm } from 'freshmint/crypto';
 
 // Specify a public key (with hash algorithm)
 // to attach to the contract account.
@@ -382,11 +381,10 @@ All NFTs in an editions share the same metadata;
 only their serial numbers are different.
 
 ```js
-import { Authorizer } from '@fresh-js/core';
-import { EditionNFTContract, metadata } from 'freshmint';
+import { EditionNFTContract, TransactionAuthorizer, metadata } from 'freshmint';
 
 // Intialize your owner authorizer.
-const owner = new Authorizer(...);
+const owner = new TransactionAuthorizer(...);
 
 const contract = new EditionNFTContract({
   name: 'MyEditionNFTContract',
@@ -400,7 +398,7 @@ const contract = new EditionNFTContract({
 ```js
 import * as fcl from '@onflow/fcl';
 import { FreshmintClient, FreshmintConfig } from 'freshmint';
-import { HashAlgorithm } from '@fresh-js/crypto';
+import { HashAlgorithm } from 'freshmint/crypto';
 
 // Specify a public key (with hash algorithm)
 // to attach to the contract account.
@@ -545,11 +543,10 @@ The hidden NFT is converted into a full NFT containing a complete
 on-chain metadata record.
 
 ```js
-import { Authorizer } from '@fresh-js/core';
-import { BlindNFTContract, metadata } from 'freshmint';
+import { BlindNFTContract, TransactionAuthorizer, metadata } from 'freshmint';
 
 // Intialize your owner authorizer.
-const owner = new Authorizer(...);
+const owner = new TransactionAuthorizer(...);
 
 const contract = new BlindNFTContract({
   name: 'MyNFTContract',
@@ -563,7 +560,7 @@ const contract = new BlindNFTContract({
 ```js
 import * as fcl from '@onflow/fcl';
 import { FreshmintClient, FreshmintConfig } from 'freshmint';
-import { HashAlgorithm } from '@fresh-js/crypto';
+import { HashAlgorithm } from 'freshmint/crypto';
 
 // Specify a public key (with hash algorithm)
 // to attach to the contract account.
@@ -694,11 +691,10 @@ All NFTs in an edition share the same metadata;
 only their serial numbers are different.
 
 ```js
-import { Authorizer } from '@fresh-js/core';
-import { BlindEditionNFTContract, metadata } from 'freshmint';
+import { BlindEditionNFTContract, TransactionAuthorizer, metadata } from 'freshmint';
 
 // Intialize your owner authorizer.
-const owner = new Authorizer(...);
+const owner = new TransactionAuthorizer(...);
 
 const contract = new BlindEditionNFTContract({
   name: 'MyEditionNFTContract',
@@ -712,7 +708,7 @@ const contract = new BlindEditionNFTContract({
 ```js
 import * as fcl from '@onflow/fcl';
 import { FreshmintClient, FreshmintConfig } from 'freshmint';
-import { HashAlgorithm } from '@fresh-js/crypto';
+import { HashAlgorithm } from 'freshmint/crypto';
 
 // Specify a public key (with hash algorithm)
 // to attach to the contract account.
