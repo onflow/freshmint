@@ -1,4 +1,4 @@
-import { ContractConfig, ContractType } from '../config';
+import { ContractFreshmintConfig, ContractType } from '../config';
 import FlowGateway from '../flow';
 import IPFS from '../ipfs';
 import { EditionMinter } from './EditionMinter';
@@ -17,7 +17,7 @@ export interface Minter {
 }
 
 export function createMinter(
-  contract: ContractConfig,
+  contract: ContractFreshmintConfig,
   nftAssetPath: string,
   ipfs: IPFS,
   flowGateway: FlowGateway,

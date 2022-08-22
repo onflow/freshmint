@@ -5,7 +5,7 @@ import { NFTMintResult } from '../contracts/BlindNFTContract';
 import { ClaimSale } from '../sales/ClaimSale';
 
 import {
-  legacyConfig,
+  legacyFreshmintConfig,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
@@ -14,7 +14,7 @@ import {
 
 describe('OnChainBlindCollection', () => {
   const collection = new OnChainBlindCollection({
-    config: legacyConfig,
+    config: legacyFreshmintConfig,
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,

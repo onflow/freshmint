@@ -13,7 +13,7 @@ import inquirer from 'inquirer';
 import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
-import { Config, ContractType } from './config';
+import { FreshmintConfig, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
 
@@ -73,7 +73,7 @@ async function mint({
   claim: boolean;
   batchSize: string;
 }) {
-  const config = Config.load();
+  const config = FreshmintConfig.load();
   const fresh = new Fresh(config, network);
 
   if (!data) {
@@ -125,7 +125,7 @@ async function mint({
 }
 
 async function getNFT(tokenId: string, { network }: { network: string }) {
-  const config = Config.load();
+  const config = FreshmintConfig.load();
   const fresh = new Fresh(config, network);
 
   const schema = config.contract.schema;
@@ -160,7 +160,7 @@ function getNFTOutput(
 }
 
 async function dumpNFTs(csvPath: string, { network }: { network: string }) {
-  const config = Config.load();
+  const config = FreshmintConfig.load();
   const fresh = new Fresh(config, network);
 
   const count = await fresh.dumpNFTs(csvPath);
@@ -169,7 +169,7 @@ async function dumpNFTs(csvPath: string, { network }: { network: string }) {
 }
 
 async function generateCadence() {
-  const config = Config.load();
+  const config = FreshmintConfig.load();
 
   await generateProjectCadence('./', config, false);
 

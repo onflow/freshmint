@@ -5,7 +5,7 @@ import { EditionResult, NFTMintResult } from '../contracts/BlindEditionNFTContra
 import { ClaimSale } from '../sales/ClaimSale';
 
 import {
-  legacyConfig,
+  legacyFreshmintConfig,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
@@ -14,7 +14,7 @@ import {
 
 describe('EditionBlindCollection', () => {
   const collection = new EditionBlindCollection({
-    config: legacyConfig,
+    config: legacyFreshmintConfig,
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,

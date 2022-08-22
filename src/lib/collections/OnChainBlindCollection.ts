@@ -4,14 +4,14 @@ import * as fcl from '@onflow/fcl';
 import { Authorizer, Config } from '@fresh-js/core';
 import { PublicKey, HashAlgorithm } from '@fresh-js/crypto';
 
-import { FlowClient } from '../client';
+import { FreshmintClient } from '../client';
 import { BlindNFTContract, NFTMintResult, NFTRevealInput, NFTRevealResult } from '../contracts/BlindNFTContract';
 import * as metadata from '../metadata';
 import NFTCollection from './NFTCollection';
 
 export class OnChainBlindCollection implements NFTCollection {
   config: Config;
-  client: FlowClient;
+  client: FreshmintClient;
   contract: BlindNFTContract;
 
   constructor({
@@ -35,7 +35,7 @@ export class OnChainBlindCollection implements NFTCollection {
 
     fcl.config().put('accessNode.api', config.host);
 
-    this.client = FlowClient.fromFCL(fcl, { imports: config.contracts });
+    this.client = FreshmintClient.fromFCL(fcl, { imports: config.contracts });
 
     this.contract = new BlindNFTContract({
       name,

@@ -2,23 +2,23 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
 import { ContractImports, StandardNFTGenerator, EditionNFTGenerator, NFTAirDropGenerator } from '../lib';
-import { Config, ContractType } from './config';
+import { FreshmintConfig, ContractType } from './config';
 
-export async function generateProject(dir: string, config: Config) {
+export async function generateProject(dir: string, config: FreshmintConfig) {
   await createScaffold(dir);
 
   config.save(dir);
 
   await generateProjectCadence(dir, config);
 
-  await createFlowConfig(dir, config.contract.name);
-  await createFlowTestnetConfig(dir, config.contract.name);
-  await createFlowMainnetConfig(dir, config.contract.name);
+  await createFlowFreshmintConfig(dir, config.contract.name);
+  await createFlowTestnetFreshmintConfig(dir, config.contract.name);
+  await createFlowMainnetFreshmintConfig(dir, config.contract.name);
 
   await createReadme(dir, config.contract.name, { nftDataPath: config.nftDataPath });
 }
 
-export async function generateProjectCadence(dir: string, config: Config, includeCSVFile = true) {
+export async function generateProjectCadence(dir: string, config: FreshmintConfig, includeCSVFile = true) {
   const imports = {
     NonFungibleToken: `"./NonFungibleToken.cdc"`,
     MetadataViews: `"./MetadataViews.cdc"`,
@@ -41,7 +41,7 @@ export async function generateProjectCadence(dir: string, config: Config, includ
   await createGetNFTScript(dir, config.contract.name);
 }
 
-async function generateStandardProject(dir: string, config: Config, imports: ContractImports, includeCSVFile = true) {
+async function generateStandardProject(dir: string, config: FreshmintConfig, imports: ContractImports, includeCSVFile = true) {
   const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
 
   const contract = StandardNFTGenerator.contract({
@@ -84,7 +84,7 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
   }
 }
 
-async function generateEditionProject(dir: string, config: Config, imports: ContractImports, includeCSVFile = true) {
+async function generateEditionProject(dir: string, config: FreshmintConfig, imports: ContractImports, includeCSVFile = true) {
   const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
 
   const contract = EditionNFTGenerator.contract({
@@ -167,11 +167,11 @@ const createGetNFTScript = template('templates/cadence/scripts/get_nft.cdc', 'ca
 const createNFTsCSVFile = template('templates/nfts.csv', 'nfts.csv');
 const createEditionsCSVFile = template('templates/editions.csv', 'editions.csv');
 
-const createFlowConfig = template('templates/flow.json', 'flow.json');
+const createFlowFreshmintConfig = template('templates/flow.json', 'flow.json');
 
-const createFlowTestnetConfig = template('templates/flow.testnet.json', 'flow.testnet.json');
+const createFlowTestnetFreshmintConfig = template('templates/flow.testnet.json', 'flow.testnet.json');
 
-const createFlowMainnetConfig = template('templates/flow.mainnet.json', 'flow.mainnet.json');
+const createFlowMainnetFreshmintConfig = template('templates/flow.mainnet.json', 'flow.mainnet.json');
 
 const createReadme = template('templates/README.md', 'README.md');
 

@@ -1,8 +1,8 @@
 export { version } from './version';
 
-export { Config, ContractImports } from './config';
+export { FreshmintConfig, ContractImports } from './config';
 
-export { FlowClient } from './client';
+export { FreshmintClient } from './client';
 
 export { StandardNFTContract } from './contracts/StandardNFTContract';
 export { BlindNFTContract } from './contracts/BlindNFTContract';

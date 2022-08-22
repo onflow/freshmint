@@ -10,7 +10,7 @@ import NFTContract from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { BlindEditionNFTGenerator } from '../generators/BlindEditionNFTGenerator';
 import { hashValuesWithSalt } from '../hash';
-import { Config, ContractImports } from '../config';
+import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
 
 export type EditionInput = {
@@ -77,7 +77,7 @@ export class BlindEditionNFTContract extends NFTContract {
     },
   ): Transaction<string> {
     return new Transaction(
-      ({ imports }: Config) => {
+      ({ imports }: FreshmintConfig) => {
         const script = BlindEditionNFTGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
@@ -130,7 +130,7 @@ export class BlindEditionNFTContract extends NFTContract {
   }
 
   private makeCreateEditionsTransaction(editions: EditionInput[]) {
-    return ({ imports }: Config) => {
+    return ({ imports }: FreshmintConfig) => {
       const script = BlindEditionNFTGenerator.createEditions({
         imports,
         contractName: this.name,
@@ -177,7 +177,7 @@ export class BlindEditionNFTContract extends NFTContract {
   }
 
   private makeMintNFTsTransaction(hashedNFTs: HashedEditionNFT[], { bucket }: { bucket?: string } = {}) {
-    return ({ imports }: Config) => {
+    return ({ imports }: FreshmintConfig) => {
       const script = BlindEditionNFTGenerator.mint({
         imports,
         contractName: this.name,
@@ -212,7 +212,7 @@ export class BlindEditionNFTContract extends NFTContract {
   }
 
   private makeRevealNFTsTransaction(nfts: NFTRevealInput[]) {
-    return ({ imports }: Config) => {
+    return ({ imports }: FreshmintConfig) => {
       const script = BlindEditionNFTGenerator.reveal({
         imports,
         contractName: this.name,

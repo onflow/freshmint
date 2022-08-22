@@ -9,7 +9,7 @@ import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '@fresh-js/crypto';
 import NFTContract from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { EditionNFTGenerator } from '../generators/EditionNFTGenerator';
-import { Config, ContractImports } from '../config';
+import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
 
 export type EditionInput = {
@@ -54,7 +54,7 @@ export class EditionNFTContract extends NFTContract {
     },
   ): Transaction<string> {
     return new Transaction(
-      ({ imports }: Config) => {
+      ({ imports }: FreshmintConfig) => {
         const script = EditionNFTGenerator.deploy();
 
         const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
@@ -106,7 +106,7 @@ export class EditionNFTContract extends NFTContract {
   }
 
   private makeCreateEditionsTransaction(editions: EditionInput[]) {
-    return ({ imports }: Config) => {
+    return ({ imports }: FreshmintConfig) => {
       const script = EditionNFTGenerator.createEditions({
         imports,
         contractName: this.name,
@@ -150,7 +150,7 @@ export class EditionNFTContract extends NFTContract {
   }
 
   private makeMintNFTsTransaction(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}) {
-    return ({ imports }: Config) => {
+    return ({ imports }: FreshmintConfig) => {
       const script = EditionNFTGenerator.mint({
         imports,
         contractName: this.name,

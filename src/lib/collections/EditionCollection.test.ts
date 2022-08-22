@@ -5,7 +5,7 @@ import { EditionResult } from '../contracts/EditionNFTContract';
 import { ClaimSale } from '../sales/ClaimSale';
 
 import {
-  legacyConfig,
+  legacyFreshmintConfig,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
@@ -14,7 +14,7 @@ import {
 
 describe('EditionCollection', () => {
   const collection = new EditionCollection({
-    config: legacyConfig,
+    config: legacyFreshmintConfig,
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,

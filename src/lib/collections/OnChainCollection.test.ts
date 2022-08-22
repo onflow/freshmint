@@ -4,7 +4,7 @@ import { OnChainCollection } from './OnChainCollection';
 import { ClaimSale } from '../sales/ClaimSale';
 
 import {
-  legacyConfig,
+  legacyFreshmintConfig,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
@@ -13,7 +13,7 @@ import {
 
 describe('OnChainCollection', () => {
   const collection = new OnChainCollection({
-    config: legacyConfig,
+    config: legacyFreshmintConfig,
     name: randomContractName(),
     schema: metadata.defaultSchema,
     owner: ownerAuthorizer,

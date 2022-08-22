@@ -1,18 +1,18 @@
-import { Config } from './config';
+import { FreshmintConfig } from './config';
 import { FCL } from './fcl';
 import { Transaction, convertTransactionError } from './transactions';
 
-export class FlowClient {
+export class FreshmintClient {
   fcl: FCL;
-  config: Config;
+  config: FreshmintConfig;
 
-  private constructor(fcl: FCL, config?: Config) {
+  private constructor(fcl: FCL, config?: FreshmintConfig) {
     this.fcl = fcl;
     this.config = config ?? { imports: {} };
   }
 
-  static fromFCL(fcl: FCL, config?: Config): FlowClient {
-    return new FlowClient(fcl, config);
+  static fromFCL(fcl: FCL, config?: FreshmintConfig): FreshmintClient {
+    return new FreshmintClient(fcl, config);
   }
 
   async send<T = void>(tx: Transaction<T>): Promise<T> {

@@ -258,13 +258,13 @@ const contract = new StandardNFTContract({
 
 ### Deploy the contract
 
-First create a `FlowClient` instance using FCL as a base.
+First create a `FreshmintClient` instance using FCL as a base.
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FlowClient, Config } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from 'freshmint';
 
-const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 ```
 
 Then deploy the contract using the `deploy()` transaction method.
@@ -309,7 +309,7 @@ const contract = new StandardNFTContract({
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FlowClient, Config } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from 'freshmint';
 import { HashAlgorithm } from '@fresh-js/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -317,7 +317,7 @@ import { HashAlgorithm } from '@fresh-js/crypto';
 const publicKey = privateKey.getPublicKey();
 const hashAlgorithm = HashAlgorithm.SHA3_256;
 
-const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
 const address = await client.send(contract.deploy(
   publicKey,
@@ -399,7 +399,7 @@ const contract = new EditionNFTContract({
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FlowClient, Config } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from 'freshmint';
 import { HashAlgorithm } from '@fresh-js/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -407,7 +407,7 @@ import { HashAlgorithm } from '@fresh-js/crypto';
 const publicKey = privateKey.getPublicKey();
 const hashAlgorithm = HashAlgorithm.SHA3_256;
 
-const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
 const address = await client.send(contract.deploy(
   publicKey,
@@ -562,7 +562,7 @@ const contract = new BlindNFTContract({
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FlowClient, Config } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from 'freshmint';
 import { HashAlgorithm } from '@fresh-js/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -574,7 +574,7 @@ const hashAlgorithm = HashAlgorithm.SHA3_256;
 // to be used as a placeholder for hidden NFTs.
 const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam';
 
-const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
 const address = await client.send(contract.deploy(
   publicKey,
@@ -711,7 +711,7 @@ const contract = new BlindEditionNFTContract({
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FlowClient, Config } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from 'freshmint';
 import { HashAlgorithm } from '@fresh-js/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -723,7 +723,7 @@ const hashAlgorithm = HashAlgorithm.SHA3_256;
 // to be used as a placeholder for hidden NFTs.
 const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam';
 
-const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
 const address = await client.send(contract.deploy(
   publicKey,
@@ -904,14 +904,15 @@ the specific NFT.
 
 ```js
 import * as fcl from '@onflow/fcl';
+
 import {
-  FlowClient,
-  Config,
+  FreshmintClient,
+  FreshmintConfig,
   ClaimSaleContract,
   StandardNFTContract
 } from 'freshmint';
 
-const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
 const contract = new StandardNFTContract(...);
 
@@ -936,15 +937,14 @@ users to claim each edition separately and at a different price.
 ```js
 import * as fcl from '@onflow/fcl';
 
-import { FlowClient, Config } from 'freshmint';
 import {
-  FlowClient,
-  Config,
+  FreshmintClient,
+  FreshmintConfig,
   ClaimSaleContract,
   EditionNFTContract
 } from 'freshmint';
 
-const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
 const contract = new EditionNFTContract(...);
 
@@ -976,9 +976,9 @@ This strategy assumes you are using the [claim sale](#claim-sale) distribution m
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FlowClient, Config } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from 'freshmint';
 
-const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
 // This implementation assumes you have the transaction ID
 // of the buyer's claim transaction (i.e. by capturing on your frontend).

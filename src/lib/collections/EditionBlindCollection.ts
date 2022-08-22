@@ -14,12 +14,12 @@ import {
   NFTRevealInput,
   NFTRevealResult,
 } from '../contracts/BlindEditionNFTContract';
-import { FlowClient } from '../client';
+import { FreshmintClient } from '../client';
 import NFTCollection from './NFTCollection';
 
 export class EditionBlindCollection implements NFTCollection {
   config: Config;
-  client: FlowClient;
+  client: FreshmintClient;
   contract: BlindEditionNFTContract;
 
   constructor({
@@ -43,7 +43,7 @@ export class EditionBlindCollection implements NFTCollection {
 
     fcl.config().put('accessNode.api', config.host);
 
-    this.client = FlowClient.fromFCL(fcl, { imports: config.contracts });
+    this.client = FreshmintClient.fromFCL(fcl, { imports: config.contracts });
 
     this.contract = new BlindEditionNFTContract({
       name,

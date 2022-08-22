@@ -1,10 +1,10 @@
 import { Config } from '@fresh-js/core';
 
-import { FlowClient } from '../client';
+import { FreshmintClient } from '../client';
 import NFTContract from '../contracts/NFTContract';
 
 export default interface NFTCollection {
   config: Config;
-  client: FlowClient;
+  client: FreshmintClient;
   contract: NFTContract;
 }

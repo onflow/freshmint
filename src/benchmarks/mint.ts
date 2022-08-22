@@ -4,7 +4,7 @@ import * as fcl from '@onflow/fcl';
 import { Authorizer } from '@fresh-js/core';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from '@fresh-js/crypto';
 
-import { Config, FlowClient, metadata, BlindNFTContract } from '../lib';
+import { FreshmintConfig, FreshmintClient, metadata, BlindNFTContract } from '../lib';
 
 function makeId(length: number) {
   let result = '';
@@ -61,7 +61,7 @@ const schema = metadata.defaultSchema.extend({
 async function main() {
   fcl.config().put('accessNode.api', 'https://rest-testnet.onflow.org');
 
-  const client = FlowClient.fromFCL(fcl, Config.TESTNET);
+  const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
   const contract = new BlindNFTContract({
     name: 'Foo',

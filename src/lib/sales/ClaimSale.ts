@@ -1,11 +1,11 @@
 import { Authorizer, Config } from '@fresh-js/core';
 import NFTCollection from '../collections/NFTCollection';
 import { ClaimSaleContract } from '../contracts/ClaimSaleContract';
-import { FlowClient } from '../client';
+import { FreshmintClient } from '../client';
 
 export class ClaimSale {
   config: Config;
-  client: FlowClient;
+  client: FreshmintClient;
   sale: ClaimSaleContract;
 
   constructor(collection: NFTCollection) {

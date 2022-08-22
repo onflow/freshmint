@@ -1,11 +1,11 @@
 export type ContractImports = { [key: string]: string };
 
-export type Config = {
+export type FreshmintConfig = {
   imports: ContractImports;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace Config {
+export namespace FreshmintConfig {
   export const EMULATOR = {
     imports: {
       FungibleToken: '0xee82856bf20e2aa6',
@@ -16,7 +16,7 @@ export namespace Config {
     },
   };
 
-  export const TESTNET: Config = {
+  export const TESTNET: FreshmintConfig = {
     imports: {
       FungibleToken: '0x9a0766d93b6608b7',
       NonFungibleToken: '0x631e88ae7f1d7c20',
@@ -25,7 +25,7 @@ export namespace Config {
     },
   };
 
-  export const MAINNET: Config = {
+  export const MAINNET: FreshmintConfig = {
     imports: {
       FungibleToken: '0xf233dcee88fe0abe',
       NonFungibleToken: '0x1d7e57aa55817448',

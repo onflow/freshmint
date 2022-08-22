@@ -6,12 +6,12 @@ import { PublicKey, HashAlgorithm } from '@fresh-js/crypto';
 
 import * as metadata from '../metadata';
 import { StandardNFTContract, NFTMintResult } from '../contracts/StandardNFTContract';
-import { FlowClient } from '../client';
+import { FreshmintClient } from '../client';
 import NFTCollection from './NFTCollection';
 
 export class OnChainCollection implements NFTCollection {
   config: Config;
-  client: FlowClient;
+  client: FreshmintClient;
   contract: StandardNFTContract;
 
   constructor({
@@ -35,7 +35,7 @@ export class OnChainCollection implements NFTCollection {
 
     fcl.config().put('accessNode.api', config.host);
 
-    this.client = FlowClient.fromFCL(fcl, { imports: config.contracts });
+    this.client = FreshmintClient.fromFCL(fcl, { imports: config.contracts });
 
     this.contract = new StandardNFTContract({
       name,

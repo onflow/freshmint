@@ -15,19 +15,19 @@ const defaultDataPathStandard = 'nfts.csv';
 const defaultDataPathEdition = 'editions.csv';
 const defaultAssetPath = 'assets';
 
-export type ContractConfig = {
+export type ContractFreshmintConfig = {
   name: string;
   type: ContractType;
   schema: metadata.Schema;
 };
 
-export type IPFSPinningServiceConfig = {
+export type IPFSPinningServiceFreshmintConfig = {
   endpoint: URL;
   key: string;
 };
 
-export type ConfigParameters = {
-  contract: ContractConfig;
+export type FreshmintConfigParameters = {
+  contract: ContractFreshmintConfig;
 
   nftDataPath?: string;
   nftAssetPath?: string;
@@ -38,14 +38,14 @@ export type ConfigParameters = {
   };
 };
 
-export class Config {
-  #config: ConfigParameters;
+export class FreshmintConfig {
+  #config: FreshmintConfigParameters;
 
-  constructor(config: ConfigParameters) {
+  constructor(config: FreshmintConfigParameters) {
     this.#config = config;
   }
 
-  get contract(): ContractConfig {
+  get contract(): ContractFreshmintConfig {
     return this.#config.contract;
   }
 
@@ -66,7 +66,7 @@ export class Config {
     return this.#config.nftAssetPath ?? defaultAssetPath;
   }
 
-  get ipfsPinningService(): IPFSPinningServiceConfig {
+  get ipfsPinningService(): IPFSPinningServiceFreshmintConfig {
     const endpoint = envsubst(this.#config.ipfsPinningService.endpoint);
     const key = envsubst(this.#config.ipfsPinningService.key);
 
@@ -76,25 +76,25 @@ export class Config {
     };
   }
 
-  static load(): Config {
-    const rawConfig = loadRawConfig(configFilename);
+  static load(): FreshmintConfig {
+    const rawFreshmintConfig = loadRawFreshmintConfig(configFilename);
 
-    return new Config({
+    return new FreshmintConfig({
       contract: {
-        name: rawConfig.contract.name,
-        type: rawConfig.contract.type as ContractType,
-        schema: metadata.parseSchema(rawConfig.contract.schema || []),
+        name: rawFreshmintConfig.contract.name,
+        type: rawFreshmintConfig.contract.type as ContractType,
+        schema: metadata.parseSchema(rawFreshmintConfig.contract.schema || []),
       },
 
-      ipfsPinningService: rawConfig.ipfsPinningService,
+      ipfsPinningService: rawFreshmintConfig.ipfsPinningService,
 
-      nftDataPath: rawConfig.nftDataPath,
-      nftAssetPath: rawConfig.nftAssetPath,
+      nftDataPath: rawFreshmintConfig.nftDataPath,
+      nftAssetPath: rawFreshmintConfig.nftAssetPath,
     });
   }
 
   save(basePath?: string) {
-    const rawConfig = {
+    const rawFreshmintConfig = {
       contract: {
         name: this.#config.contract.name,
         type: this.#config.contract.type,
@@ -107,11 +107,11 @@ export class Config {
       nftAssetPath: this.#config.nftAssetPath,
     };
 
-    saveRawConfig(configFilename, rawConfig, basePath);
+    saveRawFreshmintConfig(configFilename, rawFreshmintConfig, basePath);
   }
 }
 
-type RawConfig = {
+type RawFreshmintConfig = {
   contract: {
     name: string;
     type: string;
@@ -129,7 +129,7 @@ type RawConfig = {
 
 const configFilename = 'freshmint.yaml';
 
-function loadRawConfig(filename: string, basePath?: string): RawConfig {
+function loadRawFreshmintConfig(filename: string, basePath?: string): RawFreshmintConfig {
   dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
   const filepath = path.resolve(basePath ?? process.cwd(), filename);
@@ -137,10 +137,10 @@ function loadRawConfig(filename: string, basePath?: string): RawConfig {
 
   const config = yaml.load(contents);
 
-  return config as RawConfig;
+  return config as RawFreshmintConfig;
 }
 
-function saveRawConfig(filename: string, config: RawConfig, basePath?: string) {
+function saveRawFreshmintConfig(filename: string, config: RawFreshmintConfig, basePath?: string) {
   const filepath = path.resolve(basePath ?? process.cwd(), filename);
 
   const contents = yaml.dump(config);

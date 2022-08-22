@@ -8,7 +8,7 @@ import { ClaimSaleGenerator } from '../generators/ClaimSaleGenerator';
 import { Authorizer, Event } from '@fresh-js/core';
 
 import NFTContract from './NFTContract';
-import { Config, ContractImports } from '../config';
+import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
 
 export class ClaimSaleContract {
@@ -25,7 +25,7 @@ export class ClaimSaleContract {
   }
 
   start({ id, price, bucket }: { id: string; price: string; bucket?: string }): Transaction<void> {
-    return new Transaction(({ imports }: Config) => {
+    return new Transaction(({ imports }: FreshmintConfig) => {
       const script = ClaimSaleGenerator.startSale({
         imports,
         contractName: this.nftContract.name,
@@ -43,7 +43,7 @@ export class ClaimSaleContract {
   }
 
   stop(id: string): Transaction<void> {
-    return new Transaction(({ imports }: Config) => {
+    return new Transaction(({ imports }: FreshmintConfig) => {
       const script = ClaimSaleGenerator.stopSale({
         imports,
         contractName: this.nftContract.name,
@@ -68,7 +68,7 @@ export class ClaimSaleContract {
   // What is the best way to separate the two?
   claimNFT(saleAddress: string, authorizer: Authorizer, saleId: string): Transaction<string> {
     return new Transaction(
-      ({ imports }: Config) => {
+      ({ imports }: FreshmintConfig) => {
         const script = ClaimSaleGenerator.claimNFT({
           imports,
           contractName: this.nftContract.name,

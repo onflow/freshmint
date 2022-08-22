@@ -4,15 +4,15 @@ import * as fcl from '@onflow/fcl';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from '@fresh-js/crypto';
 import { Authorizer } from '@fresh-js/core';
 
-import { Config } from './config';
-import { FlowClient } from './client';
+import { FreshmintConfig } from './config';
+import { FreshmintClient } from './client';
 
 fcl.config().put('accessNode.api', 'http://localhost:8888');
 
-export const config = Config.EMULATOR;
-export const client = FlowClient.fromFCL(fcl, config);
+export const config = FreshmintConfig.EMULATOR;
+export const client = FreshmintClient.fromFCL(fcl, config);
 
-export const legacyConfig = {
+export const legacyFreshmintConfig = {
   host: 'http://localhost:8888',
   contracts: config.imports,
 };
