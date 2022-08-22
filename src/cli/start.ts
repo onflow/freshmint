@@ -1,7 +1,8 @@
+import * as fs from 'fs-extra';
+import * as path from 'path';
 import chalk from 'chalk';
 import { Ora } from 'ora';
 import inquirer from 'inquirer';
-import * as fs from 'fs-extra';
 import { Config, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProject } from './generateProject';
@@ -14,25 +15,8 @@ const fieldChoices = metadata.fieldTypes.map((fieldType) => ({
 const questions = [
   {
     type: 'input',
-    name: 'projectName',
-    message: 'Name your new project:',
-    validate: async function (input: string) {
-      if (!input) {
-        return 'Please enter a name for your project.';
-      }
-
-      const exists = await fs.pathExists(input);
-      if (exists) {
-        return 'A project with that name already exists.';
-      }
-
-      return true;
-    },
-  },
-  {
-    type: 'input',
     name: 'contractName',
-    message: 'Name the NFT contract (eg. MyNFT): ',
+    message: 'Contract name (eg. MyNFT): ',
     validate: async function (input: string) {
       if (!input) {
         return 'Please enter a name for your contract.';
@@ -68,7 +52,7 @@ function customFieldQuestions(count: number) {
     {
       type: 'input',
       name: 'name',
-      message: `Custom field ${count} name:`,
+      message: `Field ${count} name:`,
       validate: async function (input: string) {
         if (input !== input.toLowerCase()) {
           return 'Fields must be lowercase.';
@@ -80,7 +64,7 @@ function customFieldQuestions(count: number) {
     {
       type: 'list',
       name: 'type',
-      message: `Custom field ${count} type:`,
+      message: `Field ${count} type:`,
       choices: fieldChoices,
     },
     {
@@ -108,10 +92,21 @@ async function getCustomFields(shouldStart: boolean) {
   return fields;
 }
 
-export default async function start(spinner: Ora) {
+export default async function start(spinner: Ora, projectPath: string) {
+  const isCurrentDirectory = projectPath === '.';
+
+  const projectExists = await fs.pathExists(path.resolve(projectPath, 'freshmint.yaml'));
+  if (projectExists) {
+    throw `A project already exists in ${isCurrentDirectory ? 'the current directory' : 'that directory'}.`;
+  }
+
   const ui = new inquirer.ui.BottomBar();
 
-  ui.log.write(chalk.greenBright('Initializing new project. 🍃\n'));
+  ui.log.write(
+    `${chalk.greenBright('Initializing a new project in')} ${
+      isCurrentDirectory ? chalk.greenBright('the current directory.') : chalk.white(projectPath)
+    } 🍃\n\n`,
+  );
 
   const answers = await inquirer.prompt(questions);
 
@@ -136,15 +131,17 @@ export default async function start(spinner: Ora) {
 
   spinner.start('Generating project files...');
 
-  const dir = answers.projectName;
+  await generateProject(projectPath, config);
 
-  await generateProject(dir, config);
+  spinner.succeed(
+    `✨ Project initialized in ${chalk.white(`${isCurrentDirectory ? 'the current directory.' : projectPath}\n`)}`,
+  );
 
-  spinner.succeed(`✨ Project initialized in ${chalk.white(`./${answers.projectName}\n`)}`);
+  if (!isCurrentDirectory) {
+    ui.log.write(`Use: ${chalk.magentaBright(`cd ${projectPath}`)} to view your new project's files.\n`);
+  }
 
-  ui.log.write(`Use: ${chalk.magentaBright(`cd ./${answers.projectName}`)} to view your new project's files.\n`);
-
-  ui.log.write(`Open ${chalk.blueBright(`./${answers.projectName}/README.md`)} to learn how to use your new project!`);
+  ui.log.write(`Open ${chalk.blueBright(`${projectPath}/README.md`)} to learn how to use your new project!`);
 }
 
 function sanitizeContractName(name: string): string {

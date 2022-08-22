@@ -21,7 +21,7 @@ const program = new Command();
 const spinner = ora();
 
 async function main() {
-  program.command('start').description('initialize a new project').action(start);
+  program.command('start <project-path>').description('initialize a new project').action(start);
 
   program
     .command('mint')
@@ -58,8 +58,8 @@ async function main() {
   await program.parseAsync(process.argv);
 }
 
-async function start() {
-  await startCommand(spinner);
+async function start(projectPath: string) {
+  await startCommand(spinner, projectPath);
 }
 
 async function mint({
@@ -192,6 +192,6 @@ main()
     process.exit(0);
   })
   .catch((err) => {
-    console.error(err);
+    console.error(chalk.red(err));
     process.exit(1);
   });
