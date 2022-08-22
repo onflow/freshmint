@@ -56,7 +56,7 @@ export default class FlowGateway {
     ];
 
     return await this.flow.transaction(
-      './cadence/transactions/create_editions.template.cdc',
+      './cadence/transactions/create_editions.cdc',
       `${this.network}-account`,
       args,
     );
