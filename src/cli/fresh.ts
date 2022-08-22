@@ -24,7 +24,7 @@ export default class Fresh {
 
     const ipfsClient = new NFTStorage({
       token: config.ipfsPinningService.key,
-      endpoint: new URL(config.ipfsPinningService.endpoint),
+      endpoint: config.ipfsPinningService.endpoint,
     });
 
     const ipfs = new IPFS(ipfsClient);
