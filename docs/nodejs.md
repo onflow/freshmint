@@ -916,7 +916,6 @@ const contract = new StandardNFTContract(...);
 
 const sale = new ClaimSaleContract(contract);
 
-
 // Start a new claim sale for 10 FLOW
 await client.send(sale.start({ id: "default", price: "10.0" }));
 
