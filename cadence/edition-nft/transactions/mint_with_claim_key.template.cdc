@@ -14,7 +14,7 @@ pub fun getOrCreateDrop(account: AuthAccount): &NFTAirDrop.Drop {
         collection: collection
     )
 
-    let drop = &drop as &NFTAirDrop.Drop
+    let dropRef = &drop as &NFTAirDrop.Drop
 
     account.save(<- drop, to: NFTAirDrop.DropStoragePath)
 
@@ -23,7 +23,7 @@ pub fun getOrCreateDrop(account: AuthAccount): &NFTAirDrop.Drop {
         target: NFTAirDrop.DropStoragePath
     )
 
-    return drop
+    return dropRef
 }
 
 transaction(
@@ -39,7 +39,7 @@ transaction(
         self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
-        self.drop = getOrCreateDrop(signer)
+        self.drop = getOrCreateDrop(account: signer)
     }
 
     execute {
