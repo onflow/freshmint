@@ -70,8 +70,7 @@ export default class FlowGateway {
     return await this.flow.transaction('./cadence/transactions/mint_with_claim_key.cdc', `${this.network}-account`, [
       { type: t.Array(t.String), value: publicKeys },
       { type: t.Array(t.UInt64), value: editionIds },
-      { type: t.Array(t.UInt64), value: editionSerials },
-      { type: t.Optional(t.String), value: null },
+      { type: t.Array(t.UInt64), value: editionSerials }
     ]);
   }
 }
