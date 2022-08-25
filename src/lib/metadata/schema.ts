@@ -15,7 +15,7 @@ export class Schema {
   #fieldMap: FieldMap;
   views: View[];
 
-  public static create(params: SchemaParameters) {
+  public static create(params: SchemaParameters): Schema {
     if (isFullSchemaParameters(params)) {
       const fieldMap = Schema.prepareFields(params.fields);
       const views = Schema.prepareViews(fieldMap, params.views ?? []);
@@ -25,6 +25,19 @@ export class Schema {
     const fieldMap = Schema.prepareFields(params);
 
     return new Schema(fieldMap, []);
+  }
+
+  public static parse(input: SchemaInput): Schema {
+    if (Array.isArray(input)) {
+      return createSchema({ fields: parseFields(input) });
+    }
+
+    const fields = parseFields(input.fields);
+
+    const fieldMap = Schema.prepareFields(fields);
+    const views = parseViews(input.views, fieldMap);
+
+    return new Schema(fieldMap, views);
   }
 
   private constructor(fieldMap: FieldMap, views: View[]) {
@@ -85,14 +98,7 @@ export function createSchema(params: SchemaParameters): Schema {
 export type SchemaInput = { fields: FieldInput[]; views?: ViewInput[] } | FieldInput[];
 
 export function parseSchema(input: SchemaInput): Schema {
-  if (Array.isArray(input)) {
-    return createSchema({ fields: parseFields(input) });
-  }
-
-  return createSchema({
-    fields: parseFields(input.fields),
-    views: input.views ? parseViews(input.views) : [],
-  });
+  return Schema.parse(input);
 }
 
 export const defaultSchema = createSchema({

@@ -1,5 +1,5 @@
 import { registerHelper, registerPartial } from '../generators';
-import { Field, HTTPFile, IPFSFile } from './fields';
+import { Field, FieldMap, HTTPFile, IPFSFile } from './fields';
 
 export class View {
   type: ViewType<any>;
@@ -118,9 +118,26 @@ function getViewTypeById(id: string): ViewType<any> {
 export type ViewInput = { type: string; options: any };
 export type ViewOptionsInput = { [key: string]: string };
 
-export function parseViews(views: ViewInput[]): View[] {
+export function parseViews(views: ViewInput[], fieldMap: FieldMap): View[] {
   return views.map((view: ViewInput) => {
     const viewType = getViewTypeById(view.type);
-    return viewType(view.options);
+
+    // TODO: improve this field mapping logic.
+    //
+    // Currently it replaces any string that matches a field name.
+    // Should it be smarter?
+    const options = {};
+
+    for (const name in view.options) {
+
+      const fieldName = view.options[name];
+      const field = fieldMap[fieldName];
+
+      if (field) {
+        options[name] = field;
+      }
+    }
+
+    return viewType(options);
   });
 }
