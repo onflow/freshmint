@@ -129,7 +129,6 @@ export function parseViews(views: ViewInput[], fieldMap: FieldMap): View[] {
     const options = {};
 
     for (const name in view.options) {
-
       const fieldName = view.options[name];
       const field = fieldMap[fieldName];
 

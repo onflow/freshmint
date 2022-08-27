@@ -1,4 +1,4 @@
-import { Field, FieldMap, FieldInput, String, IPFSFile, parseFields, FieldTypes } from './fields';
+import { Field, FieldMap, FieldInput, String, IPFSFile, parseFields, FieldTypes, FieldType } from './fields';
 import { View, ViewInput, DisplayView, parseViews } from './views';
 
 type ViewsThunk = (fields: FieldMap) => View[];
@@ -66,6 +66,11 @@ export class Schema {
 
   getFieldsByName(): FieldMap {
     return this.#fieldMap;
+  }
+
+  includesFieldType(fieldType: FieldType): boolean {
+    const fieldTypes = this.fields.map((field) => field.type);
+    return fieldTypes.includes(fieldType);
   }
 
   // TODO: include options in extend

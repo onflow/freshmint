@@ -5,7 +5,11 @@ import FlowGateway from './flow';
 import IPFS from './ipfs';
 import { Config } from './config';
 import { Minter, createMinter } from './minters';
-import { Storage } from './storage';
+import Storage from './storage';
+import CSVLoader from './loaders/CSVLoader';
+import { MetadataProcessor } from './processors';
+import { metadata } from '../lib';
+import IPFSFileProcessor from './processors/IPFSFileProcessor';
 
 export default class Fresh {
   config: Config;
@@ -22,14 +26,24 @@ export default class Fresh {
 
     this.storage = new Storage('freshdb', { baseSelector: { network: this.network } });
 
-    const ipfsClient = new NFTStorage({
-      token: config.ipfsPinningService.key,
-      endpoint: config.ipfsPinningService.endpoint,
-    });
+    const schema = config.contract.schema;
 
-    const ipfs = new IPFS(ipfsClient);
+    const metadataProcessor = new MetadataProcessor(config.contract.schema);
 
-    this.minter = createMinter(config.contract, config.nftAssetPath, ipfs, this.flowGateway, this.storage);
+    if (schema.includesFieldType(metadata.IPFSFile)) {
+      const ipfsClient = new NFTStorage({
+        token: config.ipfsPinningService.key,
+        endpoint: config.ipfsPinningService.endpoint,
+      });
+
+      const ipfs = new IPFS(ipfsClient);
+
+      const ipfsFileProcessor = new IPFSFileProcessor(config.nftAssetPath, ipfs);
+
+      metadataProcessor.addFieldProcessor(ipfsFileProcessor);
+    }
+
+    this.minter = createMinter(config.contract, metadataProcessor, this.flowGateway, this.storage);
   }
 
   async mintNFTsFromCSVFile(
@@ -40,7 +54,8 @@ export default class Fresh {
     onError: (error: Error) => void,
     batchSize = 10,
   ) {
-    await this.minter.mint(csvPath, withClaimKey, onStart, onBatchComplete, onError, batchSize);
+    const loader = new CSVLoader(csvPath);
+    await this.minter.mint(loader, withClaimKey, onStart, onBatchComplete, onError, batchSize);
   }
 
   async getNFT(tokenId: string) {

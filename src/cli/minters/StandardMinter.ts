@@ -1,35 +1,39 @@
 import { metadata } from '../../lib';
 import { hashMetadata } from '../../lib/metadata';
-import { Entry, parseCSVEntries } from '../metadata/parse';
-import MetadataProcessor from '../metadata/MetadataProcessor';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import FlowGateway from '../flow';
-import IPFS from '../ipfs';
-import { Storage } from '../storage';
+import Storage from '../storage';
 import * as models from '../models';
+import { MetadataLoader, Entry } from '../loaders';
+import { MetadataProcessor } from '../processors';
 
 export class StandardMinter {
   schema: metadata.Schema;
-  processor: MetadataProcessor;
+  metadataProcessor: MetadataProcessor;
   flowGateway: FlowGateway;
   storage: Storage;
 
-  constructor(schema: metadata.Schema, nftAssetPath: string, ipfs: IPFS, flowGateway: FlowGateway, storage: Storage) {
+  constructor(
+    schema: metadata.Schema,
+    metadataProcessor: MetadataProcessor,
+    flowGateway: FlowGateway,
+    storage: Storage,
+  ) {
     this.schema = schema;
-    this.processor = new MetadataProcessor(schema, nftAssetPath, ipfs);
+    this.metadataProcessor = metadataProcessor;
     this.flowGateway = flowGateway;
     this.storage = storage;
   }
 
   async mint(
-    csvPath: string,
+    loader: MetadataLoader,
     withClaimKey: boolean,
     onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
     batchSize = 10,
   ) {
-    const entries = parseCSVEntries(csvPath);
+    const entries = await loader.loadEntries();
 
     const tokens = this.prepare(entries);
 
@@ -115,7 +119,7 @@ export class StandardMinter {
     return await Promise.all(
       batch.map(async (token: any) => ({
         ...token,
-        metadata: await this.processor.process(token.metadata),
+        metadata: await this.metadataProcessor.process(token.metadata),
       })),
     );
   }

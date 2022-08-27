@@ -1,13 +1,14 @@
 import { ContractConfig, ContractType } from '../config';
 import FlowGateway from '../flow';
-import IPFS from '../ipfs';
 import { EditionMinter } from './EditionMinter';
 import { StandardMinter } from './StandardMinter';
-import { Storage } from '../storage';
+import Storage from '../storage';
+import { MetadataLoader } from '../loaders';
+import { MetadataProcessor } from '../processors';
 
 export interface Minter {
   mint(
-    csvPath: string,
+    loader: MetadataLoader,
     withClaimKey: boolean,
     onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
     onBatchComplete: (batchSize: number) => void,
@@ -18,15 +19,14 @@ export interface Minter {
 
 export function createMinter(
   contract: ContractConfig,
-  nftAssetPath: string,
-  ipfs: IPFS,
+  metadataProcessor: MetadataProcessor,
   flowGateway: FlowGateway,
   storage: Storage,
 ): Minter {
   switch (contract.type) {
     case ContractType.Standard:
-      return new StandardMinter(contract.schema, nftAssetPath, ipfs, flowGateway, storage);
+      return new StandardMinter(contract.schema, metadataProcessor, flowGateway, storage);
     case ContractType.Edition:
-      return new EditionMinter(contract.schema, nftAssetPath, ipfs, flowGateway, storage);
+      return new EditionMinter(contract.schema, metadataProcessor, flowGateway, storage);
   }
 }

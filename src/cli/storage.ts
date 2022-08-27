@@ -8,7 +8,7 @@ import * as models from './models';
 
 export type KeyValuePairs = { [key: string]: any };
 
-export class Storage {
+export default class Storage {
   private nfts: Database;
   private editions: Database;
 
@@ -51,7 +51,7 @@ export class Storage {
   }
 }
 
-export class Database {
+class Database {
   #db: PouchDB.Database<any>;
   #baseSelector: KeyValuePairs;
 
