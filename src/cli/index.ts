@@ -192,6 +192,6 @@ main()
     process.exit(0);
   })
   .catch((err) => {
-    console.error(chalk.red(err));
+    console.error(err);
     process.exit(1);
   });
