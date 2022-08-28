@@ -16,6 +16,8 @@ import startCommand from './start';
 import { Config, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
+import { FreshmintError } from './errors';
+import CSVLoader from './loaders/CSVLoader';
 
 const program = new Command();
 const spinner = ora();
@@ -76,26 +78,33 @@ async function mint({
   const config = Config.load();
   const fresh = new Fresh(config, network);
 
+  let csvPath: string;
   if (!data) {
-    data = config.nftDataPath;
+    csvPath = config.nftDataPath;
+  } else {
+    csvPath = data;
   }
+
+  const loader = new CSVLoader(csvPath);
+
+  const minter = fresh.getMinter();
 
   const answer = await inquirer.prompt({
     type: 'confirm',
     name: 'confirm',
-    message: `Create NFTs using data from ${path.basename(data)}?`,
+    message: `Create NFTs using data from ${path.basename(csvPath)}?`,
   });
 
   if (!answer.confirm) return;
 
   console.log();
 
-  spinner.start('Checking for duplicate NFTs ...\n');
-
   let bar: ProgressBar;
 
-  await fresh.mintNFTsFromCSVFile(
-    data,
+  spinner.start(`Checking for duplicate NFTs ...\n`);
+
+  await minter.mint(
+    loader,
     claim,
     (total: number, skipped: number, batchCount: number, batchSize: number) => {
       if (skipped) {
@@ -128,11 +137,9 @@ async function getNFT(tokenId: string, { network }: { network: string }) {
   const config = Config.load();
   const fresh = new Fresh(config, network);
 
-  const schema = config.contract.schema;
-
   const { id, metadata } = await fresh.getNFT(tokenId);
 
-  const output = getNFTOutput(config.contract.type, id, metadata, schema.fields);
+  const output = getNFTOutput(config.contract.type, id, metadata, config.contract.schema.fields);
 
   alignOutput(output);
 }
@@ -171,7 +178,7 @@ async function dumpNFTs(csvPath: string, { network }: { network: string }) {
 async function generateCadence() {
   const config = Config.load();
 
-  await generateProjectCadence('./', config, false);
+  await generateProjectCadence('./', config.contract, false);
 
   spinner.succeed(`✨ Success! Regenerated Cadence files. ✨`);
 }
@@ -192,6 +199,13 @@ main()
     process.exit(0);
   })
   .catch((err) => {
-    console.error(err);
+    if (err instanceof FreshmintError) {
+      // Freshmint application errors are designed
+      // to be displayed using only the message field.
+      console.error(err.message);
+    } else {
+      console.error(err);
+    }
+
     process.exit(1);
   });

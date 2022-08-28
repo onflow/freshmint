@@ -39,7 +39,6 @@
     "@onflow/fcl": "^1.2.0",
     "@onflow/types": "^1.0.3",
     "@onflow/util-address": "0.0.0",
-    "@tuplo/envsubst": "^1.15.0",
     "chalk": "^4.1.0",
     "commander": "^7.1.0",
     "csv-parse": "^4.16.3",

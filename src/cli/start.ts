@@ -3,7 +3,7 @@ import * as path from 'path';
 import chalk from 'chalk';
 import { Ora } from 'ora';
 import inquirer from 'inquirer';
-import { Config, ContractType } from './config';
+import { Config, ContractType, LazyConfigField } from './config';
 import { metadata } from '../lib';
 import { generateProject } from './generateProject';
 
@@ -126,14 +126,17 @@ export default async function start(spinner: Ora, projectPath: string) {
       schema,
     },
     ipfsPinningService: {
-      endpoint: '${PINNING_SERVICE_ENDPOINT}',
-      key: '${PINNING_SERVICE_KEY}',
+      // TODO: find a better way to pass initial configuration values
+      endpoint: new LazyConfigField('ipfsPinningService.endpoint', () => '${PINNING_SERVICE_ENDPOINT}'),
+      key: new LazyConfigField('ipfsPinningService.key', () => '${PINNING_SERVICE_KEY}'),
     },
   });
 
   spinner.start('Generating project files...');
 
-  await generateProject(projectPath, config);
+  await generateProject(projectPath, config.contract, config.nftDataPath);
+
+  config.save(projectPath);
 
   spinner.succeed(
     `✨ Project initialized in ${chalk.white(`${isCurrentDirectory ? 'the current directory.' : projectPath}\n`)}`,

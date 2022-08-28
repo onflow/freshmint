@@ -1,61 +1,53 @@
-import { NFTStorage } from 'nft.storage';
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
+import { NFTStorage } from 'nft.storage';
 
+import { Config } from './config';
+import { metadata } from '../lib';
 import FlowGateway from './flow';
 import IPFS from './ipfs';
-import { Config } from './config';
 import { Minter, createMinter } from './minters';
-import Storage from './storage';
-import CSVLoader from './loaders/CSVLoader';
 import { MetadataProcessor } from './processors';
-import { metadata } from '../lib';
 import IPFSFileProcessor from './processors/IPFSFileProcessor';
+import Storage from './storage';
 
 export default class Fresh {
   config: Config;
   network: string;
 
-  flowGateway: FlowGateway;
   storage: Storage;
-  minter: Minter;
 
   constructor(config: Config, network: string) {
+    this.config = config;
     this.network = network;
 
-    this.flowGateway = new FlowGateway(this.network);
-
     this.storage = new Storage('freshdb', { baseSelector: { network: this.network } });
+  }
 
-    const schema = config.contract.schema;
+  getMinter(): Minter {
+    const metadataProcessor = new MetadataProcessor(this.config.contract.schema);
 
-    const metadataProcessor = new MetadataProcessor(config.contract.schema);
+    if (this.config.contract.schema.includesFieldType(metadata.IPFSFile)) {
+      const [endpoint, key] = Config.resolveLazyFields(
+        this.config.ipfsPinningService.endpoint,
+        this.config.ipfsPinningService.key,
+      );
 
-    if (schema.includesFieldType(metadata.IPFSFile)) {
-      const ipfsClient = new NFTStorage({
-        token: config.ipfsPinningService.key,
-        endpoint: config.ipfsPinningService.endpoint,
-      });
+      const ipfsClient = new NFTStorage({ endpoint, token: key });
 
       const ipfs = new IPFS(ipfsClient);
 
-      const ipfsFileProcessor = new IPFSFileProcessor(config.nftAssetPath, ipfs);
+      const ipfsFileProcessor = new IPFSFileProcessor(this.config.nftAssetPath, ipfs);
 
       metadataProcessor.addFieldProcessor(ipfsFileProcessor);
     }
 
-    this.minter = createMinter(config.contract, metadataProcessor, this.flowGateway, this.storage);
-  }
+    const flowGateway = new FlowGateway(this.network);
 
-  async mintNFTsFromCSVFile(
-    csvPath: string,
-    withClaimKey: boolean,
-    onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
-    onBatchComplete: (batchSize: number) => void,
-    onError: (error: Error) => void,
-    batchSize = 10,
-  ) {
-    const loader = new CSVLoader(csvPath);
-    await this.minter.mint(loader, withClaimKey, onStart, onBatchComplete, onError, batchSize);
+    const storage = new Storage('freshdb', { baseSelector: { network: this.network } });
+
+    const minter = createMinter(this.config.contract, metadataProcessor, flowGateway, storage);
+
+    return minter;
   }
 
   async getNFT(tokenId: string) {
