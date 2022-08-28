@@ -13,9 +13,18 @@ import inquirer from 'inquirer';
 import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
-import { Config, ContractType } from './config';
+import { Config, ContractConfig, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
+import { FreshmintError } from './errors';
+import { MetadataProcessor } from './processors';
+import IPFS from './ipfs';
+import IPFSFileProcessor from './processors/IPFSFileProcessor';
+import { NFTStorage } from 'nft.storage';
+import CSVLoader from './loaders/CSVLoader';
+import { createMinter } from './minters';
+import FlowGateway from './flow';
+import Storage from './storage';
 
 const program = new Command();
 const spinner = ora();
@@ -74,29 +83,69 @@ async function mint({
   batchSize: string;
 }) {
   const config = Config.load();
-  const fresh = new Fresh(config, network);
 
+  config.setRequired(config.contract, (contract: ContractConfig) => {
+    if (contract.schema.includesFieldType(metadata.IPFSFile)) {
+      config.setRequired(config.ipfsPinningService)
+    }
+
+    config.nftDataPath.setDefault(Config.getDefaultDataPath(contract.type))
+  })
+
+  config.resolve();
+
+  let csvPath: string;
   if (!data) {
-    data = config.nftDataPath;
+    csvPath = config.nftDataPath;
+  } else {
+    csvPath = data;
   }
+
+  const contract = config.contract.resolve();
+
+  const metadataProcessor = new MetadataProcessor(contract.schema);
+
+  if (contract.schema.includesFieldType(metadata.IPFSFile)) {
+
+    const ipfsPinningService = config.ipfsPinningService.resolve();
+
+    const ipfsClient = new NFTStorage({ 
+      endpoint: ipfsPinningService.endpoint,
+      token: ipfsPinningService.key
+    });
+
+    const ipfs = new IPFS(ipfsClient);
+
+    const ipfsFileProcessor = new IPFSFileProcessor(csvPath, ipfs);
+
+    metadataProcessor.addFieldProcessor(ipfsFileProcessor);
+  }
+
+  const flowGateway = new FlowGateway(network);
+
+  const storage = new Storage('freshdb', { baseSelector: { network } });
+
+  const loader = new CSVLoader(csvPath);
+  const minter = createMinter(contract, metadataProcessor, flowGateway, storage);
 
   const answer = await inquirer.prompt({
     type: 'confirm',
     name: 'confirm',
-    message: `Create NFTs using data from ${path.basename(data)}?`,
+    message: `Create NFTs using data from ${path.basename(csvPath)}?`,
   });
 
   if (!answer.confirm) return;
 
   console.log();
 
-  spinner.start('Checking for duplicate NFTs ...\n');
-
   let bar: ProgressBar;
 
-  await fresh.mintNFTsFromCSVFile(
-    data,
+  await minter.mint(
+    loader,
     claim,
+    (count: number) => {
+      spinner.start(`Checking for duplicates in ${count} NFTs ...\n`);
+    },
     (total: number, skipped: number, batchCount: number, batchSize: number) => {
       if (skipped) {
         spinner.info(`Skipped ${skipped} NFTs because they already exist.\n`);
@@ -126,13 +175,16 @@ async function mint({
 
 async function getNFT(tokenId: string, { network }: { network: string }) {
   const config = Config.load();
+
+  config.setRequired(config.contract).resolve();
+
   const fresh = new Fresh(config, network);
 
-  const schema = config.contract.schema;
+  const contract = config.contract.resolve();
 
   const { id, metadata } = await fresh.getNFT(tokenId);
 
-  const output = getNFTOutput(config.contract.type, id, metadata, schema.fields);
+  const output = getNFTOutput(contract.type, id, metadata, contract.schema.fields);
 
   alignOutput(output);
 }
@@ -170,8 +222,9 @@ async function dumpNFTs(csvPath: string, { network }: { network: string }) {
 
 async function generateCadence() {
   const config = Config.load();
+  const contract = config.contract.resolve();
 
-  await generateProjectCadence('./', config, false);
+  await generateProjectCadence('./', contract, false);
 
   spinner.succeed(`✨ Success! Regenerated Cadence files. ✨`);
 }
@@ -192,6 +245,13 @@ main()
     process.exit(0);
   })
   .catch((err) => {
-    console.error(err);
+    if (err instanceof FreshmintError) {
+      // Freshmint application errors are designed
+      // to be displayed using only the message field. 
+      console.error(err.message)
+    } else {
+      console.error(err);
+    }
+      
     process.exit(1);
   });

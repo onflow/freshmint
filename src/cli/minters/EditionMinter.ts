@@ -38,12 +38,15 @@ export class EditionMinter {
   async mint(
     loader: MetadataLoader,
     withClaimKey: boolean,
+    onLoad: (count: number) => void,
     onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
     batchSize = 10,
   ) {
     const entries = await loader.loadEntries();
+
+    onLoad(entries.length)
 
     const editionInputs = this.prepare(entries);
 

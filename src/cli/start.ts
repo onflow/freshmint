@@ -133,7 +133,9 @@ export default async function start(spinner: Ora, projectPath: string) {
 
   spinner.start('Generating project files...');
 
-  await generateProject(projectPath, config);
+  await generateProject(projectPath, config.contract.resolve(), config.nftAssetPath);
+
+  config.save(projectPath);
 
   spinner.succeed(
     `✨ Project initialized in ${chalk.white(`${isCurrentDirectory ? 'the current directory.' : projectPath}\n`)}`,

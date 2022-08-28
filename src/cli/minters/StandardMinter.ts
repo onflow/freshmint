@@ -28,12 +28,15 @@ export class StandardMinter {
   async mint(
     loader: MetadataLoader,
     withClaimKey: boolean,
+    onLoad: (count: number) => void,
     onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
     batchSize = 10,
   ) {
     const entries = await loader.loadEntries();
+
+    onLoad(entries.length);
 
     const tokens = this.prepare(entries);
 

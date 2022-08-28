@@ -2,23 +2,21 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
 import { ContractImports, StandardNFTGenerator, EditionNFTGenerator, NFTAirDropGenerator } from '../lib';
-import { Config, ContractType } from './config';
+import { ContractConfig, ContractType } from './config';
 
-export async function generateProject(dir: string, config: Config) {
+export async function generateProject(dir: string, contract: ContractConfig, nftDataPath: string) {
   await createScaffold(dir);
 
-  config.save(dir);
+  await generateProjectCadence(dir, contract);
 
-  await generateProjectCadence(dir, config);
+  await createFlowConfig(dir, contract.name);
+  await createFlowTestnetConfig(dir, contract.name);
+  await createFlowMainnetConfig(dir, contract.name);
 
-  await createFlowConfig(dir, config.contract.name);
-  await createFlowTestnetConfig(dir, config.contract.name);
-  await createFlowMainnetConfig(dir, config.contract.name);
-
-  await createReadme(dir, config.contract.name, { nftDataPath: config.nftDataPath });
+  await createReadme(dir, contract.name, { nftDataPath });
 }
 
-export async function generateProjectCadence(dir: string, config: Config, includeCSVFile = true) {
+export async function generateProjectCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
   const imports = {
     NonFungibleToken: `"./NonFungibleToken.cdc"`,
     MetadataViews: `"./MetadataViews.cdc"`,
@@ -27,31 +25,31 @@ export async function generateProjectCadence(dir: string, config: Config, includ
     NFTAirDrop: `"./NFTAirDrop.cdc"`,
   };
 
-  switch (config.contract.type) {
+  switch (contract.type) {
     case ContractType.Standard:
-      await generateStandardProject(dir, config, imports, includeCSVFile);
+      await generateStandardProject(dir, contract, imports, includeCSVFile);
       break;
     case ContractType.Edition:
-      await generateEditionProject(dir, config, imports, includeCSVFile);
+      await generateEditionProject(dir, contract, imports, includeCSVFile);
       break;
   }
 
   await writeFile(path.resolve(dir, `cadence/contracts/NFTAirDrop.cdc`), NFTAirDropGenerator.contract({ imports }));
 
-  await createGetNFTScript(dir, config.contract.name);
+  await createGetNFTScript(dir, contract.name);
 }
 
-async function generateStandardProject(dir: string, config: Config, imports: ContractImports, includeCSVFile = true) {
-  const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
+async function generateStandardProject(dir: string, contract: ContractConfig, imports: ContractImports, includeCSVFile = true) {
+  const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
-  const contract = StandardNFTGenerator.contract({
+  const contractSource = StandardNFTGenerator.contract({
     imports,
-    contractName: config.contract.name,
-    schema: config.contract.schema,
+    contractName: contract.name,
+    schema: contract.schema,
     saveAdminResourceToContractAccount: true,
   });
 
-  await writeFile(path.resolve(dir, `cadence/contracts/${config.contract.name}.cdc`), contract);
+  await writeFile(path.resolve(dir, `cadence/contracts/${contract.name}.cdc`), contractSource);
 
   const adjustedImports = {
     ...imports,
@@ -63,38 +61,38 @@ async function generateStandardProject(dir: string, config: Config, imports: Con
 
   const mintTransaction = StandardNFTGenerator.mint({
     imports: adjustedImports,
-    contractName: config.contract.name,
+    contractName: contract.name,
     contractAddress,
-    schema: config.contract.schema,
+    schema: contract.schema,
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
 
   const mintWithClaimKeyTransaction = StandardNFTGenerator.mintWithClaimKey({
     imports: adjustedImports,
-    contractName: config.contract.name,
+    contractName: contract.name,
     contractAddress,
-    schema: config.contract.schema,
+    schema: contract.schema,
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   if (includeCSVFile) {
-    await createNFTsCSVFile(dir, config.contract.name, { fields: config.contract.schema.fields });
+    await createNFTsCSVFile(dir, contract.name, { fields: contract.schema.fields });
   }
 }
 
-async function generateEditionProject(dir: string, config: Config, imports: ContractImports, includeCSVFile = true) {
-  const contractAddress = `"../contracts/${config.contract.name}.cdc"`;
+async function generateEditionProject(dir: string, contract: ContractConfig, imports: ContractImports, includeCSVFile = true) {
+  const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
-  const contract = EditionNFTGenerator.contract({
+  const contractSource = EditionNFTGenerator.contract({
     imports,
-    contractName: config.contract.name,
-    schema: config.contract.schema,
+    contractName: contract.name,
+    schema: contract.schema,
     saveAdminResourceToContractAccount: true,
   });
 
-  await writeFile(path.resolve(dir, `cadence/contracts/${config.contract.name}.cdc`), contract);
+  await writeFile(path.resolve(dir, `cadence/contracts/${contract.name}.cdc`), contractSource);
 
   const adjustedImports = {
     ...imports,
@@ -106,16 +104,16 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
 
   const createEditionsTransaction = EditionNFTGenerator.createEditions({
     imports: adjustedImports,
-    contractName: config.contract.name,
+    contractName: contract.name,
     contractAddress,
-    schema: config.contract.schema,
+    schema: contract.schema,
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/create_editions.cdc'), createEditionsTransaction);
 
   const mintTransaction = EditionNFTGenerator.mint({
     imports: adjustedImports,
-    contractName: config.contract.name,
+    contractName: contract.name,
     contractAddress,
   });
 
@@ -123,14 +121,14 @@ async function generateEditionProject(dir: string, config: Config, imports: Cont
 
   const mintWithClaimKeyTransaction = EditionNFTGenerator.mintWithClaimKey({
     imports: adjustedImports,
-    contractName: config.contract.name,
+    contractName: contract.name,
     contractAddress,
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   if (includeCSVFile) {
-    await createEditionsCSVFile(dir, config.contract.name, { fields: config.contract.schema.fields });
+    await createEditionsCSVFile(dir, contract.name, { fields: contract.schema.fields });
   }
 }
 
