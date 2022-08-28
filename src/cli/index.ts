@@ -17,14 +17,7 @@ import { Config, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
-import { MetadataProcessor } from './processors';
-import IPFS from './ipfs';
-import IPFSFileProcessor from './processors/IPFSFileProcessor';
-import { NFTStorage } from 'nft.storage';
 import CSVLoader from './loaders/CSVLoader';
-import { createMinter } from './minters';
-import FlowGateway from './flow';
-import Storage from './storage';
 
 const program = new Command();
 const spinner = ora();
@@ -83,6 +76,7 @@ async function mint({
   batchSize: string;
 }) {
   const config = Config.load();
+  const fresh = new Fresh(config, network);
 
   let csvPath: string;
   if (!data) {
@@ -91,29 +85,9 @@ async function mint({
     csvPath = data;
   }
 
-  const contract = config.contract;
-
-  const metadataProcessor = new MetadataProcessor(contract.schema);
-
-  if (contract.schema.includesFieldType(metadata.IPFSFile)) {
-    const [endpoint, key] = Config.resolveLazyFields(config.ipfsPinningService.endpoint, config.ipfsPinningService.key);
-
-    const ipfsClient = new NFTStorage({ endpoint, token: key });
-
-    const ipfs = new IPFS(ipfsClient);
-
-    const ipfsFileProcessor = new IPFSFileProcessor(csvPath, ipfs);
-
-    metadataProcessor.addFieldProcessor(ipfsFileProcessor);
-  }
-
-  const flowGateway = new FlowGateway(network);
-
-  const storage = new Storage('freshdb', { baseSelector: { network } });
-
   const loader = new CSVLoader(csvPath);
 
-  const minter = createMinter(contract, metadataProcessor, flowGateway, storage);
+  const minter = fresh.getMinter();
 
   const answer = await inquirer.prompt({
     type: 'confirm',

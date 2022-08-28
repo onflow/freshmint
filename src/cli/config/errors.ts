@@ -22,6 +22,11 @@ export class ConfigValidationError extends FreshmintError {
   name = 'ConfigValidationError';
 }
 
+export class UndefinedConfigFieldError extends FreshmintError {
+  name = 'UndefinedConfigFieldError';
+  message = 'This field is required.';
+}
+
 export class MissingEnvironmentVariableError extends FreshmintError {
   name = 'MissingEnvironmentVariableError';
 

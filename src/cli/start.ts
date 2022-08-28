@@ -126,14 +126,15 @@ export default async function start(spinner: Ora, projectPath: string) {
       schema,
     },
     ipfsPinningService: {
-      endpoint: new LazyConfigField('ipfsPinningService.endpoint', '${PINNING_SERVICE_ENDPOINT}'),
-      key: new LazyConfigField('ipfsPinningService.key', '${PINNING_SERVICE_KEY}'),
+      // TODO: find a better way to pass initial configuration values
+      endpoint: new LazyConfigField('ipfsPinningService.endpoint', () => '${PINNING_SERVICE_ENDPOINT}'),
+      key: new LazyConfigField('ipfsPinningService.key', () => '${PINNING_SERVICE_KEY}'),
     },
   });
 
   spinner.start('Generating project files...');
 
-  await generateProject(projectPath, config.contract, config.nftAssetPath);
+  await generateProject(projectPath, config.contract, config.nftDataPath);
 
   config.save(projectPath);
 

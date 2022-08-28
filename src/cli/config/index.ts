@@ -4,7 +4,7 @@ import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 
 import { metadata } from '../../lib';
-import { ConfigErrors, ConfigValidationError } from './errors';
+import { ConfigErrors, ConfigValidationError, UndefinedConfigFieldError } from './errors';
 import { FreshmintError } from '../errors';
 import { envsubst } from './envsubst';
 
@@ -34,7 +34,7 @@ export type ConfigParameters = {
   nftDataPath?: string;
   nftAssetPath?: string;
 
-  ipfsPinningService: IPFSPinningServiceConfig;
+  ipfsPinningService?: IPFSPinningServiceConfig;
 };
 
 export class Config {
@@ -82,10 +82,10 @@ export class Config {
       ipfsPinningService: {
         endpoint: new LazyConfigField<URL>(
           'ipfsPinningService.endpoint',
-          rawConfig.ipfsPinningService.endpoint,
+          () => rawConfig.ipfsPinningService?.endpoint,
           parseURL,
         ),
-        key: new LazyConfigField<string>('ipfsPinningService.key', rawConfig.ipfsPinningService.key),
+        key: new LazyConfigField<string>('ipfsPinningService.key', () => rawConfig.ipfsPinningService?.key),
       },
 
       nftDataPath: rawConfig.nftDataPath,
@@ -126,8 +126,8 @@ export class Config {
       },
 
       ipfsPinningService: {
-        endpoint: this.#config.ipfsPinningService.endpoint.input,
-        key: this.#config.ipfsPinningService.key.input,
+        endpoint: this.#config.ipfsPinningService.endpoint.getInput(),
+        key: this.#config.ipfsPinningService.key.getInput(),
       },
 
       nftDataPath: this.#config.nftDataPath,
@@ -145,13 +145,13 @@ type RawConfig = {
     schema: metadata.SchemaInput;
   };
 
-  ipfsPinningService: {
+  ipfsPinningService?: {
     endpoint: string;
     key: string;
   };
 
-  nftDataPath: string;
-  nftAssetPath: string;
+  nftDataPath?: string;
+  nftAssetPath?: string;
 };
 
 const configFilename = 'freshmint.yaml';
@@ -179,28 +179,34 @@ export type ConfigValueTransformer<T> = (input: any, rawInput: any) => T;
 
 export class LazyConfigField<T> {
   label: string;
-  input: any;
+  getInput: () => any;
   #transform: ConfigValueTransformer<T>;
 
-  constructor(label: string, input: any, transform: ConfigValueTransformer<T> = (input: any) => input) {
+  constructor(label: string, input: () => any, transform: ConfigValueTransformer<T> = (input: any) => input) {
     this.label = label;
-    this.input = input;
+    this.getInput = input;
     this.#transform = transform;
   }
 
   resolve(): T {
-    let value = this.input;
+    const rawInput = this.getInput();
 
-    if (typeof this.input === 'string') {
+    if (rawInput === undefined) {
+      throw new UndefinedConfigFieldError();
+    }
+
+    let input = rawInput;
+
+    if (typeof rawInput === 'string') {
       // If the value is a string, first attempt
       // to substitute environment variables before
       // validating and transforming.
-      value = envsubst(this.input);
+      input = envsubst(rawInput);
     }
 
     // Pass rawValue to transformer. This allows us to tell the user
     // which environment variable(s) stored an invalid value.
-    return this.#transform(value, this.input);
+    return this.#transform(input, rawInput);
   }
 }
 
