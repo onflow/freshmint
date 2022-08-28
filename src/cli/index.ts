@@ -135,7 +135,6 @@ async function mint({
 
 async function getNFT(tokenId: string, { network }: { network: string }) {
   const config = Config.load();
-
   const fresh = new Fresh(config, network);
 
   const { id, metadata } = await fresh.getNFT(tokenId);
