@@ -20,10 +20,6 @@ export default class Fresh {
     // TODO: display user-friendly message if token not found
     const nft = await this.storage.loadNFTById(tokenId);
 
-    if (!nft) {
-
-    }
-
     return {
       id: tokenId,
       metadata: nft.metadata,

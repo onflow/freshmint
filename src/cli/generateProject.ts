@@ -39,7 +39,12 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
   await createGetNFTScript(dir, contract.name);
 }
 
-async function generateStandardProject(dir: string, contract: ContractConfig, imports: ContractImports, includeCSVFile = true) {
+async function generateStandardProject(
+  dir: string,
+  contract: ContractConfig,
+  imports: ContractImports,
+  includeCSVFile = true,
+) {
   const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
   const contractSource = StandardNFTGenerator.contract({
@@ -82,7 +87,12 @@ async function generateStandardProject(dir: string, contract: ContractConfig, im
   }
 }
 
-async function generateEditionProject(dir: string, contract: ContractConfig, imports: ContractImports, includeCSVFile = true) {
+async function generateEditionProject(
+  dir: string,
+  contract: ContractConfig,
+  imports: ContractImports,
+  includeCSVFile = true,
+) {
   const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
   const contractSource = EditionNFTGenerator.contract({

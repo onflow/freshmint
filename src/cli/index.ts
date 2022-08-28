@@ -13,7 +13,7 @@ import inquirer from 'inquirer';
 import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
-import { Config, ContractConfig, ContractType } from './config';
+import { Config, ContractType } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
@@ -84,16 +84,6 @@ async function mint({
 }) {
   const config = Config.load();
 
-  config.setRequired(config.contract, (contract: ContractConfig) => {
-    if (contract.schema.includesFieldType(metadata.IPFSFile)) {
-      config.setRequired(config.ipfsPinningService)
-    }
-
-    config.nftDataPath.setDefault(Config.getDefaultDataPath(contract.type))
-  })
-
-  config.resolve();
-
   let csvPath: string;
   if (!data) {
     csvPath = config.nftDataPath;
@@ -101,18 +91,14 @@ async function mint({
     csvPath = data;
   }
 
-  const contract = config.contract.resolve();
+  const contract = config.contract;
 
   const metadataProcessor = new MetadataProcessor(contract.schema);
 
   if (contract.schema.includesFieldType(metadata.IPFSFile)) {
+    const [endpoint, key] = Config.resolveLazyFields(config.ipfsPinningService.endpoint, config.ipfsPinningService.key);
 
-    const ipfsPinningService = config.ipfsPinningService.resolve();
-
-    const ipfsClient = new NFTStorage({ 
-      endpoint: ipfsPinningService.endpoint,
-      token: ipfsPinningService.key
-    });
+    const ipfsClient = new NFTStorage({ endpoint, token: key });
 
     const ipfs = new IPFS(ipfsClient);
 
@@ -126,6 +112,7 @@ async function mint({
   const storage = new Storage('freshdb', { baseSelector: { network } });
 
   const loader = new CSVLoader(csvPath);
+
   const minter = createMinter(contract, metadataProcessor, flowGateway, storage);
 
   const answer = await inquirer.prompt({
@@ -140,12 +127,11 @@ async function mint({
 
   let bar: ProgressBar;
 
+  spinner.start(`Checking for duplicate NFTs ...\n`);
+
   await minter.mint(
     loader,
     claim,
-    (count: number) => {
-      spinner.start(`Checking for duplicates in ${count} NFTs ...\n`);
-    },
     (total: number, skipped: number, batchCount: number, batchSize: number) => {
       if (skipped) {
         spinner.info(`Skipped ${skipped} NFTs because they already exist.\n`);
@@ -176,15 +162,11 @@ async function mint({
 async function getNFT(tokenId: string, { network }: { network: string }) {
   const config = Config.load();
 
-  config.setRequired(config.contract).resolve();
-
   const fresh = new Fresh(config, network);
-
-  const contract = config.contract.resolve();
 
   const { id, metadata } = await fresh.getNFT(tokenId);
 
-  const output = getNFTOutput(contract.type, id, metadata, contract.schema.fields);
+  const output = getNFTOutput(config.contract.type, id, metadata, config.contract.schema.fields);
 
   alignOutput(output);
 }
@@ -222,9 +204,8 @@ async function dumpNFTs(csvPath: string, { network }: { network: string }) {
 
 async function generateCadence() {
   const config = Config.load();
-  const contract = config.contract.resolve();
 
-  await generateProjectCadence('./', contract, false);
+  await generateProjectCadence('./', config.contract, false);
 
   spinner.succeed(`✨ Success! Regenerated Cadence files. ✨`);
 }
@@ -247,11 +228,11 @@ main()
   .catch((err) => {
     if (err instanceof FreshmintError) {
       // Freshmint application errors are designed
-      // to be displayed using only the message field. 
-      console.error(err.message)
+      // to be displayed using only the message field.
+      console.error(err.message);
     } else {
       console.error(err);
     }
-      
+
     process.exit(1);
   });

@@ -4,104 +4,9 @@ import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 
 import { metadata } from '../../lib';
-import { envsubst } from './envsubst';
 import { ConfigErrors, ConfigValidationError } from './errors';
 import { FreshmintError } from '../errors';
-
-export type ConfigValueTransformer<T> = (input: any, rawInput: any) => T
-
-interface ConfigValue<T> {
-  label: string;
-  resolve(depth?: number): T
-}
-
-interface ConfigValues { [name: string]: ConfigValue<any> }
-
-class ConfigObject<T extends { [key: string]: any }> {
-  label: string;
-  values: ConfigValues
-
-  constructor(label: string, fields: ConfigValues ) {
-    this.label = label;
-    this.values = fields;
-  }
-
-  resolve(depth: number = 0): T {
-    const result = {};
-    const errors: { label: string, error: Error }[] = []
-
-    for (const name in this.values) {
-      const value = this.values[name];
-      try {
-        const resolvedValue = value.resolve(depth + 1);
-        result[name] = resolvedValue;
-      } catch (error: any){
-        if (error instanceof FreshmintError) {
-          errors.push({ label: value.label, error: error })
-        } else {
-          throw error;
-        }
-      }
-    }
-
-    if (errors.length) {
-      throw new ConfigErrors(errors, depth)
-    }
-
-    return result as T;
-  }
-}
-
-export class ConfigField<T> {
-
-  label: string;
-  value?: T = undefined;
-  defaultValue?: T;
-  rawValue: any;
-  #transform: ConfigValueTransformer<T>
-
-  constructor(
-    label: string,
-    rawValue: any,
-    transform: ConfigValueTransformer<T> = (rawValue: any) => rawValue,
-  ) {
-    this.label = label;
-    this.rawValue = rawValue;
-    this.#transform = transform;
-  }
-
-  setDefault(defaultValue: T): ConfigField<T> {
-    this.defaultValue = defaultValue;
-    return this;
-  }
-
-  resolve(depth: number = 0): T {
-    if (this.value !== undefined) {
-      return this.value;
-    }
-
-    if (this.rawValue === undefined) {
-      return this.defaultValue;
-    }
-
-    let value = this.rawValue
-
-    if (typeof this.rawValue === 'string') {
-      // If the value is a string, first attempt
-      // to substitute environment variables before
-      // validating and transforming.
-      value = envsubst(this.rawValue);
-    }
-
-    // Pass rawValue to transformer. This allows us to tell the user
-    // which environment variable(s) stored an invalid value.
-    const finalValue = this.#transform(value, this.rawValue)
-
-    this.value = finalValue;
-
-    return finalValue;
-  }
-}
+import { envsubst } from './envsubst';
 
 export enum ContractType {
   Standard = 'standard',
@@ -119,39 +24,36 @@ export type ContractConfig = {
 };
 
 export type IPFSPinningServiceConfig = {
-  endpoint: URL;
-  key: string;
+  endpoint: LazyConfigField<URL>;
+  key: LazyConfigField<string>;
 };
 
 export type ConfigParameters = {
-  contract: ConfigObject<ContractConfig>;
+  contract: ContractConfig;
 
-  nftDataPath: ConfigValue<string>;
-  nftAssetPath: ConfigValue<string>;
+  nftDataPath?: string;
+  nftAssetPath?: string;
 
-  ipfsPinningService: ConfigObject<IPFSPinningServiceConfig>;
+  ipfsPinningService: IPFSPinningServiceConfig;
 };
 
 export class Config {
   #config: ConfigParameters;
 
-  #requiredFields: { field: ConfigValue<any>, onResolve?: (value: any) => void }[];
-
   constructor(config: ConfigParameters) {
     this.#config = config;
-    this.#requiredFields = [];
   }
 
-  get contract(): ConfigObject<ContractConfig> {
+  get contract(): ContractConfig {
     return this.#config.contract;
   }
 
-  get nftDataPath(): ConfigValue<string> {
-    return this.#config.nftDataPath; // ?? this.getDefaultDataPath();
+  get nftDataPath(): string {
+    return this.#config.nftDataPath ?? this.getDefaultDataPath();
   }
 
-  static getDefaultDataPath(contractType: ContractType): string {
-    switch (contractType) {
+  private getDefaultDataPath(): string {
+    switch (this.contract.type) {
       case ContractType.Standard:
         return defaultDataPathStandard;
       case ContractType.Edition:
@@ -159,11 +61,11 @@ export class Config {
     }
   }
 
-  get nftAssetPath(): ConfigValue<string> {
-    return this.#config.nftAssetPath;
+  get nftAssetPath(): string {
+    return this.#config.nftAssetPath ?? defaultAssetPath;
   }
 
-  get ipfsPinningService(): ConfigObject<IPFSPinningServiceConfig> {
+  get ipfsPinningService(): IPFSPinningServiceConfig {
     return this.#config.ipfsPinningService;
   }
 
@@ -171,49 +73,37 @@ export class Config {
     const rawConfig = loadRawConfig(configFilename);
 
     return new Config({
-      contract: new ConfigObject<ContractConfig>('contract', {
-        name: new ConfigField<string>('name', rawConfig.contract.name),
-        type: new ConfigField<ContractType>('type', rawConfig.contract.type as ContractType),
-        schema: new ConfigField<metadata.Schema>(
-          'schema',
-          rawConfig.contract.schema,
-          (rawValue: metadata.SchemaInput) => metadata.parseSchema(rawValue),
-        ),
-      }),
+      contract: {
+        name: rawConfig.contract.name,
+        type: rawConfig.contract.type as ContractType,
+        schema: metadata.parseSchema(rawConfig.contract.schema),
+      },
 
-      ipfsPinningService: new ConfigObject<IPFSPinningServiceConfig>('ipfsPinningService', {
-        endpoint: new ConfigField<URL>(
-          "endpoint",
-          rawConfig.ipfsPinningService.endpoint, 
-          parseURL
+      ipfsPinningService: {
+        endpoint: new LazyConfigField<URL>(
+          'ipfsPinningService.endpoint',
+          rawConfig.ipfsPinningService.endpoint,
+          parseURL,
         ),
-        key: new ConfigField<string>("key", rawConfig.ipfsPinningService.key),
-      }),
+        key: new LazyConfigField<string>('ipfsPinningService.key', rawConfig.ipfsPinningService.key),
+      },
 
-      nftDataPath: new ConfigField<string>('nftDataPath', rawConfig.nftDataPath),
-      nftAssetPath: new ConfigField<string>('nftAssetPath', rawConfig.nftAssetPath).setDefault(defaultAssetPath),
+      nftDataPath: rawConfig.nftDataPath,
+      nftAssetPath: rawConfig.nftAssetPath,
     });
   }
 
-  setRequired<T = any>(field: ConfigValue<T>, onResolve?: (value: T) => void): Config {
-    this.#requiredFields.push({ field, onResolve })
-    return this;
-  }
+  static resolveLazyFields(...fields: LazyConfigField<any>[]): any[] {
+    const values = [];
+    const errors: { label: string; error: Error }[] = [];
 
-  resolve() {
-    const errors: { label: string, error: Error }[] = []
-
-    let current: { field: ConfigValue<any>, onResolve?: (value: any) => void }
-
-    while (current = this.#requiredFields.pop()) {
+    for (const field of fields) {
       try {
-        const value = current.field.resolve(1);
-        if (current.onResolve) {
-          current.onResolve(value)
-        }
-      } catch (error: any){
+        const value = field.resolve();
+        values.push(value);
+      } catch (error: any) {
         if (error instanceof FreshmintError) {
-          errors.push({ label: current.field.label, error: error })
+          errors.push({ label: field.label, error: error });
         } else {
           throw error;
         }
@@ -221,25 +111,27 @@ export class Config {
     }
 
     if (errors.length) {
-      throw new ConfigErrors(errors, 0, `Invalid configuration in ${configFilename}`)
+      throw new ConfigErrors(errors, `Invalid configuration in ${configFilename}`);
     }
+
+    return values;
   }
 
   save(basePath?: string) {
     const rawConfig = {
       contract: {
-        name: this.#config.contract.resolve().name,
-        type: this.#config.contract.resolve().type,
-        schema: this.#config.contract.resolve().schema.export(),
+        name: this.#config.contract.name,
+        type: this.#config.contract.type,
+        schema: this.#config.contract.schema.export(),
       },
 
       ipfsPinningService: {
-        endpoint: this.#config.ipfsPinningService.resolve().endpoint.toString(),
-        key: this.#config.ipfsPinningService.resolve().key
+        endpoint: this.#config.ipfsPinningService.endpoint.input,
+        key: this.#config.ipfsPinningService.key.input,
       },
 
-      nftDataPath: this.#config.nftDataPath.resolve(),
-      nftAssetPath: this.#config.nftAssetPath.resolve(),
+      nftDataPath: this.#config.nftDataPath,
+      nftAssetPath: this.#config.nftAssetPath,
     };
 
     saveRawConfig(configFilename, rawConfig, basePath);
@@ -283,10 +175,41 @@ function saveRawConfig(filename: string, config: RawConfig, basePath?: string) {
   fs.writeFileSync(filepath, contents, 'utf8');
 }
 
+export type ConfigValueTransformer<T> = (input: any, rawInput: any) => T;
+
+export class LazyConfigField<T> {
+  label: string;
+  input: any;
+  #transform: ConfigValueTransformer<T>;
+
+  constructor(label: string, input: any, transform: ConfigValueTransformer<T> = (input: any) => input) {
+    this.label = label;
+    this.input = input;
+    this.#transform = transform;
+  }
+
+  resolve(): T {
+    let value = this.input;
+
+    if (typeof this.input === 'string') {
+      // If the value is a string, first attempt
+      // to substitute environment variables before
+      // validating and transforming.
+      value = envsubst(this.input);
+    }
+
+    // Pass rawValue to transformer. This allows us to tell the user
+    // which environment variable(s) stored an invalid value.
+    return this.#transform(value, this.input);
+  }
+}
+
 function parseURL(input: string, rawInput: string): URL {
   try {
     return new URL(input);
   } catch {
-    throw new ConfigValidationError(`"${input}" is not a valid URL${input !== rawInput ? ` (loaded from "${rawInput}").` : '.'}`)
+    throw new ConfigValidationError(
+      `"${input}" is not a valid URL${input !== rawInput ? ` (loaded from "${rawInput}").` : '.'}`,
+    );
   }
 }

@@ -3,20 +3,15 @@ import chalk from 'chalk';
 import { FreshmintError } from '../errors';
 
 export class ConfigErrors extends FreshmintError {
+  name = 'ConfigErrors';
 
-  name: string = 'ConfigErrors';
+  errors: { label: string; error: Error }[];
 
-  errors: { label: string, error: Error }[]
+  constructor(errors: { label: string; error: Error }[], label: string) {
+    const errorMessages = errors.map((error) => `${chalk.gray(error.label + ':')} ${error.error.message}`).join('\n');
 
-  constructor(errors: { label: string, error: Error }[], depth: number = 0, label?: string) {
-    const padding = '  '.repeat(depth);
-  
-    const errorMessages = errors.map(error => `${padding}${chalk.gray(error.label + ':')} ${error.error.message}`).join("\n")
+    const message = `${chalk.red(label + ':')}\n\n${errorMessages}`;
 
-    const message = label ?
-      `${chalk.red(label+':')}\n\n${errorMessages}` :
-      `\n${errorMessages}`;
-    
     super(message);
 
     this.errors = errors;
@@ -24,30 +19,28 @@ export class ConfigErrors extends FreshmintError {
 }
 
 export class ConfigValidationError extends FreshmintError {
-  name: string = 'ConfigValidationError';
+  name = 'ConfigValidationError';
 }
 
 export class MissingEnvironmentVariableError extends FreshmintError {
+  name = 'MissingEnvironmentVariableError';
 
-  name: string = 'MissingEnvironmentVariableError';
-
-  variableName: string
+  variableName: string;
 
   constructor(variableName: string) {
-    super(`${variableName} environment variable is not set`)
+    super(`${variableName} environment variable is not set`);
 
     this.variableName = variableName;
   }
 }
 
 export class EmptyEnvironmentVariableError extends FreshmintError {
+  name = 'EmptyEnvironmentVariableError';
 
-  name: string = 'EmptyEnvironmentVariableError';
-
-  variableName: string
+  variableName: string;
 
   constructor(variableName: string) {
-    super(`The ${variableName} environment variable is empty.`)
+    super(`The ${variableName} environment variable is empty.`);
 
     this.variableName = variableName;
   }
