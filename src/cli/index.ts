@@ -13,7 +13,7 @@ import inquirer from 'inquirer';
 import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
-import { Config, ContractType } from './config';
+import { loadConfig, ContractType, FreshmintConfigSchema } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
@@ -75,7 +75,17 @@ async function mint({
   claim: boolean;
   batchSize: string;
 }) {
-  const config = Config.load();
+  const config = loadConfig((schema: FreshmintConfigSchema) => {
+    schema.contract.fields.schema.onLoad((metadataSchema: metadata.Schema) => {
+      if (metadataSchema.includesFieldType(metadata.IPFSFile)) {
+        schema.ipfsPinningService.setEnabled(
+          true,
+          'This field is required because your metadata schema specifies an "ipfs-file" field.',
+        );
+      }
+    });
+  });
+
   const fresh = new Fresh(config, network);
 
   let csvPath: string;
@@ -134,7 +144,7 @@ async function mint({
 }
 
 async function getNFT(tokenId: string, { network }: { network: string }) {
-  const config = Config.load();
+  const config = loadConfig();
   const fresh = new Fresh(config, network);
 
   const { id, metadata } = await fresh.getNFT(tokenId);
@@ -167,7 +177,7 @@ function getNFTOutput(
 }
 
 async function dumpNFTs(csvPath: string, { network }: { network: string }) {
-  const config = Config.load();
+  const config = loadConfig();
   const fresh = new Fresh(config, network);
 
   const count = await fresh.dumpNFTs(csvPath);
@@ -176,7 +186,7 @@ async function dumpNFTs(csvPath: string, { network }: { network: string }) {
 }
 
 async function generateCadence() {
-  const config = Config.load();
+  const config = loadConfig();
 
   await generateProjectCadence('./', config.contract, false);
 

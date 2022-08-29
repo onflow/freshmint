@@ -1,21 +1,18 @@
-import * as path from 'path';
-import * as dotenv from 'dotenv';
-import * as fs from 'fs-extra';
-import * as yaml from 'js-yaml';
-
 import { metadata } from '../../lib';
-import { ConfigErrors, ConfigValidationError, UndefinedConfigFieldError } from './errors';
-import { FreshmintError } from '../errors';
-import { envsubst } from './envsubst';
+import { ConfigValidationError } from './errors';
+import * as config from './config';
 
-export enum ContractType {
-  Standard = 'standard',
-  Edition = 'edition',
-}
-
+const defaultConfigPath = 'freshmint.yaml';
 const defaultDataPathStandard = 'nfts.csv';
 const defaultDataPathEdition = 'editions.csv';
 const defaultAssetPath = 'assets';
+
+export type FreshmintConfig = {
+  contract: ContractConfig;
+  ipfsPinningService: IPFSPinningServiceConfig;
+  nftDataPath: string;
+  nftAssetPath: string;
+};
 
 export type ContractConfig = {
   name: string;
@@ -23,191 +20,102 @@ export type ContractConfig = {
   schema: metadata.Schema;
 };
 
+export enum ContractType {
+  Standard = 'standard',
+  Edition = 'edition',
+}
+
+function isValidContractType(value: string): boolean {
+  return Object.values<string>(ContractType).includes(value);
+}
+
 export type IPFSPinningServiceConfig = {
-  endpoint: LazyConfigField<URL>;
-  key: LazyConfigField<string>;
+  endpoint: URL;
+  key: string;
 };
 
-export type ConfigParameters = {
-  contract: ContractConfig;
+const freshmintConfigSchema = getConfigSchema();
+export type FreshmintConfigSchema = typeof freshmintConfigSchema;
 
-  nftDataPath?: string;
-  nftAssetPath?: string;
+export function loadConfig(modifySchema?: (schema: FreshmintConfigSchema) => void): FreshmintConfig {
+  const reader = new config.ConfigReader<FreshmintConfig, FreshmintConfigSchema>(freshmintConfigSchema);
 
-  ipfsPinningService?: IPFSPinningServiceConfig;
-};
-
-export class Config {
-  #config: ConfigParameters;
-
-  constructor(config: ConfigParameters) {
-    this.#config = config;
+  if (modifySchema) {
+    reader.modifySchema(modifySchema);
   }
 
-  get contract(): ContractConfig {
-    return this.#config.contract;
-  }
+  return reader.load(defaultConfigPath);
+}
 
-  get nftDataPath(): string {
-    return this.#config.nftDataPath ?? this.getDefaultDataPath();
-  }
+export function saveConfig(
+  contract: ContractConfig,
+  ipfsPinningServiceEndpoint: string,
+  ipfsPinningServiceKey: string,
+  basePath?: string,
+) {
+  new config.ConfigWriter<FreshmintConfigSchema>(freshmintConfigSchema)
+    .setValues((schema) => {
+      schema.contract.setValue(contract);
+      schema.ipfsPinningService.setRawValue({
+        endpoint: ipfsPinningServiceEndpoint,
+        key: ipfsPinningServiceKey,
+      });
+    })
+    .write(defaultConfigPath, basePath);
+}
 
-  private getDefaultDataPath(): string {
-    switch (this.contract.type) {
-      case ContractType.Standard:
-        return defaultDataPathStandard;
-      case ContractType.Edition:
-        return defaultDataPathEdition;
-    }
-  }
-
-  get nftAssetPath(): string {
-    return this.#config.nftAssetPath ?? defaultAssetPath;
-  }
-
-  get ipfsPinningService(): IPFSPinningServiceConfig {
-    return this.#config.ipfsPinningService;
-  }
-
-  static load(): Config {
-    const rawConfig = loadRawConfig(configFilename);
-
-    return new Config({
-      contract: {
-        name: rawConfig.contract.name,
-        type: rawConfig.contract.type as ContractType,
-        schema: metadata.parseSchema(rawConfig.contract.schema),
-      },
-
-      ipfsPinningService: {
-        endpoint: new LazyConfigField<URL>(
-          'ipfsPinningService.endpoint',
-          () => rawConfig.ipfsPinningService?.endpoint,
-          parseURL,
-        ),
-        key: new LazyConfigField<string>('ipfsPinningService.key', () => rawConfig.ipfsPinningService?.key),
-      },
-
-      nftDataPath: rawConfig.nftDataPath,
-      nftAssetPath: rawConfig.nftAssetPath,
-    });
-  }
-
-  static resolveLazyFields(...fields: LazyConfigField<any>[]): any[] {
-    const values = [];
-    const errors: { label: string; error: Error }[] = [];
-
-    for (const field of fields) {
-      try {
-        const value = field.resolve();
-        values.push(value);
-      } catch (error: any) {
-        if (error instanceof FreshmintError) {
-          errors.push({ label: field.label, error: error });
-        } else {
-          throw error;
-        }
-      }
-    }
-
-    if (errors.length) {
-      throw new ConfigErrors(errors, `Invalid configuration in ${configFilename}`);
-    }
-
-    return values;
-  }
-
-  save(basePath?: string) {
-    const rawConfig = {
-      contract: {
-        name: this.#config.contract.name,
-        type: this.#config.contract.type,
-        schema: this.#config.contract.schema.export(),
-      },
-
-      ipfsPinningService: {
-        endpoint: this.#config.ipfsPinningService.endpoint.getInput(),
-        key: this.#config.ipfsPinningService.key.getInput(),
-      },
-
-      nftDataPath: this.#config.nftDataPath,
-      nftAssetPath: this.#config.nftAssetPath,
-    };
-
-    saveRawConfig(configFilename, rawConfig, basePath);
+export function getDefaultDataPath(contractType: ContractType): string {
+  switch (contractType) {
+    case ContractType.Standard:
+      return defaultDataPathStandard;
+    case ContractType.Edition:
+      return defaultDataPathEdition;
   }
 }
 
-type RawConfig = {
-  contract: {
-    name: string;
-    type: string;
-    schema: metadata.SchemaInput;
+function getConfigSchema() {
+  const contract = config.Map<ContractConfig>('contract', {
+    name: config.Field<string>('name'),
+    type: config.Field<ContractType>('type', parseContractType),
+    schema: config.Field<metadata.Schema>(
+      'schema',
+      (input: metadata.SchemaInput) => metadata.parseSchema(input),
+      (schema: metadata.Schema) => schema.export(),
+    ),
+  });
+
+  const ipfsPinningService = config
+    .Map<IPFSPinningServiceConfig>('ipfsPinningService', {
+      endpoint: config.Field<URL>('endpoint', parseURL),
+      key: config.Field<string>('key'),
+    })
+    .setEnabled(false);
+
+  const nftDataPath = config.Field<string>('nftDataPath').setEnabled(false);
+  const nftAssetPath = config.Field<string>('nftAssetPath').setDefault(defaultAssetPath);
+
+  // We can only set the default data path once we know
+  // the contract type (and only if it is a valid contract type).
+  contract.fields.type.onLoad((contractType) => {
+    nftDataPath.setEnabled(true).setDefault(getDefaultDataPath(contractType));
+  });
+
+  return {
+    contract,
+    ipfsPinningService,
+    nftDataPath,
+    nftAssetPath,
   };
-
-  ipfsPinningService?: {
-    endpoint: string;
-    key: string;
-  };
-
-  nftDataPath?: string;
-  nftAssetPath?: string;
-};
-
-const configFilename = 'freshmint.yaml';
-
-function loadRawConfig(filename: string, basePath?: string): RawConfig {
-  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-
-  const filepath = path.resolve(basePath ?? process.cwd(), filename);
-  const contents = fs.readFileSync(filepath, 'utf8');
-
-  const config = yaml.load(contents);
-
-  return config as RawConfig;
 }
 
-function saveRawConfig(filename: string, config: RawConfig, basePath?: string) {
-  const filepath = path.resolve(basePath ?? process.cwd(), filename);
-
-  const contents = yaml.dump(config);
-
-  fs.writeFileSync(filepath, contents, 'utf8');
-}
-
-export type ConfigValueTransformer<T> = (input: any, rawInput: any) => T;
-
-export class LazyConfigField<T> {
-  label: string;
-  getInput: () => any;
-  #transform: ConfigValueTransformer<T>;
-
-  constructor(label: string, input: () => any, transform: ConfigValueTransformer<T> = (input: any) => input) {
-    this.label = label;
-    this.getInput = input;
-    this.#transform = transform;
+function parseContractType(input: string): ContractType {
+  if (!isValidContractType(input)) {
+    throw new ConfigValidationError(
+      `"${input}" is not a valid contract type. This field must be either "${ContractType.Standard}" or "${ContractType.Edition}".`,
+    );
   }
 
-  resolve(): T {
-    const rawInput = this.getInput();
-
-    if (rawInput === undefined) {
-      throw new UndefinedConfigFieldError();
-    }
-
-    let input = rawInput;
-
-    if (typeof rawInput === 'string') {
-      // If the value is a string, first attempt
-      // to substitute environment variables before
-      // validating and transforming.
-      input = envsubst(rawInput);
-    }
-
-    // Pass rawValue to transformer. This allows us to tell the user
-    // which environment variable(s) stored an invalid value.
-    return this.#transform(input, rawInput);
-  }
+  return input as ContractType;
 }
 
 function parseURL(input: string, rawInput: string): URL {

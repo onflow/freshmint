@@ -1,7 +1,7 @@
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 import { NFTStorage } from 'nft.storage';
 
-import { Config } from './config';
+import { FreshmintConfig } from './config';
 import { metadata } from '../lib';
 import FlowGateway from './flow';
 import IPFS from './ipfs';
@@ -11,12 +11,12 @@ import IPFSFileProcessor from './processors/IPFSFileProcessor';
 import Storage from './storage';
 
 export default class Fresh {
-  config: Config;
+  config: FreshmintConfig;
   network: string;
 
   storage: Storage;
 
-  constructor(config: Config, network: string) {
+  constructor(config: FreshmintConfig, network: string) {
     this.config = config;
     this.network = network;
 
@@ -27,12 +27,10 @@ export default class Fresh {
     const metadataProcessor = new MetadataProcessor(this.config.contract.schema);
 
     if (this.config.contract.schema.includesFieldType(metadata.IPFSFile)) {
-      const [endpoint, key] = Config.resolveLazyFields(
-        this.config.ipfsPinningService.endpoint,
-        this.config.ipfsPinningService.key,
-      );
-
-      const ipfsClient = new NFTStorage({ endpoint, token: key });
+      const ipfsClient = new NFTStorage({
+        endpoint: this.config.ipfsPinningService.endpoint,
+        token: this.config.ipfsPinningService.key,
+      });
 
       const ipfs = new IPFS(ipfsClient);
 
@@ -43,11 +41,7 @@ export default class Fresh {
 
     const flowGateway = new FlowGateway(this.network);
 
-    const storage = new Storage('freshdb', { baseSelector: { network: this.network } });
-
-    const minter = createMinter(this.config.contract, metadataProcessor, flowGateway, storage);
-
-    return minter;
+    return createMinter(this.config.contract, metadataProcessor, flowGateway, this.storage);
   }
 
   async getNFT(tokenId: string) {
