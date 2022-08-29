@@ -1,7 +1,15 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
-import { ContractImports, StandardNFTGenerator, EditionNFTGenerator, NFTAirDropGenerator } from '../lib';
+import {
+  ContractImports,
+  StandardNFTGenerator,
+  EditionNFTGenerator,
+  NFTAirDropGenerator,
+  FreshmintMetadataViewsGenerator,
+  CommonNFTGenerator,
+  ClaimSaleGenerator,
+} from '../lib';
 import { ContractConfig, ContractType } from './config';
 
 export async function generateProject(dir: string, contract: ContractConfig, nftDataPath: string) {
@@ -20,6 +28,7 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
   const imports = {
     NonFungibleToken: `"./NonFungibleToken.cdc"`,
     MetadataViews: `"./MetadataViews.cdc"`,
+    FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`,
     FungibleToken: `"./FungibleToken.cdc"`,
     FlowToken: `"./FlowToken.cdc"`,
     NFTAirDrop: `"./NFTAirDrop.cdc"`,
@@ -35,8 +44,12 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
   }
 
   await writeFile(path.resolve(dir, `cadence/contracts/NFTAirDrop.cdc`), NFTAirDropGenerator.contract({ imports }));
+  await writeFile(path.resolve(dir, `cadence/contracts/NFTClaimSale.cdc`), ClaimSaleGenerator.contract({ imports }));
 
-  await createGetNFTScript(dir, contract.name);
+  await writeFile(
+    path.resolve(dir, `cadence/contracts/FreshmintMetadataViews.cdc`),
+    FreshmintMetadataViewsGenerator.contract(),
+  );
 }
 
 async function generateStandardProject(
@@ -62,6 +75,8 @@ async function generateStandardProject(
     // Find a better solution.
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
     NFTAirDrop: `"../contracts/NFTAirDrop.cdc"`,
+    MetadataViews: `"../contracts/MetadataViews.cdc"`,
+    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
   };
 
   const mintTransaction = StandardNFTGenerator.mint({
@@ -85,6 +100,11 @@ async function generateStandardProject(
   if (includeCSVFile) {
     await createNFTsCSVFile(dir, contract.name, { fields: contract.schema.fields });
   }
+
+  await writeFile(
+    path.resolve(dir, `cadence/scripts/get_nft.cdc`),
+    CommonNFTGenerator.getNFT({ imports: adjustedImports, contractName: contract.name, contractAddress }),
+  );
 }
 
 async function generateEditionProject(
@@ -110,6 +130,8 @@ async function generateEditionProject(
     // Find a better solution.
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
     NFTAirDrop: `"../contracts/NFTAirDrop.cdc"`,
+    MetadataViews: `"../contracts/MetadataViews.cdc"`,
+    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
   };
 
   const createEditionsTransaction = EditionNFTGenerator.createEditions({
@@ -140,6 +162,11 @@ async function generateEditionProject(
   if (includeCSVFile) {
     await createEditionsCSVFile(dir, contract.name, { fields: contract.schema.fields });
   }
+
+  await writeFile(
+    path.resolve(dir, `cadence/scripts/get_nft.cdc`),
+    CommonNFTGenerator.getNFT({ imports: adjustedImports, contractName: contract.name, contractAddress }),
+  );
 }
 
 async function createScaffold(dir: string) {
@@ -169,8 +196,6 @@ async function createScaffold(dir: string) {
 
   await fs.copy(path.resolve(__dirname, 'templates/gitignore'), path.resolve(dir, '.gitignore'));
 }
-
-const createGetNFTScript = template('templates/cadence/scripts/get_nft.cdc', 'cadence/scripts/get_nft.cdc');
 
 const createNFTsCSVFile = template('templates/nfts.csv', 'nfts.csv');
 const createEditionsCSVFile = template('templates/editions.csv', 'editions.csv');
