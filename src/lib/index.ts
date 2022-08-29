@@ -20,6 +20,8 @@ export { ClaimSaleContract } from './contracts/ClaimSaleContract';
 export { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 
 export { NFTAirDropGenerator } from './generators/NFTAirDropGenerator';
+export { CommonNFTGenerator } from './generators/CommonNFTGenerator';
+export { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 
 export { OnChainCollection } from './collections/OnChainCollection';
 export { OnChainBlindCollection } from './collections/OnChainBlindCollection';

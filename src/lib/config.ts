@@ -19,7 +19,9 @@ export namespace FreshmintConfig {
       NonFungibleToken: '0xf8d6e0586b0a20c7',
       FlowToken: '0x0ae53cb6e3f42a79',
       MetadataViews: '0xf8d6e0586b0a20c7',
+      FreshmintMetadataViews: '0xf8d6e0586b0a20c7',
       NFTClaimSale: '0xf8d6e0586b0a20c7',
+      NFTAirDrop: '0xf8d6e0586b0a20c7'
     },
   };
 
@@ -28,7 +30,9 @@ export namespace FreshmintConfig {
       FungibleToken: '0x9a0766d93b6608b7',
       NonFungibleToken: '0x631e88ae7f1d7c20',
       MetadataViews: '0x631e88ae7f1d7c20',
-      NFTClaimSale: '0xc7cfd3d1b4951113',
+      FreshmintMetadataViews: '0x3c67d33388b03a69',
+      NFTClaimSale: '0x3c67d33388b03a69',
+      NFTAirDrop: '0x3c67d33388b03a69'
     },
   };
 

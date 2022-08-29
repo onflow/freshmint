@@ -1,6 +1,7 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
+import FreshmintMetadataViews from {{{ imports.FreshmintMetadataViews }}}
 
 pub contract {{ contractName }}: NonFungibleToken {
 
@@ -134,15 +135,22 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
 
         pub fun getViews(): [Type] {
-            {{#if views }}
+            if self.getEdition() != nil {
+                {{#if views }}
+                return [
+                    {{#each views}}
+                    {{{ this.cadenceTypeString }}}{{#unless @last}},{{/unless}}
+                    {{/each}}
+                ]
+                {{ else }}
+                return []
+                {{/if}}
+            }
+
             return [
-                {{#each views}}
-                {{{ this.cadenceTypeString }}}{{#unless @last}},{{/unless}}
-                {{/each}}
+                Type<MetadataViews.Display>(),
+                Type<FreshmintMetadataViews.BlindNFT>()
             ]
-            {{ else }}
-            return []
-            {{/if}}
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
@@ -158,7 +166,15 @@ pub contract {{ contractName }}: NonFungibleToken {
                         {{/with}}
                     {{/each}}
                 }
+
+                return nil
             }
+            {{ else }}
+
+            if self.getEdition() != nil {
+                return []
+            }
+            {{/if}}
 
             switch view {
                 case Type<MetadataViews.Display>():
@@ -170,12 +186,11 @@ pub contract {{ contractName }}: NonFungibleToken {
                             path: nil
                         )
                     )
+                case Type<FreshmintMetadataViews.BlindNFT>():
+                    return FreshmintMetadataViews.BlindNFT(metadataHash: self.editionHash)
             }
 
             return nil
-            {{ else }}
-            return nil
-            {{/if}}
         }
 
         destroy() {
