@@ -38,7 +38,12 @@
         "mainnet": "0x1654653399040a61"
       }
     },
-    "NFTAirDrop": "cadence/contracts/NFTAirDrop.cdc",
+    "NFTAirDrop": {
+      "source": "cadence/contracts/NFTAirDrop.cdc",
+      "aliases": {
+        "testnet": "0x3c67d33388b03a69"
+      }
+    },
     "{{name}}": "cadence/contracts/{{name}}.cdc"
   },
   "networks": {
