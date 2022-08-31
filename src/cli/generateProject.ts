@@ -5,7 +5,7 @@ import {
   ContractImports,
   StandardNFTGenerator,
   EditionNFTGenerator,
-  NFTAirDropGenerator,
+  NFTLockBoxGenerator,
   FreshmintMetadataViewsGenerator,
   CommonNFTGenerator,
   ClaimSaleGenerator,
@@ -31,7 +31,7 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
     FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`,
     FungibleToken: `"./FungibleToken.cdc"`,
     FlowToken: `"./FlowToken.cdc"`,
-    NFTAirDrop: `"./NFTAirDrop.cdc"`,
+    NFTLockBox: `"./NFTLockBox.cdc"`,
   };
 
   switch (contract.type) {
@@ -43,7 +43,7 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
       break;
   }
 
-  await writeFile(path.resolve(dir, `cadence/contracts/NFTAirDrop.cdc`), NFTAirDropGenerator.contract({ imports }));
+  await writeFile(path.resolve(dir, `cadence/contracts/NFTLockBox.cdc`), NFTLockBoxGenerator.contract({ imports }));
   await writeFile(path.resolve(dir, `cadence/contracts/NFTClaimSale.cdc`), ClaimSaleGenerator.contract({ imports }));
 
   await writeFile(
@@ -74,7 +74,7 @@ async function generateStandardProject(
     // TODO: this is a workaround to fix the relative import in this file.
     // Find a better solution.
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    NFTAirDrop: `"../contracts/NFTAirDrop.cdc"`,
+    NFTLockBox: `"../contracts/NFTLockBox.cdc"`,
     MetadataViews: `"../contracts/MetadataViews.cdc"`,
     FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
   };
@@ -129,7 +129,7 @@ async function generateEditionProject(
     // TODO: this is a workaround to fix the relative import in this file.
     // Find a better solution.
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    NFTAirDrop: `"../contracts/NFTAirDrop.cdc"`,
+    NFTLockBox: `"../contracts/NFTLockBox.cdc"`,
     MetadataViews: `"../contracts/MetadataViews.cdc"`,
     FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
   };

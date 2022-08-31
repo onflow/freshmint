@@ -1,38 +1,35 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
-import NFTAirDrop from {{{ imports.NFTAirDrop }}}
+import NFTLockBox from {{{ imports.NFTClaimKeyCollection }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
-transaction(dropAddress: Address, id: UInt64, signature: String) {
+transaction(lockBoxAddress: Address, id: UInt64, signature: String) {
 
-    let receiver: &{NonFungibleToken.CollectionPublic}
-    let drop: &{NFTAirDrop.DropPublic}
+    let receiver: &{NonFungibleToken.Receiver}
+    let lockBox: &{NFTLockBox.LockBoxPublic}
 
     prepare(signer: AuthAccount) {
         if signer.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
-            // create a new empty collection
             let collection <- {{ contractName }}.createEmptyCollection()
             
-            // save it to the account
             signer.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
 
-            // create a public capability for the collection
             signer.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>(
                 {{ contractName }}.CollectionPublicPath, 
                 target: {{ contractName }}.CollectionStoragePath
             )
         }
-           
+
         self.receiver = signer
             .getCapability({{ contractName }}.CollectionPublicPath)!
-            .borrow<&{NonFungibleToken.CollectionPublic}>()!
+            .borrow<&{NonFungibleToken.Receiver}>()!
 
-        self.drop = getAccount(dropAddress)
-            .getCapability(NFTAirDrop.DropPublicPath)!
-            .borrow<&{NFTAirDrop.DropPublic}>()!
+        self.lockBox = getAccount(lockBoxAddress)
+            .getCapability(NFTLockBox.LockBoxPublicPath)!
+            .borrow<&{NFTLockBox.LockBoxPublic}>()!
     }
 
     execute {
-        self.drop.claim(
+        self.lockBox.claim(
             id: id, 
             signature: signature.decodeHex(), 
             receiver: self.receiver,

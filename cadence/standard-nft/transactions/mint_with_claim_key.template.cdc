@@ -1,29 +1,29 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
-import NFTAirDrop from {{{ imports.NFTAirDrop }}}
+import NFTLockBox from {{{ imports.NFTLockBox }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
-pub fun getOrCreateDrop(account: AuthAccount): &NFTAirDrop.Drop {
-    if let existingDrop = account.borrow<&NFTAirDrop.Drop>(from: NFTAirDrop.DropStoragePath) {
-        return existingDrop
+pub fun getOrCreateLockBox(account: AuthAccount): &NFTLockBox.LockBox {
+    if let existingLockBox = account.borrow<&NFTLockBox.LockBox>(from: NFTLockBox.DefaultLockBoxStoragePath) {
+        return existingLockBox
     }
 
-    let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>({{ contractName }}.CollectionPrivatePath)
+    let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.Receiver}>({{ contractName }}.CollectionPrivatePath)
 
-    let drop <- NFTAirDrop.createDrop(
-        nftType: Type<@{{ contractName }}.NFT>(),
-        collection: collection
+    let lockBox <- NFTLockBox.createLockBox(
+        collection: collection,
+        receiverPath: {{ contractName }}.CollectionPublicPath
     )
 
-    let drop = &drop as &NFTAirDrop.Drop
+    let lockBoxRef = &lockBox as &NFTLockBox.LockBox
 
-    account.save(<- drop, to: NFTAirDrop.DropStoragePath)
+    account.save(<- lockBox, to: NFTLockBox.DefaultLockBoxStoragePath)
 
-    account.link<&NFTAirDrop.Drop{NFTAirDrop.DropPublic}>(
-        NFTAirDrop.DropPublicPath, 
-        target: NFTAirDrop.DropStoragePath
+    account.link<&NFTLockBox.LockBox{NFTLockBox.LockBoxPublic}>(
+        NFTLockBox.DefaultLockBoxPublicPath, 
+        target: NFTLockBox.DefaultLockBoxStoragePath
     )
 
-    return drop
+    return lockBoxRef
 }
 
 transaction(
@@ -34,14 +34,14 @@ transaction(
 ) {
     
     let admin: &{{ contractName }}.Admin
-    let drop: &NFTAirDrop.Drop
+    let lockBox: &NFTLockBox.LockBox
 
     prepare(signer: AuthAccount) {
         self.admin = signer
             .borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
-        self.drop = getOrCreateDrop(signer)
+        self.lockBox = getOrCreateLockBox(signer)
     }
 
     execute {        
@@ -53,7 +53,7 @@ transaction(
                 {{/each}}
             )
         
-            self.drop.deposit(
+            self.lockBox.deposit(
                 token: <- token, 
                 publicKey: publicKey.decodeHex()
             )
