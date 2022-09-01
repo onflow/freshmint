@@ -1,5 +1,5 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
-import NFTLockBox from {{{ imports.NFTClaimKeyCollection }}}
+import NFTLockBox from {{{ imports.NFTLockBox }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(lockBoxAddress: Address, id: UInt64, signature: String) {
