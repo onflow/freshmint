@@ -3,8 +3,8 @@ import FungibleToken from {{{ imports.FungibleToken }}}
 
 pub contract NFTLockBox {
 
-    // This event is emitted when an NFT is claimed
-    // from a lock box.
+    // The Claimed event is emitted when an NFT
+    // is successfully claimed from a lock box.
     pub event Claimed(
         nftType: Type,
         nftID: UInt64,
