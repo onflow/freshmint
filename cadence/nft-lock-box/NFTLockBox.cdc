@@ -12,9 +12,16 @@ pub contract NFTLockBox {
         recipient: Address
     )
 
+    // These are the default storage and public paths
+    // defined by the lock box contract.
+    //
+    // However, a lock box owner may store multiple lock boxes 
+    // in the same account using non-default storage paths.
     pub let DefaultLockBoxStoragePath: StoragePath
     pub let DefaultLockBoxPublicPath: PublicPath
 
+    // This is the publicly-available interface
+    // that allows users to claim NFTs from a lock box.
     pub resource interface LockBoxPublic {
         pub fun claim(
             id: UInt64, 
@@ -23,6 +30,15 @@ pub contract NFTLockBox {
         )
     }
 
+    // A lock box is an NFT collection that maintains
+    // a one-to-one mapping between NFTs and ECDSA public keys.
+    //
+    // A user can withdraw a given NFT if they have its corresponding
+    // private key, referred to as the "claim key".
+    //
+    // The lock box owner can distribute claim keys (e.g. via email or QR code)
+    // in order to facilitate an airdrop without requiring users to
+    // have an existing Flow account address.
     pub resource LockBox: LockBoxPublic {
 
         // A capability to the underlying base NFT collection
