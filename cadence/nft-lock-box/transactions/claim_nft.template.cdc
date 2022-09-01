@@ -4,7 +4,7 @@ import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(lockBoxAddress: Address, id: UInt64, signature: String) {
 
-    let receiver: &{NonFungibleToken.Receiver}
+    let receiverAddress: Address 
     let lockBox: &{NFTLockBox.LockBoxPublic}
 
     prepare(signer: AuthAccount) {
@@ -19,20 +19,18 @@ transaction(lockBoxAddress: Address, id: UInt64, signature: String) {
             )
         }
 
-        self.receiver = signer
-            .getCapability({{ contractName }}.CollectionPublicPath)!
-            .borrow<&{NonFungibleToken.Receiver}>()!
+        self.receiverAddress = signer.address
 
         self.lockBox = getAccount(lockBoxAddress)
-            .getCapability(NFTLockBox.LockBoxPublicPath)!
+            .getCapability(NFTLockBox.DefaultLockBoxPublicPath)!
             .borrow<&{NFTLockBox.LockBoxPublic}>()!
     }
 
     execute {
         self.lockBox.claim(
-            id: id, 
-            signature: signature.decodeHex(), 
-            receiver: self.receiver,
+            id: id,
+            address: self.receiverAddress,
+            signature: signature.decodeHex() 
         )
     }
 }
