@@ -138,6 +138,14 @@ pub contract NFTLockBox {
             )
         }
 
+        // This function generates the raw message that is
+        // used to validate a claim.
+        //
+        // The claim message is simply the recipient address concatenated
+        // with the NFT ID in big-endian byte form.
+        //
+        // Both Address and UInt64 values have a fixed-length byte representation
+        // of 8 bytes (64 bits), so a valid message will always be exactly 16 bytes long.
         pub fun makeClaimMessage(address: Address, id: UInt64): [UInt8] {
             let addressBytes = address.toBytes()
             let idBytes = id.toBigEndianBytes()
