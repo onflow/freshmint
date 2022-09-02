@@ -162,7 +162,7 @@ pub contract NFTLockBox {
     }
 
     init() {
-        self.DefaultLockBoxStoragePath = /storage/NFTLockBox
-        self.DefaultLockBoxPublicPath = /public/NFTLockBox
+        self.DefaultLockBoxStoragePath = /storage/DefaultNFTLockBox
+        self.DefaultLockBoxPublicPath = /public/DefaultNFTLockBox
     }
 }
