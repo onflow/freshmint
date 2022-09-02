@@ -32,7 +32,7 @@ export namespace FreshmintConfig {
       MetadataViews: '0x631e88ae7f1d7c20',
       FreshmintMetadataViews: '0x3c67d33388b03a69',
       NFTClaimSale: '0x3c67d33388b03a69',
-      NFTAirDrop: '0x3c67d33388b03a69', // TODO: replace with NFTLockBox
+      NFTLockBox: '0x0cad7d1c09a3a433'
     },
   };
 
@@ -42,6 +42,7 @@ export namespace FreshmintConfig {
       NonFungibleToken: '0x1d7e57aa55817448',
       MetadataViews: '0x1d7e57aa55817448',
       NFTClaimSale: '', // TODO: deploy NFTClaimSale to mainnet
+      NFTLockBox: '0x14b5235fc3926e65'
     },
   };
 }

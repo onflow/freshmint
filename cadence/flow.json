@@ -1,0 +1,29 @@
+{
+	"contracts": {
+		"NFTLockBox": "./nft-lock-box/NFTLockBox.cdc"
+	},
+	"networks": {
+		"mainnet": "access.mainnet.nodes.onflow.org:9000",
+		"testnet": "access.devnet.nodes.onflow.org:9000"
+	},
+	"deployments": {
+		"testnet": {
+			"nft-lock-box-testnet": [
+				"NFTLockBox"
+			]
+		},
+		"mainnet": {
+			"nft-lock-box-mainnet": [
+				"NFTLockBox"
+			]
+		}
+	},
+	"accounts": {
+		"nft-lock-box-testnet": {
+			"fromFile": "nft-lock-box-testnet.private.json"
+		},
+		"nft-lock-box-mainnet": {
+			"fromFile": "nft-lock-box-mainnet.private.json"
+		}
+	}
+}
