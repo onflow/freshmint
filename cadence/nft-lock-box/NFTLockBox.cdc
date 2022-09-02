@@ -1,5 +1,4 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
-import FungibleToken from {{{ imports.FungibleToken }}}
 
 pub contract NFTLockBox {
 
