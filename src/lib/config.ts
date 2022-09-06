@@ -42,7 +42,7 @@ export namespace FreshmintConfig {
       NonFungibleToken: '0x1d7e57aa55817448',
       MetadataViews: '0x1d7e57aa55817448',
       NFTClaimSale: '', // TODO: deploy NFTClaimSale to mainnet
-      NFTLockBox: '0x14b5235fc3926e65'
+      NFTLockBox: '' // TODO: deploy NFTLockBox to mainnet
     },
   };
 }
