@@ -337,19 +337,18 @@ export class UFix64Value {
 }
 
 function parseBool(value: string): boolean {
-  if (value === "true") {
-    return true
-  };
+  if (value === 'true') {
+    return true;
+  }
 
   if (value === 'false') {
     return false;
   }
 
-  throw new Error(`"${value}" is an invalid boolean value. Must be "true" or "false".`)
+  throw new Error(`"${value}" is an invalid boolean value. Must be "true" or "false".`);
 }
 
 class BoolValue {
-
   value: boolean;
 
   constructor(value: string) {
@@ -359,6 +358,6 @@ class BoolValue {
   toBytes(): Buffer {
     // True:  [0x01]
     // False: [0x00]
-    return Buffer.from([ this.value === true ? 1 : 0]);
+    return Buffer.from([this.value === true ? 1 : 0]);
   }
 }
