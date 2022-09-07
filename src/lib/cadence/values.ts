@@ -39,7 +39,7 @@ export function getCadenceByteTemplate(cadenceType: CadenceType): string {
       return 'toBytes()';
   }
 
-  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized on-chain.`);
+  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized on chain.`);
 }
 
 export function serializeCadenceValue(cadenceType: CadenceType, value: string): Buffer {
@@ -78,7 +78,7 @@ export function serializeCadenceValue(cadenceType: CadenceType, value: string): 
       return new BoolValue(value).toBytes();
   }
 
-  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized off-chain.`);
+  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized off chain.`);
 }
 
 export class IntValue {
