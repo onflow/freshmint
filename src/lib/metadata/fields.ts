@@ -2,7 +2,7 @@
 import * as t from '@onflow/types';
 
 import { MetadataMap, MetadataValue } from '.';
-import { CadenceType, getCadenceByteTemplate, serializeCadenceValue } from '../cadence/values';
+import { CadenceType, getCadenceByteTemplate, parseBool, serializeCadenceValue } from '../cadence/values';
 
 export class Field {
   name: string;
@@ -18,7 +18,8 @@ export class Field {
   }
 
   getValue(metadata: MetadataMap): MetadataValue {
-    return metadata[this.name ?? ''];
+    const value = metadata[this.name];
+    return this.typeInstance.parseValue(value);
   }
 
   asCadenceTypeObject(): CadenceType {
@@ -56,6 +57,14 @@ export class FieldTypeInstance {
     return this.type.cadenceType;
   }
 
+  parseValue(value: string): MetadataValue {
+    if (this.type.parseValue) {
+      return this.type.parseValue(value);
+    }
+
+    return value;
+  }
+
   serializeValue(value: MetadataValue): Buffer {
     return serializeCadenceValue(this.cadenceType, value as string);
   }
@@ -67,6 +76,7 @@ export interface FieldType {
   label: string;
   cadenceType: CadenceType;
   sampleValue?: string;
+  parseValue?: (value: string) => MetadataValue;
 }
 
 export function defineField({
@@ -74,11 +84,13 @@ export function defineField({
   label,
   cadenceType,
   sampleValue,
+  parseValue,
 }: {
   id: string;
   label: string;
   cadenceType: CadenceType;
   sampleValue?: string;
+  parseValue?: (value: string) => MetadataValue;
 }): FieldType {
   const fieldType = (): FieldTypeInstance => {
     // TODO: parse options
@@ -89,6 +101,7 @@ export function defineField({
   fieldType.label = label;
   fieldType.cadenceType = cadenceType;
   fieldType.sampleValue = sampleValue;
+  fieldType.parseValue = parseValue;
 
   return fieldType;
 }
@@ -133,6 +146,7 @@ export const Bool = defineField({
   label: 'Boolean',
   cadenceType: t.Bool,
   sampleValue: 'true',
+  parseValue: (value: string) => parseBool(value),
 });
 
 export const HTTPFile = defineField({
