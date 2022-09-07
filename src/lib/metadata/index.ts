@@ -1,5 +1,5 @@
 export type MetadataMap = { [key: string]: MetadataValue };
-export type MetadataValue = { [key: string]: MetadataValue } | string;
+export type MetadataValue = any;
 
 export { Field, FieldMap, FieldType, fieldTypes } from './fields';
 export { String, Int, UInt, Fix64, UFix64, Bool, IPFSImage, HTTPFile, IPFSFile } from './fields';

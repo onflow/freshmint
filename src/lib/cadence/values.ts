@@ -42,7 +42,7 @@ export function getCadenceByteTemplate(cadenceType: CadenceType): string {
   throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized on chain.`);
 }
 
-export function serializeCadenceValue(cadenceType: CadenceType, value: string): Buffer {
+export function serializeCadenceValue(cadenceType: CadenceType, value: any): Buffer {
   // TODO: support Character type
 
   switch (cadenceType) {
@@ -336,7 +336,11 @@ export class UFix64Value {
   }
 }
 
-function parseBool(value: string): boolean {
+export function parseBool(value: string | boolean): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
   if (value === 'true') {
     return true;
   }
@@ -348,10 +352,10 @@ function parseBool(value: string): boolean {
   throw new Error(`"${value}" is an invalid boolean value. Must be "true" or "false".`);
 }
 
-class BoolValue {
+export class BoolValue {
   value: boolean;
 
-  constructor(value: string) {
+  constructor(value: string | boolean) {
     this.value = parseBool(value);
   }
 
