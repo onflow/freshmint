@@ -39,11 +39,11 @@ export function getCadenceByteTemplate(cadenceType: CadenceType): string {
       return 'toBytes()';
   }
 
-  throw 'unsupported Cadence type';
+  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized on-chain.`);
 }
 
 export function serializeCadenceValue(cadenceType: CadenceType, value: string): Buffer {
-  // TODO: support Bool and Character types
+  // TODO: support Character type
 
   switch (cadenceType) {
     case t.Int:
@@ -74,9 +74,11 @@ export function serializeCadenceValue(cadenceType: CadenceType, value: string): 
       return Buffer.from(value, 'utf-8');
     case t.Address:
       return Buffer.from(sansPrefix(value), 'hex');
+    case t.Bool:
+      return new BoolValue(value).toBytes();
   }
 
-  throw 'unsupported Cadence type';
+  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized off-chain.`);
 }
 
 export class IntValue {
@@ -331,5 +333,32 @@ export class UFix64Value {
     buffer.writeBigUInt64BE(this.number);
 
     return buffer;
+  }
+}
+
+function parseBool(value: string): boolean {
+  if (value === "true") {
+    return true
+  };
+
+  if (value === 'false') {
+    return false;
+  }
+
+  throw new Error(`"${value}" is an invalid boolean value. Must be "true" or "false".`)
+}
+
+class BoolValue {
+
+  value: boolean;
+
+  constructor(value: string) {
+    this.value = parseBool(value);
+  }
+
+  toBytes(): Buffer {
+    // True:  [0x01]
+    // False: [0x00]
+    return Buffer.from([ this.value === true ? 1 : 0]);
   }
 }
