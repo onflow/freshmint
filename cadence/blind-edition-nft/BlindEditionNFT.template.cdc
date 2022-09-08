@@ -107,7 +107,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         return {{ contractName }}.editionMembers[id]
     }
 
-    pub resource NFT: NonFungibleToken.INFT {
+    pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
 
@@ -210,7 +210,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    pub resource Collection: {{ contractName }}CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
+    pub resource Collection: {{ contractName }}CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         
         // dictionary of NFTs
         // NFT is a resource type with an `UInt64` ID field
@@ -270,6 +270,12 @@ pub contract {{ contractName }}: NonFungibleToken {
             }
 
             return nil
+        }
+
+        pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
+            let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
+            let nftRef = nft as! &{{ contractName }}.NFT
+            return nftRef as &AnyResource{MetadataViews.Resolver}
         }
 
         // destructor
@@ -365,38 +371,33 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    pub fun getCollectionPublicPath(collectionName: String?): PublicPath {
-        if let name = collectionName {
-            return PublicPath(identifier: "{{ contractName }}Collection_".concat(name))!
-        }
-
-        return /public/{{ contractName }}Collection
+    // getPublicPath returns a public path that is scoped to this contract.
+    //
+    pub fun getPublicPath(suffix: String): PublicPath {
+        return PublicPath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
-    pub fun getCollectionPrivatePath(collectionName: String?): PrivatePath {
-        if let name = collectionName {
-            return PrivatePath(identifier: "{{ contractName }}Collection_".concat(name))!
-        }
-
-        return /private/{{ contractName }}Collection
+    // getPrivatePath returns a private path that is scoped to this contract.
+    //
+    pub fun getPrivatePath(suffix: String): PrivatePath {
+        return PrivatePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
-    pub fun getCollectionStoragePath(collectionName: String?): StoragePath {
-        if let name = collectionName {
-            return StoragePath(identifier: "{{ contractName }}Collection_".concat(name))!
-        }
-
-        return /storage/{{ contractName }}Collection
+    // getStoragePath returns a storage path that is scoped to this contract.
+    //
+    pub fun getStoragePath(suffix: String): StoragePath {
+        return StoragePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
     priv fun initAdmin(admin: AuthAccount) {
         // Create an empty collection and save it to storage
         let collection <- {{ contractName }}.createEmptyCollection()
-        
+
         admin.save(<- collection, to: {{ contractName }}.CollectionStoragePath)
 
         admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
-        admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
+
+        admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
         
         // Create an admin resource and save it to storage
         let adminResource <- create Admin()
@@ -408,11 +409,11 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.version = "{{ freshmintVersion }}"
 
-        self.CollectionPublicPath = {{ contractName }}.getCollectionPublicPath(collectionName: nil)
-        self.CollectionStoragePath = {{ contractName }}.getCollectionStoragePath(collectionName: nil)
-        self.CollectionPrivatePath = {{ contractName }}.getCollectionPrivatePath(collectionName: nil)
+        self.CollectionPublicPath = {{ contractName }}.getPublicPath(suffix: "Collection")
+        self.CollectionStoragePath = {{ contractName }}.getStoragePath(suffix: "Collection")
+        self.CollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: "Collection")
 
-        self.AdminStoragePath = /storage/{{ contractName }}Admin
+        self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
 
         self.placeholderImage = placeholderImage
 

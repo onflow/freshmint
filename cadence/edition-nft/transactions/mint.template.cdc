@@ -1,9 +1,11 @@
-import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
-pub fun getOrCreateCollection(account: AuthAccount, collectionName: String?): &{NonFungibleToken.CollectionPublic} {
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
 
-    let storagePath = {{ contractName }}.getCollectionStoragePath(collectionName: collectionName)
+pub fun getOrCreateCollection(account: AuthAccount, collectionName: String): &{NonFungibleToken.CollectionPublic} {
+
+    let storagePath = {{ contractName }}.getStoragePath(suffix: collectionName)
 
     if let collectionRef = account.borrow<&{NonFungibleToken.CollectionPublic}>(from: storagePath) {
         return collectionRef
@@ -13,13 +15,13 @@ pub fun getOrCreateCollection(account: AuthAccount, collectionName: String?): &{
 
     let collectionRef = &collection as &{NonFungibleToken.CollectionPublic}
 
-    let publicPath = {{ contractName }}.getCollectionPublicPath(collectionName: collectionName)
-    let privatePath = {{ contractName }}.getCollectionPrivatePath(collectionName: collectionName)
+    let publicPath = {{ contractName }}.getPublicPath(suffix: collectionName)
+    let privatePath = {{ contractName }}.getPrivatePath(suffix: collectionName)
 
     account.save(<-collection, to: storagePath)
 
     account.link<&{{ contractName }}.Collection>(privatePath, target: storagePath)
-    account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>(publicPath, target: storagePath)
+    account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(publicPath, target: storagePath)
     
     return collectionRef
 }
@@ -33,7 +35,10 @@ transaction(editionIDs: [UInt64], editionSerials: [UInt64], collectionName: Stri
         self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
-        self.collection = getOrCreateCollection(account: signer, collectionName: collectionName)
+        self.collection = getOrCreateCollection(
+            account: signer,
+            collectionName: collectionName ?? "Collection"
+        )
     }
 
     execute {
