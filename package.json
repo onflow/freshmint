@@ -1,6 +1,6 @@
 {
   "name": "freshmint",
-  "version": "0.0.19-alpha",
+  "version": "0.0.20-alpha",
   "description": "The minty fresh way to launch an NFT project.",
   "contributors": [
     "Mackenzie Kieran",
@@ -23,7 +23,7 @@
     "fresh": "dist/cli/index.js"
   },
   "scripts": {
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --bail",
     "prebuild": "tsc --build --clean",
     "build": "tsc",
     "postbuild": "npm run copy-cli-templates && npm run copy-lib-templates",

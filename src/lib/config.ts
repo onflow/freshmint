@@ -21,7 +21,7 @@ export namespace FreshmintConfig {
       MetadataViews: '0xf8d6e0586b0a20c7',
       FreshmintMetadataViews: '0xf8d6e0586b0a20c7',
       NFTClaimSale: '0xf8d6e0586b0a20c7',
-      NFTLockBox: '0xf8d6e0586b0a20c7',
+      NFTLockBox: '0xf8d6e0586b0a20c7'
     },
   };
 
