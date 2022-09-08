@@ -12,12 +12,18 @@ import {{ contractName }} from {{{ contractAddress }}}
 // The transaction also creates a collection that is capable of
 // receiving the NFT if one does not already exist in the signer's account.
 //
-transaction(lockBoxAddress: Address, nftID: UInt64, signature: String) {
+transaction(
+    lockBoxAddress: Address,
+    lockBoxPublicPath: PublicPath,
+    nftID: UInt64,
+    signature: String
+) {
 
     let receiverAddress: Address 
     let lockBox: &{NFTLockBox.LockBoxPublic}
 
     prepare(signer: AuthAccount) {
+
         if signer.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
             let collection <- {{ contractName }}.createEmptyCollection()
             
@@ -32,7 +38,7 @@ transaction(lockBoxAddress: Address, nftID: UInt64, signature: String) {
         self.receiverAddress = signer.address
 
         self.lockBox = getAccount(lockBoxAddress)
-            .getCapability(NFTLockBox.DefaultLockBoxPublicPath)!
+            .getCapability(lockBoxPublicPath)!
             .borrow<&{NFTLockBox.LockBoxPublic}>()!
     }
 

@@ -2,12 +2,20 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import NFTLockBox from {{{ imports.NFTLockBox }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
-pub fun getOrCreateLockBox(account: AuthAccount): &NFTLockBox.LockBox {
-    if let existingLockBox = account.borrow<&NFTLockBox.LockBox>(from: NFTLockBox.DefaultLockBoxStoragePath) {
+pub fun getOrCreateLockBox(
+    account: AuthAccount,
+    lockBoxStoragePath: StoragePath,
+    lockBoxPublicPath: PublicPath,
+    collectionPrivatePath: PrivatePath
+): &NFTLockBox.LockBox {
+    if let existingLockBox = account.borrow<&NFTLockBox.LockBox>(from: lockBoxStoragePath) {
         return existingLockBox
     }
 
-    let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.Receiver}>({{ contractName }}.CollectionPrivatePath)
+    let collection = account.getCapability<&{
+        NonFungibleToken.Provider,
+        NonFungibleToken.Receiver
+    }>(collectionPrivatePath)
 
     let lockBox <- NFTLockBox.createLockBox(
         collection: collection,
@@ -16,11 +24,11 @@ pub fun getOrCreateLockBox(account: AuthAccount): &NFTLockBox.LockBox {
 
     let lockBoxRef = &lockBox as &NFTLockBox.LockBox
 
-    account.save(<- lockBox, to: NFTLockBox.DefaultLockBoxStoragePath)
+    account.save(<- lockBox, to: lockBoxStoragePath)
 
     account.link<&NFTLockBox.LockBox{NFTLockBox.LockBoxPublic}>(
-        NFTLockBox.DefaultLockBoxPublicPath, 
-        target: NFTLockBox.DefaultLockBoxStoragePath
+        lockBoxPublicPath, 
+        target: lockBoxStoragePath
     )
 
     return lockBoxRef
@@ -39,7 +47,12 @@ transaction(
         self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
-        self.lockBox = getOrCreateLockBox(account: signer)
+        self.lockBox = getOrCreateLockBox(
+            account: signer,
+            lockBoxStoragePath: {{ contractName }}.getStoragePath(suffix: "LockBox"),
+            lockBoxPublicPath: {{ contractName }}.getPublicPath(suffix: "LockBox"),
+            collectionPrivatePath: {{ contractName }}.CollectionPrivatePath
+        )
     }
 
     execute {

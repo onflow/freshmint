@@ -11,14 +11,6 @@ pub contract NFTLockBox {
         recipient: Address
     )
 
-    // These are the default storage and public paths
-    // defined by the lock box contract.
-    //
-    // However, a lock box owner may store multiple lock boxes 
-    // in the same account using non-default storage paths.
-    pub let DefaultLockBoxStoragePath: StoragePath
-    pub let DefaultLockBoxPublicPath: PublicPath
-
     // This is the publicly-available interface
     // that allows users to claim NFTs from a lock box.
     pub resource interface LockBoxPublic {
@@ -158,10 +150,5 @@ pub contract NFTLockBox {
         receiverPath: PublicPath
     ): @LockBox {
         return <- create LockBox(collection: collection, receiverPath: receiverPath)
-    }
-
-    init() {
-        self.DefaultLockBoxStoragePath = /storage/DefaultNFTLockBox
-        self.DefaultLockBoxPublicPath = /public/DefaultNFTLockBox
     }
 }
