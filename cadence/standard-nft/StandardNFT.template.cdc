@@ -202,16 +202,19 @@ pub contract {{ contractName }}: NonFungibleToken {
     }
 
     // getPublicPath returns a public path that is scoped to this contract.
+    //
     pub fun getPublicPath(suffix: String): PublicPath {
         return PublicPath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
     // getPrivatePath returns a private path that is scoped to this contract.
+    //
     pub fun getPrivatePath(suffix: String): PrivatePath {
         return PrivatePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
     // getStoragePath returns a storage path that is scoped to this contract.
+    //
     pub fun getStoragePath(suffix: String): StoragePath {
         return StoragePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
