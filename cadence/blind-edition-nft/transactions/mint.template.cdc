@@ -1,9 +1,9 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
-pub fun getOrCreateCollection(account: AuthAccount, collectionName: String?): &{NonFungibleToken.CollectionPublic} {
+pub fun getOrCreateCollection(account: AuthAccount, collectionName: String): &{NonFungibleToken.CollectionPublic} {
 
-    let storagePath = {{ contractName }}.getCollectionStoragePath(collectionName: collectionName)
+    let storagePath = {{ contractName }}.getStoragePath(suffix: collectionName)
 
     if let collectionRef = account.borrow<&{NonFungibleToken.CollectionPublic}>(from: storagePath) {
         return collectionRef
@@ -13,8 +13,8 @@ pub fun getOrCreateCollection(account: AuthAccount, collectionName: String?): &{
 
     let collectionRef = &collection as &{NonFungibleToken.CollectionPublic}
 
-    let publicPath = {{ contractName }}.getCollectionPublicPath(collectionName: collectionName)
-    let privatePath = {{ contractName }}.getCollectionPrivatePath(collectionName: collectionName)
+    let publicPath = {{ contractName }}.getPublicPath(suffix: collectionName)
+    let privatePath = {{ contractName }}.getPrivatePath(suffix: collectionName)
 
     account.save(<-collection, to: storagePath)
 
@@ -33,7 +33,7 @@ transaction(editionHashes: [String], collectionName: String?) {
         self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
-        self.collection = getOrCreateCollection(account: signer, collectionName: collectionName)
+        self.collection = getOrCreateCollection(account: signer, collectionName: collectionName ?? "Collection")
     }
 
     execute {

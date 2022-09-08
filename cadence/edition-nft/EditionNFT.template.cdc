@@ -271,28 +271,19 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    pub fun getCollectionPublicPath(collectionName: String?): PublicPath {
-        if let name = collectionName {
-            return PublicPath(identifier: "{{ contractName }}Collection_".concat(name))!
-        }
-
-        return /public/{{ contractName }}Collection
+    // getPublicPath returns a public path that is scoped to this contract.
+    pub fun getPublicPath(suffix: String): PublicPath {
+        return PublicPath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
-    pub fun getCollectionPrivatePath(collectionName: String?): PrivatePath {
-        if let name = collectionName {
-            return PrivatePath(identifier: "{{ contractName }}Collection_".concat(name))!
-        }
-
-        return /private/{{ contractName }}Collection
+    // getPrivatePath returns a private path that is scoped to this contract.
+    pub fun getPrivatePath(suffix: String): PrivatePath {
+        return PrivatePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
-    pub fun getCollectionStoragePath(collectionName: String?): StoragePath {
-        if let name = collectionName {
-            return StoragePath(identifier: "{{ contractName }}Collection_".concat(name))!
-        }
-
-        return /storage/{{ contractName }}Collection
+    // getStoragePath returns a storage path that is scoped to this contract.
+    pub fun getStoragePath(suffix: String): StoragePath {
+        return StoragePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
     priv fun initAdmin(admin: AuthAccount) {
@@ -314,11 +305,11 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.version = "{{ freshmintVersion }}"
 
-        self.CollectionPublicPath = {{ contractName }}.getCollectionPublicPath(collectionName: nil)
-        self.CollectionStoragePath = {{ contractName }}.getCollectionStoragePath(collectionName: nil)
-        self.CollectionPrivatePath = {{ contractName }}.getCollectionPrivatePath(collectionName: nil)
+        self.CollectionPublicPath = {{ contractName }}.getPublicPath(suffix: "Collection")
+        self.CollectionStoragePath = {{ contractName }}.getStoragePath(suffix: "Collection")
+        self.CollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: "Collection")
 
-        self.AdminStoragePath = /storage/{{ contractName }}Admin
+        self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
 
         // Initialize the total supply
         self.totalSupply = 0

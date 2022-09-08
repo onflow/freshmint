@@ -29,7 +29,7 @@ transaction(saleID: String, price: UFix64, collectionName: String?) {
 
         self.sales = getOrCreateSaleCollection(account: signer)
 
-        let nftCollectionPrivatePath = {{ contractName }}.getCollectionPrivatePath(collectionName: collectionName)
+        let nftCollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: collectionName ?? "Collection")
 
         self.nfts = signer
             .getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(nftCollectionPrivatePath)
