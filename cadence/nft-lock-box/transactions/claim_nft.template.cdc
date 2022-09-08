@@ -21,6 +21,7 @@ pub fun intializeCollection(account: AuthAccount) {
 //
 // Parameters:
 // - lockBoxAddress: the account address where the lock box is stored.
+// - lockBoxPublicPath: the public path where the lock box is linked.
 // - nftID: the ID of the NFT to be claimed.
 // - signature: a claim message signature from the NFT's claim key.
 //
