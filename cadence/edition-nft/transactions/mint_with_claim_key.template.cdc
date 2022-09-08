@@ -1,6 +1,7 @@
+import {{ contractName }} from {{{ contractAddress }}}
+
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import NFTLockBox from {{{ imports.NFTLockBox }}}
-import {{ contractName }} from {{{ contractAddress }}}
 
 pub fun getOrCreateLockBox(
     account: AuthAccount,

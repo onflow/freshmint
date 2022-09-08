@@ -1,9 +1,23 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
 import NFTClaimSale from {{{ imports.NFTClaimSale }}}
-import FlowToken from {{{ imports.FlowToken }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
+import FlowToken from {{{ imports.FlowToken }}}
+
+pub fun intializeCollection(account: AuthAccount) {
+    if account.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
+        let collection <- {{ contractName }}.createEmptyCollection()
+        
+        account.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
+
+        account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(
+            {{ contractName }}.CollectionPublicPath, 
+            target: {{ contractName }}.CollectionStoragePath
+        )
+    }
+}
 
 transaction(saleAddress: Address, saleID: String) {
 
@@ -12,16 +26,7 @@ transaction(saleAddress: Address, saleID: String) {
     let sale: &{NFTClaimSale.SalePublic}
 
     prepare(signer: AuthAccount) {
-        if signer.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
-            // create a new empty collection
-            let collection <- {{ contractName }}.createEmptyCollection()
-            
-            // save it to the account
-            signer.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
-
-            // create a public capability for the collection
-            signer.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
-        }
+        intializeCollection(account: signer)
 
         self.receiver = signer
             .getCapability({{ contractName }}.CollectionPublicPath)!

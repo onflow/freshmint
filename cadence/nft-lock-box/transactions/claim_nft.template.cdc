@@ -1,6 +1,21 @@
-import NonFungibleToken from {{{ imports.NonFungibleToken }}}
-import NFTLockBox from {{{ imports.NFTLockBox }}}
 import {{ contractName }} from {{{ contractAddress }}}
+
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
+import NFTLockBox from {{{ imports.NFTLockBox }}}
+
+pub fun intializeCollection(account: AuthAccount) {
+    if account.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
+        let collection <- {{ contractName }}.createEmptyCollection()
+        
+        account.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
+
+        account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(
+            {{ contractName }}.CollectionPublicPath, 
+            target: {{ contractName }}.CollectionStoragePath
+        )
+    }
+}
 
 // This transaction claims on NFT from a lock box at the given address.
 //
@@ -23,23 +38,13 @@ transaction(
     let lockBox: &{NFTLockBox.LockBoxPublic}
 
     prepare(signer: AuthAccount) {
-
-        if signer.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
-            let collection <- {{ contractName }}.createEmptyCollection()
-            
-            signer.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
-
-            signer.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>(
-                {{ contractName }}.CollectionPublicPath, 
-                target: {{ contractName }}.CollectionStoragePath
-            )
-        }
-
         self.receiverAddress = signer.address
 
         self.lockBox = getAccount(lockBoxAddress)
             .getCapability(lockBoxPublicPath)!
             .borrow<&{NFTLockBox.LockBoxPublic}>()!
+
+        intializeCollection(account: signer)
     }
 
     execute {

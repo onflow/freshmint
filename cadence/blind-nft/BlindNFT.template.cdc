@@ -74,7 +74,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     access(contract) let metadata: {UInt64: Metadata}
 
-    pub resource NFT: NonFungibleToken.INFT {
+    pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
 
@@ -175,7 +175,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    pub resource Collection: {{ contractName }}CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
+    pub resource Collection: {{ contractName }}CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         
         // dictionary of NFTs
         // NFT is a resource type with an `UInt64` ID field
@@ -235,6 +235,12 @@ pub contract {{ contractName }}: NonFungibleToken {
             }
 
             return nil
+        }
+
+        pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
+            let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
+            let nftRef = nft as! &{{ contractName }}.NFT
+            return nftRef as &AnyResource{MetadataViews.Resolver}
         }
 
         // destructor
@@ -309,11 +315,12 @@ pub contract {{ contractName }}: NonFungibleToken {
     priv fun initAdmin(admin: AuthAccount) {
         // Create an empty collection and save it to storage
         let collection <- {{ contractName }}.createEmptyCollection()
-        
+
         admin.save(<- collection, to: {{ contractName }}.CollectionStoragePath)
 
         admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
-        admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
+
+        admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
         
         // Create an admin resource and save it to storage
         let adminResource <- create Admin()

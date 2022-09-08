@@ -1,5 +1,7 @@
-import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
+
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
 
 pub fun getOrCreateCollection(account: AuthAccount, collectionName: String): &{NonFungibleToken.CollectionPublic} {
 
@@ -19,7 +21,7 @@ pub fun getOrCreateCollection(account: AuthAccount, collectionName: String): &{N
     account.save(<-collection, to: storagePath)
 
     account.link<&{{ contractName }}.Collection>(privatePath, target: storagePath)
-    account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>(publicPath, target: storagePath)
+    account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(publicPath, target: storagePath)
     
     return collectionRef
 }
