@@ -21,16 +21,14 @@ pub fun intializeCollection(account: AuthAccount) {
 
 transaction(saleAddress: Address, saleID: String) {
 
+    let address: Address
     let payment: @FungibleToken.Vault
-    let receiver: &{NonFungibleToken.CollectionPublic}
     let sale: &{NFTClaimSale.SalePublic}
 
     prepare(signer: AuthAccount) {
         intializeCollection(account: signer)
 
-        self.receiver = signer
-            .getCapability({{ contractName }}.CollectionPublicPath)!
-            .borrow<&{NonFungibleToken.CollectionPublic}>()!
+        self.address = signer.address
 
         self.sale = getAccount(saleAddress)
             .getCapability(NFTClaimSale.SaleCollectionPublicPath)!
@@ -47,7 +45,6 @@ transaction(saleAddress: Address, saleID: String) {
     }
 
     execute {
-        let token <- self.sale.claim(payment: <- self.payment)
-        self.receiver.deposit(token: <- token)
+        self.sale.claim(payment: <- self.payment, address: self.address)
     }
 }

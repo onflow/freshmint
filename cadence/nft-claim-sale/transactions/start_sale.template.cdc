@@ -19,11 +19,27 @@ pub fun getOrCreateSaleCollection(account: AuthAccount): &NFTClaimSale.SaleColle
     return collectionRef
 }
 
-transaction(saleID: String, price: UFix64, collectionName: String?) {
+pub fun getAllowlist(account: AuthAccount, useAllowlist: Bool): Capability<&NFTClaimSale.Allowlist>? {
+    if useAllowlist {
+        let privatePath = {{ contractName }}.getPrivatePath(suffix: "Allowlist")
+
+        return account.getCapability<&NFTClaimSale.Allowlist>(privatePath)
+    }
+
+    return nil
+}
+
+transaction(
+    saleID: String,
+    price: UFix64,
+    collectionName: String?,
+    useAllowlist: Bool
+) {
 
     let sales: &NFTClaimSale.SaleCollection
     let nfts: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>
     let paymentReceiver: Capability<&{FungibleToken.Receiver}>
+    let allowlist: Capability<&NFTClaimSale.Allowlist>?
 
     prepare(signer: AuthAccount) {
 
@@ -36,6 +52,8 @@ transaction(saleID: String, price: UFix64, collectionName: String?) {
 
         self.paymentReceiver = signer
             .getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)!
+
+        self.allowlist = getAllowlist(account: signer, useAllowlist: useAllowlist)
     }
 
     execute {
@@ -43,8 +61,10 @@ transaction(saleID: String, price: UFix64, collectionName: String?) {
             id: saleID,
             nftType: Type<@{{ contractName }}.NFT>(),
             collection: self.nfts,
+            receiverPath: {{ contractName }}.CollectionPublicPath,
             paymentReceiver: self.paymentReceiver,
             paymentPrice: price,
+            allowlist: self.allowlist
         )
 
         self.sales.insert(<- sale)

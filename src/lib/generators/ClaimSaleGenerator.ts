@@ -55,4 +55,20 @@ export class ClaimSaleGenerator extends TemplateGenerator {
       contractAddress,
     });
   }
+
+  static addToAllowlist({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate('../../../cadence/nft-claim-sale/transactions/add_to_allowlist.cdc', {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
 }
