@@ -35,12 +35,11 @@ pub contract {{ contractName }}: NonFungibleToken {
         {{/each}}
 
         init(
-            id: UInt64,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ) {
-            self.id = id
+            self.id = self.uuid
             {{#each fields}}
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
@@ -193,7 +192,6 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{/each}}
         ): @{{ contractName }}.NFT {
             let nft <- create {{ contractName }}.NFT(
-                id: {{ contractName }}.totalSupply,
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }},
                 {{/each}}
