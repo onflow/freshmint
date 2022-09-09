@@ -60,16 +60,23 @@ pub contract NFTClaimSale {
         // The integer value is the number of NFTs an  
         // address is entitled to claim.
         //
-        access(self) let addresses: {Address: Int}
+        access(self) let claimsByAddress: {Address: Int}
 
         init() {
-            self.addresses = {}
+            self.claimsByAddress = {}
         }
 
         // setClaims sets the number of claims that an address can make.
         //
         pub fun setClaims(address: Address, claims: Int) {
-            self.addresses[address] = claims
+            self.claimsByAddress[address] = claims
+        }
+
+        // getClaims returns the number of claims for an address
+        // or nil if the address is not in the allowlist.
+        //
+        pub fun getClaims(address: Address): Int? {
+            return self.claimsByAddress[address]
         }
 
         // consumeClaim is called when a user exercises one of their claims.
@@ -82,12 +89,12 @@ pub contract NFTClaimSale {
         // count by one.
         //
         pub fun consumeClaim(address: Address): Bool {
-            if let claims = self.addresses[address] {
+            if let claims = self.claimsByAddress[address] {
                 if claims == 0 {
                     return false
                 }
 
-                self.addresses[address] = claims - 1
+                self.claimsByAddress[address] = claims - 1
 
                 return true
             }
@@ -110,7 +117,11 @@ pub contract NFTClaimSale {
         pub fun claim(payment: @FungibleToken.Vault, address: Address)
     }
 
-    // A Sale
+    // A Sale is a resource that lists NFTs that can be claimed
+    // for a fee.
+    //
+    // A sale can optionally include an allowlist used to gate claiming.
+    //
     pub resource Sale: SalePublic {
     
         pub let id: String
