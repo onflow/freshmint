@@ -19,6 +19,12 @@ pub fun intializeCollection(account: AuthAccount) {
     }
 }
 
+// This transaction claims an NFT from a sale.
+//
+// Parameters:
+// - saleAddress: the address of the account holding the sale.
+// - saleID: the ID of the sale within the account.
+//
 transaction(saleAddress: Address, saleID: String) {
 
     let address: Address

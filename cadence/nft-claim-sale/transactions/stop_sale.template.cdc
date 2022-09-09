@@ -1,5 +1,10 @@
 import NFTClaimSale from {{{ imports.NFTClaimSale }}}
 
+// This transaction stops an existing claim sale.
+//
+// Parameters:
+// - saleID: the ID of the sale to stop.
+//
 transaction(saleID: String) {
     
     let sales: &NFTClaimSale.SaleCollection

@@ -1,6 +1,16 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 
+// NFTClaimSale provides functionality to operate a
+// claim-style sale of NFTs.
+//
+// In a claim sale, users can claims NFT from a minted collection
+// for a fee. All NFTs in a claim sale are sold for the same price.
+//
+// Unlike in the NFTStorefront, a user cannot purchase a specific NFT by ID.
+// On each claim, the user receives the next available NFT in the collection.
+// 
 pub contract NFTClaimSale {
 
     pub let version: String
@@ -15,6 +25,13 @@ pub contract NFTClaimSale {
         pub fun borrowSale(id: String): &Sale
     }
 
+    // A SaleCollection is a container that holds one or
+    // more Sale resources.
+    //
+    // The sale creator does not need to use a sale collection,
+    // but is useful when running multiple claims from different collections
+    // in the same account at the same time.
+    //
     pub resource SaleCollection: SaleCollectionPublic {
 
         access(self) let sales: @{String: Sale}
@@ -43,6 +60,153 @@ pub contract NFTClaimSale {
         
         pub fun borrowSale(id: String): &Sale {
             return (&self.sales[id] as &Sale?)!
+        }
+    }
+
+    // SalePublic is the public-facing capability for a sale.
+    //
+    // Users can use this interface to read the details of a sale
+    // and claim an NFT.
+    //
+    pub resource interface SalePublic {
+
+        pub let id: String
+        pub let price: UFix64
+        pub let size: Int
+        pub fun supply(): Int
+        pub fun isActive(): Bool
+
+        pub fun claim(payment: @FungibleToken.Vault, address: Address)
+
+        pub fun borrowCollection(): &{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}
+    }
+
+    // A Sale is a resource that lists NFTs that can be claimed
+    // for a fee.
+    //
+    // A sale can optionally include an allowlist used to gate claiming.
+    //
+    pub resource Sale: SalePublic {
+    
+        pub let id: String
+        pub let nftType: Type
+        pub let price: UFix64
+        pub let size: Int
+
+        // A capability to the underlying base NFT collection
+        // that will store the claimable NFTs.
+        //
+        access(self) let collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
+        
+        // When moving a claimed NFT in an account,
+        // the sale will deposit the NFT into 
+        // the NonFungibleToken.CollectionPublic linked at this public path.
+        //
+        pub let receiverPath: PublicPath
+
+        // A capability to the receiver that will receive
+        // payments from this sale.
+        //
+        access(self) let paymentReceiver: Capability<&{FungibleToken.Receiver}>
+
+        // An optional allowlist used to gate access to this sale.
+        //
+        access(self) let allowlist: Capability<&Allowlist>?
+
+        init(
+            id: String,
+            nftType: Type,
+            collection: Capability<&AnyResource{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>,
+            receiverPath: PublicPath,
+            paymentReceiver: Capability<&{FungibleToken.Receiver}>,
+            paymentPrice: UFix64,
+            allowlist: Capability<&Allowlist>?
+        ) {
+            self.id = id
+            self.nftType = nftType
+            self.price = paymentPrice
+            self.size = collection.borrow()!.getIDs().length
+
+            self.collection = collection
+            self.receiverPath = receiverPath
+            self.paymentReceiver = paymentReceiver
+            self.allowlist = allowlist
+
+            if let allowlist = self.allowlist {
+                allowlist.borrow() ?? panic("failed to borrow allowlist capability")
+            }
+        }
+
+        pub fun supply(): Int {
+            return self.collection.borrow()!.getIDs().length
+        }
+
+        pub fun isActive(): Bool {
+            return self.supply() != 0
+        }
+
+        // If an allowlist is set,
+        // check that the provided address can claim
+        // and decrement their claim counter.
+        access(self) fun checkAllowlist(address: Address) {
+            if let allowlist = self.allowlist {
+                let canClaim = allowlist.borrow()!.consumeClaim(address: address)
+                if !canClaim {
+                    panic("address is not on the allowlist")
+                }
+            }
+        }
+
+        // The claim function is called by a user to claim an NFT from 
+        // this sale.
+        //
+        // The user will receive the next available NFT in the collection
+        // if they pass a vault with the correct price and,
+        // if an allowlist is set, their address exists in the allowlist.
+        //
+        // The NFT is transfered to the provided address at the storage
+        // path defined in self.receiverPath.
+        //
+        pub fun claim(payment: @FungibleToken.Vault, address: Address) {
+            pre {
+                payment.balance == self.price: "payment vault does not contain requested price"
+            }
+
+            self.checkAllowlist(address: address)
+
+            let collection = self.collection.borrow()!
+
+            let ids = collection.getIDs()
+
+            if ids.length == 0 {
+                panic("Sale is sold out")
+            }
+
+            let paymentReceiver = self.paymentReceiver.borrow()!
+
+            paymentReceiver.deposit(from: <- payment)
+
+            // Remove the next NFT from the collection.
+            let nextID = ids[0]
+            let nft <- collection.withdraw(withdrawID: nextID)
+
+            let nftReceiver = getAccount(address)
+                .getCapability(self.receiverPath)
+                .borrow<&{NonFungibleToken.CollectionPublic}>()!
+
+            emit Claimed(nftType: self.nftType, nftID: nft.id)
+
+            nftReceiver.deposit(token: <- nft)
+        }
+
+        // borrowCollection returns a public reference to the
+        // underlying collection for this lockbox.
+        //
+        // Callers can use this to read information about NFTs in this lock box.
+        //
+        pub fun borrowCollection(): &AnyResource{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection} {
+            let collection = self.collection.borrow()!
+            return collection as! &AnyResource{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}
         }
     }
 
@@ -103,141 +267,21 @@ pub contract NFTClaimSale {
         }
     }
 
-    // SalePublic is the public-facing capability for a sale.
+    // makeAllowlistName is a utility function that constructs
+    // an allowlist name with a common prefix.
     //
-    // Users can use this interface to read the details of a sale
-    // and claim an NFT.
-    //
-    pub resource interface SalePublic {
-        pub let id: String
-        pub let price: UFix64
-        pub let size: Int
-        pub fun supply(): Int
-        pub fun isActive(): Bool
-        pub fun claim(payment: @FungibleToken.Vault, address: Address)
-    }
-
-    // A Sale is a resource that lists NFTs that can be claimed
-    // for a fee.
-    //
-    // A sale can optionally include an allowlist used to gate claiming.
-    //
-    pub resource Sale: SalePublic {
-    
-        pub let id: String
-        pub let nftType: Type
-        pub let price: UFix64
-        pub let size: Int
-
-        // A capability to the underlying base NFT collection
-        // that will store the claimable NFTs.
-        //
-        access(self) let collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>
-        
-        // When moving a claimed NFT in an account,
-        // the sale will deposit the NFT into 
-        // the NonFungibleToken.CollectionPublic linked at this public path.
-        //
-        pub let receiverPath: PublicPath
-
-        // A capability to the receiver that will receive
-        // payments from this sale.
-        //
-        access(self) let paymentReceiver: Capability<&{FungibleToken.Receiver}>
-
-        // An optional allowlist used to gate access to this sale.
-        //
-        access(self) let allowlist: Capability<&Allowlist>?
-
-        init(
-            id: String,
-            nftType: Type,
-            collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>,
-            receiverPath: PublicPath,
-            paymentReceiver: Capability<&{FungibleToken.Receiver}>,
-            paymentPrice: UFix64,
-            allowlist: Capability<&Allowlist>?
-        ) {
-            self.id = id
-            self.nftType = nftType
-            self.price = paymentPrice
-            self.size = collection.borrow()!.getIDs().length
-
-            self.collection = collection
-            self.receiverPath = receiverPath
-            self.paymentReceiver = paymentReceiver
-            self.allowlist = allowlist
-
-            if let allowlist = self.allowlist {
-                allowlist.borrow() ?? panic("failed to borrow allowlist capability")
-            }
-        }
-
-        pub fun supply(): Int {
-            return self.collection.borrow()!.getIDs().length
-        }
-
-        pub fun isActive(): Bool {
-            return self.supply() != 0
-        }
-
-        // If an allowlist is set,
-        // check that the provided address can claim
-        // and decrement their claim counter.
-        access(self) fun checkAllowlist(address: Address) {
-            if let allowlist = self.allowlist {
-                let canClaim = allowlist.borrow()!.consumeClaim(address: address)
-                if !canClaim {
-                    panic("address is not on the allowlist")
-                }
-            }
-        }
-
-        pub fun claim(payment: @FungibleToken.Vault, address: Address) {
-            pre {
-                payment.balance == self.price: "payment vault does not contain requested price"
-            }
-
-            self.checkAllowlist(address: address)
-
-            let collection = self.collection.borrow()!
-
-            let ids = collection.getIDs()
-
-            if ids.length == 0 {
-                panic("Sale is sold out")
-            }
-
-            let paymentReceiver = self.paymentReceiver.borrow()!
-
-            paymentReceiver.deposit(from: <- payment)
-
-            // Remove the next NFT from the collection.
-            let nextID = ids[0]
-            let nft <- collection.withdraw(withdrawID: nextID)
-
-            let nftReceiver = getAccount(address)
-                .getCapability(self.receiverPath)
-                .borrow<&{NonFungibleToken.CollectionPublic}>()!
-
-            emit Claimed(nftType: self.nftType, nftID: nft.id)
-
-            nftReceiver.deposit(token: <- nft)
-        }
+    pub fun makeAllowlistName(name: String): String {
+        return "Allowlist_".concat(name)
     }
 
     pub fun createEmptySaleCollection(): @SaleCollection {
         return <- create SaleCollection()
     }
 
-    pub fun createAllowlist(): @Allowlist {
-        return <- create Allowlist()
-    }
-
     pub fun createSale(
         id: String,
         nftType: Type,
-        collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>, 
+        collection: Capability<&AnyResource{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>,
         receiverPath: PublicPath,
         paymentReceiver: Capability<&{FungibleToken.Receiver}>,
         paymentPrice: UFix64,
@@ -252,6 +296,10 @@ pub contract NFTClaimSale {
             paymentPrice: paymentPrice,
             allowlist: allowlist
         )
+    }
+
+    pub fun createAllowlist(): @Allowlist {
+        return <- create Allowlist()
     }
 
     init() {

@@ -27,17 +27,13 @@ export class ClaimSaleContract {
     id,
     price,
     bucket,
-    useAllowlist,
+    allowlist,
   }: {
     id: string;
     price: string;
     bucket?: string;
-    useAllowlist?: boolean;
+    allowlist?: string;
   }): Transaction<void> {
-    if (useAllowlist === undefined) {
-      useAllowlist = false;
-    }
-
     return new Transaction(({ imports }: FreshmintConfig) => {
       const script = ClaimSaleGenerator.startSale({
         imports,
@@ -52,7 +48,7 @@ export class ClaimSaleContract {
           fcl.arg(id, t.String),
           fcl.arg(price, t.UFix64),
           fcl.arg(bucket, t.Optional(t.String)),
-          fcl.arg(useAllowlist, t.Bool),
+          fcl.arg(allowlist ?? null, t.Optional(t.String)),
         ],
         computeLimit: 9999,
         signers: this.nftContract.getSigners(),
@@ -78,7 +74,7 @@ export class ClaimSaleContract {
     }, Transaction.VoidResult);
   }
 
-  addToAllowlist(addresses: string[]): Transaction<void> {
+  addToAllowlist(name: string, addresses: string[], claims: string = "1"): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
       const script = ClaimSaleGenerator.addToAllowlist({
         imports,
@@ -89,7 +85,11 @@ export class ClaimSaleContract {
 
       return {
         script,
-        args: [fcl.arg(addresses, t.Array(t.Address))],
+        args: [
+          fcl.arg(name, t.String),
+          fcl.arg(addresses, t.Array(t.Address)),
+          fcl.arg(claims, t.Int)
+        ],
         computeLimit: 9999,
         signers: this.nftContract.getSigners(),
       };

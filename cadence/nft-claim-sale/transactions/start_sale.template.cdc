@@ -19,25 +19,31 @@ pub fun getOrCreateSaleCollection(account: AuthAccount): &NFTClaimSale.SaleColle
     return collectionRef
 }
 
-pub fun getAllowlist(account: AuthAccount, useAllowlist: Bool): Capability<&NFTClaimSale.Allowlist>? {
-    if useAllowlist {
-        let privatePath = {{ contractName }}.getPrivatePath(suffix: "Allowlist")
+pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&NFTClaimSale.Allowlist> {
+    let fullAllowlistName = NFTClaimSale.makeAllowlistName(name: allowlistName)
 
-        return account.getCapability<&NFTClaimSale.Allowlist>(privatePath)
-    }
+    let privatePath = {{ contractName }}.getPrivatePath(suffix: fullAllowlistName)
 
-    return nil
+    return account.getCapability<&NFTClaimSale.Allowlist>(privatePath)
 }
 
+// This transaction starts a new claim sale.
+//
+// Parameters:
+// - saleID: the ID of the sale.
+// - price: the price to set for the sale.
+// - collectionName: (optional) the collection name to claim from.
+// - allowlistName: (optional) the name of the allowlist to attach to the sale.
+//
 transaction(
     saleID: String,
     price: UFix64,
     collectionName: String?,
-    useAllowlist: Bool
+    allowlistName: String?
 ) {
 
     let sales: &NFTClaimSale.SaleCollection
-    let nfts: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>
+    let collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
     let paymentReceiver: Capability<&{FungibleToken.Receiver}>
     let allowlist: Capability<&NFTClaimSale.Allowlist>?
 
@@ -47,20 +53,24 @@ transaction(
 
         let nftCollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: collectionName ?? "Collection")
 
-        self.nfts = signer
-            .getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic}>(nftCollectionPrivatePath)
+        self.collection = signer
+            .getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(nftCollectionPrivatePath)
 
         self.paymentReceiver = signer
             .getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)!
 
-        self.allowlist = getAllowlist(account: signer, useAllowlist: useAllowlist)
+        if let name = allowlistName {
+            self.allowlist = getAllowlist(account: signer, allowlistName: name)
+        } else {
+            self.allowlist = nil
+        }
     }
 
     execute {
         let sale <- NFTClaimSale.createSale(
             id: saleID,
             nftType: Type<@{{ contractName }}.NFT>(),
-            collection: self.nfts,
+            collection: self.collection,
             receiverPath: {{ contractName }}.CollectionPublicPath,
             paymentReceiver: self.paymentReceiver,
             paymentPrice: price,
