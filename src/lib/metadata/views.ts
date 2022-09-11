@@ -67,6 +67,7 @@ registerHelper('whichFilePartial', (field) => {
   throw 'field must be a file field';
 });
 
+registerPartial('viewCase', '../../../cadence/metadata-views/viewCase.partial.cdc');
 registerPartial(httpFilePartial, '../../../cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc');
 registerPartial(ipfsFilePartial, '../../../cadence/metadata-views/MetadataViews.IPFSFile.partial.cdc');
 

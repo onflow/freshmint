@@ -69,18 +69,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun resolveView(_ view: Type): AnyStruct? {
             switch view {
                 {{#each views }}
-                case {{{ this.cadenceTypeString }}}:
-                    {{#with this}}
-                    {{#if cadenceResolverFunction }}
-                    {{#if requiresMetadata }}
-                    return self.{{ cadenceResolverFunction }}(self.metadata)
-                    {{ else }}
-                    return self.{{ cadenceResolverFunction }}()
-                    {{/if}}
-                    {{ else }}
-                    {{> (lookup . "id") view=this metadata="self.metadata" }}
-                    {{/if}}
-                    {{/with}}
+                {{> viewCase view=this metadata="self.metadata" }}
                 {{/each}}
                 case Type<MetadataViews.NFTCollectionData>():
                     return self.resolveNFTCollectionData()

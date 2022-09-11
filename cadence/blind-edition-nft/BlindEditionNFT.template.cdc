@@ -177,18 +177,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
                 switch view {
                     {{#each views}}
-                    case {{{ this.cadenceTypeString }}}:
-                        {{#with this}}
-                        {{#if cadenceResolverFunction }}
-                        {{#if requiresMetadata }}
-                        return self.{{ cadenceResolverFunction }}(edition.metadata)
-                        {{ else }}
-                        return self.{{ cadenceResolverFunction }}()
-                        {{/if}}
-                        {{ else }}
-                        {{> (lookup . "id") view=this metadata="edition.metadata" }}
-                        {{/if}}
-                        {{/with}}
+                    {{> viewCase view=this metadata="edition.metadata" }}
                     {{/each}}
                     case Type<MetadataViews.NFTCollectionData>():
                         return self.resolveNFTCollectionData()
@@ -229,8 +218,7 @@ pub contract {{ contractName }}: NonFungibleToken {
                     return self.resolveRoyalties()
                 {{#each views}}
                 {{#unless this.requiresMetadata }}
-                case {{{ this.cadenceTypeString }}}:
-                    return self.{{ this.cadenceResolverFunction }}()
+                {{> viewCase view=this }}
                 {{/unless}}
                 {{/each}}
             }
