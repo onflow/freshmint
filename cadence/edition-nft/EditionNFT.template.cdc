@@ -32,27 +32,45 @@ pub contract {{ contractName }}: NonFungibleToken {
     //
     pub var totalEditions: UInt64
 
-    pub struct Edition {
-        pub let id: UInt64
-        pub let size: UInt
-
+    pub struct Metadata {
+    
         {{#each fields}}
         pub let {{ this.name }}: {{ this.asCadenceTypeString }}
         {{/each}}
 
         init(
-            id: UInt64,
-            size: UInt,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ) {
-            self.id = id
-            self.size = size
-
             {{#each fields}}
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
+        }
+    }
+
+    pub struct Edition {
+
+        pub let id: UInt64
+        pub let size: UInt
+        pub let metadata: Metadata
+
+        init(
+            id: UInt64,
+            size: UInt,
+            metadata: Metadata
+        ) {
+            self.id = id
+            self.size = size
+            self.metadata = metadata
+        }
+
+        pub fun resolveView(serial: UInt64): MetadataViews.Edition {
+            return MetadataViews.Edition(
+                name: "Edition",
+                number: serial,
+                max: (self.size as! UInt64)
+            )
         }
     }
 
@@ -90,6 +108,8 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{#each views}}
                 {{{ this.cadenceTypeString }}},
                 {{/each}}
+                Type<MetadataViews.NFTCollectionData>(),
+                Type<MetadataViews.Royalties>(),
                 Type<MetadataViews.Edition>()
             ]
         }
@@ -101,18 +121,50 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{#each views}}
                 case {{{ this.cadenceTypeString }}}:
                     {{#with this}}
-                    {{> (lookup . "id") view=this metadata="edition" }}
+                    {{#if cadenceResolverFunction }}
+                    {{#if requiresMetadata }}
+                    return self.{{ cadenceResolverFunction }}(edition.metadata)
+                    {{ else }}
+                    return self.{{ cadenceResolverFunction }}()
+                    {{/if}}
+                    {{ else }}
+                    {{> (lookup . "id") view=this metadata="edition.metadata" }}
+                    {{/if}}
                     {{/with}}
                 {{/each}}
                 case Type<MetadataViews.Edition>():
-                    return MetadataViews.Edition(
-                        name: "Edition",
-                        number: self.editionSerial,
-                        max: (edition.size as! UInt64)
-                    )
+                    return edition.resolveView(serial: self.editionSerial)
+                case Type<MetadataViews.NFTCollectionData>():
+                    return self.resolveNFTCollectionData()
+                case Type<MetadataViews.Royalties>():
+                    return self.resolveRoyalties()
             }
 
             return nil
+        }
+
+        {{#each views}}
+        {{#if this.cadenceResolverFunction }}
+        {{> (lookup . "id") view=this }}
+        
+        {{/if}}
+        {{/each}}
+        pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
+            return MetadataViews.NFTCollectionData(
+                storagePath: {{ contractName }}.CollectionStoragePath,
+                publicPath: {{ contractName }}.CollectionPublicPath,
+                providerPath: {{ contractName }}.CollectionPrivatePath,
+                publicCollection: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic}>(),
+                publicLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
+                providerLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider, MetadataViews.ResolverCollection}>(),
+                createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
+                    return <-{{ contractName }}.createEmptyCollection()
+                })
+            )
+        }
+
+        pub fun resolveRoyalties(): MetadataViews.Royalties {
+            return MetadataViews.Royalties([])
         }
 
         destroy() {
@@ -237,12 +289,16 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ): UInt64 {
-            let edition = Edition(
-                id: {{ contractName }}.totalEditions,
-                size: size,
+            let metadata = Metadata(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }},
                 {{/each}}
+            )
+
+            let edition = Edition(
+                id: {{ contractName }}.totalEditions,
+                size: size,
+                metadata: metadata
             )
 
             {{ contractName }}.editions[edition.id] = edition

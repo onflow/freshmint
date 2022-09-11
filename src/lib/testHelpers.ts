@@ -5,6 +5,7 @@ import { FreshmintConfig } from './config';
 import { FreshmintClient } from './client';
 import { TransactionAuthorizer } from './transactions';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from './crypto';
+import * as metadata from './metadata';
 
 fcl.config().put('accessNode.api', 'http://localhost:8888');
 
@@ -31,3 +32,31 @@ export const contractHashAlgorithm = HashAlgorithm.SHA3_256;
 export function randomContractName() {
   return `Foo${Math.floor(Math.random() * 1000)}`;
 }
+
+export const schema = metadata.createSchema({
+  fields: {
+    name: metadata.String(),
+    description: metadata.String(),
+    thumbnail: metadata.IPFSFile(),
+  },
+  views: (fields: metadata.FieldMap) => [
+    metadata.NFTView(),
+    metadata.DisplayView({
+      name: fields.name,
+      description: fields.description,
+      thumbnail: fields.thumbnail,
+    }),
+    metadata.ExternalURLView({
+      cadenceTemplate: `"http://foo.com/".concat(self.id.toString())`,
+    }),
+    metadata.NFTCollectionDisplayView({
+      name: 'My Collection',
+      description: 'This is my collection.',
+      url: 'http://foo.com',
+      media: {
+        ipfsCid: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
+        type: 'image/jpeg',
+      },
+    }),
+  ],
+});

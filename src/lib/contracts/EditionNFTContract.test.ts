@@ -1,5 +1,3 @@
-import * as metadata from '../metadata';
-
 import { EditionNFTContract, EditionResult } from './EditionNFTContract';
 import { ClaimSaleContract } from './ClaimSaleContract';
 
@@ -10,12 +8,13 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   randomContractName,
+  schema,
 } from '../testHelpers';
 
 describe('EditionNFTContract', () => {
   const contract = new EditionNFTContract({
     name: randomContractName(),
-    schema: metadata.defaultSchema,
+    schema,
     owner: ownerAuthorizer,
   });
 

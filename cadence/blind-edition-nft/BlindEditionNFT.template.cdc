@@ -166,7 +166,7 @@ pub contract {{ contractName }}: NonFungibleToken {
                 Type<MetadataViews.Display>(),
                 Type<FreshmintMetadataViews.BlindNFT>(),
                 Type<MetadataViews.NFTCollectionData>(),
-                Type<MetadataViews.Royalties>(),
+                Type<MetadataViews.Royalties>()
             ]
         }
 
@@ -174,16 +174,19 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{#if views }}
             if let editionMember = self.getEdition() {
                 let edition = editionMember.getData()
-                let metadata = edition.metadata
 
                 switch view {
                     {{#each views}}
                     case {{{ this.cadenceTypeString }}}:
                         {{#with this}}
                         {{#if cadenceResolverFunction }}
-                        return {{ cadenceResolverFunction }}
+                        {{#if requiresMetadata }}
+                        return self.{{ cadenceResolverFunction }}(edition.metadata)
                         {{ else }}
-                        {{> (lookup . "id") view=this metadata="metadata" }}
+                        return self.{{ cadenceResolverFunction }}()
+                        {{/if}}
+                        {{ else }}
+                        {{> (lookup . "id") view=this metadata="edition.metadata" }}
                         {{/if}}
                         {{/with}}
                     {{/each}}
@@ -224,6 +227,12 @@ pub contract {{ contractName }}: NonFungibleToken {
                     return self.resolveNFTCollectionData()
                 case Type<MetadataViews.Royalties>():
                     return self.resolveRoyalties()
+                {{#each views}}
+                {{#unless this.requiresMetadata }}
+                case {{{ this.cadenceTypeString }}}:
+                    return self.{{ this.cadenceResolverFunction }}()
+                {{/unless}}
+                {{/each}}
             }
 
             return nil

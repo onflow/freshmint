@@ -109,7 +109,7 @@ export const DisplayView = defineView<{
 }>({
   id: 'display',
   cadenceTypeString: 'Type<MetadataViews.Display>()',
-  cadenceResolverFunction: 'self.resolveDisplay(metadata)',
+  cadenceResolverFunction: 'resolveDisplay',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Display.partial.cdc',
   requiresMetadata: true,
 });
@@ -117,7 +117,7 @@ export const DisplayView = defineView<{
 export const ExternalURLView = defineView<{ cadenceTemplate: string }>({
   id: 'external-url',
   cadenceTypeString: 'Type<MetadataViews.ExternalURL>()',
-  cadenceResolverFunction: 'self.resolveExternalURL()',
+  cadenceResolverFunction: 'resolveExternalURL',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.ExternalURL.partial.cdc',
   requiresMetadata: false,
 });
@@ -133,7 +133,7 @@ export const NFTCollectionDisplayView = defineView<{
 }>({
   id: 'nft-collection-display',
   cadenceTypeString: 'Type<MetadataViews.NFTCollectionDisplay>()',
-  cadenceResolverFunction: 'self.resolveNFTCollectionDisplay()',
+  cadenceResolverFunction: 'resolveNFTCollectionDisplay',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc',
   requiresMetadata: false,
 });
@@ -141,7 +141,7 @@ export const NFTCollectionDisplayView = defineView<{
 export const NFTView = defineView<void>({
   id: 'nft',
   cadenceTypeString: 'Type<MetadataViews.NFTView>()',
-  cadenceResolverFunction: 'self.resolveNFTView(metadata)',
+  cadenceResolverFunction: 'resolveNFTView',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTView.partial.cdc',
   requiresMetadata: true,
 });

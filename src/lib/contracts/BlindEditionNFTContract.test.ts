@@ -1,5 +1,3 @@
-import * as metadata from '../metadata';
-
 import { BlindEditionNFTContract, EditionResult, NFTMintResult } from './BlindEditionNFTContract';
 import { ClaimSaleContract } from './ClaimSaleContract';
 
@@ -10,12 +8,13 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   randomContractName,
+  schema,
 } from '../testHelpers';
 
 describe('BlindEditionNFTContract', () => {
   const contract = new BlindEditionNFTContract({
     name: randomContractName(),
-    schema: metadata.defaultSchema,
+    schema,
     owner: ownerAuthorizer,
   });
 

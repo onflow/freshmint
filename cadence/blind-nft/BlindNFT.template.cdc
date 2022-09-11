@@ -141,7 +141,11 @@ pub contract {{ contractName }}: NonFungibleToken {
                     case {{{ this.cadenceTypeString }}}:
                         {{#with this}}
                         {{#if cadenceResolverFunction }}
-                        return {{ cadenceResolverFunction }}
+                        {{#if requiresMetadata }}
+                        return self.{{ cadenceResolverFunction }}(metadata)
+                        {{ else }}
+                        return self.{{ cadenceResolverFunction }}()
+                        {{/if}}
                         {{ else }}
                         {{> (lookup . "id") view=this metadata="metadata" }}
                         {{/if}}
@@ -186,7 +190,7 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{#each views}}
                 {{#unless this.requiresMetadata }}
                 case {{{ this.cadenceTypeString }}}:
-                    return {{ this.cadenceResolverFunction }}
+                    return self.{{ this.cadenceResolverFunction }}()
                 {{/unless}}
                 {{/each}}
             }

@@ -26,53 +26,93 @@ pub contract {{ contractName }}: NonFungibleToken {
     //
     pub var totalSupply: UInt64
 
-    pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
-
-        pub let id: UInt64
+    pub struct Metadata {
 
         {{#each fields}}
         pub let {{ this.name }}: {{ this.asCadenceTypeString }}
         {{/each}}
 
         init(
-            id: UInt64,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ) {
-            self.id = id
             {{#each fields}}
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
         }
+    }
+
+    pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
+
+        pub let id: UInt64
+        pub let metadata: Metadata
+
+        init(
+            id: UInt64,
+            metadata: Metadata
+        ) {
+            self.id = id
+            self.metadata = metadata
+        }
 
         pub fun getViews(): [Type] {
-            {{#if views }}
             return [
                 {{#each views}}
-                {{{ this.cadenceTypeString }}}{{#unless @last}},{{/unless}}
+                {{{ this.cadenceTypeString }}},
                 {{/each}}
+                Type<MetadataViews.NFTCollectionData>(),
+                Type<MetadataViews.Royalties>()
             ]
-            {{ else }}
-            return []
-            {{/if}}
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            {{#if views }}
             switch view {
-                {{#each views}}
+                {{#each views }}
                 case {{{ this.cadenceTypeString }}}:
                     {{#with this}}
-                    {{> (lookup . "id") view=this metadata="self" }}
+                    {{#if cadenceResolverFunction }}
+                    {{#if requiresMetadata }}
+                    return self.{{ cadenceResolverFunction }}(self.metadata)
+                    {{ else }}
+                    return self.{{ cadenceResolverFunction }}()
+                    {{/if}}
+                    {{ else }}
+                    {{> (lookup . "id") view=this metadata="self.metadata" }}
+                    {{/if}}
                     {{/with}}
                 {{/each}}
+                case Type<MetadataViews.NFTCollectionData>():
+                    return self.resolveNFTCollectionData()
+                case Type<MetadataViews.Royalties>():
+                    return self.resolveRoyalties()
             }
 
             return nil
-            {{ else }}
-            return nil
-            {{/if}}
+        }
+
+        {{#each views}}
+        {{#if this.cadenceResolverFunction }}
+        {{> (lookup . "id") view=this }}
+        
+        {{/if}}
+        {{/each}}
+        pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
+            return MetadataViews.NFTCollectionData(
+                storagePath: {{ contractName }}.CollectionStoragePath,
+                publicPath: {{ contractName }}.CollectionPublicPath,
+                providerPath: {{ contractName }}.CollectionPrivatePath,
+                publicCollection: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic}>(),
+                publicLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
+                providerLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider, MetadataViews.ResolverCollection}>(),
+                createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
+                    return <-{{ contractName }}.createEmptyCollection()
+                })
+            )
+        }
+
+        pub fun resolveRoyalties(): MetadataViews.Royalties {
+            return MetadataViews.Royalties([])
         }
 
         destroy() {
@@ -192,11 +232,15 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ): @{{ contractName }}.NFT {
-            let nft <- create {{ contractName }}.NFT(
-                id: {{ contractName }}.totalSupply,
+            let metadata = Metadata(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }},
                 {{/each}}
+            )
+
+            let nft <- create {{ contractName }}.NFT(
+                id: {{ contractName }}.totalSupply,
+                metadata: metadata
             )
 
             emit Minted(id: nft.id)
