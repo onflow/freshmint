@@ -6,6 +6,7 @@ export class View {
   options: any;
 
   id: string;
+  cadenceResolverFunction?: string;
   cadenceTypeString: string;
 
   constructor(type: ViewType<any>, options: any) {
@@ -13,6 +14,7 @@ export class View {
     this.options = options;
 
     this.id = type.id;
+    this.cadenceResolverFunction = type.cadenceResolverFunction;
     this.cadenceTypeString = type.cadenceTypeString;
   }
 
@@ -44,6 +46,7 @@ export interface ViewType<ViewOptions> {
   (options: ViewOptions): View;
   id: string;
   cadenceTypeString: string;
+  cadenceResolverFunction?: string;
 }
 
 const httpFilePartial = 'http-file';
@@ -64,13 +67,17 @@ registerHelper('whichFilePartial', (field) => {
 registerPartial(httpFilePartial, '../../../cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc');
 registerPartial(ipfsFilePartial, '../../../cadence/metadata-views/MetadataViews.IPFSFile.partial.cdc');
 
+export const viewsTypes: ViewType<any>[] = [];
+
 export function defineView<ViewOptions>({
   id,
   cadenceTypeString,
+  cadenceResolverFunction,
   cadenceTemplatePath,
 }: {
   id: string;
   cadenceTypeString: string;
+  cadenceResolverFunction?: string;
   cadenceTemplatePath: string;
 }): ViewType<ViewOptions> {
   const viewType = (options: ViewOptions): View => {
@@ -78,9 +85,13 @@ export function defineView<ViewOptions>({
   };
 
   viewType.id = id;
+  viewType.cadenceResolverFunction = cadenceResolverFunction;
   viewType.cadenceTypeString = cadenceTypeString;
 
   registerPartial(id, cadenceTemplatePath);
+
+  // Add this view to the view type list
+  viewsTypes.push(viewType);
 
   return viewType;
 }
@@ -92,7 +103,37 @@ export const DisplayView = defineView<{
 }>({
   id: 'display',
   cadenceTypeString: 'Type<MetadataViews.Display>()',
+  cadenceResolverFunction: 'resolveDisplay',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Display.partial.cdc',
+});
+
+export const ExternalURLView = defineView<{ cadenceTemplate: string }>({
+  id: 'external-url',
+  cadenceTypeString: 'Type<MetadataViews.ExternalURL>()',
+  cadenceResolverFunction: 'resolveExternalURL',
+  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.ExternalURL.partial.cdc',
+});
+
+export const NFTCollectionDisplayView = defineView<{
+  name: string;
+  description: string;
+  url: string;
+  media: {
+    ipfsCid: string;
+    type: string;
+  };
+}>({
+  id: 'nft-collection-display',
+  cadenceTypeString: 'Type<MetadataViews.NFTCollectionDisplay>()',
+  cadenceResolverFunction: 'resolveNFTCollectionDisplay',
+  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc',
+});
+
+export const NFTView = defineView<void>({
+  id: 'nft',
+  cadenceTypeString: 'Type<MetadataViews.NFTView>()',
+  cadenceResolverFunction: 'resolveNFTView',
+  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTView.partial.cdc',
 });
 
 export const MediaView = defineView<{
@@ -103,8 +144,6 @@ export const MediaView = defineView<{
   cadenceTypeString: 'Type<MetadataViews.Media>()',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Media.partial.cdc',
 });
-
-export const viewsTypes: ViewType<any>[] = [DisplayView, MediaView];
 
 const viewsTypesById: { [key: string]: ViewType<any> } = viewsTypes.reduce(
   (views, view) => ({ [view.id]: view, ...views }),
@@ -126,7 +165,7 @@ export function parseViews(views: ViewInput[], fieldMap: FieldMap): View[] {
     //
     // Currently it replaces any string that matches a field name.
     // Should it be smarter?
-    const options = {};
+    const options = view.options;
 
     for (const name in view.options) {
       const fieldName = view.options[name];
