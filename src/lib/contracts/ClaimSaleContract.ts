@@ -88,7 +88,7 @@ export class ClaimSaleContract {
         args: [
           fcl.arg(name, t.String),
           fcl.arg(addresses, t.Array(t.Address)),
-          fcl.arg(claims, t.Int)
+          fcl.arg(claims, t.UInt)
         ],
         computeLimit: 9999,
         signers: this.nftContract.getSigners(),

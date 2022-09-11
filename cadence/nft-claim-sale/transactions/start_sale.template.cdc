@@ -3,6 +3,7 @@ import {{ contractName }} from {{{ contractAddress }}}
 import NFTClaimSale from {{{ imports.NFTClaimSale }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
 
 pub fun getOrCreateSaleCollection(account: AuthAccount): &NFTClaimSale.SaleCollection {
     if let collectionRef = account.borrow<&NFTClaimSale.SaleCollection>(from: NFTClaimSale.SaleCollectionStoragePath) {

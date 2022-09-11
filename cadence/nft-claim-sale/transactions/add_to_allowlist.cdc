@@ -30,7 +30,7 @@ pub fun getOrCreateAllowlist(account: AuthAccount, allowlistName: String): &NFTC
 // - addresses: the list of addresses to add to the allowlist.
 // - claims: the number of claims to grant to all addresses.
 //
-transaction(allowlistName: String, addresses: [Address], claims: Int) {
+transaction(allowlistName: String, addresses: [Address], claims: UInt) {
 
     let allowlist: &NFTClaimSale.Allowlist
 

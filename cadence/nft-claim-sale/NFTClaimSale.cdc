@@ -149,10 +149,18 @@ pub contract NFTClaimSale {
         // check that the provided address can claim
         // and decrement their claim counter.
         access(self) fun checkAllowlist(address: Address) {
-            if let allowlist = self.allowlist {
-                let canClaim = allowlist.borrow()!.consumeClaim(address: address)
-                if !canClaim {
-                    panic("address is not on the allowlist")
+            if let allowlistCap = self.allowlist {
+
+                let allowlist = allowlistCap.borrow() ?? panic("failed to borrow allowlist")
+
+                if let claims = allowlist.getClaims(address: address) {
+                    if claims == 0 {
+                        panic("address has already consumed all claims")
+                    }
+
+                    allowlist.consumeClaim(address: address)
+                } else {
+                    panic("address is not in the allowlist")
                 }
             }
         }
@@ -224,7 +232,7 @@ pub contract NFTClaimSale {
         // The integer value is the number of NFTs an  
         // address is entitled to claim.
         //
-        access(self) let claimsByAddress: {Address: Int}
+        access(self) let claimsByAddress: {Address: UInt}
 
         init() {
             self.claimsByAddress = {}
@@ -232,14 +240,14 @@ pub contract NFTClaimSale {
 
         // setClaims sets the number of claims that an address can make.
         //
-        pub fun setClaims(address: Address, claims: Int) {
+        pub fun setClaims(address: Address, claims: UInt) {
             self.claimsByAddress[address] = claims
         }
 
         // getClaims returns the number of claims for an address
         // or nil if the address is not in the allowlist.
         //
-        pub fun getClaims(address: Address): Int? {
+        pub fun getClaims(address: Address): UInt? {
             return self.claimsByAddress[address]
         }
 
@@ -252,18 +260,12 @@ pub contract NFTClaimSale {
         // Each call to consumeClaim decrements the address's claim
         // count by one.
         //
-        pub fun consumeClaim(address: Address): Bool {
+        pub fun consumeClaim(address: Address) {
             if let claims = self.claimsByAddress[address] {
-                if claims == 0 {
-                    return false
+                if claims != 0 {
+                    self.claimsByAddress[address] = claims - 1
                 }
-
-                self.claimsByAddress[address] = claims - 1
-
-                return true
             }
-
-            return false
         }
     }
 
