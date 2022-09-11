@@ -74,7 +74,7 @@ export class ClaimSaleContract {
     }, Transaction.VoidResult);
   }
 
-  addToAllowlist(name: string, addresses: string[], claims: string = "1"): Transaction<void> {
+  addToAllowlist(name: string, addresses: string[], claims = '1'): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
       const script = ClaimSaleGenerator.addToAllowlist({
         imports,
@@ -85,11 +85,7 @@ export class ClaimSaleContract {
 
       return {
         script,
-        args: [
-          fcl.arg(name, t.String),
-          fcl.arg(addresses, t.Array(t.Address)),
-          fcl.arg(claims, t.UInt)
-        ],
+        args: [fcl.arg(name, t.String), fcl.arg(addresses, t.Array(t.Address)), fcl.arg(claims, t.UInt)],
         computeLimit: 9999,
         signers: this.nftContract.getSigners(),
       };
