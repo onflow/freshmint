@@ -1,4 +1,4 @@
-pub fun resolveNFTCollectionDisplay(_ metadata: Metadata): MetadataViews.NFTCollectionDisplay {
+pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
     let media = MetadataViews.Media(
         file: MetadataViews.IPFSFile(
             cid: "{{ view.options.media.ipfsCid }}", 

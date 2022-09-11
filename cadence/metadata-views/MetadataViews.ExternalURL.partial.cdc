@@ -1,3 +1,3 @@
-pub fun resolveExternalURL(_ metadata: Metadata): MetadataViews.ExternalURL {
+pub fun resolveExternalURL(): MetadataViews.ExternalURL {
     return MetadataViews.ExternalURL({{{ view.options.cadenceTemplate }}})
 }

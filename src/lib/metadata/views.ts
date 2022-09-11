@@ -8,6 +8,7 @@ export class View {
   id: string;
   cadenceResolverFunction?: string;
   cadenceTypeString: string;
+  requiresMetadata: boolean;
 
   constructor(type: ViewType<any>, options: any) {
     this.type = type;
@@ -16,6 +17,7 @@ export class View {
     this.id = type.id;
     this.cadenceResolverFunction = type.cadenceResolverFunction;
     this.cadenceTypeString = type.cadenceTypeString;
+    this.requiresMetadata = type.requiresMetadata;
   }
 
   export(): ViewInput {
@@ -47,6 +49,7 @@ export interface ViewType<ViewOptions> {
   id: string;
   cadenceTypeString: string;
   cadenceResolverFunction?: string;
+  requiresMetadata: boolean;
 }
 
 const httpFilePartial = 'http-file';
@@ -74,11 +77,13 @@ export function defineView<ViewOptions>({
   cadenceTypeString,
   cadenceResolverFunction,
   cadenceTemplatePath,
+  requiresMetadata,
 }: {
   id: string;
   cadenceTypeString: string;
   cadenceResolverFunction?: string;
   cadenceTemplatePath: string;
+  requiresMetadata: boolean;
 }): ViewType<ViewOptions> {
   const viewType = (options: ViewOptions): View => {
     return new View(viewType, options);
@@ -87,6 +92,7 @@ export function defineView<ViewOptions>({
   viewType.id = id;
   viewType.cadenceResolverFunction = cadenceResolverFunction;
   viewType.cadenceTypeString = cadenceTypeString;
+  viewType.requiresMetadata = requiresMetadata;
 
   registerPartial(id, cadenceTemplatePath);
 
@@ -103,15 +109,17 @@ export const DisplayView = defineView<{
 }>({
   id: 'display',
   cadenceTypeString: 'Type<MetadataViews.Display>()',
-  cadenceResolverFunction: 'resolveDisplay',
+  cadenceResolverFunction: 'self.resolveDisplay(metadata)',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Display.partial.cdc',
+  requiresMetadata: true,
 });
 
 export const ExternalURLView = defineView<{ cadenceTemplate: string }>({
   id: 'external-url',
   cadenceTypeString: 'Type<MetadataViews.ExternalURL>()',
-  cadenceResolverFunction: 'resolveExternalURL',
+  cadenceResolverFunction: 'self.resolveExternalURL()',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.ExternalURL.partial.cdc',
+  requiresMetadata: false,
 });
 
 export const NFTCollectionDisplayView = defineView<{
@@ -125,15 +133,17 @@ export const NFTCollectionDisplayView = defineView<{
 }>({
   id: 'nft-collection-display',
   cadenceTypeString: 'Type<MetadataViews.NFTCollectionDisplay>()',
-  cadenceResolverFunction: 'resolveNFTCollectionDisplay',
+  cadenceResolverFunction: 'self.resolveNFTCollectionDisplay()',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc',
+  requiresMetadata: false,
 });
 
 export const NFTView = defineView<void>({
   id: 'nft',
   cadenceTypeString: 'Type<MetadataViews.NFTView>()',
-  cadenceResolverFunction: 'resolveNFTView',
+  cadenceResolverFunction: 'self.resolveNFTView(metadata)',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTView.partial.cdc',
+  requiresMetadata: true,
 });
 
 export const MediaView = defineView<{
@@ -143,6 +153,7 @@ export const MediaView = defineView<{
   id: 'media',
   cadenceTypeString: 'Type<MetadataViews.Media>()',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Media.partial.cdc',
+  requiresMetadata: true,
 });
 
 const viewsTypesById: { [key: string]: ViewType<any> } = viewsTypes.reduce(

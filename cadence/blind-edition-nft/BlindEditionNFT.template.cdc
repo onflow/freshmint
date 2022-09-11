@@ -38,27 +38,37 @@ pub contract {{ contractName }}: NonFungibleToken {
     // yet been revealed.
     pub let placeholderImage: String
 
-    pub struct Edition {
-        pub let id: UInt64
-        pub let size: UInt
-
+    pub struct Metadata {
+    
         {{#each fields}}
         pub let {{ this.name }}: {{ this.asCadenceTypeString }}
         {{/each}}
 
         init(
-            id: UInt64,
-            size: UInt,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ) {
-            self.id = id
-            self.size = size
-
             {{#each fields}}
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
+        }
+    }
+
+    pub struct Edition {
+
+        pub let id: UInt64
+        pub let size: UInt
+        pub let metadata: Metadata
+
+        init(
+            id: UInt64,
+            size: UInt,
+            metadata: Metadata
+        ) {
+            self.id = id
+            self.size = size
+            self.metadata = metadata
         }
     }
 
@@ -69,6 +79,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     }
 
     pub struct EditionMember {
+    
         pub let editionID: UInt64
         pub let editionSerial: UInt64
         pub let editionSalt: [UInt8]
@@ -130,53 +141,76 @@ pub contract {{ contractName }}: NonFungibleToken {
         //
         // This function returns nil if the edition membership has
         // not yet been revealed.
+        //
         pub fun getEdition(): EditionMember? {
             return {{ contractName }}.editionMembers[self.id]
         }
 
         pub fun getViews(): [Type] {
             if self.getEdition() != nil {
-                {{#if views }}
                 return [
                     {{#each views}}
-                    {{{ this.cadenceTypeString }}}{{#unless @last}},{{/unless}}
+                    {{{ this.cadenceTypeString }}},
                     {{/each}}
+                    Type<MetadataViews.NFTCollectionData>(),
+                    Type<MetadataViews.Royalties>()
                 ]
-                {{ else }}
-                return []
-                {{/if}}
             }
 
             return [
+                {{#each views}}
+                {{#unless this.requiresMetadata }}
+                {{{ this.cadenceTypeString }}},
+                {{/unless}}
+                {{/each}}
                 Type<MetadataViews.Display>(),
-                Type<FreshmintMetadataViews.BlindNFT>()
+                Type<FreshmintMetadataViews.BlindNFT>(),
+                Type<MetadataViews.NFTCollectionData>(),
+                Type<MetadataViews.Royalties>(),
             ]
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
             {{#if views }}
-            if let edition = self.getEdition() {
-                let data = edition.getData()
+            if let editionMember = self.getEdition() {
+                let edition = editionMember.getData()
+                let metadata = edition.metadata
 
                 switch view {
                     {{#each views}}
                     case {{{ this.cadenceTypeString }}}:
                         {{#with this}}
-                        {{> (lookup . "id") view=this metadata="data" }}
+                        {{#if cadenceResolverFunction }}
+                        return {{ cadenceResolverFunction }}
+                        {{ else }}
+                        {{> (lookup . "id") view=this metadata="metadata" }}
+                        {{/if}}
                         {{/with}}
                     {{/each}}
+                    case Type<MetadataViews.NFTCollectionData>():
+                        return self.resolveNFTCollectionData()
+                    case Type<MetadataViews.Royalties>():
+                        return self.resolveRoyalties()
                 }
 
                 return nil
             }
             {{ else }}
-
             if self.getEdition() != nil {
-                return []
+                switch view {
+                    case Type<MetadataViews.NFTCollectionData>():
+                        return self.resolveNFTCollectionData()
+                    case Type<MetadataViews.Royalties>():
+                        return self.resolveRoyalties()
+                }
+                
+                return nil
             }
             {{/if}}
 
             switch view {
+                case Type<FreshmintMetadataViews.BlindNFT>():
+                    return FreshmintMetadataViews.BlindNFT(metadataHash: self.editionHash)
                 case Type<MetadataViews.Display>():
                     return MetadataViews.Display(
                         name: "{{ contractName }}",
@@ -186,11 +220,37 @@ pub contract {{ contractName }}: NonFungibleToken {
                             path: nil
                         )
                     )
-                case Type<FreshmintMetadataViews.BlindNFT>():
-                    return FreshmintMetadataViews.BlindNFT(metadataHash: self.editionHash)
+                case Type<MetadataViews.NFTCollectionData>():
+                    return self.resolveNFTCollectionData()
+                case Type<MetadataViews.Royalties>():
+                    return self.resolveRoyalties()
             }
 
             return nil
+        }
+
+        {{#each views}}
+        {{#if this.cadenceResolverFunction }}
+        {{> (lookup . "id") view=this }}
+        
+        {{/if}}
+        {{/each}}
+        pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
+            return MetadataViews.NFTCollectionData(
+                storagePath: {{ contractName }}.CollectionStoragePath,
+                publicPath: {{ contractName }}.CollectionPublicPath,
+                providerPath: {{ contractName }}.CollectionPrivatePath,
+                publicCollection: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic}>(),
+                publicLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
+                providerLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider, MetadataViews.ResolverCollection}>(),
+                createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
+                    return <-{{ contractName }}.createEmptyCollection()
+                })
+            )
+        }
+
+        pub fun resolveRoyalties(): MetadataViews.Royalties {
+            return MetadataViews.Royalties([])
         }
 
         destroy() {
@@ -315,12 +375,16 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ): UInt64 {
-            let edition = Edition(
-                id: {{ contractName }}.totalEditions,
-                size: size,
+            let metadata = Metadata(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }},
                 {{/each}}
+            )
+
+            let edition = Edition(
+                id: {{ contractName }}.totalEditions,
+                size: size,
+                metadata: metadata
             )
 
             {{ contractName }}.editions[edition.id] = edition
