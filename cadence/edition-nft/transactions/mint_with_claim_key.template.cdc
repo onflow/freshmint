@@ -1,6 +1,7 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
 import NFTLockBox from {{{ imports.NFTLockBox }}}
 
 pub fun getOrCreateLockBox(
@@ -13,10 +14,7 @@ pub fun getOrCreateLockBox(
         return existingLockBox
     }
 
-    let collection = account.getCapability<&{
-        NonFungibleToken.Provider,
-        NonFungibleToken.Receiver
-    }>(collectionPrivatePath)
+    let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(collectionPrivatePath)
 
     let lockBox <- NFTLockBox.createLockBox(
         collection: collection,

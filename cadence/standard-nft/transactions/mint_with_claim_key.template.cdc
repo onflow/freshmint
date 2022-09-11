@@ -1,13 +1,15 @@
-import NonFungibleToken from {{{ imports.NonFungibleToken }}}
-import NFTLockBox from {{{ imports.NFTLockBox }}}
 import {{ contractName }} from {{{ contractAddress }}}
+
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import MetadataViews from {{{ imports.MetadataViews }}}
+import NFTLockBox from {{{ imports.NFTLockBox }}}
 
 pub fun getOrCreateLockBox(account: AuthAccount): &NFTLockBox.LockBox {
     if let existingLockBox = account.borrow<&NFTLockBox.LockBox>(from: NFTLockBox.DefaultLockBoxStoragePath) {
         return existingLockBox
     }
 
-    let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.Receiver}>({{ contractName }}.CollectionPrivatePath)
+    let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPrivatePath)
 
     let lockBox <- NFTLockBox.createLockBox(
         collection: collection,
