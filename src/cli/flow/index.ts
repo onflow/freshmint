@@ -48,7 +48,7 @@ export default class FlowGateway {
 
   async createEditions(sizes: number[], fields: any[]) {
     const args = [
-      { type: t.Array(t.UInt), value: sizes.map((size) => size.toString(10)) },
+      { type: t.Array(t.UInt64), value: sizes.map((size) => size.toString(10)) },
       ...fields.map((field) => ({
         type: t.Array(field.cadenceType),
         value: field.values,

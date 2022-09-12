@@ -118,7 +118,7 @@ export class EditionNFTContract extends NFTContract {
       return {
         script,
         args: [
-          fcl.arg(sizes, t.Array(t.UInt)),
+          fcl.arg(sizes, t.Array(t.UInt64)),
           ...this.schema.fields.map((field) => {
             return fcl.arg(
               editions.map((edition) => field.getValue(edition.metadata)),

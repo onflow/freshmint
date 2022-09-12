@@ -46,25 +46,17 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub struct Edition {
 
         pub let id: UInt64
-        pub let size: UInt
+        pub let size: UInt64
         pub let metadata: Metadata
 
         init(
             id: UInt64,
-            size: UInt,
+            size: UInt64,
             metadata: Metadata
         ) {
             self.id = id
             self.size = size
             self.metadata = metadata
-        }
-
-        pub fun resolveView(serial: UInt64): MetadataViews.Edition {
-            return MetadataViews.Edition(
-                name: "Edition",
-                number: serial,
-                max: (self.size as! UInt64)
-            )
         }
     }
 
@@ -113,7 +105,7 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{> viewCase view=this metadata="edition.metadata" }}
                 {{/each}}
                 case Type<MetadataViews.Edition>():
-                    return edition.resolveView(serial: self.editionSerial)
+                    return self.resolveEditionView(edition)
             }
 
             return nil
@@ -125,6 +117,14 @@ pub contract {{ contractName }}: NonFungibleToken {
         
         {{/if}}
         {{/each}}
+        pub fun resolveEditionView(_ edition: Edition): MetadataViews.Edition {
+            return MetadataViews.Edition(
+                name: "Edition",
+                number: self.editionSerial,
+                max: edition.size
+            )
+        }
+
         destroy() {
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply - (1 as UInt64)
 
@@ -239,7 +239,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         // edition data that will later be associated with minted NFTs.
         //
         pub fun createEdition(
-            size: UInt,
+            size: UInt64,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
