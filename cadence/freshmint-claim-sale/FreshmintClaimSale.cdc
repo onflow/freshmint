@@ -304,8 +304,6 @@ pub contract FreshmintClaimSale {
     }
 
     init() {
-        self.version = "{{ freshmintVersion }}"
-
         self.SaleCollectionStoragePath = /storage/FreshmintClaimSaleCollection
         self.SaleCollectionPublicPath = /public/FreshmintClaimSaleCollection
     }
