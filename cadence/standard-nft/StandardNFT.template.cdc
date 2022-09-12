@@ -140,7 +140,7 @@ pub contract {{ contractName }}: NonFungibleToken {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
 
-        // Return a reference to an NFT in this collection,
+        // Return a reference to an NFT in this collection
         // typed as {{ contractName }}.NFT.
         //
         // This function returns nil if the NFT does not exist in this collection.
@@ -154,7 +154,7 @@ pub contract {{ contractName }}: NonFungibleToken {
             return nil
         }
 
-        // Return a reference to an NFT in this collection,
+        // Return a reference to an NFT in this collection
         // typed as MetadataViews.Resolver.
         //
         // This function panics if the NFT does not exist in this collection.

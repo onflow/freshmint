@@ -2,13 +2,12 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 
-// FreshmintClaimSale provides functionality to operate a
-// claim-style sale of NFTs.
+// FreshmintClaimSale provides functionality to operate a claim-style sale of NFTs.
 //
-// In a claim sale, users can claims NFT from a minted collection
-// for a fee. All NFTs in a claim sale are sold for the same price.
+// In a claim sale, users can claim NFTs from a collection
+// for a fee. All NFTs in a sale are sold for the same price.
 //
-// Unlike in the NFTStorefront, a user cannot purchase a specific NFT by ID.
+// Unlike in the NFTStorefront contract, a user cannot purchase a specific NFT by ID.
 // On each claim, the user receives the next available NFT in the collection.
 // 
 pub contract FreshmintClaimSale {
@@ -29,8 +28,8 @@ pub contract FreshmintClaimSale {
     // more Sale resources.
     //
     // The sale creator does not need to use a sale collection,
-    // but is useful when running multiple claims from different collections
-    // in the same account at the same time.
+    // but it is useful when running multiple claims from different collections
+    // in the same account.
     //
     pub resource SaleCollection: SaleCollectionPublic {
 
