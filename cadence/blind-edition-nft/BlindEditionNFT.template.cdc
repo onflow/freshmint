@@ -118,11 +118,8 @@ pub contract {{ contractName }}: NonFungibleToken {
         // serial number for this NFT.
         pub let editionHash: [UInt8]
 
-        init(
-            id: UInt64,
-            editionHash: [UInt8]
-        ) {
-            self.id = id
+        init(editionHash: [UInt8]) {
+            self.id = self.uuid
             self.editionHash = editionHash
         }
 
@@ -337,10 +334,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         // Mints a new NFT.
         //
         pub fun mintNFT(editionHash: [UInt8]): @{{ contractName }}.NFT {
-            let nft <- create {{ contractName }}.NFT(
-                id: {{ contractName }}.totalSupply,
-                editionHash: editionHash,
-            )
+            let nft <- create {{ contractName }}.NFT(editionHash: editionHash)
 
             emit Minted(id: nft.id)
 
