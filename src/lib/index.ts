@@ -23,11 +23,6 @@ export { NFTLockBoxGenerator } from './generators/NFTLockBoxGenerator';
 export { CommonNFTGenerator } from './generators/CommonNFTGenerator';
 export { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 
-export { OnChainCollection } from './collections/OnChainCollection';
-export { OnChainBlindCollection } from './collections/OnChainBlindCollection';
-export { EditionBlindCollection } from './collections/EditionBlindCollection';
-export { EditionCollection } from './collections/EditionCollection';
-
 export { ClaimSale } from './sales/ClaimSale';
 
 export * as metadata from './metadata';
