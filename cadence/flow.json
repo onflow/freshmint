@@ -1,6 +1,7 @@
 {
 	"contracts": {
-		"FreshmintLockBox": "./nft-lock-box/FreshmintLockBox.cdc"
+		"FreshmintLockBox": "./freshmint-lock-box/FreshmintLockBox.cdc",
+		"FreshmintClaimSale": "./freshmint-claim-sale/FreshmintClaimSale.cdc"
 	},
 	"networks": {
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
@@ -8,22 +9,20 @@
 	},
 	"deployments": {
 		"testnet": {
-			"nft-lock-box-testnet": [
+			"freshmint-lock-box-testnet": [
 				"FreshmintLockBox"
-			]
-		},
-		"mainnet": {
-			"nft-lock-box-mainnet": [
-				"FreshmintLockBox"
+			],
+			"freshmint-claim-sale-testnet": [
+				"FreshmintClaimSale"
 			]
 		}
 	},
 	"accounts": {
-		"nft-lock-box-testnet": {
-			"fromFile": "nft-lock-box-testnet.private.json"
+		"freshmint-lock-box-testnet": {
+			"fromFile": "freshmint-lock-box-testnet.private.json"
 		},
-		"nft-lock-box-mainnet": {
-			"fromFile": "nft-lock-box-mainnet.private.json"
+		"freshmint-claim-sale-testnet": {
+			"fromFile": "freshmint-claim-sale-testnet.private.json"
 		}
 	}
 }
