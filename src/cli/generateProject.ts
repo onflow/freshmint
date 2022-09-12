@@ -5,10 +5,10 @@ import {
   ContractImports,
   StandardNFTGenerator,
   EditionNFTGenerator,
-  NFTLockBoxGenerator,
   FreshmintMetadataViewsGenerator,
   CommonNFTGenerator,
   ClaimSaleGenerator,
+  LockBoxGenerator
 } from '../lib';
 import { ContractConfig, ContractType } from './config';
 
@@ -28,10 +28,10 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
   const imports = {
     NonFungibleToken: `"./NonFungibleToken.cdc"`,
     MetadataViews: `"./MetadataViews.cdc"`,
-    FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`,
     FungibleToken: `"./FungibleToken.cdc"`,
     FlowToken: `"./FlowToken.cdc"`,
-    NFTLockBox: `"./NFTLockBox.cdc"`,
+    FreshmintLockBox: `"./FreshmintLockBox.cdc"`,
+    FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`
   };
 
   switch (contract.type) {
@@ -43,7 +43,7 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
       break;
   }
 
-  await writeFile(path.resolve(dir, `cadence/contracts/NFTLockBox.cdc`), NFTLockBoxGenerator.contract({ imports }));
+  await writeFile(path.resolve(dir, `cadence/contracts/FreshmintLockBox.cdc`), LockBoxGenerator.contract({ imports }));
   await writeFile(
     path.resolve(dir, `cadence/contracts/FreshmintClaimSale.cdc`),
     ClaimSaleGenerator.contract({ imports }),
@@ -77,9 +77,9 @@ async function generateStandardProject(
     // TODO: this is a workaround to fix the relative import in this file.
     // Find a better solution.
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    NFTLockBox: `"../contracts/NFTLockBox.cdc"`,
     MetadataViews: `"../contracts/MetadataViews.cdc"`,
-    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
+    FreshmintLockBox: `"../contracts/FreshmintLockBox.cdc"`,
+    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`
   };
 
   const mintTransaction = StandardNFTGenerator.mint({
@@ -132,9 +132,9 @@ async function generateEditionProject(
     // TODO: this is a workaround to fix the relative import in this file.
     // Find a better solution.
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    NFTLockBox: `"../contracts/NFTLockBox.cdc"`,
     MetadataViews: `"../contracts/MetadataViews.cdc"`,
-    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
+    FreshmintLockBox: `"../contracts/FreshmintLockBox.cdc"`,
+    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`
   };
 
   const createEditionsTransaction = EditionNFTGenerator.createEditions({

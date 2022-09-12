@@ -38,8 +38,8 @@
         "mainnet": "0x1654653399040a61"
       }
     },
-    "NFTLockBox": {
-      "source": "cadence/contracts/NFTLockBox.cdc",
+    "FreshmintLockBox": {
+      "source": "cadence/contracts/FreshmintLockBox.cdc",
       "aliases": {
         "testnet": "0x3c67d33388b03a69"
       }
@@ -62,7 +62,7 @@
       "emulator-account": [
         "NonFungibleToken",
         "MetadataViews",
-        "NFTLockBox",
+        "FreshmintLockBox",
         "{{name}}"
       ]
     }

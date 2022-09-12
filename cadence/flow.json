@@ -1,6 +1,6 @@
 {
 	"contracts": {
-		"NFTLockBox": "./nft-lock-box/NFTLockBox.cdc"
+		"FreshmintLockBox": "./nft-lock-box/FreshmintLockBox.cdc"
 	},
 	"networks": {
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
@@ -9,12 +9,12 @@
 	"deployments": {
 		"testnet": {
 			"nft-lock-box-testnet": [
-				"NFTLockBox"
+				"FreshmintLockBox"
 			]
 		},
 		"mainnet": {
 			"nft-lock-box-mainnet": [
-				"NFTLockBox"
+				"FreshmintLockBox"
 			]
 		}
 	},

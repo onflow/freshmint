@@ -2,30 +2,30 @@ import {{ contractName }} from {{{ contractAddress }}}
 
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
-import NFTLockBox from {{{ imports.NFTLockBox }}}
+import FreshmintLockBox from {{{ imports.FreshmintLockBox }}}
 
 pub fun getOrCreateLockBox(
     account: AuthAccount,
     lockBoxStoragePath: StoragePath,
     lockBoxPublicPath: PublicPath,
     collectionPrivatePath: PrivatePath
-): &NFTLockBox.LockBox {
-    if let existingLockBox = account.borrow<&NFTLockBox.LockBox>(from: lockBoxStoragePath) {
+): &FreshmintLockBox.LockBox {
+    if let existingLockBox = account.borrow<&FreshmintLockBox.LockBox>(from: lockBoxStoragePath) {
         return existingLockBox
     }
 
     let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(collectionPrivatePath)
 
-    let lockBox <- NFTLockBox.createLockBox(
+    let lockBox <- FreshmintLockBox.createLockBox(
         collection: collection,
         receiverPath: {{ contractName }}.CollectionPublicPath
     )
 
-    let lockBoxRef = &lockBox as &NFTLockBox.LockBox
+    let lockBoxRef = &lockBox as &FreshmintLockBox.LockBox
 
     account.save(<- lockBox, to: lockBoxStoragePath)
 
-    account.link<&NFTLockBox.LockBox{NFTLockBox.LockBoxPublic}>(
+    account.link<&FreshmintLockBox.LockBox{FreshmintLockBox.LockBoxPublic}>(
         lockBoxPublicPath, 
         target: lockBoxStoragePath
     )
@@ -40,7 +40,7 @@ transaction(
 ) {
     
     let admin: &{{ contractName }}.Admin
-    let lockBox: &NFTLockBox.LockBox
+    let lockBox: &FreshmintLockBox.LockBox
 
     prepare(signer: AuthAccount) {
         self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)

@@ -1,7 +1,7 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 
-pub contract NFTLockBox {
+pub contract FreshmintLockBox {
 
     // The Claimed event is emitted when an NFT
     // is successfully claimed from a lock box.

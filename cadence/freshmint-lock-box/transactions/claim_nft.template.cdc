@@ -2,7 +2,7 @@ import {{ contractName }} from {{{ contractAddress }}}
 
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
-import NFTLockBox from {{{ imports.NFTLockBox }}}
+import FreshmintLockBox from {{{ imports.FreshmintLockBox }}}
 
 pub fun intializeCollection(account: AuthAccount) {
     if account.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
@@ -36,14 +36,14 @@ transaction(
 ) {
 
     let receiverAddress: Address 
-    let lockBox: &{NFTLockBox.LockBoxPublic}
+    let lockBox: &{FreshmintLockBox.LockBoxPublic}
 
     prepare(signer: AuthAccount) {
         self.receiverAddress = signer.address
 
         self.lockBox = getAccount(lockBoxAddress)
             .getCapability(lockBoxPublicPath)!
-            .borrow<&{NFTLockBox.LockBoxPublic}>()!
+            .borrow<&{FreshmintLockBox.LockBoxPublic}>()!
 
         intializeCollection(account: signer)
     }
@@ -56,3 +56,5 @@ transaction(
         )
     }
 }
+
+464c4f572d56302e302d757365720000000000000000000000000000000000003078613264323337376435313739323539300000000000000033
