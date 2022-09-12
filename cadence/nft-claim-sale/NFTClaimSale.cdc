@@ -307,7 +307,7 @@ pub contract NFTClaimSale {
     init() {
         self.version = "{{ freshmintVersion }}"
 
-        self.SaleCollectionStoragePath = /storage/NFTClaimSale
-        self.SaleCollectionPublicPath = /public/NFTClaimSale
+        self.SaleCollectionStoragePath = /storage/NFTClaimSaleCollection
+        self.SaleCollectionPublicPath = /public/NFTClaimSaleCollection
     }
 }
