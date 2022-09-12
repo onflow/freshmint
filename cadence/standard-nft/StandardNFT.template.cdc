@@ -78,6 +78,8 @@ pub contract {{ contractName }}: NonFungibleToken {
         {{/if}}
         {{/each}}
         destroy() {
+            {{ contractName }}.totalSupply = {{ contractName }}.totalSupply - (1 as UInt64)
+            
             emit Burned(id: self.id)
         }
     }
