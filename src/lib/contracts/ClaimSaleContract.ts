@@ -81,10 +81,8 @@ export class ClaimSaleContract {
   }: {
     name: string;
     addresses: string[];
-    claims?: number;
+    claims: number;
   }): Transaction<void> {
-    claims = claims ?? 1;
-
     return new Transaction(({ imports }: FreshmintConfig) => {
       const script = ClaimSaleGenerator.addToAllowlist({
         imports,
