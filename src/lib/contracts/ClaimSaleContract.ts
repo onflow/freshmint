@@ -93,7 +93,7 @@ export class ClaimSaleContract {
 
       return {
         script,
-        args: [fcl.arg(name, t.String), fcl.arg(addresses, t.Array(t.Address)), fcl.arg(claims.toString(), t.UInt)],
+        args: [fcl.arg(name, t.String), fcl.arg(addresses, t.Array(t.Address)), fcl.arg(claims.toString(10), t.UInt)],
         computeLimit: 9999,
         signers: this.nftContract.getSigners(),
       };
