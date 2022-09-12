@@ -12,8 +12,6 @@ import FungibleToken from {{{ imports.FungibleToken }}}
 // 
 pub contract FreshmintClaimSale {
 
-    pub let version: String
-
     pub event Claimed(nftType: Type, nftID: UInt64)
 
     pub let SaleCollectionStoragePath: StoragePath
