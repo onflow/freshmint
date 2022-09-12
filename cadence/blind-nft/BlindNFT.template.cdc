@@ -12,7 +12,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Minted(id: UInt64)
+    pub event Minted(id: UInt64, metadataHash: [UInt8])
     pub event Revealed(id: UInt64)
     pub event Burned(id: UInt64)
 
@@ -280,7 +280,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun mintNFT(metadataHash: [UInt8]): @{{ contractName }}.NFT {
             let nft <- create {{ contractName }}.NFT(metadataHash: metadataHash)
 
-            emit Minted(id: nft.id)
+            emit Minted(id: nft.id, metadataHash: metadataHash)
 
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply + (1 as UInt64)
 
