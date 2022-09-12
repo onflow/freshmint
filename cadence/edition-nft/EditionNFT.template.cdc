@@ -18,12 +18,12 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub let CollectionPrivatePath: PrivatePath
     pub let AdminStoragePath: StoragePath
 
-    // The total number of {{ contractName }} NFTs that have been minted.
-    //
+    /// The total number of {{ contractName }} NFTs that have been minted.
+    ///
     pub var totalSupply: UInt64
 
-    // The total number of {{ contractName }} editions that have been created.
-    //
+    /// The total number of {{ contractName }} editions that have been created.
+    ///
     pub var totalEditions: UInt64
 
     pub struct Metadata {
@@ -82,8 +82,8 @@ pub contract {{ contractName }}: NonFungibleToken {
             self.editionSerial = editionSerial
         }
 
-        // Return the edition that this NFT belongs to.
-        //
+        /// Return the edition that this NFT belongs to.
+        ///
         pub fun getEdition(): Edition {
             return {{ contractName }}.getEdition(id: self.editionID)!
         }
@@ -146,16 +146,16 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     pub resource Collection: {{ contractName }}CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         
-        // A dictionary of all NFTs in this collection indexed by ID.
-        //
+        /// A dictionary of all NFTs in this collection indexed by ID.
+        ///
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
 
         init () {
             self.ownedNFTs <- {}
         }
 
-        // Remove an NFT from the collection and move it to the caller.
-        //
+        /// Remove an NFT from the collection and move it to the caller.
+        ///
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) 
                 ?? panic("Requested NFT to withdraw does not exist in this collection")
@@ -165,8 +165,8 @@ pub contract {{ contractName }}: NonFungibleToken {
             return <- token
         }
 
-        // Deposit an NFT into this collection.
-        //
+        /// Deposit an NFT into this collection.
+        ///
         pub fun deposit(token: @NonFungibleToken.NFT) {
             let token <- token as! @{{ contractName }}.NFT
 
@@ -180,25 +180,25 @@ pub contract {{ contractName }}: NonFungibleToken {
             destroy oldToken
         }
 
-        // Return an array of the NFT IDs in this collection.
-        //
+        /// Return an array of the NFT IDs in this collection.
+        ///
         pub fun getIDs(): [UInt64] {
             return self.ownedNFTs.keys
         }
 
-        // Return a reference to an NFT in this collection.
-        //
-        // This function panics if the NFT does not exist in this collection.
-        //
+        /// Return a reference to an NFT in this collection.
+        ///
+        /// This function panics if the NFT does not exist in this collection.
+        ///
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
 
-        // Return a reference to an NFT in this collection
-        // typed as {{ contractName }}.NFT.
-        //
-        // This function returns nil if the NFT does not exist in this collection.
-        //
+        /// Return a reference to an NFT in this collection
+        /// typed as {{ contractName }}.NFT.
+        ///
+        /// This function returns nil if the NFT does not exist in this collection.
+        ///
         pub fun borrow{{ contractName }}(id: UInt64): &{{ contractName }}.NFT? {
             if self.ownedNFTs[id] != nil {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
@@ -208,11 +208,11 @@ pub contract {{ contractName }}: NonFungibleToken {
             return nil
         }
 
-        // Return a reference to an NFT in this collection
-        // typed as MetadataViews.Resolver.
-        //
-        // This function panics if the NFT does not exist in this collection.
-        //
+        /// Return a reference to an NFT in this collection
+        /// typed as MetadataViews.Resolver.
+        ///
+        /// This function panics if the NFT does not exist in this collection.
+        ///
         pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
             let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
             let nftRef = nft as! &{{ contractName }}.NFT
@@ -224,21 +224,21 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    // Return a new empty collection.
-    //
+    /// Return a new empty collection.
+    ///
     pub fun createEmptyCollection(): @NonFungibleToken.Collection {
         return <- create Collection()
     }
 
-    // The administrator resource used to mint and reveal NFTs.
-    //
+    /// The administrator resource used to mint and reveal NFTs.
+    ///
     pub resource Admin {
 
-        // Create a new NFT edition.
-        //
-        // This function does not mint any NFTs. It only creates the
-        // edition data that will later be associated with minted NFTs.
-        //
+        /// Create a new NFT edition.
+        ///
+        /// This function does not mint any NFTs. It only creates the
+        /// edition data that will later be associated with minted NFTs.
+        ///
         pub fun createEdition(
             size: UInt64,
             {{#each fields}}
@@ -266,11 +266,11 @@ pub contract {{ contractName }}: NonFungibleToken {
             return edition.id
         }
 
-        // mintNFT
-        //
-        // To mint an edition NFT, specify its edition by ID
-        // and a unique serial number.
-        //
+        /// Mint a new NFT.
+        ///
+        /// To mint an edition NFT, specify its edition by ID
+        /// and a unique serial number.
+        ///
         pub fun mintNFT(editionID: UInt64, editionSerial: UInt64): @{{ contractName }}.NFT {
             pre {
                 {{ contractName }}.getEdition(id: editionID) != nil : "edition does not exist"
@@ -289,20 +289,20 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    // Return a public path that is scoped to this contract.
-    //
+    /// Return a public path that is scoped to this contract.
+    ///
     pub fun getPublicPath(suffix: String): PublicPath {
         return PublicPath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
-    // Return a private path that is scoped to this contract.
-    //
+    /// Return a private path that is scoped to this contract.
+    ///
     pub fun getPrivatePath(suffix: String): PrivatePath {
         return PrivatePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
-    // Return a storage path that is scoped to this contract.
-    //
+    /// Return a storage path that is scoped to this contract.
+    ///
     pub fun getStoragePath(suffix: String): StoragePath {
         return StoragePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
