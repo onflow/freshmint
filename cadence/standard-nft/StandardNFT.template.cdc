@@ -48,10 +48,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub let id: UInt64
         pub let metadata: Metadata
 
-        init(
-            id: UInt64,
-            metadata: Metadata
-        ) {
+        init(metadata: Metadata) {
             self.id = self.uuid
             self.metadata = metadata
         }
