@@ -108,8 +108,6 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{#each views}}
                 {{{ this.cadenceTypeString }}},
                 {{/each}}
-                Type<MetadataViews.NFTCollectionData>(),
-                Type<MetadataViews.Royalties>(),
                 Type<MetadataViews.Edition>()
             ]
         }
@@ -123,10 +121,6 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{/each}}
                 case Type<MetadataViews.Edition>():
                     return edition.resolveView(serial: self.editionSerial)
-                case Type<MetadataViews.NFTCollectionData>():
-                    return self.resolveNFTCollectionData()
-                case Type<MetadataViews.Royalties>():
-                    return self.resolveRoyalties()
             }
 
             return nil
@@ -134,28 +128,10 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         {{#each views}}
         {{#if this.cadenceResolverFunction }}
-        {{> (lookup . "id") view=this }}
+        {{> (lookup . "id") view=this contractName=../contractName }}
         
         {{/if}}
         {{/each}}
-        pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
-            return MetadataViews.NFTCollectionData(
-                storagePath: {{ contractName }}.CollectionStoragePath,
-                publicPath: {{ contractName }}.CollectionPublicPath,
-                providerPath: {{ contractName }}.CollectionPrivatePath,
-                publicCollection: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic}>(),
-                publicLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
-                providerLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider, MetadataViews.ResolverCollection}>(),
-                createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
-                    return <-{{ contractName }}.createEmptyCollection()
-                })
-            )
-        }
-
-        pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties([])
-        }
-
         destroy() {
             emit Burned(id: self.id)
         }

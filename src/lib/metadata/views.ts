@@ -139,12 +139,28 @@ export const NFTCollectionDisplayView = defineView<{
   requiresMetadata: false,
 });
 
+export const NFTCollectionDataView = defineView<void>({
+  id: 'nft-collection-data',
+  cadenceTypeString: 'Type<MetadataViews.NFTCollectionData>()',
+  cadenceResolverFunction: 'resolveNFTCollectionData',
+  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTCollectionData.partial.cdc',
+  requiresMetadata: false,
+});
+
 export const NFTView = defineView<void>({
   id: 'nft',
   cadenceTypeString: 'Type<MetadataViews.NFTView>()',
   cadenceResolverFunction: 'resolveNFTView',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTView.partial.cdc',
   requiresMetadata: true,
+});
+
+export const RoyaltiesView = defineView<void>({
+  id: 'royalties',
+  cadenceTypeString: 'Type<MetadataViews.Royalties>()',
+  cadenceResolverFunction: 'resolveRoyalties',
+  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Royalties.partial.cdc',
+  requiresMetadata: false,
 });
 
 export const MediaView = defineView<{

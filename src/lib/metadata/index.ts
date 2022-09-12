@@ -6,4 +6,13 @@ export { String, Int, UInt, Fix64, UFix64, Bool, IPFSImage, HTTPFile, IPFSFile }
 export { Schema, SchemaInput, createSchema, parseSchema, defaultSchema } from './schema';
 export { hashMetadata, hashMetadataWithSalt } from './hash';
 
-export { View, DisplayView, ExternalURLView, NFTCollectionDisplayView, NFTView, MediaView } from './views';
+export {
+  View,
+  DisplayView,
+  ExternalURLView,
+  NFTCollectionDisplayView,
+  NFTCollectionDataView,
+  RoyaltiesView,
+  NFTView,
+  MediaView,
+} from './views';

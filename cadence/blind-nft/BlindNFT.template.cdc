@@ -107,16 +107,11 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{#if views }}
                 return [
                     {{#each views}}
-                    {{{ this.cadenceTypeString }}},
+                    {{{ this.cadenceTypeString }}}{{#unless @last }},{{/unless}}
                     {{/each}}
-                    Type<MetadataViews.NFTCollectionData>(),
-                    Type<MetadataViews.Royalties>()
                 ]
                 {{ else }}
-                return [
-                    Type<MetadataViews.NFTCollectionData>(),
-                    Type<MetadataViews.Royalties>()
-                ]
+                return []
                 {{/if}}
             }
 
@@ -126,10 +121,8 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{{ this.cadenceTypeString }}},
                 {{/unless}}
                 {{/each}}
-                Type<FreshmintMetadataViews.BlindNFT>(),
                 Type<MetadataViews.Display>(),
-                Type<MetadataViews.NFTCollectionData>(),
-                Type<MetadataViews.Royalties>()
+                Type<FreshmintMetadataViews.BlindNFT>()
             ]
         }
 
@@ -140,29 +133,17 @@ pub contract {{ contractName }}: NonFungibleToken {
                     {{#each views}}
                     {{> viewCase view=this metadata="metadata" }}
                     {{/each}}
-                    case Type<MetadataViews.NFTCollectionData>():
-                        return self.resolveNFTCollectionData()
-                    case Type<MetadataViews.Royalties>():
-                        return self.resolveRoyalties()
                 }
 
                 return nil
             }
             {{ else }}
             if self.getMetadata() != nil {
-                switch view {
-                    case Type<MetadataViews.NFTCollectionData>():
-                        return self.resolveNFTCollectionData()
-                    case Type<MetadataViews.Royalties>():
-                        return self.resolveRoyalties()
-                }
                 return nil
             }
             {{/if}}
 
             switch view {
-                case Type<FreshmintMetadataViews.BlindNFT>():
-                    return FreshmintMetadataViews.BlindNFT(metadataHash: self.metadataHash)
                 case Type<MetadataViews.Display>():
                     return MetadataViews.Display(
                         name: "{{ contractName }}",
@@ -172,10 +153,8 @@ pub contract {{ contractName }}: NonFungibleToken {
                             path: nil
                         )
                     )
-                case Type<MetadataViews.NFTCollectionData>():
-                    return self.resolveNFTCollectionData()
-                case Type<MetadataViews.Royalties>():
-                    return self.resolveRoyalties()
+                case Type<FreshmintMetadataViews.BlindNFT>():
+                    return FreshmintMetadataViews.BlindNFT(metadataHash: self.metadataHash)
                 {{#each views}}
                 {{#unless this.requiresMetadata }}
                 {{> viewCase view=this }}
@@ -188,28 +167,10 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         {{#each views}}
         {{#if this.cadenceResolverFunction }}
-        {{> (lookup . "id") view=this }}
+        {{> (lookup . "id") view=this contractName=../contractName }}
         
         {{/if}}
         {{/each}}
-        pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
-            return MetadataViews.NFTCollectionData(
-                storagePath: {{ contractName }}.CollectionStoragePath,
-                publicPath: {{ contractName }}.CollectionPublicPath,
-                providerPath: {{ contractName }}.CollectionPrivatePath,
-                publicCollection: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic}>(),
-                publicLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
-                providerLinkedType: Type<&{{ contractName }}.Collection{ {{~contractName~}}.{{ contractName }}CollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider, MetadataViews.ResolverCollection}>(),
-                createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
-                    return <-{{ contractName }}.createEmptyCollection()
-                })
-            )
-        }
-
-        pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties([])
-        }
-
         destroy() {
             emit Burned(id: self.id)
         }

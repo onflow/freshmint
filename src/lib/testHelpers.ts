@@ -58,5 +58,7 @@ export const schema = metadata.createSchema({
         type: 'image/jpeg',
       },
     }),
+    metadata.NFTCollectionDataView(),
+    metadata.RoyaltiesView(),
   ],
 });
