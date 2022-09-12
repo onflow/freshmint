@@ -6,23 +6,18 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     pub let version: String
 
-    // Events
-    //
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
     pub event Minted(id: UInt64)
     pub event Burned(id: UInt64)
 
-    // Named Paths
-    //
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
     pub let CollectionPrivatePath: PrivatePath
     pub let AdminStoragePath: StoragePath
 
-    // totalSupply
-    // The total number of {{ contractName }} that have been minted
+    // The total number of {{ contractName }} NFTs that have been minted.
     //
     pub var totalSupply: UInt64
 
@@ -79,7 +74,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         {{/each}}
         destroy() {
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply - (1 as UInt64)
-            
+
             emit Burned(id: self.id)
         }
     }
@@ -98,13 +93,15 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     pub resource Collection: {{ contractName }}CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         
-        // dictionary of NFTs
-        // NFT is a resource type with an `UInt64` ID field
+        // A dictionary of all NFTs in this collection indexed by ID.
         //
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
 
-        // withdraw
-        // Removes an NFT from the collection and moves it to the caller
+        init () {
+            self.ownedNFTs <- {}
+        }
+
+        // Remove an NFT from the collection and move it to the caller.
         //
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
@@ -114,9 +111,7 @@ pub contract {{ contractName }}: NonFungibleToken {
             return <- token
         }
 
-        // deposit
-        // Takes a NFT and adds it to the collections dictionary
-        // and adds the ID to the id array
+        // Deposit an NFT into this collection.
         //
         pub fun deposit(token: @NonFungibleToken.NFT) {
             let token <- token as! @{{ contractName }}.NFT
@@ -131,23 +126,24 @@ pub contract {{ contractName }}: NonFungibleToken {
             destroy oldToken
         }
 
-        // getIDs
-        // Returns an array of the IDs that are in the collection
+        // Return an array of the NFT IDs in this collection.
         //
         pub fun getIDs(): [UInt64] {
             return self.ownedNFTs.keys
         }
 
-        // borrowNFT
-        // Gets a reference to an NFT in the collection
-        // so that the caller can read its metadata and call its methods
+        // Return a reference to an NFT in this collection.
+        //
+        // This function panics if the NFT does not exist in this collection.
         //
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
 
-        // borrow{{ contractName }}
-        // Gets a reference to an NFT in the collection as a {{ contractName }}.
+        // Return a reference to an NFT in this collection,
+        // typed as {{ contractName }}.NFT.
+        //
+        // This function returns nil if the NFT does not exist in this collection.
         //
         pub fun borrow{{ contractName }}(id: UInt64): &{{ contractName }}.NFT? {
             if self.ownedNFTs[id] != nil {
@@ -158,38 +154,35 @@ pub contract {{ contractName }}: NonFungibleToken {
             return nil
         }
 
+        // Return a reference to an NFT in this collection,
+        // typed as MetadataViews.Resolver.
+        //
+        // This function panics if the NFT does not exist in this collection.
+        //
         pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
             let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
             let nftRef = nft as! &{{ contractName }}.NFT
             return nftRef as &AnyResource{MetadataViews.Resolver}
         }
 
-        // destructor
         destroy() {
             destroy self.ownedNFTs
         }
-
-        // initializer
-        //
-        init () {
-            self.ownedNFTs <- {}
-        }
     }
 
-    // createEmptyCollection
-    // public function that anyone can call to create a new empty collection
+    // Return a new empty collection.
     //
     pub fun createEmptyCollection(): @NonFungibleToken.Collection {
         return <- create Collection()
     }
 
-    // Admin
-    // Resource that an admin can use to mint NFTs.
+    // The administrator resource used to mint and reveal NFTs.
     //
     pub resource Admin {
 
-        // mintNFT
-        // Mints a new NFT with a new ID
+        // Mint a new NFT.
+        //
+        // To mint an NFT, specify a value for each of its metadata fields.
         //
         pub fun mintNFT(
             {{#each fields}}
@@ -213,19 +206,19 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    // getPublicPath returns a public path that is scoped to this contract.
+    // Return a public path that is scoped to this contract.
     //
     pub fun getPublicPath(suffix: String): PublicPath {
         return PublicPath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
-    // getPrivatePath returns a private path that is scoped to this contract.
+    // Return a private path that is scoped to this contract.
     //
     pub fun getPrivatePath(suffix: String): PrivatePath {
         return PrivatePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
-    // getStoragePath returns a storage path that is scoped to this contract.
+    // Return a storage path that is scoped to this contract.
     //
     pub fun getStoragePath(suffix: String): StoragePath {
         return StoragePath(identifier: "{{ contractName }}_".concat(suffix))!
@@ -257,7 +250,6 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
 
-        // Initialize the total supply
         self.totalSupply = 0
 
         self.initAdmin(admin: {{#if saveAdminResourceToContractAccount }}self.account{{ else }}admin{{/if}})

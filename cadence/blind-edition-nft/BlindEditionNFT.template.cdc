@@ -348,8 +348,9 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         // Mint a new NFT.
         //
-        // Blind edition NFTs are minted with an edition hash
-        // that can later be used to verify the revealed NFT.
+        // To mint a blind edition NFT, specify its edition hash
+        // that can later be used to verify the revealed NFT's 
+        // edition ID and serial number.
         //
         pub fun mintNFT(editionHash: [UInt8]): @{{ contractName }}.NFT {
             let nft <- create {{ contractName }}.NFT(editionHash: editionHash)
@@ -363,8 +364,8 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         // Reveal a minted NFT.
         //
-        // This function publishes the edition membership information for an NFT,
-        // along with its unique salt value.
+        // To reveal an NFT, publish its edition ID, serial number
+        // and unique salt value.
         //
         pub fun revealNFT(
             id: UInt64,
@@ -438,10 +439,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.placeholderImage = placeholderImage
 
-        // Initialize the total supply
         self.totalSupply = 0
-
-        // Initialize the total editions
         self.totalEditions = 0
 
         self.editions = {}
