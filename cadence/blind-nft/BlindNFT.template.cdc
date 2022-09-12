@@ -202,7 +202,8 @@ pub contract {{ contractName }}: NonFungibleToken {
         // Remove an NFT from the collection and move it to the caller.
         //
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
-            let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
+            let token <- self.ownedNFTs.remove(key: withdrawID) 
+                ?? panic("Requested NFT to withdraw does not exist in this collection")
 
             emit Withdraw(id: token.id, from: self.owner?.address)
 
