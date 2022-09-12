@@ -20,7 +20,7 @@ export namespace FreshmintConfig {
       FlowToken: '0x0ae53cb6e3f42a79',
       MetadataViews: '0xf8d6e0586b0a20c7',
       FreshmintMetadataViews: '0xf8d6e0586b0a20c7',
-      NFTClaimSale: '0xf8d6e0586b0a20c7',
+      FreshmintClaimSale: '0xf8d6e0586b0a20c7',
       NFTLockBox: '0xf8d6e0586b0a20c7',
     },
   };
@@ -31,7 +31,7 @@ export namespace FreshmintConfig {
       NonFungibleToken: '0x631e88ae7f1d7c20',
       MetadataViews: '0x631e88ae7f1d7c20',
       FreshmintMetadataViews: '0x3c67d33388b03a69',
-      NFTClaimSale: '0x3c67d33388b03a69',
+      FreshmintClaimSale: '0x3c67d33388b03a69',
       NFTLockBox: '0x0cad7d1c09a3a433',
     },
   };
@@ -41,7 +41,7 @@ export namespace FreshmintConfig {
       FungibleToken: '0xf233dcee88fe0abe',
       NonFungibleToken: '0x1d7e57aa55817448',
       MetadataViews: '0x1d7e57aa55817448',
-      NFTClaimSale: '', // TODO: deploy NFTClaimSale to mainnet
+      FreshmintClaimSale: '', // TODO: deploy NFTClaimSale to mainnet
       NFTLockBox: '', // TODO: deploy NFTLockBox to mainnet
     },
   };

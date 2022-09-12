@@ -2,7 +2,7 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 
-// NFTClaimSale provides functionality to operate a
+// FreshmintClaimSale provides functionality to operate a
 // claim-style sale of NFTs.
 //
 // In a claim sale, users can claims NFT from a minted collection
@@ -11,7 +11,7 @@ import FungibleToken from {{{ imports.FungibleToken }}}
 // Unlike in the NFTStorefront, a user cannot purchase a specific NFT by ID.
 // On each claim, the user receives the next available NFT in the collection.
 // 
-pub contract NFTClaimSale {
+pub contract FreshmintClaimSale {
 
     pub let version: String
 
@@ -307,7 +307,7 @@ pub contract NFTClaimSale {
     init() {
         self.version = "{{ freshmintVersion }}"
 
-        self.SaleCollectionStoragePath = /storage/NFTClaimSaleCollection
-        self.SaleCollectionPublicPath = /public/NFTClaimSaleCollection
+        self.SaleCollectionStoragePath = /storage/FreshmintClaimSaleCollection
+        self.SaleCollectionPublicPath = /public/FreshmintClaimSaleCollection
     }
 }

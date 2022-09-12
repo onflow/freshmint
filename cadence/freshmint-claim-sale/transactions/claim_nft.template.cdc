@@ -1,6 +1,6 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-import NFTClaimSale from {{{ imports.NFTClaimSale }}}
+import FreshmintClaimSale from {{{ imports.FreshmintClaimSale }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
@@ -29,7 +29,7 @@ transaction(saleAddress: Address, saleID: String) {
 
     let address: Address
     let payment: @FungibleToken.Vault
-    let sale: &{NFTClaimSale.SalePublic}
+    let sale: &{FreshmintClaimSale.SalePublic}
 
     prepare(signer: AuthAccount) {
         intializeCollection(account: signer)
@@ -37,8 +37,8 @@ transaction(saleAddress: Address, saleID: String) {
         self.address = signer.address
 
         self.sale = getAccount(saleAddress)
-            .getCapability(NFTClaimSale.SaleCollectionPublicPath)!
-            .borrow<&{NFTClaimSale.SaleCollectionPublic}>()!
+            .getCapability(FreshmintClaimSale.SaleCollectionPublicPath)!
+            .borrow<&{FreshmintClaimSale.SaleCollectionPublic}>()!
             .borrowSale(id: saleID)
 
         let vault = signer

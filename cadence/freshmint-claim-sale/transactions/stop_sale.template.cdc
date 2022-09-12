@@ -1,4 +1,4 @@
-import NFTClaimSale from {{{ imports.NFTClaimSale }}}
+import FreshmintClaimSale from {{{ imports.FreshmintClaimSale }}}
 
 // This transaction stops an existing claim sale.
 //
@@ -7,10 +7,10 @@ import NFTClaimSale from {{{ imports.NFTClaimSale }}}
 //
 transaction(saleID: String) {
     
-    let sales: &NFTClaimSale.SaleCollection
+    let sales: &FreshmintClaimSale.SaleCollection
 
     prepare(signer: AuthAccount) {
-        self.sales = signer.borrow<&NFTClaimSale.SaleCollection>(from: NFTClaimSale.SaleCollectionStoragePath)!
+        self.sales = signer.borrow<&FreshmintClaimSale.SaleCollection>(from: FreshmintClaimSale.SaleCollectionStoragePath)!
     }
 
     execute {

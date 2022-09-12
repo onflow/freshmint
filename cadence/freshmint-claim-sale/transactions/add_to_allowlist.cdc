@@ -1,24 +1,24 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-import NFTClaimSale from {{{ imports.NFTClaimSale }}}
+import FreshmintClaimSale from {{{ imports.FreshmintClaimSale }}}
 
-pub fun getOrCreateAllowlist(account: AuthAccount, allowlistName: String): &NFTClaimSale.Allowlist {
-    let fullAllowlistName = NFTClaimSale.makeAllowlistName(name: allowlistName)
+pub fun getOrCreateAllowlist(account: AuthAccount, allowlistName: String): &FreshmintClaimSale.Allowlist {
+    let fullAllowlistName = FreshmintClaimSale.makeAllowlistName(name: allowlistName)
 
     let storagePath = {{ contractName }}.getStoragePath(suffix: fullAllowlistName)
 
-    if let allowlist = account.borrow<&NFTClaimSale.Allowlist>(from: storagePath) {
+    if let allowlist = account.borrow<&FreshmintClaimSale.Allowlist>(from: storagePath) {
         return allowlist
     }
 
-    let allowlist <- NFTClaimSale.createAllowlist()
-    let allowlistRef = &allowlist as &NFTClaimSale.Allowlist
+    let allowlist <- FreshmintClaimSale.createAllowlist()
+    let allowlistRef = &allowlist as &FreshmintClaimSale.Allowlist
 
     account.save(<- allowlist, to: storagePath)
 
     let privatePath = {{ contractName }}.getPrivatePath(suffix: fullAllowlistName)
 
-    account.link<&NFTClaimSale.Allowlist>(privatePath, target: storagePath)
+    account.link<&FreshmintClaimSale.Allowlist>(privatePath, target: storagePath)
 
     return allowlistRef
 }
@@ -32,7 +32,7 @@ pub fun getOrCreateAllowlist(account: AuthAccount, allowlistName: String): &NFTC
 //
 transaction(allowlistName: String, addresses: [Address], claims: UInt) {
 
-    let allowlist: &NFTClaimSale.Allowlist
+    let allowlist: &FreshmintClaimSale.Allowlist
 
     prepare(signer: AuthAccount) {
         self.allowlist = getOrCreateAllowlist(account: signer, allowlistName: allowlistName)

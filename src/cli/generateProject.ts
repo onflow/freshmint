@@ -44,7 +44,10 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
   }
 
   await writeFile(path.resolve(dir, `cadence/contracts/NFTLockBox.cdc`), NFTLockBoxGenerator.contract({ imports }));
-  await writeFile(path.resolve(dir, `cadence/contracts/NFTClaimSale.cdc`), ClaimSaleGenerator.contract({ imports }));
+  await writeFile(
+    path.resolve(dir, `cadence/contracts/FreshmintClaimSale.cdc`),
+    ClaimSaleGenerator.contract({ imports }),
+  );
 
   await writeFile(
     path.resolve(dir, `cadence/contracts/FreshmintMetadataViews.cdc`),

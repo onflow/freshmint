@@ -1,31 +1,31 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-import NFTClaimSale from {{{ imports.NFTClaimSale }}}
+import FreshmintClaimSale from {{{ imports.FreshmintClaimSale }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 
-pub fun getOrCreateSaleCollection(account: AuthAccount): &NFTClaimSale.SaleCollection {
-    if let collectionRef = account.borrow<&NFTClaimSale.SaleCollection>(from: NFTClaimSale.SaleCollectionStoragePath) {
+pub fun getOrCreateSaleCollection(account: AuthAccount): &FreshmintClaimSale.SaleCollection {
+    if let collectionRef = account.borrow<&FreshmintClaimSale.SaleCollection>(from: FreshmintClaimSale.SaleCollectionStoragePath) {
         return collectionRef
     }
 
-    let collection <- NFTClaimSale.createEmptySaleCollection()
+    let collection <- FreshmintClaimSale.createEmptySaleCollection()
 
-    let collectionRef = &collection as &NFTClaimSale.SaleCollection
+    let collectionRef = &collection as &FreshmintClaimSale.SaleCollection
 
-    account.save(<-collection, to: NFTClaimSale.SaleCollectionStoragePath)
-    account.link<&NFTClaimSale.SaleCollection{NFTClaimSale.SaleCollectionPublic}>(NFTClaimSale.SaleCollectionPublicPath, target: NFTClaimSale.SaleCollectionStoragePath)
+    account.save(<-collection, to: FreshmintClaimSale.SaleCollectionStoragePath)
+    account.link<&FreshmintClaimSale.SaleCollection{FreshmintClaimSale.SaleCollectionPublic}>(FreshmintClaimSale.SaleCollectionPublicPath, target: FreshmintClaimSale.SaleCollectionStoragePath)
         
     return collectionRef
 }
 
-pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&NFTClaimSale.Allowlist> {
-    let fullAllowlistName = NFTClaimSale.makeAllowlistName(name: allowlistName)
+pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&FreshmintClaimSale.Allowlist> {
+    let fullAllowlistName = FreshmintClaimSale.makeAllowlistName(name: allowlistName)
 
     let privatePath = {{ contractName }}.getPrivatePath(suffix: fullAllowlistName)
 
-    return account.getCapability<&NFTClaimSale.Allowlist>(privatePath)
+    return account.getCapability<&FreshmintClaimSale.Allowlist>(privatePath)
 }
 
 // This transaction starts a new claim sale.
@@ -43,10 +43,10 @@ transaction(
     allowlistName: String?
 ) {
 
-    let sales: &NFTClaimSale.SaleCollection
+    let sales: &FreshmintClaimSale.SaleCollection
     let collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
     let paymentReceiver: Capability<&{FungibleToken.Receiver}>
-    let allowlist: Capability<&NFTClaimSale.Allowlist>?
+    let allowlist: Capability<&FreshmintClaimSale.Allowlist>?
 
     prepare(signer: AuthAccount) {
 
@@ -68,7 +68,7 @@ transaction(
     }
 
     execute {
-        let sale <- NFTClaimSale.createSale(
+        let sale <- FreshmintClaimSale.createSale(
             id: saleID,
             nftType: Type<@{{ contractName }}.NFT>(),
             collection: self.collection,
