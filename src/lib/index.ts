@@ -19,7 +19,7 @@ export { BlindEditionNFTGenerator } from './generators/BlindEditionNFTGenerator'
 export { ClaimSaleContract } from './contracts/ClaimSaleContract';
 export { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 
-export { NFTAirDropGenerator } from './generators/NFTAirDropGenerator';
+export { NFTLockBoxGenerator } from './generators/NFTLockBoxGenerator';
 export { CommonNFTGenerator } from './generators/CommonNFTGenerator';
 export { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 
