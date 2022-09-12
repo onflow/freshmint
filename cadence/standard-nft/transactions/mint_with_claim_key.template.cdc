@@ -4,12 +4,17 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FreshmintLockBox from {{{ imports.FreshmintLockBox }}}
 
-pub fun getOrCreateLockBox(account: AuthAccount): &FreshmintLockBox.LockBox {
-    if let existingLockBox = account.borrow<&FreshmintLockBox.LockBox>(from: FreshmintLockBox.DefaultLockBoxStoragePath) {
+pub fun getOrCreateLockBox(
+    account: AuthAccount,
+    lockBoxStoragePath: StoragePath,
+    lockBoxPublicPath: PublicPath,
+    collectionPrivatePath: PrivatePath
+): &FreshmintLockBox.LockBox {
+    if let existingLockBox = account.borrow<&FreshmintLockBox.LockBox>(from: lockBoxStoragePath) {
         return existingLockBox
     }
 
-    let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPrivatePath)
+    let collection = account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(collectionPrivatePath)
 
     let lockBox <- FreshmintLockBox.createLockBox(
         collection: collection,
@@ -18,11 +23,11 @@ pub fun getOrCreateLockBox(account: AuthAccount): &FreshmintLockBox.LockBox {
 
     let lockBoxRef = &lockBox as &FreshmintLockBox.LockBox
 
-    account.save(<- lockBox, to: FreshmintLockBox.DefaultLockBoxStoragePath)
+    account.save(<- lockBox, to: lockBoxStoragePath)
 
     account.link<&FreshmintLockBox.LockBox{FreshmintLockBox.LockBoxPublic}>(
-        FreshmintLockBox.DefaultLockBoxPublicPath, 
-        target: FreshmintLockBox.DefaultLockBoxStoragePath
+        lockBoxPublicPath, 
+        target: lockBoxStoragePath
     )
 
     return lockBoxRef
@@ -43,7 +48,12 @@ transaction(
             .borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
-        self.lockBox = getOrCreateLockBox(signer)
+        self.lockBox = getOrCreateLockBox(
+            account: signer,
+            lockBoxStoragePath: {{ contractName }}.getStoragePath(suffix: "LockBox"),
+            lockBoxPublicPath: {{ contractName }}.getPublicPath(suffix: "LockBox"),
+            collectionPrivatePath: {{ contractName }}.CollectionPrivatePath
+        )
     }
 
     execute {        

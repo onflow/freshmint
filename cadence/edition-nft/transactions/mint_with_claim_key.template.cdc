@@ -43,7 +43,8 @@ transaction(
     let lockBox: &FreshmintLockBox.LockBox
 
     prepare(signer: AuthAccount) {
-        self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
+        self.admin = signer
+            .borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
         
         self.lockBox = getOrCreateLockBox(
@@ -56,6 +57,7 @@ transaction(
 
     execute {
         for i, publicKey in publicKeys {
+        
             let token <- self.admin.mintNFT(
                 editionID: editionIDs[i],
                 editionSerial: editionSerials[i],
