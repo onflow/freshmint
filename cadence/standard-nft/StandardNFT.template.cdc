@@ -52,7 +52,7 @@ pub contract {{ contractName }}: NonFungibleToken {
             id: UInt64,
             metadata: Metadata
         ) {
-            self.id = id
+            self.id = self.uuid
             self.metadata = metadata
         }
 
@@ -197,16 +197,14 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ): @{{ contractName }}.NFT {
+
             let metadata = Metadata(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }},
                 {{/each}}
             )
 
-            let nft <- create {{ contractName }}.NFT(
-                id: {{ contractName }}.totalSupply,
-                metadata: metadata
-            )
+            let nft <- create {{ contractName }}.NFT(metadata: metadata)
 
             emit Minted(id: nft.id)
 

@@ -88,11 +88,10 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub let editionSerial: UInt64
 
         init(
-            id: UInt64,
             editionID: UInt64,
             editionSerial: UInt64
         ) {
-            self.id = id
+            self.id = self.uuid
             self.editionID = editionID
             self.editionSerial = editionSerial
         }
@@ -285,7 +284,6 @@ pub contract {{ contractName }}: NonFungibleToken {
             }
 
             let nft <- create {{ contractName }}.NFT(
-                id: {{ contractName }}.totalSupply,
                 editionID: editionID,
                 editionSerial: editionSerial
             )

@@ -86,11 +86,8 @@ pub contract {{ contractName }}: NonFungibleToken {
         // that the correct metadata fields are revealed.
         pub let metadataHash: [UInt8]
 
-        init(
-            id: UInt64,
-            metadataHash: [UInt8]
-        ) {
-            self.id = id
+        init(metadataHash: [UInt8]) {
+            self.id = self.uuid
             self.metadataHash = metadataHash
         }
 
@@ -281,10 +278,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         // Mints a new NFT with a new ID
         //
         pub fun mintNFT(metadataHash: [UInt8]): @{{ contractName }}.NFT {
-            let nft <- create {{ contractName }}.NFT(
-                id: {{ contractName }}.totalSupply,
-                metadataHash: metadataHash,
-            )
+            let nft <- create {{ contractName }}.NFT(metadataHash: metadataHash)
 
             emit Minted(id: nft.id)
 
