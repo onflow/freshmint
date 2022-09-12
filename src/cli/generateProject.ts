@@ -8,7 +8,7 @@ import {
   FreshmintMetadataViewsGenerator,
   CommonNFTGenerator,
   ClaimSaleGenerator,
-  LockBoxGenerator
+  LockBoxGenerator,
 } from '../lib';
 import { ContractConfig, ContractType } from './config';
 
@@ -31,7 +31,7 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
     FungibleToken: `"./FungibleToken.cdc"`,
     FlowToken: `"./FlowToken.cdc"`,
     FreshmintLockBox: `"./FreshmintLockBox.cdc"`,
-    FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`
+    FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`,
   };
 
   switch (contract.type) {
@@ -79,7 +79,7 @@ async function generateStandardProject(
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
     MetadataViews: `"../contracts/MetadataViews.cdc"`,
     FreshmintLockBox: `"../contracts/FreshmintLockBox.cdc"`,
-    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`
+    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
   };
 
   const mintTransaction = StandardNFTGenerator.mint({
@@ -134,7 +134,7 @@ async function generateEditionProject(
     NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
     MetadataViews: `"../contracts/MetadataViews.cdc"`,
     FreshmintLockBox: `"../contracts/FreshmintLockBox.cdc"`,
-    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`
+    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
   };
 
   const createEditionsTransaction = EditionNFTGenerator.createEditions({
