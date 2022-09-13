@@ -39,6 +39,8 @@ pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&F
 transaction(
     saleID: String,
     price: UFix64,
+    paymentReceiverAddress: Address,
+    paymentReceiverPath: PublicPath,
     collectionName: String?,
     allowlistName: String?
 ) {
@@ -57,8 +59,8 @@ transaction(
         self.collection = signer
             .getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(nftCollectionPrivatePath)
 
-        self.paymentReceiver = signer
-            .getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)!
+        self.paymentReceiver = getAccount(paymentReceiverAddress)
+            .getCapability<&{FungibleToken.Receiver}>(paymentReceiverPath)
 
         if let name = allowlistName {
             self.allowlist = getAllowlist(account: signer, allowlistName: name)

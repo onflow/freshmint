@@ -9,6 +9,9 @@ import { ClaimSaleGenerator } from '../generators/ClaimSaleGenerator';
 import NFTContract from './NFTContract';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionAuthorizer, TransactionResult } from '../transactions';
+import { parsePath } from '../cadence/values';
+
+const flowTokenReceiverPublicPath = '/public/flowTokenReceiver';
 
 export class ClaimSaleContract {
   nftContract: NFTContract;
@@ -26,14 +29,26 @@ export class ClaimSaleContract {
   start({
     id,
     price,
+    paymentReceiverAddress,
+    paymentReceiverPath,
     bucket,
     allowlist,
   }: {
     id: string;
     price: string;
+    paymentReceiverAddress?: string;
+    paymentReceiverPath?: string;
     bucket?: string;
     allowlist?: string;
   }): Transaction<void> {
+    const signers = this.nftContract.getSigners();
+
+    // Payment receiver address defaults to the transaction signer
+    paymentReceiverAddress = paymentReceiverAddress ?? signers.authorizers[0].address;
+
+    // Payment receiver path defaults to the FLOW token receiver
+    paymentReceiverPath = paymentReceiverPath ?? flowTokenReceiverPublicPath;
+
     return new Transaction(({ imports }: FreshmintConfig) => {
       const script = ClaimSaleGenerator.startSale({
         imports,
@@ -47,11 +62,13 @@ export class ClaimSaleContract {
         args: [
           fcl.arg(id, t.String),
           fcl.arg(price, t.UFix64),
+          fcl.arg(paymentReceiverAddress, t.Address),
+          fcl.arg(parsePath(paymentReceiverPath), t.Path),
           fcl.arg(bucket, t.Optional(t.String)),
           fcl.arg(allowlist ?? null, t.Optional(t.String)),
         ],
         computeLimit: 9999,
-        signers: this.nftContract.getSigners(),
+        signers,
       };
     }, Transaction.VoidResult);
   }

@@ -69,6 +69,7 @@ pub contract FreshmintClaimSale {
 
         pub let id: String
         pub let price: UFix64
+        pub let paymentVaultType: Type
         pub let size: Int
         pub fun supply(): Int
         pub fun isActive(): Bool
@@ -88,6 +89,7 @@ pub contract FreshmintClaimSale {
         pub let id: String
         pub let nftType: Type
         pub let price: UFix64
+        pub let paymentVaultType: Type
         pub let size: Int
 
         // A capability to the underlying base NFT collection
@@ -127,6 +129,11 @@ pub contract FreshmintClaimSale {
             self.collection = collection
             self.receiverPath = receiverPath
             self.paymentReceiver = paymentReceiver
+
+            let receiver = paymentReceiver.borrow() 
+                ?? panic("failed to borrow payment receiver capability")
+            self.paymentVaultType = receiver.getType()
+
             self.allowlist = allowlist
 
             if let allowlist = self.allowlist {

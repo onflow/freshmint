@@ -365,3 +365,22 @@ export class BoolValue {
     return Buffer.from([this.value === true ? 1 : 0]);
   }
 }
+
+export function parsePath(path: string): { domain: string; identifier: string } {
+  const pathRegex = /\/(\w+)\/(\w+)/;
+
+  const parts = path.match(pathRegex);
+
+  if (parts.length != 3) {
+    throw new Error(
+      `Invalid path. Path must contain a domain and identifier (e.g. "/public/flowTokenVault"), but received: "${path}"`,
+    );
+  }
+
+  const [domain, identifier] = parts.slice(1);
+
+  return {
+    domain,
+    identifier,
+  };
+}
