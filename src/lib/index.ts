@@ -23,6 +23,4 @@ export { LockBoxGenerator } from './generators/LockBoxGenerator';
 export { CommonNFTGenerator } from './generators/CommonNFTGenerator';
 export { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 
-export { ClaimSale } from './sales/ClaimSale';
-
 export * as metadata from './metadata';
