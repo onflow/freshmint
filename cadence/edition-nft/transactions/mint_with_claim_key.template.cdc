@@ -34,9 +34,8 @@ pub fun getOrCreateLockBox(
 }
 
 transaction(
-    publicKeys: [String],
-    editionIDs: [UInt64],
-    editionSerials: [UInt64]
+    editionID: UInt64,
+    publicKeys: [String]
 ) {
     
     let admin: &{{ contractName }}.Admin
@@ -58,10 +57,7 @@ transaction(
     execute {
         for i, publicKey in publicKeys {
         
-            let token <- self.admin.mintNFT(
-                editionID: editionIDs[i],
-                editionSerial: editionSerials[i],
-            )
+            let token <- self.admin.mintNFT(editionID: editionID)
 
             self.lockBox.deposit(
                 token: <- token, 
