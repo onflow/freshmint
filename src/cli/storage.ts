@@ -23,7 +23,11 @@ export default class Storage {
   }
 
   async saveEdition(edition: models.Edition): Promise<void> {
-    await this.editions.insert(edition);
+    await this.editions.insert(edition.editionId, edition);
+  }
+
+  async updateEditionCount(editionId: string, count: number): Promise<void> {
+    await this.editions.update(editionId, { count });
   }
 
   async loadEditionByHash(hash: string): Promise<models.Edition | null> {
@@ -31,7 +35,7 @@ export default class Storage {
   }
 
   async saveNFT(nft: models.NFT): Promise<void> {
-    await this.nfts.insert(nft);
+    await this.nfts.insert(nft.tokenId, nft);
   }
 
   async loadNFTByHash(hash: string): Promise<models.NFT | null> {
@@ -67,9 +71,20 @@ class Database {
     };
   }
 
-  async insert(value: KeyValuePairs) {
-    // Creates a new document with an auto-generated _id
-    return await this.#db.post(this.#applyBaseSelector(value));
+  async insert(id: string, value: KeyValuePairs) {
+    return await this.#db.put({
+      _id: id,
+      ...this.#applyBaseSelector(value),
+    });
+  }
+
+  async update(id: string, value: KeyValuePairs) {
+    const doc = await this.#db.get(id);
+
+    return await this.#db.put({
+      ...doc,
+      ...value,
+    });
   }
 
   async get(selector: KeyValuePairs) {

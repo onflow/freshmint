@@ -3,6 +3,7 @@ import { metadata } from '../lib';
 export type Edition = {
   editionId: string;
   size: number;
+  count: number;
   txId: string;
   hash: string;
   metadata: metadata.MetadataMap;
@@ -13,5 +14,7 @@ export type NFT = {
   txId: string;
   hash: string;
   metadata: metadata.MetadataMap;
-  claimKey: string;
+  editionId?: string;
+  serialNumber?: string;
+  claimKey?: string;
 };

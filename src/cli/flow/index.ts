@@ -58,19 +58,18 @@ export default class FlowGateway {
     return await this.flow.transaction('./cadence/transactions/create_editions.cdc', `${this.network}-account`, args);
   }
 
-  async mintEdition(editionIds: string[], editionSerials: string[]) {
+  async mintEdition(editionId: string, count: number) {
     return await this.flow.transaction('./cadence/transactions/mint.cdc', `${this.network}-account`, [
-      { type: t.Array(t.UInt64), value: editionIds },
-      { type: t.Array(t.UInt64), value: editionSerials },
+      { type: t.UInt64, value: editionId },
+      { type: t.Int, value: count.toString(10) },
       { type: t.Optional(t.String), value: null },
     ]);
   }
 
-  async mintEditionWithClaimKey(publicKeys: string[], editionIds: string[], editionSerials: string[]) {
+  async mintEditionWithClaimKey(editionId: string, publicKeys: string[]) {
     return await this.flow.transaction('./cadence/transactions/mint_with_claim_key.cdc', `${this.network}-account`, [
+      { type: t.UInt64, value: editionId },
       { type: t.Array(t.String), value: publicKeys },
-      { type: t.Array(t.UInt64), value: editionIds },
-      { type: t.Array(t.UInt64), value: editionSerials },
     ]);
   }
 }

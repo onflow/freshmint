@@ -13,11 +13,12 @@ import inquirer from 'inquirer';
 import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
-import { loadConfig, ContractType, FreshmintConfigSchema } from './config';
+import { loadConfig, ContractType, FreshmintConfigSchema, ContractConfig } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
 import CSVLoader from './loaders/CSVLoader';
+import * as models from './models';
 
 const program = new Command();
 const spinner = ora();
@@ -147,27 +148,25 @@ async function getNFT(tokenId: string, { network }: { network: string }) {
   const config = loadConfig();
   const fresh = new Fresh(config, network);
 
-  const { id, metadata } = await fresh.getNFT(tokenId);
+  const nft = await fresh.getNFT(tokenId);
 
-  const output = getNFTOutput(config.contract.type, id, metadata, config.contract.schema.fields);
+  const output = getNFTOutput(nft, config.contract);
 
   alignOutput(output);
 }
 
-function getNFTOutput(
-  contractType: ContractType,
-  id: string,
-  metadata: metadata.MetadataMap,
-  fields: metadata.Field[],
-) {
-  const idOutput = ['ID:', chalk.green(id)];
-  const fieldOutput = fields.map((field) => [` ${field.name}:`, chalk.blue(field.getValue(metadata))]);
+function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
+  const idOutput = ['ID:', chalk.green(nft.tokenId)];
+  const fieldOutput = contractConfig.schema.fields.map((field) => [
+    ` ${field.name}:`,
+    chalk.blue(field.getValue(nft.metadata)),
+  ]);
 
-  if (contractType === ContractType.Edition) {
+  if (contractConfig.type === ContractType.Edition) {
     return [
       idOutput,
-      ['Edition ID', chalk.green(metadata.edition_id)],
-      ['Edition Serial #', chalk.green(metadata.edition_serial)],
+      ['Edition ID', chalk.green(nft.editionId)],
+      ['Edition Serial #', chalk.green(nft.serialNumber)],
       ['Edition Fields:'],
       ...fieldOutput,
     ];

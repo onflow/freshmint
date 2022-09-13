@@ -9,6 +9,7 @@ import { Minter, createMinter } from './minters';
 import { MetadataProcessor } from './processors';
 import IPFSFileProcessor from './processors/IPFSFileProcessor';
 import Storage from './storage';
+import * as models from './models';
 
 export default class Fresh {
   config: FreshmintConfig;
@@ -44,14 +45,9 @@ export default class Fresh {
     return createMinter(this.config.contract, metadataProcessor, flowGateway, this.storage);
   }
 
-  async getNFT(tokenId: string) {
+  async getNFT(tokenId: string): Promise<models.NFT> {
     // TODO: display user-friendly message if token not found
-    const nft = await this.storage.loadNFTById(tokenId);
-
-    return {
-      id: tokenId,
-      metadata: nft.metadata,
-    };
+    return await this.storage.loadNFTById(tokenId);
   }
 
   async dumpNFTs(csvPath: string) {

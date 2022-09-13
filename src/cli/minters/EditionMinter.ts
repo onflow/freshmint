@@ -2,18 +2,15 @@ import { metadata } from '../../lib';
 import { hashMetadata } from '../../lib/metadata';
 import { MetadataLoader, Entry } from '../loaders';
 import FlowGateway from '../flow';
-import { hashValues } from '../../lib/hash';
-import { UInt64Value } from '../../lib/cadence/values';
 import Storage from '../storage';
 import * as models from '../models';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { MetadataProcessor } from '../processors';
 
-type EditionNFT = {
-  editionId: string;
-  editionSerial: string;
-  metadata: metadata.MetadataMap;
-  hash: string;
+type EditionBatch = {
+  edition: models.Edition;
+  size: number;
+  newCount: number;
 };
 
 export class EditionMinter {
@@ -48,61 +45,39 @@ export class EditionMinter {
     const editionInputs = this.prepare(entries);
 
     const editions = await this.getOrCreateEditions(editionInputs);
+    const editionsToMint = editions.filter((edition) => edition.count < edition.size);
 
-    const tokens = [];
+    const totalNFTCount = editions.reduce((size, edition) => size + edition.size, 0);
 
-    for (const edition of editions) {
-      tokens.push(...getEditionNFTs(edition));
-    }
+    const batches = createBatches(editionsToMint, batchSize);
 
-    const newTokens = [];
+    const newNFTCount = batches.reduce((count, batch) => count + batch.size, 0);
+    const skippedNFTCount = totalNFTCount - newNFTCount;
 
-    for (const token of tokens) {
-      const existingNFT = await this.storage.loadNFTByHash(token.hash);
-      if (!existingNFT) {
-        newTokens.push(token);
-      }
-    }
-
-    const total = newTokens.length;
-    const skipped = tokens.length - newTokens.length;
-
-    const batches = [];
-
-    while (newTokens.length > 0) {
-      const batch = newTokens.splice(0, batchSize);
-      batches.push(batch);
-    }
-
-    onStart(total, skipped, batches.length, batchSize);
+    onStart(newNFTCount, skippedNFTCount, batches.length, batchSize);
 
     for (const batch of batches) {
-      const batchSize = batch.length;
-
-      const batchFields = {
-        editionIds: batch.map((nft: EditionNFT) => nft.editionId),
-        editionSerials: batch.map((nft: EditionNFT) => nft.editionSerial),
-      };
-
       let results;
 
       try {
-        results = await this.createTokenBatch(withClaimKey, batchFields);
+        results = await this.mintBatch(batch, withClaimKey);
       } catch (error: any) {
         onError(error);
         return;
       }
 
-      const finalResults = results.map((result: any, index: number) => {
-        const { tokenId, txId, claimKey } = result;
+      await this.storage.updateEditionCount(batch.edition.editionId, batch.newCount);
 
-        const token = batch[index];
+      const finalResults = results.map((result: any) => {
+        const { tokenId, serialNumber, txId, claimKey } = result;
 
         return {
           tokenId,
           txId,
-          hash: token.hash,
-          metadata: token.metadata,
+          hash: batch.edition.hash,
+          metadata: batch.edition.metadata,
+          editionId: batch.edition.editionId,
+          serialNumber,
           claimKey,
         };
       });
@@ -111,7 +86,7 @@ export class EditionMinter {
         await this.storage.saveNFT(result);
       }
 
-      onBatchComplete(batchSize);
+      onBatchComplete(batch.size);
     }
   }
 
@@ -129,7 +104,10 @@ export class EditionMinter {
       if (edition) {
         editionMap[edition.hash] = edition;
       } else {
-        newEditions.push(editionInput);
+        newEditions.push({
+          ...editionInput,
+          count: 0,
+        });
       }
     }
 
@@ -182,35 +160,28 @@ export class EditionMinter {
     });
   }
 
-  async createTokenBatch(withClaimKey: boolean, batchFields: { editionIds: string[]; editionSerials: string[] }) {
+  async mintBatch(batch: EditionBatch, withClaimKey: boolean) {
     if (withClaimKey) {
-      return await this.mintTokensWithClaimKey(batchFields);
+      return await this.mintTokensWithClaimKey(batch);
     }
 
-    return await this.mintTokens(batchFields);
+    return await this.mintTokens(batch);
   }
 
-  async mintTokens(batchFields: { editionIds: string[]; editionSerials: string[] }) {
-    const minted = await this.flowGateway.mintEdition(batchFields.editionIds, batchFields.editionSerials);
+  async mintTokens(batch: EditionBatch) {
+    const minted = await this.flowGateway.mintEdition(batch.edition.editionId, batch.size);
     return formatMintResults(minted);
   }
 
-  async mintTokensWithClaimKey(batchFields: { editionIds: string[]; editionSerials: string[] }) {
-    const batchSize = batchFields.editionIds.length;
+  async mintTokensWithClaimKey(batch: EditionBatch) {
+    const { privateKeys, publicKeys } = generateClaimKeyPairs(batch.size);
 
-    const { privateKeys, publicKeys } = generateClaimKeyPairs(batchSize);
-
-    const minted = await this.flowGateway.mintEditionWithClaimKey(
-      publicKeys,
-      batchFields.editionIds,
-      batchFields.editionSerials,
-    );
+    const minted = await this.flowGateway.mintEditionWithClaimKey(batch.edition.editionId, publicKeys);
 
     const results = formatMintResults(minted);
 
     return results.map((result: any, i: number) => ({
-      txId: result.txId,
-      tokenId: result.tokenId,
+      ...result,
       claimKey: formatClaimKey(result.tokenId, privateKeys[i]),
     }));
   }
@@ -230,6 +201,7 @@ function formatEditionResults(txId: string, events: any[], editions: any[]): mod
     return {
       editionId,
       size: edition.size,
+      count: edition.count,
       txId,
       metadata: edition.metadata,
       hash: edition.hash,
@@ -238,40 +210,39 @@ function formatEditionResults(txId: string, events: any[], editions: any[]): mod
 }
 
 function formatMintResults(txOutput: any) {
-  const deposits = txOutput.events.filter((event: any) => event.type.includes('.Deposit'));
+  const mints = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
 
-  return deposits.map((deposit: any) => {
+  return mints.map((mint: any) => {
     // TODO: improve event parsing. Use FCL?
-    const tokenId = deposit.values.value.fields.find((f: any) => f.name === 'id').value;
+    const tokenId = mint.values.value.fields.find((f: any) => f.name === 'id').value;
+    const serialNumber = mint.values.value.fields.find((f: any) => f.name === 'serialNumber').value;
 
     return {
       tokenId: tokenId.value,
+      serialNumber: serialNumber.value,
       txId: txOutput.id,
     };
   });
 }
 
-function getEditionNFTs(edition: models.Edition): EditionNFT[] {
-  const nfts = Array(edition.size);
+function createBatches(editions: models.Edition[], batchSize: number): EditionBatch[] {
+  return editions.flatMap((edition) => createEditionBatches(edition, batchSize));
+}
 
-  const editionIdBytes = new UInt64Value(edition.editionId).toBytes();
+function createEditionBatches(edition: models.Edition, batchSize: number): EditionBatch[] {
+  const batches: EditionBatch[] = [];
 
-  for (let i = 0; i < edition.size; i++) {
-    const editionSerial = String(i + 1);
-    const editionSerialBytes = new UInt64Value(editionSerial).toBytes();
+  let count = edition.count;
+  let remaining = edition.size - edition.count;
 
-    nfts[i] = {
-      editionId: edition.editionId,
-      editionSerial: editionSerial,
-      metadata: {
-        // TODO: improve this. Find a way to avoid saving it here.
-        edition_id: edition.editionId,
-        edition_serial: editionSerial,
-        ...edition.metadata,
-      },
-      hash: hashValues([editionIdBytes, editionSerialBytes]).toString('hex'),
-    };
+  while (remaining > 0) {
+    const size = Math.min(batchSize, remaining);
+
+    count = count + size;
+    remaining = remaining - size;
+
+    batches.push({ edition: edition, size, newCount: count });
   }
 
-  return nfts;
+  return batches;
 }
