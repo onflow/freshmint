@@ -42,7 +42,7 @@ export namespace FreshmintConfig {
       NonFungibleToken: '0x1d7e57aa55817448',
       MetadataViews: '0x1d7e57aa55817448',
       FreshmintClaimSale: '', // TODO: deploy FreshmintClaimSale to mainnet
-      FreshmintLockBox: '', // TODO: deploy FreshmintLockBox to mainnet
+      FreshmintLockBox: '0xdd1c2c328f849078'
     },
   };
 }

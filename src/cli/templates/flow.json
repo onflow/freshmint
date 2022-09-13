@@ -41,7 +41,8 @@
     "FreshmintLockBox": {
       "source": "cadence/contracts/FreshmintLockBox.cdc",
       "aliases": {
-        "testnet": "0x3c67d33388b03a69"
+        "testnet": "0x3c67d33388b03a69",
+        "mainnet": "0xdd1c2c328f849078"
       }
     },
     "{{name}}": "cadence/contracts/{{name}}.cdc"
