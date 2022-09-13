@@ -9,7 +9,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Minted(id: UInt64, editionID: UInt64, editionSerial: UInt64)
+    pub event Minted(id: UInt64, editionID: UInt64, serialNumber: UInt64)
     pub event Burned(id: UInt64)
     pub event EditionCreated(edition: Edition)
 
@@ -46,7 +46,19 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub struct Edition {
 
         pub let id: UInt64
+
+        /// The maximum size of this edition.
+        ///
         pub let size: UInt64
+
+        /// The number of NFTs minted in this edition.
+        ///
+        /// The count cannot exceed the edition size.
+        ///
+        pub(set) var count: UInt64
+
+        /// The metadata for this edition.
+        ///
         pub let metadata: Metadata
 
         init(
@@ -57,6 +69,9 @@ pub contract {{ contractName }}: NonFungibleToken {
             self.id = id
             self.size = size
             self.metadata = metadata
+
+            // An edition starts with a count of zero
+            self.count = 0
         }
     }
 
@@ -71,15 +86,15 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub let id: UInt64
 
         pub let editionID: UInt64
-        pub let editionSerial: UInt64
+        pub let serialNumber: UInt64
 
         init(
             editionID: UInt64,
-            editionSerial: UInt64
+            serialNumber: UInt64
         ) {
             self.id = self.uuid
             self.editionID = editionID
-            self.editionSerial = editionSerial
+            self.serialNumber = serialNumber
         }
 
         /// Return the edition that this NFT belongs to.
@@ -120,7 +135,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun resolveEditionView(_ edition: Edition): MetadataViews.Edition {
             return MetadataViews.Edition(
                 name: "Edition",
-                number: self.editionSerial,
+                number: self.serialNumber,
                 max: edition.size
             )
         }
@@ -268,20 +283,34 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         /// Mint a new NFT.
         ///
-        /// To mint an edition NFT, specify its edition by ID
-        /// and a unique serial number.
+        /// This function will mint the next NFT in this edition
+        /// and automatically assign the serial number.
         ///
-        pub fun mintNFT(editionID: UInt64, editionSerial: UInt64): @{{ contractName }}.NFT {
-            pre {
-                {{ contractName }}.getEdition(id: editionID) != nil : "edition does not exist"
-            }
+        /// This function will panic if the edition has already
+        /// reached its maximum size.
+        ///
+        pub fun mintNFT(editionID: UInt64): @{{ contractName }}.NFT {
+            let edition = {{ contractName }}.editions[editionID]
+                ?? panic("edition does not exist")
+
+            // Create the serial number by incrementing the current edition count
+            let serialNumber = edition.count + (1 as UInt64)
+
+            assert(
+                serialNumber <= edition.size,
+                message: "edition has already reached its maximum size"
+            )
 
             let nft <- create {{ contractName }}.NFT(
                 editionID: editionID,
-                editionSerial: editionSerial
+                serialNumber: serialNumber
             )
 
-            emit Minted(id: nft.id, editionID: editionID, editionSerial: editionSerial)
+            // Update the edition count by one
+            edition.count = serialNumber
+            {{ contractName }}.editions[editionID] = edition
+
+            emit Minted(id: nft.id, editionID: editionID, serialNumber: serialNumber)
 
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply + (1 as UInt64)
 
