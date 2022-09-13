@@ -26,7 +26,7 @@ pub fun getOrCreateCollection(account: AuthAccount, collectionName: String): &{N
     return collectionRef
 }
 
-transaction(editionIDs: [UInt64], editionSerials: [UInt64], collectionName: String?) {
+transaction(editionID: UInt64, count: Int, collectionName: String?) {
     
     let admin: &{{ contractName }}.Admin
     let collection: &{NonFungibleToken.CollectionPublic}
@@ -42,13 +42,14 @@ transaction(editionIDs: [UInt64], editionSerials: [UInt64], collectionName: Stri
     }
 
     execute {
-        for i, editionID in editionIDs {
-            let token <- self.admin.mintNFT(
-                editionID: editionID,
-                editionSerial: editionSerials[i],
-            )
+        var i = 0
 
-            self.collection.deposit(token: <- token)   
+        while i < count {
+            let token <- self.admin.mintNFT(editionID: editionID)
+
+            self.collection.deposit(token: <- token)
+
+            i = i + 1
         }
     }
 }
