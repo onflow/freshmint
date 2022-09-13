@@ -9,22 +9,29 @@ import { EditionNFTGenerator } from '../generators/EditionNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult, TransactionEvent } from '../transactions';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
+import { Script } from '../scripts';
 
 export type EditionInput = {
   size: number;
   metadata: MetadataMap;
 };
 
-export type EditionNFT = {
+export type EditionNFTInput = {
   editionId: string;
-  editionSerial: string;
+  count: number;
 };
 
 export type EditionResult = {
   id: string;
   metadata: MetadataMap;
   size: number;
-  nfts: EditionNFT[];
+};
+
+export type OnChainEdition = {
+  id: string;
+  size: number;
+  count: number;
+  metadata: { [key: string]: any };
 };
 
 export type NFTMintResult = {
@@ -132,22 +139,36 @@ export class EditionNFTContract extends NFTContract {
     };
   }
 
-  mintNFT(nft: EditionNFT, { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult> {
-    const nfts = [nft];
-
+  mintNFT({
+    editionId,
+    count,
+    bucket,
+  }: {
+    editionId: string;
+    count: number;
+    bucket?: string;
+  }): Transaction<NFTMintResult> {
     return new Transaction(
-      this.makeMintNFTsTransaction(nfts, { bucket }),
-      (result: TransactionResult) => formatMintResults(result, nfts)[0],
+      this.makeMintNFTsTransaction({ editionId, count, bucket }),
+      (result: TransactionResult) => formatMintResults(result, editionId)[0],
     );
   }
 
-  mintNFTs(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult[]> {
-    return new Transaction(this.makeMintNFTsTransaction(nfts, { bucket }), (result: TransactionResult) =>
-      formatMintResults(result, nfts),
+  mintNFTs({
+    editionId,
+    count,
+    bucket,
+  }: {
+    editionId: string;
+    count: number;
+    bucket?: string;
+  }): Transaction<NFTMintResult[]> {
+    return new Transaction(this.makeMintNFTsTransaction({ editionId, count, bucket }), (result: TransactionResult) =>
+      formatMintResults(result, editionId),
     );
   }
 
-  private makeMintNFTsTransaction(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}) {
+  private makeMintNFTsTransaction({ editionId, count, bucket }: { editionId: string; count: number; bucket?: string }) {
     return ({ imports }: FreshmintConfig) => {
       const script = EditionNFTGenerator.mint({
         imports,
@@ -156,20 +177,35 @@ export class EditionNFTContract extends NFTContract {
         contractAddress: this.address ?? '',
       });
 
-      const editionIds = nfts.map((nft) => nft.editionId);
-      const editionSerials = nfts.map((nft) => nft.editionSerial);
-
       return {
         script,
-        args: [
-          fcl.arg(editionIds, t.Array(t.UInt64)),
-          fcl.arg(editionSerials, t.Array(t.UInt64)),
-          fcl.arg(bucket, t.Optional(t.String)),
-        ],
+        args: [fcl.arg(editionId, t.UInt64), fcl.arg(count.toString(10), t.Int), fcl.arg(bucket, t.Optional(t.String))],
         computeLimit: 9999,
         signers: this.getSigners(),
       };
     };
+  }
+
+  getEdition(editionId: string): Script<OnChainEdition> {
+    const script = EditionNFTGenerator.getEdition({
+      contractName: this.name,
+      // TODO: return error if contract address is not set
+      contractAddress: this.address ?? '',
+    });
+
+    return new Script(
+      () => ({
+        script,
+        args: (arg, t) => [arg(editionId, t.UInt64)],
+        computeLimit: 9999,
+      }),
+      (result) => ({
+        id: result.id,
+        size: parseInt(result.size, 10),
+        count: parseInt(result.count, 10),
+        metadata: result.metadata,
+      }),
+    );
   }
 }
 
@@ -184,35 +220,19 @@ function formatEditionResults({ events }: TransactionResult, editions: EditionIn
       id: editionId,
       metadata: edition.metadata,
       size: edition.size,
-      nfts: getEditionNFTs(editionId, edition.size),
     };
   });
 }
 
-function formatMintResults({ transactionId, events }: TransactionResult, nfts: EditionNFT[]): NFTMintResult[] {
+function formatMintResults({ transactionId, events }: TransactionResult, editionId: string): NFTMintResult[] {
   const deposits = events.filter((event) => event.type.includes('.Minted'));
 
-  return deposits.map((deposit, i) => {
-    const { editionId, editionSerial } = nfts[i];
-
+  return deposits.map((deposit) => {
     return {
       id: deposit.data.id,
       editionId,
-      editionSerial,
+      editionSerial: deposit.data.serialNumber,
       transactionId,
     };
   });
-}
-
-function getEditionNFTs(id: string, size: number): EditionNFT[] {
-  const nfts = Array(size);
-
-  for (let i = 0; i < size; i++) {
-    nfts[i] = {
-      editionId: id,
-      editionSerial: String(i + 1),
-    };
-  }
-
-  return nfts;
 }

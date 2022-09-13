@@ -1,6 +1,7 @@
 import { FreshmintConfig } from './config';
 import { FCL } from './fcl';
 import { Transaction, convertTransactionError } from './transactions';
+import { Script, convertScriptError } from './scripts';
 
 export class FreshmintClient {
   fcl: FCL;
@@ -39,6 +40,17 @@ export class FreshmintClient {
       return transactionId;
     } catch (error) {
       throw convertTransactionError(error);
+    }
+  }
+
+  async query<T = void>(script: Script<T>): Promise<T> {
+    const fclScript = await script.toFCLScript(this.config);
+
+    try {
+      const result = await this.fcl.query(fclScript);
+      return await script.transformResult(result);
+    } catch (error) {
+      throw convertScriptError(error);
     }
   }
 }

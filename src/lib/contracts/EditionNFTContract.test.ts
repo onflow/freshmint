@@ -40,6 +40,12 @@ describe('EditionNFTContract', () => {
     };
 
     edition1 = await client.send(contract.createEdition(editionMetadata1));
+
+    const onChainEdition = await client.query(contract.getEdition(edition1.id));
+
+    expect(onChainEdition.id).toEqual(edition1.id);
+    expect(onChainEdition.size).toEqual(edition1.size);
+    expect(onChainEdition.count).toEqual(0);
   });
 
   it('should create edition 2', async () => {
@@ -53,16 +59,54 @@ describe('EditionNFTContract', () => {
     };
 
     edition2 = await client.send(contract.createEdition(editionMetadata2));
+
+    const onChainEdition = await client.query(contract.getEdition(edition2.id));
+
+    expect(onChainEdition.id).toEqual(edition2.id);
+    expect(onChainEdition.size).toEqual(edition2.size);
+    expect(onChainEdition.count).toEqual(0);
   });
 
-  it('should mint Edition 1 NFTs into default bucket', async () => {
-    await client.send(contract.mintNFTs(edition1.nfts));
+  it('should mint 3 edition 1 NFTs into default bucket', async () => {
+    const count = 3;
+
+    await client.send(contract.mintNFTs({ editionId: edition1.id, count }));
+
+    const onChainEdition = await client.query(contract.getEdition(edition1.id));
+
+    expect(onChainEdition.id).toEqual(edition1.id);
+    expect(onChainEdition.size).toEqual(edition1.size);
+    expect(onChainEdition.count).toEqual(count);
+  });
+
+  it('should mint remaining 2 edition 1 NFTs into default bucket', async () => {
+    const count = 2;
+
+    await client.send(contract.mintNFTs({ editionId: edition1.id, count }));
+
+    const onChainEdition = await client.query(contract.getEdition(edition1.id));
+
+    expect(onChainEdition.id).toEqual(edition1.id);
+    expect(onChainEdition.size).toEqual(edition1.size);
+    expect(onChainEdition.count).toEqual(edition1.size);
+  });
+
+  it('should fail to mint more than edition size', async () => {
+    await expect(async () => {
+      await client.send(contract.mintNFTs({ editionId: edition1.id, count: 5 }));
+    }).rejects.toThrow();
+
+    const onChainEdition = await client.query(contract.getEdition(edition1.id));
+
+    expect(onChainEdition.id).toEqual(edition1.id);
+    expect(onChainEdition.size).toEqual(edition1.size);
+    expect(onChainEdition.count).toEqual(edition1.size);
   });
 
   const edition2Bucket = 'edition2';
 
-  it('should mint Edition 2 NFTs into custom bucket', async () => {
-    await client.send(contract.mintNFTs(edition2.nfts, { bucket: edition2Bucket }));
+  it('should mint all edition 2 NFTs into custom bucket', async () => {
+    await client.send(contract.mintNFTs({ editionId: edition2.id, count: edition2.size, bucket: edition2Bucket }));
   });
 
   const sale = new ClaimSaleContract(contract);
