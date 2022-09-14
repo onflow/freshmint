@@ -61,12 +61,6 @@ pub contract {{ contractName }}: NonFungibleToken {
         ///
         pub let metadata: Metadata
 
-        /// Update the number of NFTs minted in this edition.
-        ///
-        access(contract) fun setCount(count: UInt64) {
-            self.count = count
-        }
-
         init(
             id: UInt64,
             size: UInt64,
@@ -78,6 +72,18 @@ pub contract {{ contractName }}: NonFungibleToken {
 
             // An edition starts with a count of zero
             self.count = 0
+        }
+
+        /// Increment the NFT count of this edition.
+        ///
+        /// The count cannot exceed the edition size.
+        ///
+        access(contract) fun incrementCount() {
+            post {
+                self.count <= self.size: "edition has already reached its maximum size"
+            }
+
+            self.count = self.count + (1 as UInt64)
         }
     }
 
@@ -299,21 +305,18 @@ pub contract {{ contractName }}: NonFungibleToken {
             let edition = {{ contractName }}.editions[editionID]
                 ?? panic("edition does not exist")
 
-            // Create the serial number by incrementing the current edition count
-            let serialNumber = edition.count + (1 as UInt64)
+            // Increase the edition count by one
+            edition.incrementCount()
 
-            assert(
-                serialNumber <= edition.size,
-                message: "edition has already reached its maximum size"
-            )
+            // The NFT serial number is the new edition count
+            let serialNumber = edition.count
 
             let nft <- create {{ contractName }}.NFT(
                 editionID: editionID,
                 serialNumber: serialNumber
             )
 
-            // Update the edition count by one
-            edition.setCount(count: serialNumber)
+            // Save the updated edition
             {{ contractName }}.editions[editionID] = edition
 
             emit Minted(id: nft.id, editionID: editionID, serialNumber: serialNumber)
