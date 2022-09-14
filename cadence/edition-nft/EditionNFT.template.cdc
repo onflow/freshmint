@@ -55,11 +55,17 @@ pub contract {{ contractName }}: NonFungibleToken {
         ///
         /// The count cannot exceed the edition size.
         ///
-        pub(set) var count: UInt64
+        pub var count: UInt64
 
         /// The metadata for this edition.
         ///
         pub let metadata: Metadata
+
+        /// Update the number of NFTs minted in this edition.
+        ///
+        access(contract) fun setCount(count: UInt64) {
+            self.count = count
+        }
 
         init(
             id: UInt64,
@@ -307,7 +313,7 @@ pub contract {{ contractName }}: NonFungibleToken {
             )
 
             // Update the edition count by one
-            edition.count = serialNumber
+            edition.setCount(count: serialNumber)
             {{ contractName }}.editions[editionID] = edition
 
             emit Minted(id: nft.id, editionID: editionID, serialNumber: serialNumber)
