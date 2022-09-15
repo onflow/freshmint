@@ -7,16 +7,16 @@ pub struct NFT {
     pub let id: UInt64
 
     pub let display: MetadataViews.Display
-    pub let metadataHash: String?
+    pub let hash: String?
     
     init(
         id: UInt64,
         display: MetadataViews.Display,
-        metadataHash: String?
+        hash: String?
     ) {
         self.id = id
         self.display = display
-        self.metadataHash = metadataHash
+        self.hash = hash
     }
 }
 
@@ -26,17 +26,17 @@ pub fun main(address: Address, id: UInt64): NFT? {
 
             let display = nft.resolveView(Type<MetadataViews.Display>())! as! MetadataViews.Display
 
-            var metadataHash: String? = nil
+            var hash: String? = nil
 
             if let blindNFTView = nft.resolveView(Type<FreshmintMetadataViews.BlindNFT>()) {
                 let blindNFT = blindNFTView as! FreshmintMetadataViews.BlindNFT
-                metadataHash = String.encodeHex(blindNFT.metadataHash)
+                hash = String.encodeHex(blindNFT.hash)
             }
 
             return NFT(
                 id: id,
                 display: display,
-                metadataHash: metadataHash
+                hash: hash
             )
         }
     }

@@ -21,7 +21,7 @@ transaction(
             let metadataSalt = metadataSalts[i].decodeHex()
 
             let metadata = {{ contractName }}.Metadata(
-                metadataSalt: metadataSalt,
+                salt: metadataSalt,
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
