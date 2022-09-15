@@ -18,7 +18,7 @@ transaction(metadataHashes: [String]) {
 
     execute {
         for metadataHash in metadataHashes {
-            let token <- self.admin.mintNFT(metadataHash: metadataHash.decodeHex())
+            let token <- self.admin.mintNFT(hash: metadataHash.decodeHex())
 
             self.receiver.deposit(token: <- token)
         }

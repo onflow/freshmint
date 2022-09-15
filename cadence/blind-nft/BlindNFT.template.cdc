@@ -10,7 +10,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Minted(id: UInt64, metadataHash: [UInt8])
+    pub event Minted(id: UInt64, hash: [UInt8])
     pub event Revealed(id: UInt64)
     pub event Burned(id: UInt64)
 
@@ -85,11 +85,11 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// for this NFT. The hash can later be used to verify
         /// that the correct metadata fields are revealed.
         ///
-        pub let metadataHash: [UInt8]
+        pub let hash: [UInt8]
 
-        init(metadataHash: [UInt8]) {
+        init(hash: [UInt8]) {
             self.id = self.uuid
-            self.metadataHash = metadataHash
+            self.hash = hash
         }
 
         /// Return the metadata for this NFT.
@@ -153,7 +153,7 @@ pub contract {{ contractName }}: NonFungibleToken {
                         )
                     )
                 case Type<FreshmintMetadataViews.BlindNFT>():
-                    return FreshmintMetadataViews.BlindNFT(metadataHash: self.metadataHash)
+                    return FreshmintMetadataViews.BlindNFT(hash: self.hash)
                 {{#each views}}
                 {{#unless this.requiresMetadata }}
                 {{> viewCase view=this }}
@@ -284,10 +284,10 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// To mint a blind NFT, specify its metadata hash
         /// that can later be used to verify the revealed NFT.
         ///
-        pub fun mintNFT(metadataHash: [UInt8]): @{{ contractName }}.NFT {
-            let nft <- create {{ contractName }}.NFT(metadataHash: metadataHash)
+        pub fun mintNFT(hash: [UInt8]): @{{ contractName }}.NFT {
+            let nft <- create {{ contractName }}.NFT(hash: hash)
 
-            emit Minted(id: nft.id, metadataHash: metadataHash)
+            emit Minted(id: nft.id, hash: hash)
 
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply + (1 as UInt64)
 
