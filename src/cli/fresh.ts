@@ -67,6 +67,12 @@ export default class Fresh {
 
     const firstNft = nfts[0];
 
+    const isEdition = firstNft.editionId !== undefined;
+    const editionHeaders = [
+      { id: 'editionId', title: 'edition_id' },
+      { id: 'serialNumber', title: 'edition_serial_number' },
+    ];
+
     const metadataHeaders = Object.keys(firstNft.metadata).map((key) => {
       return { id: key, title: key };
     });
@@ -74,19 +80,22 @@ export default class Fresh {
     const csvWriter = createCsvWriter({
       path: csvPath,
       header: [
-        { id: 'tokenID', title: 'token_id' },
+        { id: 'tokenId', title: 'token_id' },
+        ...(isEdition ? editionHeaders : []),
         ...metadataHeaders,
-        { id: 'transactionID', title: 'transaction_id' },
+        { id: 'txId', title: 'transaction_id' },
         { id: 'claimKey', title: 'claim_key' },
       ],
     });
 
     const records = nfts.map((nft: any) => {
       return {
-        tokenID: nft.tokenId,
-        ...nft.metadata,
-        transactionID: nft.txId,
+        tokenId: nft.tokenId,
+        editionId: nft.editionId,
+        serialNumber: nft.serialNumber,
+        txId: nft.txId,
         claimKey: nft.claimKey,
+        ...nft.metadata,
       };
     });
 
