@@ -49,6 +49,14 @@ export default class Storage {
   async loadAllNFTs(): Promise<models.NFT[]> {
     const nfts = await this.nfts.all();
 
+    // TODO: optimize this by creating an index and sorting in DB.
+    //
+    // NFT IDs are stored as strings, so in-DB sorting produces incorrect ordering.
+    // This is a workaround.
+    //
+    // We don't store NFT IDs as numbers because they are 64 bit integers
+    // and may overflow the built-in JavaScript integer type.
+    //
     return nfts.sort((a: models.NFT, b: models.NFT) => {
       return parseInt(a.tokenId, 10) - parseInt(b.tokenId, 10);
     });

@@ -4,7 +4,7 @@
 // See fresh.js for the core functionality.
 
 import * as path from 'path';
-import { Command } from 'commander';
+import { Command, InvalidOptionArgumentError } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
 import ProgressBar from 'progress';
@@ -22,6 +22,15 @@ import * as models from './models';
 
 const program = new Command();
 const spinner = ora();
+
+function parseIntOption(value: string) {
+  const parsedValue = parseInt(value, 10);
+  if (isNaN(parsedValue)) {
+    throw new InvalidOptionArgumentError('Not a number.');
+  }
+
+  return parsedValue;
+}
 
 async function main() {
   program.command('start <project-path>').description('initialize a new project').action(start);
@@ -45,6 +54,7 @@ async function main() {
     .command('dump <csv-path>')
     .description('dump all NFT data to a CSV file')
     .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
+    .option('--tail <number>', 'Only dump the last <number> NFTs. ', parseIntOption)
     .action(dumpNFTs);
 
   const generate = program.command('generate').description('regenerate project files from config');
@@ -175,11 +185,11 @@ function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
   return [idOutput, ['Fields:'], ...fieldOutput];
 }
 
-async function dumpNFTs(csvPath: string, { network }: { network: string }) {
+async function dumpNFTs(csvPath: string, { network, tail }: { network: string; tail: number }) {
   const config = loadConfig();
   const fresh = new Fresh(config, network);
 
-  const count = await fresh.dumpNFTs(csvPath);
+  const count = await fresh.dumpNFTs(csvPath, tail);
 
   spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
 }

@@ -50,11 +50,19 @@ export default class Fresh {
     return await this.storage.loadNFTById(tokenId);
   }
 
-  async dumpNFTs(csvPath: string) {
-    const nfts = await this.storage.loadAllNFTs();
+  async dumpNFTs(csvPath: string, tail = 0) {
+    let nfts = await this.storage.loadAllNFTs();
 
     if (nfts.length === 0) {
       return 0;
+    }
+
+    // If tail parameter N is greater than zero,
+    // only dump the last N records.
+    //
+    // TODO: optimize this; NFTs should be sorted and sliced in DB.
+    if (tail > 0) {
+      nfts = nfts.slice(-tail);
     }
 
     const firstNft = nfts[0];
