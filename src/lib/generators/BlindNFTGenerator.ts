@@ -61,4 +61,11 @@ export class BlindNFTGenerator extends TemplateGenerator {
       fields: schema.fields,
     });
   }
+
+  static getNFTHash({ contractName, contractAddress }: { contractName: string; contractAddress: string }): string {
+    return this.generate('../../../cadence/blind-nft/scripts/get_nft_hash.template.cdc', {
+      contractName,
+      contractAddress,
+    });
+  }
 }

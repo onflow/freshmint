@@ -9,6 +9,7 @@ import { BlindNFTGenerator } from '../generators/BlindNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
+import { Script } from '../scripts';
 
 export type HashedNFT = {
   metadata: MetadataMap;
@@ -186,5 +187,22 @@ export class BlindNFTContract extends NFTContract {
         transactionId,
       };
     });
+  }
+
+  getNFTHash(nftId: string): Script<string> {
+    const script = BlindNFTGenerator.getNFTHash({
+      contractName: this.name,
+      // TODO: return error if contract address is not set
+      contractAddress: this.address ?? '',
+    });
+
+    return new Script(
+      () => ({
+        script,
+        args: (arg, t) => [arg(nftId, t.UInt64)],
+        computeLimit: 9999,
+      }),
+      (result) => result,
+    );
   }
 }
