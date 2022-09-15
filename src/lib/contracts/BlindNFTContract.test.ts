@@ -70,7 +70,7 @@ describe('BlindNFTContract', () => {
     // After NFTs are revealed, ensure that each
     // on-chain computed hash matches our off-chain copy.
     for (const nft of mintedNFTs) {
-      const onChainHash = await client.query(contract.getNFTHash(nft.id));
+      const onChainHash = await client.query(contract.getRevealedNFTHash(nft.id));
       expect(onChainHash).toEqual(nft.metadataHash);
     }
   });
