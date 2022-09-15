@@ -33,19 +33,19 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// The salt is a byte array that is prepended to the 
         /// encoded metadata values before generating the metadata hash.
         ///
-        pub let metadataSalt: [UInt8]
+        pub let salt: [UInt8]
 
         {{#each fields}}
         pub let {{ this.name }}: {{ this.asCadenceTypeString }}
         {{/each}}
 
         init(
-            metadataSalt: [UInt8],
+            salt: [UInt8],
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ) {
-            self.metadataSalt = metadataSalt
+            self.salt = salt
 
             {{#each fields}}
             self.{{ this.name }} = {{ this.name }}
@@ -57,7 +57,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// This can be used to hash the metadata and verify its integrity.
         ///
         pub fun encode(): [UInt8] {
-            return self.metadataSalt
+            return self.salt
             {{#each fields}}
                 .concat(self.{{ this.name }}.{{ this.getCadenceByteTemplate }})
             {{/each}}
