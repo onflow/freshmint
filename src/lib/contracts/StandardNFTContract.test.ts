@@ -57,7 +57,7 @@ describe('StandardNFTContract', () => {
       sale.addToAllowlist({
         name: allowlistName,
         addresses: ['0x0ae53cb6e3f42a79'],
-        claims: 1, // this address will be allowed to claim 5 NFTs
+        claims: 1, // this address will be allowed to claim 1 NFT
       }),
     );
   });
@@ -77,7 +77,7 @@ describe('StandardNFTContract', () => {
       sale.addToAllowlist({
         name: allowlistName,
         addresses: [ownerAuthorizer.address],
-        claims: 2, // our address will be allowed to claim 5 NFTs
+        claims: 2, // our address will be allowed to claim 2 NFTs
       }),
     );
   });
