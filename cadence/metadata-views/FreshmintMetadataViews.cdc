@@ -1,13 +1,18 @@
 pub contract FreshmintMetadataViews {
 
-    // BlindNFT returns a representation of
-    // a hidden or "blind" NFT, which at this point
-    // is a secure hash of the NFT's metadata values.
+    /// BlindNFT returns a representation of a hidden NFT.
+    ///
+    /// A hidden (or blind) NFT contains secure
+    /// hash of its metadata values that can later be used
+    /// to verify its authenticity.
+    ///
     pub struct BlindNFT {
+    
+        // TODO: change this field to "hash" and redeploy the contract on testnet.
         pub let metadataHash: [UInt8]
 
-        init(metadataHash: [UInt8]) {
-            self.metadataHash = metadataHash
+        init(hash: [UInt8]) {
+            self.metadataHash = hash
         }
     }
 }
