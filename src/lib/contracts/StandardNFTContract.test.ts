@@ -53,6 +53,10 @@ describe('StandardNFTContract', () => {
   const allowlistName = 'default';
 
   it('should be able to add an address we do not control to the allowlist', async () => {
+    // When calling addToAllowlist for the first time with a new name,
+    // Freshmint will automatically create the allowlist if it does not exist.
+    //
+    // This call creates an allowlist with name "default" and adds address 0x0ae53cb6e3f42a79.
     await client.send(
       sale.addToAllowlist({
         name: allowlistName,
