@@ -1,6 +1,6 @@
 # Freshmint Node.js Library
 
-The Freshmins Node.js package provides the core pieces needed to deploy,
+The Freshmint Node.js package provides the core pieces needed to deploy,
 mint and distribute NFTs on Flow from a Node.js application.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
