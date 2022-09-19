@@ -1,7 +1,8 @@
 {
 	"contracts": {
 		"FreshmintLockBox": "./freshmint-lock-box/FreshmintLockBox.cdc",
-		"FreshmintClaimSale": "./freshmint-claim-sale/FreshmintClaimSale.cdc"
+		"FreshmintClaimSale": "./freshmint-claim-sale/FreshmintClaimSale.cdc",
+		"FreshmintMetadataViews": "./metadata-views/FreshmintMetadataViews.cdc"
 	},
 	"networks": {
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
@@ -14,6 +15,9 @@
 			],
 			"freshmint-claim-sale-testnet": [
 				"FreshmintClaimSale"
+			],
+			"freshmint-metadata-views-testnet": [
+				"FreshmintMetadataViews"
 			]
 		},
 		"mainnet": {
@@ -28,6 +32,9 @@
 		},
 		"freshmint-claim-sale-testnet": {
 			"fromFile": "freshmint-claim-sale-testnet.private.json"
+		},
+		"freshmint-metadata-views-testnet": {
+			"fromFile": "freshmint-metadata-views-testnet.private.json"
 		},
 		"freshmint-lock-box-mainnet": {
 			"fromFile": "freshmint-lock-box-mainnet.private.json"
