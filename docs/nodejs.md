@@ -1022,3 +1022,50 @@ async function revealAfterPurchase(transactionId) {
   }]));
 }
 ```
+
+### Allowlists
+
+You can optionally configure a claim sale to be gated by an address-based allowlist.
+
+Allowlists are referenced by a string name and stored as a resource in your minter account.
+You can create an allowlist before a sale, add addresses to it, and then attach it to the sale later.
+
+#### Add to an allowlist
+
+The `addToAllowlist` function builds a transaction that adds one or more addresses to an on-chain allowlist.
+
+When calling `addToAllowlist` for the first time with a new name,
+Freshmint will automatically create the allowlist if it does not exist.
+You can execute this transaction again to add more addresses to the list.
+
+This example creates an allowlist with name `early-access-users` and 
+adds accounts 0x0ae53cb6e3f42a79 and 0xf8d6e0586b0a20c7,
+both of which will be allowed to claim 3 NFTs.
+
+```js
+await client.send(
+  sale.addToAllowlist({
+    name: 'early-access-users',
+    addresses: ['0x0ae53cb6e3f42a79', '0xf8d6e0586b0a20c7'],
+    claims: 3, // Each account will be allowed to claim 3 NFTs
+  })
+)
+```
+
+#### Create a sale with an allowlist
+
+This example creates a sale and attaches the `early-access-users` allowlist created above.
+
+Only the the accounts 0x0ae53cb6e3f42a79 and 0xf8d6e0586b0a20c7 will be allowed to claim from the sale,
+up to a maximum of 3 NFTs each.
+
+```js
+await client.send(sale.start({
+  id: 'default',
+  price: '10.0',
+  // Note: 'allowlist' is an optional argument. 
+  //
+  // If omitted, the sale will be open to anybody and with no claim limits.
+  allowlist: 'early-access-users'
+}));
+```
