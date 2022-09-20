@@ -1038,7 +1038,7 @@ When calling `addToAllowlist` for the first time with a new name,
 Freshmint will automatically create the allowlist if it does not exist.
 You can execute this transaction again to add more addresses to the list.
 
-The example blow creates an allowlist with name `early-access-users` and 
+This example creates an allowlist with name `early-access-users` and 
 adds accounts 0x0ae53cb6e3f42a79 and 0xf8d6e0586b0a20c7,
 both of which will be allowed to claim 3 NFTs.
 
