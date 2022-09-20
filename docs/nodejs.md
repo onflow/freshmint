@@ -28,6 +28,7 @@ mint and distribute NFTs on Flow from a Node.js application.
     - [Deploy the contract](#deploy-the-contract-2)
     - [Step 1: Create one or more editions](#step-1-create-one-or-more-editions)
     - [Step 2: Mint NFTs](#step-2-mint-nfts)
+      - [Mint into buckets](#mint-into-buckets)
   - [Blind NFTs](#blind-nfts)
     - [Deploy the contract](#deploy-the-contract-3)
     - [Step 1: Mint NFTs](#step-1-mint-nfts)
@@ -376,8 +377,8 @@ This will print:
 
 The `EditionNFTContract` allows you to mint edition-based NFTs.
 
-In this model, a contract can define multiple editions.
-All NFTs in an editions share the same metadata;
+In this model, a contract can define multiple NFT editions.
+All NFTs in an edition share the same metadata;
 only their serial numbers are different.
 
 ```js
@@ -417,8 +418,8 @@ const address = await client.send(contract.deploy(
 
 ```js
 const edition1 = {
-  // This edition will contain 5 NFTs.
-  size: 5,
+  // This edition will contain 100 NFTs.
+  size: 100,
   // Note: the metadata fields provided must match those
   // defined in your metadata schema.
   metadata: {
@@ -429,8 +430,8 @@ const edition1 = {
 };
 
 const edition2 = {
-  // This edition will contain 5 NFTs.
-  size: 5,
+  // This edition will contain 200 NFTs.
+  size: 200,
   // Note: the metadata fields provided must match those
   // defined in your metadata schema.
   metadata: {
@@ -455,53 +456,52 @@ This will print:
 [
   {
     id: '0',
-    size: 5,
+    size: 100,
     metadata: {
       name: 'Edition 1',
       description: 'This is the first edition',
       thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
-    },
-    nfts: [
-      { editionId: '0', editionSerial: '1' },
-      { editionId: '0', editionSerial: '2' },
-      { editionId: '0', editionSerial: '3' },
-      { editionId: '0', editionSerial: '4' },
-      { editionId: '0', editionSerial: '5' },
-    ]
+    }
   },
   {
     id: '1',
-    size: 5,
+    size: 200,
     metadata: {
       name: 'Edition 2',
       description: 'This is the second edition',
       thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
-    },
-    nfts: [
-      { editionId: '1', editionSerial: '1' },
-      { editionId: '1', editionSerial: '2' },
-      { editionId: '1', editionSerial: '3' },
-      { editionId: '1', editionSerial: '4' },
-      { editionId: '1', editionSerial: '5' },
-    ]
+    }
   }
 ]
 ```
 
 #### Step 2: Mint NFTs
 
-You can mint NFTs to any existing edition.
-The input to each NFT is simply its edition ID and serial number.
+The `mintNFTs` function prepares a transaction to mint NFTs into an existing edition. 
+
+It requires two arguments:
+- `editionId` is the ID of the edition to mint into.
+- `count` is the number of NFTs to mint. 
+For smaller editions, you may be able mint the entire edition in a single transaction,
+but in most cases you will need to mint in smaller batches.
 
 ```js
 // This example shows how to mint editions into separate buckets.
+//
+// By default, Freshmint will mint all NFTs into a single collection
+// on the minter's account. By specifying a bucket, you can split 
+// your minted NFTs into separate collections (i.e. buckets) in the same account.
+//
+// In the case of editions, this allows you to sell or distribute each edition
+// separately, rather than mixing all editions into a single collection
 
 for (const edition of editions) {
-  // Mint each edition into its own bucket.
-  const mintedNFTs = await client.send(contract.mintNFTs(
-    edition.nfts,
-    { bucket: edition.id }
-  ));
+
+  const mintedNFTs = await client.send(contract.mintNFTs({
+    editionId: edition.id,
+    // Mint NFTs in batches of 10.
+    count: 10, 
+  }));
 
   console.log(mintedNFTs);
 }
@@ -525,6 +525,26 @@ This will print:
   },
   ...
 ]
+```
+
+##### Mint into buckets
+
+This example shows how to mint editions into separate buckets.
+
+By default, Freshmint will mint all NFTs into a single collection
+on the minter's account. By specifying a bucket name, you can split 
+your minted NFTs into separate collections (i.e. buckets) in the same account.
+
+In the case of editions, this allows you to [distribute each edition
+in a separate sale](#edition-based-claim-sales), rather than mixing all editions into a single collection.
+
+```js
+const mintedNFTs = await client.send(contract.mintNFTs({ 
+  editionId: '1',
+  count: 10, 
+  // Mint each edition into its own bucket.
+  bucket: 'edition-1-bucket'
+}));
 ```
 
 ### Blind NFTs
