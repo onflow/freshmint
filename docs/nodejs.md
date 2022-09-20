@@ -43,16 +43,17 @@ mint and distribute NFTs on Flow from a Node.js application.
   - [Claim sale](#claim-sale)
     - [Edition-based claim sales](#edition-based-claim-sales)
     - [Reveal on claim](#reveal-on-claim)
+    - [Allowlists](#allowlists)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Installation
+# Installation
 
 ```sh
 npm i freshmint@alpha
 ```
 
-## Create & deploy an NFT contract
+# Create & deploy an NFT contract
 
 NFTs on Flow are defined by a Cadence contract that 
 implements the [Flow NFT interface](https://github.com/onflow/flow-nft).
@@ -64,7 +65,7 @@ Freshmint includes several NFT contract templates:
 - `EditionNFTContract`
 - `BlindEditionNFTContract`
 
-### Define a metadata schema
+## Define a metadata schema
 
 Before creating a contract, you'll need to define its metadata schema.
 The schema is a list of fields that define the structure
@@ -83,7 +84,7 @@ const schema = metadata.createSchema({
 });
 ```
 
-#### Default schema
+### Default schema
 
 Freshmint ships with a default metadata schema.
 This is the minimum set of fields required to
@@ -120,7 +121,7 @@ const schema = metadata.defaultSchema.extend({
 });
 ```
 
-#### Supported metadata fields
+### Supported metadata fields
 
 |Name|Identifier|
 |----|----------|
@@ -132,7 +133,7 @@ const schema = metadata.defaultSchema.extend({
 |UFix64|`ufix64`|
 |IPFSFile|`ipfs-file`|
 
-#### Parse a raw metadata schema
+### Parse a raw metadata schema
 
 You can represent a metadata schema as a plain JavaScript object,
 which can easily be serialized to JSON, YAML or other formats.
@@ -162,7 +163,7 @@ import { metadata } from 'freshmint';
 const schema = metadata.parseSchema(rawSchema);
 ```
 
-### Create a contract
+## Create a contract
 
 ```js
 import { StandardNFTContract, metadata } from 'freshmint';
@@ -176,13 +177,13 @@ const contract = new StandardNFTContract({
 });
 ```
 
-### Configure the contract owner
+## Configure the contract owner
 
 You will need to configure the contract owner before you can
 deploy the contract or mint NFTs. The owner is the account that will
 mint, reveal and manage your NFTs.
 
-#### Define an authorizer
+### Define an authorizer
 
 The owner is defined as a `TransactionAuthorizer`, an object that can authorize transactions for a specific Flow account.
 
@@ -210,7 +211,7 @@ const authorizer = new TransactionAuthorizer({
 });
 ```
 
-#### Set the owner
+### Set the owner
 
 ```js
 const contract = new StandardNFTContract(...);
@@ -220,7 +221,7 @@ const contract = new StandardNFTContract(...);
 contract.setOwner(authorizer);
 ```
 
-#### Use a separate payer or proposer
+### Use a separate payer or proposer
 
 You can optionally specify separate payer or proposer authorizers.
 This is useful if you would like to create multiple contracts, 
@@ -244,7 +245,7 @@ contract.setPayer(payerAuthorizer);
 contract.setProposer(proposerAuthorizer);
 ```
 
-#### Specify authorizers in the constructor
+### Specify authorizers in the constructor
 
 For convenience, you can pass the authorizers directly in the contract constructor:
 
@@ -257,7 +258,7 @@ const contract = new StandardNFTContract({
 });
 ```
 
-### Deploy the contract
+## Deploy the contract
 
 First create a `FreshmintClient` instance using FCL as a base.
 
@@ -286,9 +287,9 @@ const deployTransaction = contract.deploy(publicKey, hashAlgorithm);
 const contractAddress = await client.send(deployTransaction);
 ```
 
-## Mint NFTs
+# Mint NFTs
 
-### Standard NFTs
+## Standard NFTs
 
 The `StandardNFTContract` allows you to mint simple one-of-a-kind NFTs.
 
@@ -305,7 +306,7 @@ const contract = new StandardNFTContract({
 });
 ```
 
-#### Deploy the contract
+### Deploy the contract
 
 ```js
 import * as fcl from '@onflow/fcl';
@@ -325,7 +326,7 @@ const address = await client.send(contract.deploy(
 ));
 ```
 
-#### Mint the NFTs
+### Mint the NFTs
 
 ```js
 // Note: the metadata fields provided must match those
@@ -373,7 +374,7 @@ This will print:
 ]
 ```
 
-### Edition NFTs
+## Edition NFTs
 
 The `EditionNFTContract` allows you to mint edition-based NFTs.
 
@@ -394,7 +395,7 @@ const contract = new EditionNFTContract({
 });
 ```
 
-#### Deploy the contract
+### Deploy the contract
 
 ```js
 import * as fcl from '@onflow/fcl';
@@ -414,7 +415,7 @@ const address = await client.send(contract.deploy(
 ));
 ```
 
-#### Step 1: Create one or more editions
+### Step 1: Create one or more editions
 
 ```js
 const edition1 = {
@@ -475,7 +476,7 @@ This will print:
 ]
 ```
 
-#### Step 2: Mint NFTs
+### Step 2: Mint NFTs
 
 The `mintNFTs` function prepares a transaction to mint NFTs into an existing edition. 
 
@@ -527,7 +528,7 @@ This will print:
 ]
 ```
 
-##### Mint into buckets
+#### Mint into buckets
 
 This example shows how to mint editions into separate buckets.
 
@@ -547,7 +548,7 @@ const mintedNFTs = await client.send(contract.mintNFTs({
 }));
 ```
 
-### Blind NFTs
+## Blind NFTs
 
 Use a `BlindNFTContract` to create NFTs that can be blindly minted.
 In a blind mint, NFTs are initially minted as partial objects with their metadata hidden.
@@ -575,7 +576,7 @@ const contract = new BlindNFTContract({
 });
 ```
 
-#### Deploy the contract
+### Deploy the contract
 
 ```js
 import * as fcl from '@onflow/fcl';
@@ -600,7 +601,7 @@ const address = await client.send(contract.deploy(
 ));
 ```
 
-#### Step 1: Mint NFTs
+### Step 1: Mint NFTs
 
 ```js
 // Note: the metadata fields provided must match those
@@ -659,7 +660,7 @@ against a known set of possible metadata values.
 Important: you **must** save the `id`, `metadata` and `metadataSalt` fields for each NFT.
 You'll need them to later reveal the NFTs.
 
-##### Randomized minting
+#### Randomized minting
 
 Blind NFTs are often minted in a random order. To randomize your mint,
 shuffle your input array before calling `mintNFTs()`.
@@ -668,7 +669,7 @@ Freshmint does not support automatic randomization.
 It's important to note that this will only randomize the NFT metadata.
 The minted NFT IDs will still be sequential (i.e. 0, 1, 2, etc).
 
-#### Step 2: Reveal NFTs
+### Step 2: Reveal NFTs
 
 You can reveal your NFTs at any time.
 You also have the option to reveal NFTs one by one, all at once, or in batches.
@@ -701,7 +702,7 @@ await client.send(contract.revealNFTs([nft0]));
 await client.send(contract.revealNFTs([nft0, nft1]));
 ```
 
-### Blind Edition NFTs
+## Blind Edition NFTs
 
 The `BlindEditionNFTContract` allows you to mint edition-based NFTs
 that are hidden at mint time and revealed at a later date.
@@ -723,7 +724,7 @@ const contract = new BlindEditionNFTContract({
 });
 ```
 
-#### Deploy the contract
+### Deploy the contract
 
 ```js
 import * as fcl from '@onflow/fcl';
@@ -748,7 +749,7 @@ const address = await client.send(contract.deploy(
 ));
 ```
 
-#### Step 1: Create one or more editions
+### Step 1: Create one or more editions
 
 ```js
 const edition1 = {
@@ -823,7 +824,7 @@ This will print:
 ]
 ```
 
-#### Step 2: Mint NFTs
+### Step 2: Mint NFTs
 
 You can mint NFTs to any existing edition.
 The input to each NFT is simply its edition ID and serial number.
@@ -882,7 +883,7 @@ This will print:
 ]
 ```
 
-#### Step 3: Reveal NFTs
+### Step 3: Reveal NFTs
 
 Reveal edition NFTs by publishing their edition ID, serial number and unique salt.
 
@@ -908,12 +909,12 @@ await client.send(contract.revealNFT(nft0));
 await client.send(contract.revealNFTs([nft0, nft1]));
 ```
 
-## Distribute NFTs
+# Distribute NFTs
 
 Freshmint provides several distribution methods that you can use
 after minting your NFTs.
 
-### Claim sale
+## Claim sale
 
 In a claim sale, a user purchases an NFT from a contract but does not get to pick
 the specific NFT.
@@ -944,7 +945,7 @@ await client.send(sale.start({ id: "default", price: "10.0" }));
 await client.send(sale.stop("default"));
 ```
 
-#### Edition-based claim sales
+### Edition-based claim sales
 
 When selling edition-based NFTs, you may want to allow
 users to claim each edition separately and at a different price.
@@ -980,7 +981,7 @@ for (const edition in editions) {
 }
 ```
 
-#### Reveal on claim
+### Reveal on claim
 
 In this strategy, each NFT is revealed immediately after it is claimed by a buyer.
 The NFTs are revealed one by one until all NFTs are claimed.
