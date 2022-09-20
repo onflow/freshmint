@@ -1063,6 +1063,9 @@ up to a maximum of 3 NFTs each.
 await client.send(sale.start({
   id: 'default',
   price: '10.0',
+  // Note: 'allowlist' is an optional argument. 
+  //
+  // If omitted, the sale will be open to anybody and with no claim limits.
   allowlist: 'early-access-users'
 }));
 ```
