@@ -44,6 +44,15 @@ mint and distribute NFTs on Flow from a Node.js application.
     - [Edition-based claim sales](#edition-based-claim-sales)
     - [Reveal on claim](#reveal-on-claim)
     - [Allowlists](#allowlists)
+      - [Add to an allowlist](#add-to-an-allowlist)
+      - [Create a sale with an allowlist](#create-a-sale-with-an-allowlist)
+- [Metadata views](#metadata-views)
+  - [Add views to a schema](#add-views-to-a-schema)
+  - [Built-in views](#built-in-views)
+    - [NFT Collection Display View](#nft-collection-display-view)
+      - [Collection media](#collection-media)
+        - [IPFS Media](#ipfs-media)
+        - [HTTP Media](#http-media)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -90,6 +99,9 @@ Freshmint ships with a default metadata schema.
 This is the minimum set of fields required to
 implement the [Display](https://github.com/onflow/flow-nft#list-of-common-views)
 metadata view.
+
+For a full list of supported metadata views,
+see the [metadata views](#metadata-views) section.
 
 ```js
 const defaultSchema = metadata.createSchema({
@@ -1068,4 +1080,104 @@ await client.send(sale.start({
   // If omitted, the sale will be open to anybody and with no claim limits.
   allowlist: 'early-access-users'
 }));
+```
+
+# Metadata views
+
+Metadata views allow NFTs to return their metadata in a standardized way
+to consumers such as wallets, indexers and marketplaces.
+They were proposed in [FLIP-0636](https://github.com/onflow/flow/blob/master/flips/20210916-nft-metadata.md)
+and implemented in the [Flow NFT standard repository](https://github.com/onflow/flow-nft#nft-metadata).
+
+Freshmint allows you to specify views as part of your metadata schema.
+It will then generate the necessary Cadence code to attach the views to your contract.
+
+## Add views to a schema
+
+```js
+import { metadata } from 'freshmint';
+
+const defaultSchema = metadata.createSchema({
+  fields: {
+    name: metadata.String(),
+    description: metadata.String(),
+    thumbnail: metadata.IPFSImage()
+  },
+  // The views property returns a list of views 
+  // to be attached to the contract.
+  views: (fields) => [
+    metadata.DisplayView({
+      name: fields.name,
+      description: fields.description,
+      thumbnail: fields.thumbnail
+    })
+  ]
+});
+```
+
+## Built-in views
+
+Freshmint has built-in support for the following metadata views.
+
+### NFT Collection Display View
+
+The `NFTCollectionDisplay` view returns a basic representation of the collection
+that an NFT belongs to.
+
+```js
+import { metadata } from 'freshmint';
+
+const view = metadata.NFTCollectionDisplayView({
+  name: 'My NFT Collection',
+  description: 'This is my new NFT collection.',
+  url: 'http://my-nft-collection.com',
+  media: {
+    ipfs: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
+    type: 'image/jpeg'
+  }
+})
+```
+
+#### Collection media 
+
+The media object can either be an IPFS CID or an HTTP URL.
+
+##### IPFS Media
+
+```js
+// Example: IPFS media file
+
+const view = metadata.NFTCollectionDisplayView({
+  // ...
+  media: {
+    ipfs: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
+    type: 'image/jpeg'
+  }
+})
+
+// Alternatively, you can specify an IPFS CID and path as an object.
+const view = metadata.NFTCollectionDisplayView({
+  // ...
+  media: {
+    ipfs: {
+      cid: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
+      path: 'banner.jpeg'
+    }
+    type: 'image/jpeg'
+  }
+})
+```
+
+##### HTTP Media
+
+```js
+// Example: HTTP media file.
+
+const view = metadata.NFTCollectionDisplayView({
+  // ...
+  media: {
+    url: 'http://my-nft-collection.com/banner.jpeg',
+    type: 'image/jpeg'
+  }
+})
 ```
