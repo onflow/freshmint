@@ -1171,7 +1171,7 @@ const view = metadata.NFTCollectionDisplayView({
 ##### HTTP Media
 
 ```js
-// Example: HTTP media file.
+// Example: HTTP media file
 
 const view = metadata.NFTCollectionDisplayView({
   // ...
