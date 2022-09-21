@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NFTCollectionDisplayView generates a Cadence snippet with an HTTP media file 1`] = `
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
+    let media = MetadataViews.Media(
+        file: MetadataViews.HTTPFile(url: \\"http://foo.com/nft.jpeg\\"),
+        mediaType: \\"image/jpeg\\"
+    )
+
+    return MetadataViews.NFTCollectionDisplay(
+        name: \\"Foo NFT Collection\\",
+        description: \\"This is the Foo NFT collection.\\",
+        externalURL: MetadataViews.ExternalURL(\\"http://foo.com\\"),
+        squareImage: media,
+        bannerImage: media,
+        socials: {}
+    )
+}
+"
+`;
+
+exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media file with a path 1`] = `
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
+    let media = MetadataViews.Media(
+        file: MetadataViews.IPFSFile(
+            cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 
+            path: \\"foo.jpeg\\"
+        ),
+        mediaType: \\"image/jpeg\\"
+    )
+
+    return MetadataViews.NFTCollectionDisplay(
+        name: \\"Foo NFT Collection\\",
+        description: \\"This is the Foo NFT collection.\\",
+        externalURL: MetadataViews.ExternalURL(\\"http://foo.com\\"),
+        squareImage: media,
+        bannerImage: media,
+        socials: {}
+    )
+}
+"
+`;
+
+exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media file with no path 1`] = `
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
+    let media = MetadataViews.Media(
+        file: MetadataViews.IPFSFile(
+            cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 
+            path: nil
+        ),
+        mediaType: \\"image/jpeg\\"
+    )
+
+    return MetadataViews.NFTCollectionDisplay(
+        name: \\"Foo NFT Collection\\",
+        description: \\"This is the Foo NFT collection.\\",
+        externalURL: MetadataViews.ExternalURL(\\"http://foo.com\\"),
+        squareImage: media,
+        bannerImage: media,
+        socials: {}
+    )
+}
+"
+`;

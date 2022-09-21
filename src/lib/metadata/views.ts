@@ -49,6 +49,7 @@ export interface ViewType<ViewOptions> {
   id: string;
   cadenceTypeString: string;
   cadenceResolverFunction?: string;
+  cadenceTemplatePath: string;
   requiresMetadata: boolean;
 }
 
@@ -79,20 +80,27 @@ export function defineView<ViewOptions>({
   cadenceResolverFunction,
   cadenceTemplatePath,
   requiresMetadata,
+  transformOptions,
 }: {
   id: string;
   cadenceTypeString: string;
   cadenceResolverFunction?: string;
   cadenceTemplatePath: string;
   requiresMetadata: boolean;
+  transformOptions?: (options: ViewOptions) => ViewOptions;
 }): ViewType<ViewOptions> {
   const viewType = (options: ViewOptions): View => {
+    if (transformOptions) {
+      options = transformOptions(options);
+    }
+
     return new View(viewType, options);
   };
 
   viewType.id = id;
-  viewType.cadenceResolverFunction = cadenceResolverFunction;
   viewType.cadenceTypeString = cadenceTypeString;
+  viewType.cadenceResolverFunction = cadenceResolverFunction;
+  viewType.cadenceTemplatePath = cadenceTemplatePath;
   viewType.requiresMetadata = requiresMetadata;
 
   registerPartial(id, cadenceTemplatePath);
@@ -123,20 +131,74 @@ export const ExternalURLView = defineView<{ cadenceTemplate: string }>({
   requiresMetadata: false,
 });
 
+export type LegacyIPFSMediaInput = {
+  ipfsCid: string;
+  type: string;
+};
+
+export type IPFSMediaInput = {
+  ipfs: string | { cid: string; path?: string };
+  type: string;
+};
+
+export type HTTPMediaInput = {
+  url: string;
+  type: string;
+};
+
+export type MediaInput = LegacyIPFSMediaInput | IPFSMediaInput | HTTPMediaInput;
+
+function isLegacyIPFSMediaInput(media: MediaInput): media is LegacyIPFSMediaInput {
+  return (media as LegacyIPFSMediaInput).ipfsCid !== undefined;
+}
+
+function isIPFSMediaInput(media: MediaInput): media is IPFSMediaInput {
+  return (media as IPFSMediaInput).ipfs !== undefined;
+}
+
+function isHTTPMediaInput(media: MediaInput): media is HTTPMediaInput {
+  return (media as HTTPMediaInput).url !== undefined;
+}
+
 export const NFTCollectionDisplayView = defineView<{
   name: string;
   description: string;
   url: string;
-  media: {
-    ipfsCid: string;
-    type: string;
-  };
+  media: MediaInput;
 }>({
   id: 'nft-collection-display',
   cadenceTypeString: 'Type<MetadataViews.NFTCollectionDisplay>()',
   cadenceResolverFunction: 'resolveNFTCollectionDisplay',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc',
   requiresMetadata: false,
+  transformOptions: (options) => {
+    // Convert the legacy IPFS format to the new generic file format.
+    //
+    // TODO: deprecate the ipfsCid field.
+    if (isLegacyIPFSMediaInput(options.media)) {
+      options.media = {
+        ipfs: {
+          cid: options.media.ipfsCid,
+        },
+        type: options.media.type,
+      };
+    }
+
+    if (isIPFSMediaInput(options.media) && isHTTPMediaInput(options.media)) {
+      throw new Error('You must specify either an IPFS or HTTP media file to nft-collection-display, but not both.');
+    }
+
+    // If IPFS is passed as string, assume it is a CID.
+    if (isIPFSMediaInput(options.media)) {
+      if (typeof options.media.ipfs === 'string') {
+        options.media.ipfs = {
+          cid: options.media.ipfs,
+        };
+      }
+    }
+
+    return options;
+  },
 });
 
 export const NFTCollectionDataView = defineView<void>({

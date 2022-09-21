@@ -1,9 +1,13 @@
 pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
     let media = MetadataViews.Media(
+        {{#if view.options.media.ipfs }}
         file: MetadataViews.IPFSFile(
-            cid: "{{ view.options.media.ipfsCid }}", 
-            path: nil
+            cid: "{{ view.options.media.ipfs.cid }}", 
+            path: {{#if view.options.media.ipfs.path }}"{{ view.options.media.ipfs.path }}"{{ else }}nil{{/if}}
         ),
+        {{ else }}
+        file: MetadataViews.HTTPFile(url: "{{ view.options.media.url }}"),
+        {{/if}}
         mediaType: "{{ view.options.media.type }}"
     )
 
