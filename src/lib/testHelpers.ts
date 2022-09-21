@@ -54,7 +54,11 @@ export const schema = metadata.createSchema({
       description: 'This is my collection.',
       url: 'http://foo.com',
       media: {
-        ipfsCid: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
+        file: {
+          ipfs: {
+            cid: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
+          },
+        },
         type: 'image/jpeg',
       },
     }),
