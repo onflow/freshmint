@@ -189,6 +189,23 @@ const contract = new StandardNFTContract({
 });
 ```
 
+### Optional: set the deployed contract address
+
+If your contract is already deployed to an account,
+you can set the contract address in the constructor.
+Otherwise the address will be set when you deploy the contract.
+
+```js
+const contract = new StandardNFTContract({
+  name: 'MyNFTContract',
+  schema: metadata.defaultSchema.extend({
+    foo: metadata.String(),
+    bar: metadata.Int()
+  }),
+  address: '0xf8d6e0586b0a20c7' // The address where your contract is deployed
+});
+```
+
 ## Configure the contract owner
 
 You will need to configure the contract owner before you can
