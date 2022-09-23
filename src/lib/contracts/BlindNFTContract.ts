@@ -94,6 +94,10 @@ export class BlindNFTContract extends NFTContract {
 
   mintNFTs(metadata: MetadataMap[]): Transaction<NFTMintResult[]> {
     const hashedNFTs = this.hashNFTs(metadata);
+    return this.mintHashedNFTs(hashedNFTs);
+  }
+
+  mintHashedNFTs(hashedNFTs: HashedNFT[]): Transaction<NFTMintResult[]> {
     const hashes = hashedNFTs.map((nft) => nft.metadataHash);
 
     return new Transaction(
