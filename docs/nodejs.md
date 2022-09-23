@@ -189,7 +189,7 @@ const contract = new StandardNFTContract({
 });
 ```
 
-### Set the deployed contract address
+### Optional: set the deployed contract address
 
 If your contract is already deployed to an account,
 you can set the contract address in the constructor.
