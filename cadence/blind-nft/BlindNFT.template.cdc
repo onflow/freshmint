@@ -24,6 +24,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub var totalSupply: UInt64
 
     /// A placeholder image used to display NFTs that have not yet been revealed.
+    ///
     pub let placeholderImage: String
 
     pub struct Metadata {
