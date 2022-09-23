@@ -101,8 +101,7 @@ export class BlindNFTContract extends NFTContract {
         const script = BlindNFTGenerator.mint({
           imports,
           contractName: this.name,
-          // TODO: return error if contract address is not set
-          contractAddress: this.address ?? '',
+          contractAddress: this.getAddress(),
         });
 
         return {
@@ -153,8 +152,7 @@ export class BlindNFTContract extends NFTContract {
         const script = BlindNFTGenerator.reveal({
           imports,
           contractName: this.name,
-          // TODO: return error if contract address is not set
-          contractAddress: this.address ?? '',
+          contractAddress: this.getAddress(),
           schema: this.schema,
         });
 

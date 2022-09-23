@@ -52,6 +52,14 @@ export default abstract class NFTContract {
     this.address = address;
   }
 
+  getAddress(): string {
+    if (this.address !== undefined) {
+      return this.address;
+    }
+
+    throw new MissingContractAddressError(this.name);
+  }
+
   getSigners(): TransactionSigners {
     const owner = this.owner;
     if (!owner) {
@@ -67,5 +75,14 @@ export default abstract class NFTContract {
       proposer,
       authorizers: [owner],
     };
+  }
+}
+
+export class MissingContractAddressError extends Error {
+  contractName: string;
+
+  constructor(contractName: string) {
+    const message = `Missing contract address for contract with name "${contractName}".`;
+    super(message);
   }
 }

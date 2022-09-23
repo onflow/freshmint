@@ -53,8 +53,7 @@ export class ClaimSaleContract {
       const script = ClaimSaleGenerator.startSale({
         imports,
         contractName: this.nftContract.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.nftContract.address ?? '',
+        contractAddress: this.nftContract.getAddress(),
       });
 
       return {
@@ -78,8 +77,7 @@ export class ClaimSaleContract {
       const script = ClaimSaleGenerator.stopSale({
         imports,
         contractName: this.nftContract.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.nftContract.address ?? '',
+        contractAddress: this.nftContract.getAddress(),
       });
 
       return {
@@ -104,8 +102,7 @@ export class ClaimSaleContract {
       const script = ClaimSaleGenerator.addToAllowlist({
         imports,
         contractName: this.nftContract.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.nftContract.address ?? '',
+        contractAddress: this.nftContract.getAddress(),
       });
 
       return {
@@ -129,8 +126,7 @@ export class ClaimSaleContract {
         const script = ClaimSaleGenerator.claimNFT({
           imports,
           contractName: this.nftContract.name,
-          // TODO: return error if contract address is not set
-          contractAddress: this.nftContract.address ?? '',
+          contractAddress: this.nftContract.getAddress(),
         });
 
         return {

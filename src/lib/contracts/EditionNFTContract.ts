@@ -115,8 +115,7 @@ export class EditionNFTContract extends NFTContract {
       const script = EditionNFTGenerator.createEditions({
         imports,
         contractName: this.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.address ?? '',
+        contractAddress: this.getAddress(),
         schema: this.schema,
       });
 
@@ -173,8 +172,7 @@ export class EditionNFTContract extends NFTContract {
       const script = EditionNFTGenerator.mint({
         imports,
         contractName: this.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.address ?? '',
+        contractAddress: this.getAddress(),
       });
 
       return {
@@ -189,8 +187,7 @@ export class EditionNFTContract extends NFTContract {
   getEdition(editionId: string): Script<OnChainEdition> {
     const script = EditionNFTGenerator.getEdition({
       contractName: this.name,
-      // TODO: return error if contract address is not set
-      contractAddress: this.address ?? '',
+      contractAddress: this.getAddress(),
     });
 
     return new Script(

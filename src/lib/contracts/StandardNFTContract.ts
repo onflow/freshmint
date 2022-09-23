@@ -77,8 +77,7 @@ export class StandardNFTContract extends NFTContract {
         const script = StandardNFTGenerator.mint({
           imports,
           contractName: this.name,
-          // TODO: return error if contract address is not set
-          contractAddress: this.address ?? '',
+          contractAddress: this.getAddress(),
           schema: this.schema,
         });
 
