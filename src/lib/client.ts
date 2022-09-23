@@ -34,8 +34,10 @@ export class FreshmintClient {
   }
 
   async sendAsync(tx: Transaction<any>): Promise<string> {
+    // Do not catch and convert errors that throw when building the transaction.
+    const fclTransaction = await tx.toFCLTransaction(this.fcl, this.config);
+
     try {
-      const fclTransaction = await tx.toFCLTransaction(this.fcl, this.config);
       const { transactionId } = await this.fcl.send(fclTransaction);
       return transactionId;
     } catch (error) {

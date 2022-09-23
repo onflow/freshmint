@@ -1,4 +1,5 @@
 import { StandardNFTContract } from './StandardNFTContract';
+import { MissingContractAddressError } from './NFTContract';
 import { ClaimSaleContract } from './ClaimSaleContract';
 
 import {
@@ -18,8 +19,30 @@ describe('StandardNFTContract', () => {
     owner: ownerAuthorizer,
   });
 
+  const nfts = [
+    {
+      name: 'NFT 1',
+      description: 'This is the first NFT.',
+      thumbnail: 'nft-1.jpeg',
+    },
+    {
+      name: 'NFT 2',
+      description: 'This is the second NFT.',
+      thumbnail: 'nft-2.jpeg',
+    },
+    {
+      name: 'NFT 3',
+      description: 'This is the third NFT.',
+      thumbnail: 'nft-3.jpeg',
+    },
+  ];
+
   it('should generate a contract', async () => {
     contract.getSource(config.imports);
+  });
+
+  it('should fail to mint NFTs before contract is deployed', async () => {
+    expect(async () => await client.send(contract.mintNFTs(nfts))).rejects.toThrow(MissingContractAddressError);
   });
 
   it('should deploy a contract', async () => {
@@ -27,24 +50,6 @@ describe('StandardNFTContract', () => {
   });
 
   it('should mint NFTs', async () => {
-    const nfts = [
-      {
-        name: 'NFT 1',
-        description: 'This is the first NFT.',
-        thumbnail: 'nft-1.jpeg',
-      },
-      {
-        name: 'NFT 2',
-        description: 'This is the second NFT.',
-        thumbnail: 'nft-2.jpeg',
-      },
-      {
-        name: 'NFT 3',
-        description: 'This is the third NFT.',
-        thumbnail: 'nft-3.jpeg',
-      },
-    ];
-
     await client.send(contract.mintNFTs(nfts));
   });
 

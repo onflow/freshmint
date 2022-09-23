@@ -132,8 +132,7 @@ export class BlindEditionNFTContract extends NFTContract {
       const script = BlindEditionNFTGenerator.createEditions({
         imports,
         contractName: this.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.address ?? '',
+        contractAddress: this.getAddress(),
         schema: this.schema,
       });
 
@@ -179,8 +178,7 @@ export class BlindEditionNFTContract extends NFTContract {
       const script = BlindEditionNFTGenerator.mint({
         imports,
         contractName: this.name,
-        // TODO: return error if contract address is not set
-        contractAddress: this.address ?? '',
+        contractAddress: this.getAddress(),
       });
 
       const hashes = hashedNFTs.map((nft) => nft.editionHash);
