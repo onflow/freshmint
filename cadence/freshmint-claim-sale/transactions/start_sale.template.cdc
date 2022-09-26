@@ -72,7 +72,6 @@ transaction(
     execute {
         let sale <- FreshmintClaimSale.createSale(
             id: saleID,
-            nftType: Type<@{{ contractName }}.NFT>(),
             collection: self.collection,
             receiverPath: {{ contractName }}.CollectionPublicPath,
             paymentReceiver: self.paymentReceiver,

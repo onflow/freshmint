@@ -71,4 +71,10 @@ export class ClaimSaleGenerator extends TemplateGenerator {
       contractAddress,
     });
   }
+
+  static getClaimSale({ imports }: { imports: ContractImports }): string {
+    return this.generate('../../../cadence/freshmint-claim-sale/scripts/get_claim_sale.cdc', {
+      imports,
+    });
+  }
 }
