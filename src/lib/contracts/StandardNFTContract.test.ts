@@ -10,6 +10,7 @@ import {
   ownerAuthorizer,
   randomContractName,
   schema,
+  royaltiesTests
 } from '../testHelpers';
 
 describe('StandardNFTContract', () => {
@@ -108,4 +109,6 @@ describe('StandardNFTContract', () => {
   it('should stop a sale', async () => {
     await client.send(sale.stop('default'));
   });
+
+  royaltiesTests(contract);
 });

@@ -9,6 +9,7 @@ import {
   ownerAuthorizer,
   randomContractName,
   schema,
+  royaltiesTests
 } from '../testHelpers';
 
 describe('EditionNFTContract', () => {
@@ -141,4 +142,6 @@ describe('EditionNFTContract', () => {
       await client.send(sale.stop(sale2));
     });
   });
+
+  royaltiesTests(contract);
 });
