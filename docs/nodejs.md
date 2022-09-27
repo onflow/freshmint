@@ -14,6 +14,7 @@ mint and distribute NFTs on Flow from a Node.js application.
     - [Supported metadata fields](#supported-metadata-fields)
     - [Parse a raw metadata schema](#parse-a-raw-metadata-schema)
   - [Create a contract](#create-a-contract)
+    - [Optional: set the deployed contract address](#optional-set-the-deployed-contract-address)
   - [Configure the contract owner](#configure-the-contract-owner)
     - [Define an authorizer](#define-an-authorizer)
     - [Set the owner](#set-the-owner)
@@ -53,6 +54,9 @@ mint and distribute NFTs on Flow from a Node.js application.
       - [Collection media](#collection-media)
         - [IPFS Media](#ipfs-media)
         - [HTTP Media](#http-media)
+- [Royalties](#royalties)
+  - [1. Enable the royalties view](#1-enable-the-royalties-view)
+  - [2. Set the royalty recipients](#2-set-the-royalty-recipients)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1197,4 +1201,59 @@ const view = metadata.NFTCollectionDisplayView({
     type: 'image/jpeg'
   }
 })
+```
+
+# Royalties
+
+Freshmint allows you to configure one or more royalty recipients
+who will receive a portion of the sales on all NFTs minted by your contract.
+
+There are two steps to configuring royalties for your contract.
+
+## 1. Enable the royalties view
+
+First, ensure that your schema contains the royalties metadata view.
+This view exposes your royalty information to wallets and marketplaces.
+Without it, your royalties will not be applied.
+
+Note: `metadata.defaultSchema` already contains the royalties view.
+
+```js
+import { metadata } from 'freshmint';
+
+const schema = metadata.createSchema({
+  // ...
+  views: (fields) => [
+    // ...
+    metadata.RoyaltiesView()
+  ]
+});
+```
+
+## 2. Set the royalty recipients
+
+After you deploy your contract, you can use the `setRoyalties` function
+to set or update the royalty information for your contract.
+
+You can call this function at any point to update your royalties.
+This function will update the royalty information for all NFTs minted by your
+contract, past and present, regardless of where they are stored.
+
+```js
+const royalties = [
+  {
+    address: '0xf8d6e0586b0a20c7',
+    receiverPath: '/public/flowTokenReceiver',
+    cut: '0.03',
+    // Description is an optional field
+    description: '0.3% of sale proceeds go to 0xf8d6e0586b0a20c7 in FLOW.',
+  },
+  {
+    address: '0x0ae53cb6e3f42a79',
+    receiverPath: '/public/flowTokenReceiver',
+    cut: '0.05'
+  },
+];
+
+await client.send(contract.setRoyalties(royalties));
 ```
