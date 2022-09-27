@@ -9,6 +9,7 @@ import {
   ownerAuthorizer,
   randomContractName,
   schema,
+  royaltiesTests
 } from '../testHelpers';
 
 describe('BlindNFTContract', () => {
@@ -74,4 +75,6 @@ describe('BlindNFTContract', () => {
       expect(onChainHash).toEqual(nft.metadataHash);
     }
   });
+
+  royaltiesTests(contract);
 });

@@ -9,6 +9,7 @@ import {
   ownerAuthorizer,
   randomContractName,
   schema,
+  royaltiesTests
 } from '../testHelpers';
 
 describe('BlindEditionNFTContract', () => {
@@ -108,4 +109,6 @@ describe('BlindEditionNFTContract', () => {
   it('should reveal edition 2 NFTs', async () => {
     await client.send(contract.revealNFTs(edition2mintedNFTs));
   });
+
+  royaltiesTests(contract);
 });

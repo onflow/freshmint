@@ -366,21 +366,32 @@ export class BoolValue {
   }
 }
 
-export function parsePath(path: string): { domain: string; identifier: string } {
-  const pathRegex = /\/(\w+)\/(\w+)/;
+export class Path {
+  domain: string;
+  identifier: string;
 
-  const parts = path.match(pathRegex);
-
-  if (parts.length != 3) {
-    throw new Error(
-      `Invalid path. Path must contain a domain and identifier (e.g. "/public/flowTokenVault"), but received: "${path}"`,
-    );
+  constructor({ domain, identifier }: { domain: string; identifier: string }) {
+    this.domain = domain;
+    this.identifier = identifier;
   }
 
-  const [domain, identifier] = parts.slice(1);
+  static fromString(path: string): Path {
+    const pathRegex = /\/(\w+)\/(\w+)/;
 
-  return {
-    domain,
-    identifier,
-  };
+    const parts = path.match(pathRegex);
+
+    if (parts.length != 3) {
+      throw new Error(
+        `Invalid path. Path must contain a domain and identifier (e.g. "/public/flowTokenVault"), but received: "${path}"`,
+      );
+    }
+
+    const [domain, identifier] = parts.slice(1);
+
+    return new Path({ domain, identifier });
+  }
+
+  toString(): string {
+    return `/${this.domain}/${this.identifier}`;
+  }
 }

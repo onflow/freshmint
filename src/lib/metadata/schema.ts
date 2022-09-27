@@ -1,5 +1,5 @@
 import { Field, FieldMap, FieldInput, String, IPFSFile, parseFields, FieldTypes, FieldType } from './fields';
-import { View, ViewInput, DisplayView, parseViews } from './views';
+import { View, ViewInput, DisplayView, RoyaltiesView, parseViews } from './views';
 
 type ViewsThunk = (fields: FieldMap) => View[];
 
@@ -118,5 +118,6 @@ export const defaultSchema = createSchema({
       description: fields.description,
       thumbnail: fields.thumbnail,
     }),
+    RoyaltiesView()
   ],
 });
