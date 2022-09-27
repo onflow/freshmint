@@ -61,8 +61,8 @@ export class ClaimSaleContract {
         args: [
           fcl.arg(id, t.String),
           fcl.arg(price, t.UFix64),
-          fcl.arg(paymentReceiverAddress, t.Address),
-          fcl.arg(parsePath(paymentReceiverPath), t.Path),
+          fcl.arg(paymentReceiverAddress, t.Optional(t.Address)),
+          fcl.arg(parsePath(paymentReceiverPath), t.Optional(t.Path)),
           fcl.arg(bucket, t.Optional(t.String)),
           fcl.arg(allowlist ?? null, t.Optional(t.String)),
         ],
