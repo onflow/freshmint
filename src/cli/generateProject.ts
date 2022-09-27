@@ -24,18 +24,18 @@ export async function generateProject(dir: string, contract: ContractConfig, nft
   await createReadme(dir, contract.name, { nftDataPath });
 }
 
-const imports = {
-  NonFungibleToken: `"./NonFungibleToken.cdc"`,
-  MetadataViews: `"./MetadataViews.cdc"`,
-  FungibleToken: `"./FungibleToken.cdc"`,
-  FlowToken: `"./FlowToken.cdc"`,
-  FreshmintLockBox: `"./FreshmintLockBox.cdc"`,
-  FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`,
+const contracts = {
+  NonFungibleToken: './NonFungibleToken.cdc',
+  MetadataViews: './MetadataViews.cdc',
+  FungibleToken: './FungibleToken.cdc',
+  FlowToken: './FlowToken.cdc',
+  FreshmintLockBox: './FreshmintLockBox.cdc',
+  FreshmintMetadataViews: './FreshmintMetadataViews.cdc',
+  FreshmintClaimSale: './FreshmintClaimSale.cdc',
 };
 
-// TODO: this is a workaround to fix the relative import in this file.
-// Find a better solution.
-const adjustedImports = shiftImports('../contracts/', imports);
+const imports = prepareImports(contracts);
+const shiftedImports = prepareImports(contracts, '../contracts');
 
 export async function generateProjectCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
   switch (contract.type) {
@@ -65,7 +65,7 @@ async function generateStandardProject(dir: string, contract: ContractConfig, in
   await writeFile(path.resolve(dir, `cadence/contracts/${contract.name}.cdc`), contractSource);
 
   const mintTransaction = StandardNFTGenerator.mint({
-    imports: adjustedImports,
+    imports: shiftedImports,
     contractName: contract.name,
     contractAddress,
     schema: contract.schema,
@@ -74,7 +74,7 @@ async function generateStandardProject(dir: string, contract: ContractConfig, in
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
 
   const mintWithClaimKeyTransaction = StandardNFTGenerator.mintWithClaimKey({
-    imports: adjustedImports,
+    imports: shiftedImports,
     contractName: contract.name,
     contractAddress,
     schema: contract.schema,
@@ -88,7 +88,7 @@ async function generateStandardProject(dir: string, contract: ContractConfig, in
 
   await writeFile(
     path.resolve(dir, `cadence/scripts/get_nft.cdc`),
-    CommonNFTGenerator.getNFT({ imports: adjustedImports, contractName: contract.name, contractAddress }),
+    CommonNFTGenerator.getNFT({ imports: shiftedImports, contractName: contract.name, contractAddress }),
   );
 }
 
@@ -105,7 +105,7 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   await writeFile(path.resolve(dir, `cadence/contracts/${contract.name}.cdc`), contractSource);
 
   const createEditionsTransaction = EditionNFTGenerator.createEditions({
-    imports: adjustedImports,
+    imports: shiftedImports,
     contractName: contract.name,
     contractAddress,
     schema: contract.schema,
@@ -114,7 +114,7 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   await writeFile(path.resolve(dir, 'cadence/transactions/create_editions.cdc'), createEditionsTransaction);
 
   const mintTransaction = EditionNFTGenerator.mint({
-    imports: adjustedImports,
+    imports: shiftedImports,
     contractName: contract.name,
     contractAddress,
   });
@@ -122,7 +122,7 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
 
   const mintWithClaimKeyTransaction = EditionNFTGenerator.mintWithClaimKey({
-    imports: adjustedImports,
+    imports: shiftedImports,
     contractName: contract.name,
     contractAddress,
   });
@@ -135,7 +135,7 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
 
   await writeFile(
     path.resolve(dir, `cadence/scripts/get_nft.cdc`),
-    CommonNFTGenerator.getNFT({ imports: adjustedImports, contractName: contract.name, contractAddress }),
+    CommonNFTGenerator.getNFT({ imports: shiftedImports, contractName: contract.name, contractAddress }),
   );
 }
 
@@ -163,7 +163,7 @@ async function generateFreshmintClaimSale(dir: string, contract: ContractConfig)
     ClaimSaleGenerator.startSale({
       contractName: contract.name,
       contractAddress,
-      imports: adjustedImports,
+      imports: shiftedImports,
     }),
   );
 
@@ -172,7 +172,7 @@ async function generateFreshmintClaimSale(dir: string, contract: ContractConfig)
     ClaimSaleGenerator.stopSale({
       contractName: contract.name,
       contractAddress,
-      imports: adjustedImports,
+      imports: shiftedImports,
     }),
   );
 
@@ -181,14 +181,14 @@ async function generateFreshmintClaimSale(dir: string, contract: ContractConfig)
     ClaimSaleGenerator.claimNFT({
       contractName: contract.name,
       contractAddress,
-      imports: adjustedImports,
+      imports: shiftedImports,
     }),
   );
 
   await writeFile(
     path.resolve(dir, `cadence/scripts/get_drop.cdc`),
     ClaimSaleGenerator.getClaimSale({
-      imports: adjustedImports,
+      imports: shiftedImports,
     }),
   );
 }
@@ -266,13 +266,30 @@ async function writeFile(filePath: string, data: any) {
   }
 }
 
-// Shift all import paths by joining with the provided base path.
-function shiftImports(basePath: string, imports: ContractImports): ContractImports {
-  const newImports = {};
+function prepareImports(imports: ContractImports, basePath?: string): ContractImports {
+  const preparedImports = {};
 
   for (const key in imports) {
-    newImports[key] = path.join(basePath, imports[key]);
+    let importPath = imports[key];
+
+    // If base path is provided, shift import path by joining with the base path
+    if (basePath) {
+      importPath = shiftImport(importPath, basePath);
+    }
+
+    // Escape the import path as a Cadence-safe string
+    importPath = escapeImport(importPath);
+
+    preparedImports[key] = importPath;
   }
 
-  return newImports;
+  return preparedImports;
+}
+
+function shiftImport(importPath: string, basePath: string): string {
+  return path.join(basePath, importPath);
+}
+
+function escapeImport(importPath: string): string {
+  return `"${importPath}"`;
 }
