@@ -11,6 +11,7 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../../../cadence/common-nft/scripts/get_nft.cdc', { imports, contractName, contractAddress });
+    return this.generate('../../../cadence/common-nft/scripts/get_nft.template.cdc', { imports, contractName, contractAddress });
+  }
   }
 }
