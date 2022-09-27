@@ -72,4 +72,25 @@ export default class FlowGateway {
       { type: t.Array(t.String), value: publicKeys },
     ]);
   }
+
+  async startDrop(saleId: string, price: string) {
+    return await this.flow.transaction('./cadence/transactions/start_drop.cdc', `${this.network}-account`, [
+      { type: t.String, value: saleId },
+      { type: t.UFix64, value: price },
+      { type: t.Optional(t.Address), value: null },
+      { type: t.Optional(t.Path), value: null },
+      { type: t.Optional(t.String), value: null },
+      { type: t.Optional(t.String), value: null },
+    ]);
+  }
+
+  async getDrop() {
+    return await this.flow.script('./cadence/transactions/get_drop.cdc', []);
+  }
+
+  async stopDrop(saleId: string) {
+    return await this.flow.transaction('./cadence/transactions/stop_drop.cdc', `${this.network}-account`, [
+      { type: t.String, value: saleId },
+    ]);
+  }
 }

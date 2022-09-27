@@ -14,12 +14,14 @@ import * as models from './models';
 export default class Fresh {
   config: FreshmintConfig;
   network: string;
+  flowGateway: FlowGateway;
 
   storage: Storage;
 
   constructor(config: FreshmintConfig, network: string) {
     this.config = config;
     this.network = network;
+    this.flowGateway = new FlowGateway(this.network);
 
     this.storage = new Storage('freshdb', { baseSelector: { network: this.network } });
   }
@@ -40,9 +42,7 @@ export default class Fresh {
       metadataProcessor.addFieldProcessor(ipfsFileProcessor);
     }
 
-    const flowGateway = new FlowGateway(this.network);
-
-    return createMinter(this.config.contract, metadataProcessor, flowGateway, this.storage);
+    return createMinter(this.config.contract, metadataProcessor, this.flowGateway, this.storage);
   }
 
   async getNFT(tokenId: string): Promise<models.NFT> {
@@ -102,5 +102,17 @@ export default class Fresh {
     await csvWriter.writeRecords(records);
 
     return nfts.length;
+  }
+
+  async startDrop(price: string) {
+    await this.flowGateway.startDrop('default', price);
+  }
+
+  async getDrop() {
+    return this.flowGateway.getDrop();
+  }
+
+  async stopDrop() {
+    await this.flowGateway.stopDrop('default');
   }
 }

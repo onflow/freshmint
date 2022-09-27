@@ -51,6 +51,20 @@ async function main() {
     .action(getNFT);
 
   program
+    .command('start-drop <price>')
+    .description('start a new drop')
+    .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
+    .action(startDrop);
+
+  program
+    .command('stop-drop')
+    .description('stop the current drop')
+    .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
+    .action(stopDrop);
+
+  // TODO: add get-drop command
+
+  program
     .command('dump <csv-path>')
     .description('dump all NFT data to a CSV file')
     .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
@@ -163,6 +177,25 @@ async function getNFT(tokenId: string, { network }: { network: string }) {
   const output = getNFTOutput(nft, config.contract);
 
   alignOutput(output);
+}
+
+async function startDrop(price: string, { network }: { network: string }) {
+  const config = loadConfig();
+  const fresh = new Fresh(config, network);
+
+  await fresh.startDrop(price);
+
+  // TODO: return confirmation to user
+}
+
+async function stopDrop({ network }: { network: string }) {
+  const config = loadConfig();
+  const fresh = new Fresh(config, network);
+
+  await fresh.stopDrop();
+
+  // TODO: return confirmation to user
+  // TODO: return error if no drop is active
 }
 
 function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
