@@ -24,43 +24,35 @@ export async function generateProject(dir: string, contract: ContractConfig, nft
   await createReadme(dir, contract.name, { nftDataPath });
 }
 
-export async function generateProjectCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
-  const imports = {
-    NonFungibleToken: `"./NonFungibleToken.cdc"`,
-    MetadataViews: `"./MetadataViews.cdc"`,
-    FungibleToken: `"./FungibleToken.cdc"`,
-    FlowToken: `"./FlowToken.cdc"`,
-    FreshmintLockBox: `"./FreshmintLockBox.cdc"`,
-    FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`,
-  };
+const imports = {
+  NonFungibleToken: `"./NonFungibleToken.cdc"`,
+  MetadataViews: `"./MetadataViews.cdc"`,
+  FungibleToken: `"./FungibleToken.cdc"`,
+  FlowToken: `"./FlowToken.cdc"`,
+  FreshmintLockBox: `"./FreshmintLockBox.cdc"`,
+  FreshmintMetadataViews: `"./FreshmintMetadataViews.cdc"`,
+};
 
+// TODO: this is a workaround to fix the relative import in this file.
+// Find a better solution.
+const adjustedImports = shiftImports('../contracts/', imports);
+
+export async function generateProjectCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
   switch (contract.type) {
     case ContractType.Standard:
-      await generateStandardProject(dir, contract, imports, includeCSVFile);
+      await generateStandardProject(dir, contract, includeCSVFile);
       break;
     case ContractType.Edition:
-      await generateEditionProject(dir, contract, imports, includeCSVFile);
+      await generateEditionProject(dir, contract, includeCSVFile);
       break;
   }
 
-  await writeFile(path.resolve(dir, `cadence/contracts/FreshmintLockBox.cdc`), LockBoxGenerator.contract({ imports }));
-  await writeFile(
-    path.resolve(dir, `cadence/contracts/FreshmintClaimSale.cdc`),
-    ClaimSaleGenerator.contract({ imports }),
-  );
-
-  await writeFile(
-    path.resolve(dir, `cadence/contracts/FreshmintMetadataViews.cdc`),
-    FreshmintMetadataViewsGenerator.contract(),
-  );
+  await generateFreshmintMetadataViews(dir);
+  await generateFreshmintLockBox(dir);
+  await generateFreshmintClaimSale(dir, contract);
 }
 
-async function generateStandardProject(
-  dir: string,
-  contract: ContractConfig,
-  imports: ContractImports,
-  includeCSVFile = true,
-) {
+async function generateStandardProject(dir: string, contract: ContractConfig, includeCSVFile = true) {
   const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
   const contractSource = StandardNFTGenerator.contract({
@@ -71,16 +63,6 @@ async function generateStandardProject(
   });
 
   await writeFile(path.resolve(dir, `cadence/contracts/${contract.name}.cdc`), contractSource);
-
-  const adjustedImports = {
-    ...imports,
-    // TODO: this is a workaround to fix the relative import in this file.
-    // Find a better solution.
-    NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    MetadataViews: `"../contracts/MetadataViews.cdc"`,
-    FreshmintLockBox: `"../contracts/FreshmintLockBox.cdc"`,
-    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
-  };
 
   const mintTransaction = StandardNFTGenerator.mint({
     imports: adjustedImports,
@@ -110,12 +92,7 @@ async function generateStandardProject(
   );
 }
 
-async function generateEditionProject(
-  dir: string,
-  contract: ContractConfig,
-  imports: ContractImports,
-  includeCSVFile = true,
-) {
+async function generateEditionProject(dir: string, contract: ContractConfig, includeCSVFile = true) {
   const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
   const contractSource = EditionNFTGenerator.contract({
@@ -126,16 +103,6 @@ async function generateEditionProject(
   });
 
   await writeFile(path.resolve(dir, `cadence/contracts/${contract.name}.cdc`), contractSource);
-
-  const adjustedImports = {
-    ...imports,
-    // TODO: this is a workaround to fix the relative import in this file.
-    // Find a better solution.
-    NonFungibleToken: `"../contracts/NonFungibleToken.cdc"`,
-    MetadataViews: `"../contracts/MetadataViews.cdc"`,
-    FreshmintLockBox: `"../contracts/FreshmintLockBox.cdc"`,
-    FreshmintMetadataViews: `"../contracts/FreshmintMetadataViews.cdc"`,
-  };
 
   const createEditionsTransaction = EditionNFTGenerator.createEditions({
     imports: adjustedImports,
@@ -169,6 +136,60 @@ async function generateEditionProject(
   await writeFile(
     path.resolve(dir, `cadence/scripts/get_nft.cdc`),
     CommonNFTGenerator.getNFT({ imports: adjustedImports, contractName: contract.name, contractAddress }),
+  );
+}
+
+async function generateFreshmintMetadataViews(dir: string) {
+  await writeFile(
+    path.resolve(dir, `cadence/contracts/FreshmintMetadataViews.cdc`),
+    FreshmintMetadataViewsGenerator.contract(),
+  );
+}
+
+async function generateFreshmintLockBox(dir: string) {
+  await writeFile(path.resolve(dir, `cadence/contracts/FreshmintLockBox.cdc`), LockBoxGenerator.contract({ imports }));
+}
+
+async function generateFreshmintClaimSale(dir: string, contract: ContractConfig) {
+  await writeFile(
+    path.resolve(dir, `cadence/contracts/FreshmintClaimSale.cdc`),
+    ClaimSaleGenerator.contract({ imports }),
+  );
+
+  const contractAddress = `"../contracts/${contract.name}.cdc"`;
+
+  await writeFile(
+    path.resolve(dir, `cadence/transactions/start_drop.cdc`),
+    ClaimSaleGenerator.startSale({
+      contractName: contract.name,
+      contractAddress,
+      imports: adjustedImports,
+    }),
+  );
+
+  await writeFile(
+    path.resolve(dir, `cadence/transactions/stop_drop.cdc`),
+    ClaimSaleGenerator.stopSale({
+      contractName: contract.name,
+      contractAddress,
+      imports: adjustedImports,
+    }),
+  );
+
+  await writeFile(
+    path.resolve(dir, `cadence/transactions/claim_nft.cdc`),
+    ClaimSaleGenerator.claimNFT({
+      contractName: contract.name,
+      contractAddress,
+      imports: adjustedImports,
+    }),
+  );
+
+  await writeFile(
+    path.resolve(dir, `cadence/scripts/get_drop.cdc`),
+    ClaimSaleGenerator.getClaimSale({
+      imports: adjustedImports,
+    }),
   );
 }
 
@@ -243,4 +264,15 @@ async function writeFile(filePath: string, data: any) {
   } catch (err: any) {
     throw new Error(err);
   }
+}
+
+// Shift all import paths by joining with the provided base path.
+function shiftImports(basePath: string, imports: ContractImports): ContractImports {
+  const newImports = {};
+
+  for (const key in imports) {
+    newImports[key] = path.join(basePath, imports[key]);
+  }
+
+  return newImports;
 }
