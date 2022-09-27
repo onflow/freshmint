@@ -23,7 +23,7 @@ pub contract FreshmintClaimSale {
     ///
     pub resource interface SaleCollectionPublic {
         pub fun getIDs(): [String]
-        pub fun borrowSale(id: String): &Sale
+        pub fun borrowSale(id: String): &Sale?
     }
 
     /// A SaleCollection is a container that holds one or
@@ -59,8 +59,8 @@ pub contract FreshmintClaimSale {
             return self.sales.keys
         }
         
-        pub fun borrowSale(id: String): &Sale {
-            return (&self.sales[id] as &Sale?)!
+        pub fun borrowSale(id: String): &Sale? {
+            return (&self.sales[id] as &Sale?)
         }
     }
 
