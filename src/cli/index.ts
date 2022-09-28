@@ -13,6 +13,7 @@ import inquirer from 'inquirer';
 import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
+import { runDevServer } from './devServer';
 import { loadConfig, ContractType, FreshmintConfigSchema, ContractConfig } from './config';
 import { metadata } from '../lib';
 import { generateProjectCadence } from './generateProject';
@@ -34,6 +35,8 @@ function parseIntOption(value: string) {
 
 async function main() {
   program.command('start <project-path>').description('initialize a new project').action(start);
+
+  program.command('dev').description('start the Freshmint development server').action(dev);
 
   program
     .command('mint')
@@ -87,6 +90,10 @@ async function main() {
 
 async function start(projectPath: string) {
   await startCommand(spinner, projectPath);
+}
+
+async function dev() {
+  await runDevServer();
 }
 
 async function mint({
