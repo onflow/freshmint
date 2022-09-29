@@ -104,10 +104,10 @@ pub contract FreshmintClaimSale {
         pub let price: UFix64
         pub let paymentVaultType: Type
         pub let size: Int
-        pub fun supply(): Int
+        pub fun getSupply(): Int
         pub fun isActive(): Bool
 
-        pub fun info(): SaleInfo
+        pub fun getInfo(): SaleInfo
 
         pub fun claim(payment: @FungibleToken.Vault, address: Address)
 
@@ -125,17 +125,6 @@ pub contract FreshmintClaimSale {
         pub let price: UFix64
         pub let paymentVaultType: Type
         pub let size: Int
-
-        pub fun info(): SaleInfo {
-            return SaleInfo(
-                id: self.id,
-                price: self.price,
-                paymentVaultType: self.paymentVaultType,
-                size: self.size,
-                supply: self.supply(),
-                isActive: self.isActive()
-            )
-        }
 
         /// A capability to the underlying base NFT collection
         /// that will store the claimable NFTs.
@@ -184,12 +173,23 @@ pub contract FreshmintClaimSale {
             }
         }
 
-        pub fun supply(): Int {
+        pub fun getInfo(): SaleInfo {
+            return SaleInfo(
+                id: self.id,
+                price: self.price,
+                paymentVaultType: self.paymentVaultType,
+                size: self.size,
+                supply: self.getSupply(),
+                isActive: self.isActive()
+            )
+        }
+
+        pub fun getSupply(): Int {
             return self.collection.borrow()!.getIDs().length
         }
 
         pub fun isActive(): Bool {
-            return self.supply() != 0
+            return self.getSupply() != 0
         }
 
         /// If an allowlist is set,
