@@ -185,7 +185,10 @@ pub contract FreshmintClaimSale {
         }
 
         pub fun getSupply(): Int {
-            return self.collection.borrow()!.getIDs().length
+            let collection = self.collection.borrow() 
+                ?? panic("failed to borrow sale collection") 
+
+            return collection.getIDs().length
         }
 
         pub fun isActive(): Bool {
@@ -230,7 +233,8 @@ pub contract FreshmintClaimSale {
 
             self.checkAllowlist(address: address)
 
-            let collection = self.collection.borrow()!
+            let collection = self.collection.borrow()
+                ?? panic("failed to borrow sale collection") 
 
             let ids = collection.getIDs()
 
@@ -261,7 +265,8 @@ pub contract FreshmintClaimSale {
         /// Callers can use this to read information about NFTs in this lock box.
         ///
         pub fun borrowCollection(): &AnyResource{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection} {
-            let collection = self.collection.borrow()!
+            let collection = self.collection.borrow() 
+                ?? panic("failed to borrow sale collection")
             return collection as! &AnyResource{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}
         }
     }
