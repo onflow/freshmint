@@ -74,22 +74,19 @@ pub contract FreshmintClaimSale {
         pub let paymentVaultType: Type
         pub let size: Int
         pub let supply: Int
-        pub let isActive: Bool
 
         init(
             id: String,
             price: UFix64,
             paymentVaultType: Type,
             size: Int,
-            supply: Int,
-            isActive: Bool
+            supply: Int
         ) {
             self.id = id
             self.price = price
             self.paymentVaultType = paymentVaultType
             self.size = size
             self.supply = supply
-            self.isActive = isActive
         }
     }
 
@@ -105,7 +102,6 @@ pub contract FreshmintClaimSale {
         pub let paymentVaultType: Type
         pub let size: Int
         pub fun getSupply(): Int
-        pub fun isActive(): Bool
 
         pub fun getInfo(): SaleInfo
 
@@ -179,8 +175,7 @@ pub contract FreshmintClaimSale {
                 price: self.price,
                 paymentVaultType: self.paymentVaultType,
                 size: self.size,
-                supply: self.getSupply(),
-                isActive: self.isActive()
+                supply: self.getSupply()
             )
         }
 
@@ -189,10 +184,6 @@ pub contract FreshmintClaimSale {
                 ?? panic("failed to borrow sale collection") 
 
             return collection.getIDs().length
-        }
-
-        pub fun isActive(): Bool {
-            return self.getSupply() != 0
         }
 
         /// If an allowlist is set,
