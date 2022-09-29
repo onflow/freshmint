@@ -24,6 +24,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub var totalSupply: UInt64
 
     /// A placeholder image used to display NFTs that have not yet been revealed.
+    ///
     pub let placeholderImage: String
 
     {{> royaltiesFields contractName=contractName }}
@@ -70,10 +71,35 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
+    /// This dictionary holds the metadata for all NFTs
+    /// minted by this contract.
+    ///
+    /// When an NFT is revealed, its metadata is added to this 
+    /// dictionary.
+    ///
     access(contract) let metadata: {UInt64: Metadata}
 
+    /// Return the metadata for an NFT.
+    ///
+    /// This function returns nil if the NFT has not yet been revealed.
+    ///
     pub fun getMetadata(nftID: UInt64): Metadata? {
         return {{ contractName }}.metadata[nftID]
+    }
+
+    /// This dictionary stores all NFT IDs minted by this contract,
+    /// indexed by their metadata hash.
+    ///
+    /// It is populated at mint time and later used to validate
+    /// metadata hashes at reveal time.
+    ///
+    /// This dictionary is indexed by hash rather than by ID so that
+    /// the contract (and client software) can prevent duplicate mints.
+    ///
+    access(contract) let nftsByHash: {String: UInt64}
+
+    pub fun getNFTIDByHash(hash: String): UInt64? {
+        return {{ contractName }}.nftsByHash[hash]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
@@ -287,9 +313,20 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// that can later be used to verify the revealed NFT.
         ///
         pub fun mintNFT(hash: [UInt8]): @{{ contractName }}.NFT {
+            let hexHash = String.encodeHex(hash)
+
+            // Prevent multiple NFTs from being minted with the same metadata hash.
+            assert(
+                {{ contractName }}.nftsByHash[hexHash] == nil,
+                message: "an NFT has already been minted with hash=".concat(hexHash)
+            )
+
             let nft <- create {{ contractName }}.NFT(hash: hash)
 
             emit Minted(id: nft.id, hash: hash)
+
+            // Save the metadata hash so that it can later be validated on reveal. 
+            {{ contractName }}.nftsByHash[hexHash] = nft.id
 
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply + (1 as UInt64)
 
@@ -303,6 +340,23 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun revealNFT(id: UInt64, metadata: Metadata) {
             pre {
                 {{ contractName }}.metadata[id] == nil : "NFT has already been revealed"
+            }
+
+            // An NFT cannot be revealed unless the provided metadata values
+            // match the hash the was specified at mint time.
+
+            let hash = String.encodeHex(metadata.hash())
+
+            if let mintedID = {{ contractName }}.getNFTIDByHash(hash: hash) {
+                assert(
+                    id == mintedID,
+                    message: "the provided metadata hash matches NFT with ID="
+                        .concat(mintedID.toString())
+                        .concat(", but expected ID=")
+                        .concat(id.toString())
+                )
+            } else {
+                panic("the provided metadata hash does not match any minted NFTs")
             }
 
             {{ contractName }}.metadata[id] = metadata
@@ -364,6 +418,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.totalSupply = 0
 
         self.metadata = {}
+        self.nftsByHash = {}
 
         self.initAdmin(admin: {{#if saveAdminResourceToContractAccount }}self.account{{ else }}admin{{/if}})
 

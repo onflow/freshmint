@@ -43,7 +43,7 @@ describe('StandardNFTContract', () => {
   });
 
   it('should fail to mint NFTs before contract is deployed', async () => {
-    expect(async () => await client.send(contract.mintNFTs(nfts))).rejects.toThrow(MissingContractAddressError);
+    await expect(async () => await client.send(contract.mintNFTs(nfts))).rejects.toThrow(MissingContractAddressError);
   });
 
   it('should deploy a contract', async () => {
