@@ -12,7 +12,14 @@ import FungibleToken from {{{ imports.FungibleToken }}}
 /// 
 pub contract FreshmintClaimSale {
 
-    pub event Claimed(nftType: Type, nftID: UInt64)
+    /// The Claimed event is emitted when an NFT is claimed from a sale.
+    ///
+    pub event Claimed(
+        saleAddress: Address?,
+        saleID: string,
+        nftType: Type,
+        nftID: UInt64
+    )
 
     pub let SaleCollectionStoragePath: StoragePath
     pub let SaleCollectionPublicPath: PublicPath
@@ -245,7 +252,12 @@ pub contract FreshmintClaimSale {
                 .getCapability(self.receiverPath)
                 .borrow<&{NonFungibleToken.CollectionPublic}>()!
 
-            emit Claimed(nftType: nft.getType(), nftID: nft.id)
+            emit Claimed(
+                saleAddress: self.owner?.address,
+                saleID: self.id,
+                nftType: nft.getType(),
+                nftID: nft.id
+            )
 
             nftReceiver.deposit(token: <- nft)
         }
