@@ -7,43 +7,27 @@ import {
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
-  randomContractName,
-  schema,
-  royaltiesTests
+  getTestSchema,
+  getTestNFTs,
+  royaltiesTests,
 } from '../testHelpers';
 
 describe('BlindNFTContract', () => {
   const contract = new BlindNFTContract({
-    name: randomContractName(),
-    schema,
+    name: 'BlindNFT_Test',
+    schema: getTestSchema(),
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    contract.getSource(config.imports);
+    expect(contract.getSource(config.imports)).toMatchSnapshot();
   });
 
   it('should deploy a contract', async () => {
     await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm, 'sample-image.jpeg'));
   });
 
-  const nfts = [
-    {
-      name: 'NFT 1',
-      description: 'This is the first NFT.',
-      thumbnail: 'nft-1.jpeg',
-    },
-    {
-      name: 'NFT 2',
-      description: 'This is the second NFT.',
-      thumbnail: 'nft-2.jpeg',
-    },
-    {
-      name: 'NFT 3',
-      description: 'This is the third NFT.',
-      thumbnail: 'nft-3.jpeg',
-    },
-  ];
+  const nfts = getTestNFTs(3);
 
   let mintedNFTs: NFTMintResult[];
 
@@ -108,6 +92,7 @@ describe('BlindNFTContract', () => {
       name: 'NFT 4',
       description: 'This is the fourth NFT.',
       thumbnail: 'nft-4.jpeg',
+      serialNumber: '4',
     };
 
     const nft = {

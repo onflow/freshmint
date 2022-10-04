@@ -1,5 +1,5 @@
 import { registerHelper, registerPartial } from '../generators';
-import { Field, FieldMap, HTTPFile, IPFSFile } from './fields';
+import { Field, FieldMap, HTTPFile, IPFSFile, UInt64 } from './fields';
 
 export class View {
   type: ViewType<any>;
@@ -233,6 +233,23 @@ export const MediaView = defineView<{
   cadenceTypeString: 'Type<MetadataViews.Media>()',
   cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Media.partial.cdc',
   requiresMetadata: true,
+});
+
+export const SerialView = defineView<{ serialNumber: Field }>({
+  id: 'serial',
+  cadenceTypeString: 'Type<MetadataViews.Serial>()',
+  cadenceResolverFunction: 'resolveSerial',
+  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Serial.partial.cdc',
+  requiresMetadata: true,
+  transformOptions: (options) => {
+    if (options.serialNumber.type !== UInt64) {
+      throw new Error(
+        `The serialNumber field passed to SerialView must have type ${UInt64.cadenceType.label}. You passed the '${options.serialNumber.name}' field which has type ${options.serialNumber.type.cadenceType.label}.`,
+      );
+    }
+
+    return options;
+  },
 });
 
 const viewsTypesById: { [key: string]: ViewType<any> } = viewsTypes.reduce(

@@ -62,3 +62,10 @@ exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media
 }
 "
 `;
+
+exports[`SerialView generates a Cadence snippet 1`] = `
+"pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
+    return MetadataViews.Serial(metadata.serialNumber)
+}
+"
+`;

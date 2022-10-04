@@ -30,42 +30,74 @@ export const payerAuthorizer = new TransactionAuthorizer({ address: '0xf8d6e0586
 export const contractPublicKey = privateKey.getPublicKey();
 export const contractHashAlgorithm = HashAlgorithm.SHA3_256;
 
-export function randomContractName() {
-  return `Foo${Math.floor(Math.random() * 1000)}`;
+export function getTestSchema(includeSerialNumber = true): metadata.Schema {
+  const schema = metadata.createSchema({
+    fields: {
+      name: metadata.String(),
+      description: metadata.String(),
+      thumbnail: metadata.IPFSFile(),
+    },
+    views: (fields: metadata.FieldMap) => [
+      metadata.NFTView(),
+      metadata.DisplayView({
+        name: fields.name,
+        description: fields.description,
+        thumbnail: fields.thumbnail,
+      }),
+      metadata.ExternalURLView({
+        cadenceTemplate: `"http://foo.com/".concat(self.id.toString())`,
+      }),
+      metadata.NFTCollectionDisplayView({
+        name: 'My Collection',
+        description: 'This is my collection.',
+        url: 'http://foo.com',
+        media: {
+          ipfs: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
+          type: 'image/jpeg',
+        },
+      }),
+      metadata.NFTCollectionDataView(),
+      metadata.RoyaltiesView(),
+    ],
+  });
+
+  // Extend the schema with a serial number if requested
+  if (includeSerialNumber) {
+    return schema.extend(
+      metadata.createSchema({
+        fields: {
+          serialNumber: metadata.UInt64(),
+        },
+        views: (fields: metadata.FieldMap) => [metadata.SerialView({ serialNumber: fields.serialNumber })],
+      }),
+    );
+  }
+
+  return schema;
 }
 
-export const schema = metadata.createSchema({
-  fields: {
-    name: metadata.String(),
-    description: metadata.String(),
-    thumbnail: metadata.IPFSFile(),
-  },
-  views: (fields: metadata.FieldMap) => [
-    metadata.NFTView(),
-    metadata.DisplayView({
-      name: fields.name,
-      description: fields.description,
-      thumbnail: fields.thumbnail,
-    }),
-    metadata.ExternalURLView({
-      cadenceTemplate: `"http://foo.com/".concat(self.id.toString())`,
-    }),
-    metadata.NFTCollectionDisplayView({
-      name: 'My Collection',
-      description: 'This is my collection.',
-      url: 'http://foo.com',
-      media: {
-        ipfs: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
-        type: 'image/jpeg',
-      },
-    }),
-    metadata.NFTCollectionDataView(),
-    metadata.RoyaltiesView(),
-  ],
-});
+export function getTestNFTs(count: number, includeSerialNumber = true): metadata.MetadataMap[] {
+  const nfts: metadata.MetadataMap[] = [];
+
+  for (let i = 1; i <= count; i++) {
+    const nft: metadata.MetadataMap = {
+      name: `NFT ${i}`,
+      description: `This is NFT #${i}.`,
+      thumbnail: `nft-${i}.jpeg`,
+    };
+
+    if (includeSerialNumber) {
+      // Cadence UInt64 values must be passed as strings
+      nft.serialNumber = i.toString();
+    }
+
+    nfts.push(nft);
+  }
+
+  return nfts;
+}
 
 export function royaltiesTests(contract: NFTContract) {
-
   const royaltyA = {
     address: ownerAuthorizer.address,
     receiverPath: '/public/flowTokenReceiver',

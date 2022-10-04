@@ -127,6 +127,13 @@ export const UInt = defineField({
   sampleValue: '42',
 });
 
+export const UInt64 = defineField({
+  id: 'uint64',
+  label: 'UInt64',
+  cadenceType: t.UInt64,
+  sampleValue: '42',
+});
+
 export const Fix64 = defineField({
   id: 'fix64',
   label: 'Fix64',
@@ -171,7 +178,7 @@ export const IPFSImage = defineField({
   sampleValue: 'sample-image.jpeg',
 });
 
-export const fieldTypes: FieldType[] = [String, Int, UInt, Fix64, UFix64, Bool, IPFSImage, HTTPFile, IPFSFile];
+export const fieldTypes: FieldType[] = [String, Int, UInt, UInt64, Fix64, UFix64, Bool, IPFSImage, HTTPFile, IPFSFile];
 
 const fieldTypesById: { [key: string]: FieldType } = fieldTypes.reduce(
   (fields, field) => ({ [field.id]: field, ...fields }),
