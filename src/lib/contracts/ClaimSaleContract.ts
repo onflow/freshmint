@@ -141,7 +141,7 @@ export class ClaimSaleContract {
         };
       },
       ({ events }: TransactionResult) => {
-        const claimedEvent = events.find((event) => event.type.includes('.Claimed'));
+        const claimedEvent = events.find((event) => event.type.includes('FreshmintClaimSale.NFTClaimed'));
 
         const nftId = claimedEvent.data['nftID'];
 
