@@ -75,7 +75,7 @@ transaction(
             collection: self.collection,
             receiverPath: {{ contractName }}.CollectionPublicPath,
             paymentReceiver: self.paymentReceiver,
-            paymentPrice: price,
+            price: price,
             allowlist: self.allowlist
         )
 
