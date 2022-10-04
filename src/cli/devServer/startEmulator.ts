@@ -1,10 +1,15 @@
 import { spawnProcess } from './process';
 
-import { exec } from 'child_process';
+import { exec, ChildProcess } from 'child_process';
 
 const port = 8888;
 
-export type EmulatorProcess = { port: number; done: Promise<number>; showOutput: (show: boolean) => void };
+export type EmulatorProcess = {
+  port: number;
+  done: Promise<number>;
+  process: ChildProcess;
+  showOutput: (show: boolean) => void;
+};
 
 export type EmulatorTransaction = {
   id: string;
@@ -29,18 +34,16 @@ export async function startEmulator(handlers: EmulatorHandlers): Promise<Emulato
 
     let lastLogLine = '';
 
-    const handleStdout = (line: string) => {
+    const handleStdout = (line: string, process: ChildProcess) => {
       if (line.trim() === '') {
         return;
       }
 
       lastLogLine = line;
 
-      console.log(line);
-
       // The emulator is considered ready when the REST API launches
       if (line.includes('Starting REST API')) {
-        resolveStart({ port, done, showOutput });
+        resolveStart({ port, done, process, showOutput });
       }
 
       if (outputEnabled) {
@@ -55,13 +58,17 @@ export async function startEmulator(handlers: EmulatorHandlers): Promise<Emulato
     };
 
     const done = new Promise<number>((resolveRun) => {
-      spawnProcess('flow', ['emulator', '--verbose', '--log-format', 'json', '--rest-port', port.toString()], {
-        onClose: (code: number) => {
-          handlers.onExit(code, lastLogLine);
-          resolveRun(code);
+      const process = spawnProcess(
+        'flow',
+        ['emulator', '--verbose', '--log-format', 'json', '--rest-port', port.toString()],
+        {
+          onClose: (code: number) => {
+            handlers.onExit(code, lastLogLine);
+            resolveRun(code);
+          },
+          onStdout: (line: string) => handleStdout(line, process),
         },
-        onStdout: (line: string) => handleStdout(line),
-      });
+      );
     });
   });
 }

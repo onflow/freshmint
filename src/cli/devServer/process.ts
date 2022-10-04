@@ -1,11 +1,12 @@
 import { spawn, ChildProcess } from 'child_process';
 
 export type CloseHandler = (code: number) => void;
-export type StdoutHandler = (line: string) => void;
+export type OutputHandler = (line: string) => void;
 
 export type ProcessHandlers = {
   onClose?: CloseHandler;
-  onStdout?: StdoutHandler;
+  onStdout?: OutputHandler;
+  onStderr?: OutputHandler;
 };
 
 export function spawnProcess(command: string, args: string[], handlers: ProcessHandlers): ChildProcess {
@@ -20,6 +21,13 @@ export function spawnProcess(command: string, args: string[], handlers: ProcessH
       for (const line of lines) {
         handlers.onStdout(line);
       }
+    });
+  }
+
+  if (handlers.onStderr) {
+    process.stderr.on('data', (data) => {
+      const output = String(data);
+      handlers.onStderr(output);
     });
   }
 

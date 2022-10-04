@@ -6,6 +6,10 @@ import { deployContracts } from './deployContracts';
 
 export type ServerReadyHandler<T> = (value: T) => void;
 
+// TODO: clean up the child process handling logic
+//
+// Ensure that the emulator and dev wallet servers are never left running
+
 export async function runDevServer() {
   const emulator = await startEmulator({
     onTransaction: (tx: EmulatorTransaction) => {
@@ -16,7 +20,7 @@ export async function runDevServer() {
       }
     },
     onExit: (code: number, message: string) => {
-      if (code === 1) {
+      if (code !== 0) {
         console.error(chalk.redBright('error - emulator failed with error:'));
         console.error(chalk.red(message));
       }
@@ -38,13 +42,21 @@ export async function runDevServer() {
     }`,
   );
 
-  await deployContracts();
+  try {
+    await deployContracts();
+    console.log(`${chalk.green('ready')} - project contracts deployed`);
+  } catch (error) {
+    console.log(`${chalk.redBright('error - failed to deploy contracts:')}\n\n${chalk.red(error)}`);
 
-  console.log(`${chalk.green('ready')} - project contracts deployed`);
+    // Stop the emulator and dev wallet
+    emulator.process.kill();
+    devWallet.process.kill();
+  }
 
   // Enable emulator output after contracts are deployed
   emulator.showOutput(true);
 
   // Wait for the emulator and dev wallet to exit
-  await Promise.all([emulator.done, devWallet.done]);
+  await emulator.done;
+  await devWallet.done;
 }
