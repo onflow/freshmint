@@ -76,16 +76,20 @@ export class Schema {
   // TODO: include options in extend
   extend(schema: Schema | FieldTypes) {
     let fieldMap: FieldMap;
+    let views: View[];
 
     if (schema instanceof Schema) {
       fieldMap = schema.getFieldsByName();
+      views = schema.views;
     } else {
       fieldMap = Schema.prepareFields(schema);
+      views = [];
     }
 
     const newFieldMap = Object.assign({}, this.#fieldMap, fieldMap);
+    const newViews = this.views.concat(views);
 
-    return new Schema(newFieldMap, this.views);
+    return new Schema(newFieldMap, newViews);
   }
 
   export(): SchemaInput {
@@ -118,6 +122,6 @@ export const defaultSchema = createSchema({
       description: fields.description,
       thumbnail: fields.thumbnail,
     }),
-    RoyaltiesView()
+    RoyaltiesView(),
   ],
 });
