@@ -517,7 +517,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
 
     init(admin: AuthAccount, placeholderImage: String) {
 
-        self.version = \\"0.0.28\\"
+        self.version = \\"0.0.29\\"
 
         self.CollectionPublicPath = BlindEditionNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = BlindEditionNFT_Test.getStoragePath(suffix: \\"Collection\\")
