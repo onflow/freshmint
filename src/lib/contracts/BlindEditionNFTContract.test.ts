@@ -7,20 +7,19 @@ import {
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
-  randomContractName,
-  schema,
-  royaltiesTests
+  getTestSchema,
+  royaltiesTests,
 } from '../testHelpers';
 
 describe('BlindEditionNFTContract', () => {
   const contract = new BlindEditionNFTContract({
-    name: randomContractName(),
-    schema,
+    name: 'BlindEditionNFT_Test',
+    schema: getTestSchema(false),
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    contract.getSource(config.imports);
+    expect(contract.getSource(config.imports)).toMatchSnapshot();
   });
 
   it('should deploy a contract', async () => {

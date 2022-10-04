@@ -3,9 +3,9 @@ import { ContractImports } from '../config';
 import TemplateGenerator from './TemplateGenerator';
 
 // Register the royalties partials
-registerPartial('royaltiesFields', '../../../cadence/common-nft/partials/royalties-fields.partial.cdc')
-registerPartial('royaltiesAdmin', '../../../cadence/common-nft/partials/royalties-admin.partial.cdc')
-registerPartial('royaltiesInit', '../../../cadence/common-nft/partials/royalties-init.partial.cdc')
+registerPartial('royaltiesFields', '../../../cadence/common-nft/partials/royalties-fields.partial.cdc');
+registerPartial('royaltiesAdmin', '../../../cadence/common-nft/partials/royalties-admin.partial.cdc');
+registerPartial('royaltiesInit', '../../../cadence/common-nft/partials/royalties-init.partial.cdc');
 
 export class CommonNFTGenerator extends TemplateGenerator {
   static getNFT({
@@ -17,7 +17,11 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../../../cadence/common-nft/scripts/get_nft.template.cdc', { imports, contractName, contractAddress });
+    return this.generate('../../../cadence/common-nft/scripts/get_nft.template.cdc', {
+      imports,
+      contractName,
+      contractAddress,
+    });
   }
 
   static setRoyalties({
