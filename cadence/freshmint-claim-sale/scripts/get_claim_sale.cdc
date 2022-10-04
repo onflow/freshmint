@@ -12,7 +12,7 @@ pub fun main(saleAddress: Address, saleID: String): FreshmintClaimSale.SaleInfo?
         .borrow<&{FreshmintClaimSale.SaleCollectionPublic}>() {
 
         if let sale = saleCollection.borrowSale(id: saleID) {
-            return sale.info()
+            return sale.getInfo()
         }
     }
 
