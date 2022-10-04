@@ -15,4 +15,5 @@ export {
   RoyaltiesView,
   NFTView,
   MediaView,
+  SerialView,
 } from './views';

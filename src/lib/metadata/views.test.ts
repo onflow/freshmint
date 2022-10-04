@@ -108,3 +108,20 @@ describe('NFTCollectionDisplayView', () => {
     expect(generateView(view)).toMatchSnapshot();
   });
 });
+
+describe('SerialView', () => {
+  it('generates a Cadence snippet', () => {
+    const serialNumberField = new metadata.Field('serialNumber', metadata.UInt64());
+    const serialView = metadata.SerialView({ serialNumber: serialNumberField });
+
+    expect(generateView(serialView)).toMatchSnapshot();
+  });
+
+  it('rejects a field that is not typed as UInt64', () => {
+    const invalidSerialNumberField = new metadata.Field('serialNumber', metadata.Int());
+
+    expect(() => metadata.SerialView({ serialNumber: invalidSerialNumberField })).toThrow(
+      `The serialNumber field passed to SerialView must have type UInt64. You passed the 'serialNumber' field which has type Int.`,
+    );
+  });
+});
