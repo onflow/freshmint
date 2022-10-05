@@ -1,0 +1,58 @@
+{
+  "name": "@freshmint/core",
+  "version": "0.0.27-alpha",
+  "description": "The minty fresh way to launch an NFT project.",
+  "contributors": [
+    "Mackenzie Kieran",
+    "Peter Siemens <peterjsiemens@gmail.com>"
+  ],
+  "license": "Apache-2.0",
+  "repository": "github:packagelabs/freshmint",
+  "keywords": [
+    "nft",
+    "blockchain"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./crypto": {
+      "require": "./dist/crypto/index.js",
+      "import": "./dist/crypto/index.mjs",
+      "types": "./dist/crypto/index.d.ts"
+    },
+    "./metadata": {
+      "require": "./dist/metadata/index.js",
+      "import": "./dist/metadata/index.mjs",
+      "types": "./dist/metadata/index.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "jest --runInBand --bail",
+    "build": "tsup index.ts crypto/index.ts metadata/index.ts --loader \".cdc=text\" --dts --sourcemap --format esm,cjs --splitting",
+    "dev": "npm run build -- --watch",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@onflow/fcl": "^1.2.0",
+    "@onflow/types": "^1.0.3",
+    "@onflow/util-address": "0.0.0",
+    "elliptic": "^6.5.4",
+    "handlebars": "^4.7.7",
+    "sha3": "^2.1.4"
+  },
+  "devDependencies": {
+    "@types/elliptic": "^6.4.14",
+    "@types/jest": "^28.1.6",
+    "jest": "^28.1.3",
+    "ts-jest": "^28.0.7",
+    "tsup": "^6.2.3"
+  }
+}

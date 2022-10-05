@@ -1,0 +1,32 @@
+{
+  "name": "@freshmint/react",
+  "version": "0.0.27-alpha",
+  "license": "Apache-2.0",
+  "repository": "github:packagelabs/freshmint",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup index.ts --dts --sourcemap --format esm,cjs",
+    "dev": "npm run build -- --watch",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@onflow/fcl": "^1.2.0",
+    "@onflow/flow-cadut": "^0.2.0-alpha.9",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.21",
+    "tsup": "^6.2.3"
+  }
+}
