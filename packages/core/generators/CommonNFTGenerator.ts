@@ -5,9 +5,9 @@ import { ContractImports } from '../config';
 import TemplateGenerator from './TemplateGenerator';
 
 // Register the royalties partials
-registerPartial('royaltiesFields', require('../../../cadence/common-nft/partials/royalties-fields.partial.cdc'));
-registerPartial('royaltiesAdmin', require('../../../cadence/common-nft/partials/royalties-admin.partial.cdc'));
-registerPartial('royaltiesInit', require('../../../cadence/common-nft/partials/royalties-init.partial.cdc'));
+registerPartial('royaltiesFields', require('../../../cadence/nfts/common/partials/royalties-fields.partial.cdc'));
+registerPartial('royaltiesAdmin', require('../../../cadence/nfts/common/partials/royalties-admin.partial.cdc'));
+registerPartial('royaltiesInit', require('../../../cadence/nfts/common/partials/royalties-init.partial.cdc'));
 
 export class CommonNFTGenerator extends TemplateGenerator {
   static getNFT({
@@ -19,7 +19,7 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate(require('../../../cadence/common-nft/scripts/get_nft.template.cdc'), {
+    return this.generate(require('../../../cadence/nfts/common/scripts/get_nft.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -35,7 +35,7 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate(require('../../../cadence/common-nft/transactions/set_royalties.template.cdc'), {
+    return this.generate(require('../../../cadence/nfts/common/transactions/set_royalties.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -51,7 +51,7 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate(require('../../../cadence/common-nft/scripts/get_royalties.template.cdc'), {
+    return this.generate(require('../../../cadence/nfts/common/scripts/get_royalties.template.cdc'), {
       imports,
       contractName,
       contractAddress,

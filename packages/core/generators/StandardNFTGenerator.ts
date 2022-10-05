@@ -16,7 +16,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
   }): string {
-    return this.generate(require('../../../cadence/standard-nft/StandardNFT.template.cdc'), {
+    return this.generate(require('../../../cadence/nfts/standard-nft/StandardNFT.template.cdc'), {
       imports,
       contractName,
       fields: schema.fields,
@@ -26,7 +26,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
   }
 
   static deploy(): string {
-    return this.generate(require('../../../cadence/standard-nft/transactions/deploy.cdc'));
+    return this.generate(require('../../../cadence/nfts/standard-nft/transactions/deploy.cdc'));
   }
 
   static mint({
@@ -40,7 +40,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
     contractAddress: string;
     schema: metadata.Schema;
   }): string {
-    return this.generate(require('../../../cadence/standard-nft/transactions/mint.template.cdc'), {
+    return this.generate(require('../../../cadence/nfts/standard-nft/transactions/mint.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -59,7 +59,7 @@ export class StandardNFTGenerator extends TemplateGenerator {
     contractAddress: string;
     schema: metadata.Schema;
   }): string {
-    return this.generate(require('../../../cadence/standard-nft/transactions/mint_with_claim_key.template.cdc'), {
+    return this.generate(require('../../../cadence/nfts/standard-nft/transactions/mint_with_claim_key.template.cdc'), {
       imports,
       contractName,
       contractAddress,
