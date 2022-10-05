@@ -9,7 +9,7 @@ const httpMedia = 'http://foo.com/nft.jpeg';
 const mediaType = 'image/jpeg';
 
 function generateView(view: metadata.View): string {
-  return TemplateGenerator.generate(view.type.cadenceTemplatePath, { view });
+  return TemplateGenerator.generate(view.type.cadenceTemplate, { view });
 }
 
 describe('NFTCollectionDisplayView', () => {

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+
 import { registerHelper, registerPartial } from '../generators';
 import { Field, FieldMap, HTTPFile, IPFSFile, UInt64 } from './fields';
 
@@ -49,7 +51,7 @@ export interface ViewType<ViewOptions> {
   id: string;
   cadenceTypeString: string;
   cadenceResolverFunction?: string;
-  cadenceTemplatePath: string;
+  cadenceTemplate: string;
   requiresMetadata: boolean;
 }
 
@@ -68,9 +70,9 @@ registerHelper('whichFilePartial', (field) => {
   throw 'field must be a file field';
 });
 
-registerPartial('viewCase', '../../../cadence/metadata-views/viewCase.partial.cdc');
-registerPartial(httpFilePartial, '../../../cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc');
-registerPartial(ipfsFilePartial, '../../../cadence/metadata-views/MetadataViews.IPFSFile.partial.cdc');
+registerPartial('viewCase', require('../../../cadence/metadata-views/viewCase.partial.cdc'));
+registerPartial(httpFilePartial, require('../../../cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc'));
+registerPartial(ipfsFilePartial, require('../../../cadence/metadata-views/MetadataViews.IPFSFile.partial.cdc'));
 
 export const viewsTypes: ViewType<any>[] = [];
 
@@ -78,14 +80,14 @@ export function defineView<ViewOptions>({
   id,
   cadenceTypeString,
   cadenceResolverFunction,
-  cadenceTemplatePath,
+  cadenceTemplate,
   requiresMetadata,
   transformOptions,
 }: {
   id: string;
   cadenceTypeString: string;
   cadenceResolverFunction?: string;
-  cadenceTemplatePath: string;
+  cadenceTemplate: string;
   requiresMetadata: boolean;
   transformOptions?: (options: ViewOptions) => ViewOptions;
 }): ViewType<ViewOptions> {
@@ -100,10 +102,10 @@ export function defineView<ViewOptions>({
   viewType.id = id;
   viewType.cadenceTypeString = cadenceTypeString;
   viewType.cadenceResolverFunction = cadenceResolverFunction;
-  viewType.cadenceTemplatePath = cadenceTemplatePath;
+  viewType.cadenceTemplate = cadenceTemplate;
   viewType.requiresMetadata = requiresMetadata;
 
-  registerPartial(id, cadenceTemplatePath);
+  registerPartial(id, cadenceTemplate);
 
   // Add this view to the view type list
   viewsTypes.push(viewType);
@@ -119,7 +121,7 @@ export const DisplayView = defineView<{
   id: 'display',
   cadenceTypeString: 'Type<MetadataViews.Display>()',
   cadenceResolverFunction: 'resolveDisplay',
-  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Display.partial.cdc',
+  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.Display.partial.cdc'),
   requiresMetadata: true,
 });
 
@@ -127,7 +129,7 @@ export const ExternalURLView = defineView<{ cadenceTemplate: string }>({
   id: 'external-url',
   cadenceTypeString: 'Type<MetadataViews.ExternalURL>()',
   cadenceResolverFunction: 'resolveExternalURL',
-  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.ExternalURL.partial.cdc',
+  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.ExternalURL.partial.cdc'),
   requiresMetadata: false,
 });
 
@@ -169,7 +171,7 @@ export const NFTCollectionDisplayView = defineView<{
   id: 'nft-collection-display',
   cadenceTypeString: 'Type<MetadataViews.NFTCollectionDisplay>()',
   cadenceResolverFunction: 'resolveNFTCollectionDisplay',
-  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc',
+  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc'),
   requiresMetadata: false,
   transformOptions: (options) => {
     // Convert the legacy IPFS format to the new generic file format.
@@ -205,7 +207,7 @@ export const NFTCollectionDataView = defineView<void>({
   id: 'nft-collection-data',
   cadenceTypeString: 'Type<MetadataViews.NFTCollectionData>()',
   cadenceResolverFunction: 'resolveNFTCollectionData',
-  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTCollectionData.partial.cdc',
+  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.NFTCollectionData.partial.cdc'),
   requiresMetadata: false,
 });
 
@@ -213,7 +215,7 @@ export const NFTView = defineView<void>({
   id: 'nft',
   cadenceTypeString: 'Type<MetadataViews.NFTView>()',
   cadenceResolverFunction: 'resolveNFTView',
-  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.NFTView.partial.cdc',
+  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.NFTView.partial.cdc'),
   requiresMetadata: true,
 });
 
@@ -221,7 +223,7 @@ export const RoyaltiesView = defineView<void>({
   id: 'royalties',
   cadenceTypeString: 'Type<MetadataViews.Royalties>()',
   cadenceResolverFunction: 'resolveRoyalties',
-  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Royalties.partial.cdc',
+  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.Royalties.partial.cdc'),
   requiresMetadata: false,
 });
 
@@ -231,7 +233,7 @@ export const MediaView = defineView<{
 }>({
   id: 'media',
   cadenceTypeString: 'Type<MetadataViews.Media>()',
-  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Media.partial.cdc',
+  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.Media.partial.cdc'),
   requiresMetadata: true,
 });
 
@@ -239,7 +241,7 @@ export const SerialView = defineView<{ serialNumber: Field }>({
   id: 'serial',
   cadenceTypeString: 'Type<MetadataViews.Serial>()',
   cadenceResolverFunction: 'resolveSerial',
-  cadenceTemplatePath: '../../../cadence/metadata-views/MetadataViews.Serial.partial.cdc',
+  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.Serial.partial.cdc'),
   requiresMetadata: true,
   transformOptions: (options) => {
     if (options.serialNumber.type !== UInt64) {
