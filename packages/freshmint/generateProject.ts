@@ -91,6 +91,11 @@ async function generateStandardProject(dir: string, contract: ContractConfig, in
     path.resolve(dir, `cadence/scripts/get_nft.cdc`),
     CommonNFTGenerator.getNFT({ imports: shiftedImports, contractName: contract.name, contractAddress }),
   );
+
+  await writeFile(
+    path.resolve(dir, `cadence/scripts/get_nfts.cdc`),
+    CommonNFTGenerator.getNFTs({ imports: shiftedImports, contractName: contract.name, contractAddress }),
+  );
 }
 
 async function generateEditionProject(dir: string, contract: ContractConfig, includeCSVFile = true) {
@@ -137,6 +142,11 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   await writeFile(
     path.resolve(dir, `cadence/scripts/get_nft.cdc`),
     CommonNFTGenerator.getNFT({ imports: shiftedImports, contractName: contract.name, contractAddress }),
+  );
+
+  await writeFile(
+    path.resolve(dir, `cadence/scripts/get_nfts.cdc`),
+    CommonNFTGenerator.getNFTs({ imports: shiftedImports, contractName: contract.name, contractAddress }),
   );
 }
 
