@@ -17,6 +17,7 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@freshmint/cadence-loader": "^0.0.29-alpha",
     "@types/node": "^18.8.2",
     "@types/react": "18.0.21",
     "@types/react-dom": "18.0.6",
