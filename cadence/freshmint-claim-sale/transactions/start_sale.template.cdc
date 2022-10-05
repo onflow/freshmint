@@ -39,8 +39,8 @@ pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&F
 transaction(
     saleID: String,
     price: UFix64,
-    paymentReceiverAddress: Address,
-    paymentReceiverPath: PublicPath,
+    paymentReceiverAddress: Address?,
+    paymentReceiverPath: PublicPath?,
     collectionName: String?,
     allowlistName: String?
 ) {
@@ -59,8 +59,8 @@ transaction(
         self.collection = signer
             .getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(nftCollectionPrivatePath)
 
-        self.paymentReceiver = getAccount(paymentReceiverAddress)
-            .getCapability<&{FungibleToken.Receiver}>(paymentReceiverPath)
+        self.paymentReceiver = getAccount(paymentReceiverAddress ?? signer.address)
+            .getCapability<&{FungibleToken.Receiver}>(paymentReceiverPath ?? /public/flowTokenReceiver)
 
         if let name = allowlistName {
             self.allowlist = getAllowlist(account: signer, allowlistName: name)
@@ -72,11 +72,10 @@ transaction(
     execute {
         let sale <- FreshmintClaimSale.createSale(
             id: saleID,
-            nftType: Type<@{{ contractName }}.NFT>(),
             collection: self.collection,
             receiverPath: {{ contractName }}.CollectionPublicPath,
             paymentReceiver: self.paymentReceiver,
-            paymentPrice: price,
+            price: price,
             allowlist: self.allowlist
         )
 

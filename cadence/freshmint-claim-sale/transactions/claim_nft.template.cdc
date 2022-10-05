@@ -39,7 +39,7 @@ transaction(saleAddress: Address, saleID: String) {
         self.sale = getAccount(saleAddress)
             .getCapability(FreshmintClaimSale.SaleCollectionPublicPath)!
             .borrow<&{FreshmintClaimSale.SaleCollectionPublic}>()!
-            .borrowSale(id: saleID)
+            .borrowSale(id: saleID)!
 
         let vault = signer
             .borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)

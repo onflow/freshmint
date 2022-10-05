@@ -62,7 +62,7 @@ export class ClaimSaleContract {
           fcl.arg(id, t.String),
           fcl.arg(price, t.UFix64),
           fcl.arg(paymentReceiverAddress, t.Address),
-          fcl.arg(Path.fromString(paymentReceiverPath), t.Path),
+          fcl.arg(Path.fromString(paymentReceiverPath!), t.Path),
           fcl.arg(bucket, t.Optional(t.String)),
           fcl.arg(allowlist ?? null, t.Optional(t.String)),
         ],
@@ -141,7 +141,7 @@ export class ClaimSaleContract {
         };
       },
       ({ events }: TransactionResult) => {
-        const claimedEvent = events.find((event) => event.type.includes('.Claimed'));
+        const claimedEvent = events.find((event) => event.type.includes('FreshmintClaimSale.NFTClaimed'));
 
         const nftId = claimedEvent.data['nftID'];
 
