@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+
 import * as metadata from '../metadata';
 import { ContractImports } from '../config';
 import TemplateGenerator from './TemplateGenerator';
@@ -14,7 +16,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     schema: metadata.Schema;
     saveAdminResourceToContractAccount?: boolean;
   }): string {
-    return this.generate('../../../cadence/blind-edition-nft/BlindEditionNFT.template.cdc', {
+    return this.generate(require('../../../cadence/blind-edition-nft/BlindEditionNFT.template.cdc'), {
       imports,
       contractName,
       fields: schema.fields,
@@ -24,7 +26,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
   }
 
   static deploy(): string {
-    return this.generate('../../../cadence/blind-edition-nft/transactions/deploy.cdc', {});
+    return this.generate(require('../../../cadence/blind-edition-nft/transactions/deploy.cdc'), {});
   }
 
   static createEditions({
@@ -38,7 +40,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     contractAddress: string;
     schema: metadata.Schema;
   }): string {
-    return this.generate('../../../cadence/blind-edition-nft/transactions/create_editions.template.cdc', {
+    return this.generate(require('../../../cadence/blind-edition-nft/transactions/create_editions.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -55,7 +57,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../../../cadence/blind-edition-nft/transactions/mint.template.cdc', {
+    return this.generate(require('../../../cadence/blind-edition-nft/transactions/mint.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -71,7 +73,7 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../../../cadence/blind-edition-nft/transactions/reveal.template.cdc', {
+    return this.generate(require('../../../cadence/blind-edition-nft/transactions/reveal.template.cdc'), {
       imports,
       contractName,
       contractAddress,

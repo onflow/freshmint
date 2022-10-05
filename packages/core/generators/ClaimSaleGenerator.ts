@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+
 import { ContractImports } from '../config';
 import TemplateGenerator from './TemplateGenerator';
 
 export class ClaimSaleGenerator extends TemplateGenerator {
   static contract({ imports }: { imports: ContractImports }): string {
-    return this.generate('../../../cadence/freshmint-claim-sale/FreshmintClaimSale.cdc', {
+    return this.generate(require('../../../cadence/freshmint-claim-sale/FreshmintClaimSale.cdc'), {
       imports,
     });
   }
@@ -17,7 +19,7 @@ export class ClaimSaleGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../../../cadence/freshmint-claim-sale/transactions/start_sale.template.cdc', {
+    return this.generate(require('../../../cadence/freshmint-claim-sale/transactions/start_sale.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -33,7 +35,7 @@ export class ClaimSaleGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../../../cadence/freshmint-claim-sale/transactions/stop_sale.template.cdc', {
+    return this.generate(require('../../../cadence/freshmint-claim-sale/transactions/stop_sale.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -49,7 +51,7 @@ export class ClaimSaleGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../../../cadence/freshmint-claim-sale/transactions/claim_nft.template.cdc', {
+    return this.generate(require('../../../cadence/freshmint-claim-sale/transactions/claim_nft.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -65,7 +67,7 @@ export class ClaimSaleGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate('../../../cadence/freshmint-claim-sale/transactions/add_to_allowlist.cdc', {
+    return this.generate(require('../../../cadence/freshmint-claim-sale/transactions/add_to_allowlist.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -73,7 +75,7 @@ export class ClaimSaleGenerator extends TemplateGenerator {
   }
 
   static getClaimSale({ imports }: { imports: ContractImports }): string {
-    return this.generate('../../../cadence/freshmint-claim-sale/scripts/get_claim_sale.cdc', {
+    return this.generate(require('../../../cadence/freshmint-claim-sale/scripts/get_claim_sale.cdc'), {
       imports,
     });
   }

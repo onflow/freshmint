@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist"
   },
-  "include": ["."],
+  "include": ["./index.ts", "./crypto/index.ts", "./metadata/index.ts"],
   "exclude": [
     "dist",
     "node_modules",
