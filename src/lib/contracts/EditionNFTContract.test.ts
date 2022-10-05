@@ -7,19 +7,19 @@ import {
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
-  randomContractName,
-  schema,
+  getTestSchema,
+  royaltiesTests,
 } from '../testHelpers';
 
 describe('EditionNFTContract', () => {
   const contract = new EditionNFTContract({
-    name: randomContractName(),
-    schema,
+    name: 'EditionNFT_Test',
+    schema: getTestSchema(false),
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    contract.getSource(config.imports);
+    expect(contract.getSource(config.imports)).toMatchSnapshot();
   });
 
   it('should deploy a contract', async () => {
@@ -141,4 +141,6 @@ describe('EditionNFTContract', () => {
       await client.send(sale.stop(sale2));
     });
   });
+
+  royaltiesTests(contract);
 });

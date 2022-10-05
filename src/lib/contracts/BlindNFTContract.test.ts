@@ -7,47 +7,39 @@ import {
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
-  randomContractName,
-  schema,
+  getTestSchema,
+  getTestNFTs,
+  royaltiesTests,
 } from '../testHelpers';
 
 describe('BlindNFTContract', () => {
   const contract = new BlindNFTContract({
-    name: randomContractName(),
-    schema,
+    name: 'BlindNFT_Test',
+    schema: getTestSchema(),
     owner: ownerAuthorizer,
   });
 
   it('should generate a contract', async () => {
-    contract.getSource(config.imports);
+    expect(contract.getSource(config.imports)).toMatchSnapshot();
   });
 
   it('should deploy a contract', async () => {
     await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm, 'sample-image.jpeg'));
   });
 
+  const nfts = getTestNFTs(3);
+
   let mintedNFTs: NFTMintResult[];
 
   it('should mint NFTs', async () => {
-    const nfts = [
-      {
-        name: 'NFT 1',
-        description: 'This is the first NFT.',
-        thumbnail: 'nft-1.jpeg',
-      },
-      {
-        name: 'NFT 2',
-        description: 'This is the second NFT.',
-        thumbnail: 'nft-2.jpeg',
-      },
-      {
-        name: 'NFT 3',
-        description: 'This is the third NFT.',
-        thumbnail: 'nft-3.jpeg',
-      },
-    ];
-
     mintedNFTs = await client.send(contract.mintNFTs(nfts));
+  });
+
+  it('should fail to mint the same NFTs twice', async () => {
+    const nftA = mintedNFTs[0];
+    await expect(client.send(contract.mintHashedNFTs([nftA]))).rejects.toThrow(
+      `an NFT has already been minted with hash=${nftA.metadataHash}`,
+    );
   });
 
   const sale = new ClaimSaleContract(contract);
@@ -64,6 +56,56 @@ describe('BlindNFTContract', () => {
     await client.send(sale.stop('default'));
   });
 
+  it('should fail to reveal an NFT with metadata from another NFT', async () => {
+    const [nftA, nftB] = mintedNFTs;
+
+    const nft = {
+      id: nftA.id,
+      metadataSalt: nftB.metadataSalt,
+      metadata: nftB.metadata, // Use metadata from NFT B
+    };
+
+    await expect(client.send(contract.revealNFTs([nft]))).rejects.toThrow(
+      `the provided metadata hash matches NFT with ID=${nftB.id}, but expected ID=${nftA.id}`,
+    );
+  });
+
+  it('should fail to reveal an NFT with the wrong salt', async () => {
+    const [nftA, nftB] = mintedNFTs;
+
+    const nft = {
+      id: nftA.id,
+      metadataSalt: nftB.metadataSalt, // Use salt from NFT B
+      metadata: nftA.metadata,
+    };
+
+    await expect(client.send(contract.revealNFTs([nft]))).rejects.toThrow(
+      'the provided metadata hash does not match any minted NFTs',
+    );
+  });
+
+  it('should fail to reveal an NFT with metadata that was never minted', async () => {
+    const nftA = mintedNFTs[0];
+
+    // NFT 4 was never minted
+    const nonexistentMetadata = {
+      name: 'NFT 4',
+      description: 'This is the fourth NFT.',
+      thumbnail: 'nft-4.jpeg',
+      serialNumber: '4',
+    };
+
+    const nft = {
+      id: nftA.id,
+      metadataSalt: nftA.metadataSalt,
+      metadata: nonexistentMetadata,
+    };
+
+    await expect(client.send(contract.revealNFTs([nft]))).rejects.toThrow(
+      'the provided metadata hash does not match any minted NFTs',
+    );
+  });
+
   it('should reveal NFTs', async () => {
     await client.send(contract.revealNFTs(mintedNFTs));
 
@@ -74,4 +116,6 @@ describe('BlindNFTContract', () => {
       expect(onChainHash).toEqual(nft.metadataHash);
     }
   });
+
+  royaltiesTests(contract);
 });

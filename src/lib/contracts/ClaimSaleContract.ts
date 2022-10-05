@@ -9,7 +9,7 @@ import { ClaimSaleGenerator } from '../generators/ClaimSaleGenerator';
 import NFTContract from './NFTContract';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionAuthorizer, TransactionResult } from '../transactions';
-import { parsePath } from '../cadence/values';
+import { Path } from '../cadence/values';
 
 const flowTokenReceiverPublicPath = '/public/flowTokenReceiver';
 
@@ -61,8 +61,8 @@ export class ClaimSaleContract {
         args: [
           fcl.arg(id, t.String),
           fcl.arg(price, t.UFix64),
-          fcl.arg(paymentReceiverAddress, t.Optional(t.Address)),
-          fcl.arg(parsePath(paymentReceiverPath), t.Optional(t.Path)),
+          fcl.arg(paymentReceiverAddress, t.Address),
+          fcl.arg(Path.fromString(paymentReceiverPath!), t.Path),
           fcl.arg(bucket, t.Optional(t.String)),
           fcl.arg(allowlist ?? null, t.Optional(t.String)),
         ],

@@ -1,0 +1,367 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`StandardNFTContract should generate a contract 1`] = `
+"import NonFungibleToken from 0xf8d6e0586b0a20c7
+import MetadataViews from 0xf8d6e0586b0a20c7
+import FungibleToken from 0xee82856bf20e2aa6
+
+pub contract StandardNFT_Test: NonFungibleToken {
+
+    pub let version: String
+
+    pub event ContractInitialized()
+    pub event Withdraw(id: UInt64, from: Address?)
+    pub event Deposit(id: UInt64, to: Address?)
+    pub event Minted(id: UInt64)
+    pub event Burned(id: UInt64)
+
+    pub let CollectionStoragePath: StoragePath
+    pub let CollectionPublicPath: PublicPath
+    pub let CollectionPrivatePath: PrivatePath
+    pub let AdminStoragePath: StoragePath
+
+    /// The total number of StandardNFT_Test NFTs that have been minted.
+    ///
+    pub var totalSupply: UInt64
+
+    /// A list of royalty recipients that is attached to all NFTs
+    /// minted by this contract.
+    ///
+    access(contract) var royalties: [MetadataViews.Royalty]
+    
+    /// Return the royalty recipients for this contract.
+    ///
+    pub fun getRoyalties(): [MetadataViews.Royalty] {
+        return StandardNFT_Test.royalties
+    }
+
+    pub struct Metadata {
+
+        pub let name: String
+        pub let description: String
+        pub let thumbnail: String
+        pub let serialNumber: UInt64
+
+        init(
+            name: String,
+            description: String,
+            thumbnail: String,
+            serialNumber: UInt64,
+        ) {
+            self.name = name
+            self.description = description
+            self.thumbnail = thumbnail
+            self.serialNumber = serialNumber
+        }
+    }
+
+    pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
+
+        pub let id: UInt64
+        pub let metadata: Metadata
+
+        init(metadata: Metadata) {
+            self.id = self.uuid
+            self.metadata = metadata
+        }
+
+        pub fun getViews(): [Type] {
+            return [
+                Type<MetadataViews.NFTView>(),
+                Type<MetadataViews.Display>(),
+                Type<MetadataViews.ExternalURL>(),
+                Type<MetadataViews.NFTCollectionDisplay>(),
+                Type<MetadataViews.NFTCollectionData>(),
+                Type<MetadataViews.Royalties>(),
+                Type<MetadataViews.Serial>()
+            ]
+        }
+
+        pub fun resolveView(_ view: Type): AnyStruct? {
+            switch view {
+                case Type<MetadataViews.NFTView>():
+                    return self.resolveNFTView(self.metadata)
+                case Type<MetadataViews.Display>():
+                    return self.resolveDisplay(self.metadata)
+                case Type<MetadataViews.ExternalURL>():
+                    return self.resolveExternalURL()
+                case Type<MetadataViews.NFTCollectionDisplay>():
+                    return self.resolveNFTCollectionDisplay()
+                case Type<MetadataViews.NFTCollectionData>():
+                    return self.resolveNFTCollectionData()
+                case Type<MetadataViews.Royalties>():
+                    return self.resolveRoyalties()
+                case Type<MetadataViews.Serial>():
+                    return self.resolveSerial(self.metadata)
+            }
+
+            return nil
+        }
+
+        pub fun resolveNFTView(_ metadata: Metadata): MetadataViews.NFTView {
+            return MetadataViews.NFTView(
+                id: self.id,
+                uuid: self.uuid,
+                display: self.resolveDisplay(metadata),
+                externalURL: self.resolveExternalURL(),
+                collectionData: self.resolveNFTCollectionData(),
+                collectionDisplay: self.resolveNFTCollectionDisplay(),
+                royalties : self.resolveRoyalties(),
+                traits: nil
+            )
+        }
+        
+        pub fun resolveDisplay(_ metadata: Metadata): MetadataViews.Display {
+            return MetadataViews.Display(
+                name: metadata.name,
+                description: metadata.description,
+                thumbnail: MetadataViews.IPFSFile(cid: metadata.thumbnail, path: nil)
+            )
+        }
+        
+        pub fun resolveExternalURL(): MetadataViews.ExternalURL {
+            return MetadataViews.ExternalURL(\\"http://foo.com/\\".concat(self.id.toString()))
+        }
+        
+        pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
+            let media = MetadataViews.Media(
+                file: MetadataViews.IPFSFile(
+                    cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 
+                    path: nil
+                ),
+                mediaType: \\"image/jpeg\\"
+            )
+        
+            return MetadataViews.NFTCollectionDisplay(
+                name: \\"My Collection\\",
+                description: \\"This is my collection.\\",
+                externalURL: MetadataViews.ExternalURL(\\"http://foo.com\\"),
+                squareImage: media,
+                bannerImage: media,
+                socials: {}
+            )
+        }
+        
+        pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
+            return MetadataViews.NFTCollectionData(
+                storagePath: StandardNFT_Test.CollectionStoragePath,
+                publicPath: StandardNFT_Test.CollectionPublicPath,
+                providerPath: StandardNFT_Test.CollectionPrivatePath,
+                publicCollection: Type<&StandardNFT_Test.Collection{StandardNFT_Test.StandardNFT_TestCollectionPublic}>(),
+                publicLinkedType: Type<&StandardNFT_Test.Collection{StandardNFT_Test.StandardNFT_TestCollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Receiver, MetadataViews.ResolverCollection}>(),
+                providerLinkedType: Type<&StandardNFT_Test.Collection{StandardNFT_Test.StandardNFT_TestCollectionPublic, NonFungibleToken.CollectionPublic, NonFungibleToken.Provider, MetadataViews.ResolverCollection}>(),
+                createEmptyCollectionFunction: (fun (): @NonFungibleToken.Collection {
+                    return <-StandardNFT_Test.createEmptyCollection()
+                })
+            )
+        }
+        
+        pub fun resolveRoyalties(): MetadataViews.Royalties {
+            return MetadataViews.Royalties(StandardNFT_Test.royalties)
+        }
+        
+        pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
+            return MetadataViews.Serial(metadata.serialNumber)
+        }
+        
+        destroy() {
+            StandardNFT_Test.totalSupply = StandardNFT_Test.totalSupply - (1 as UInt64)
+
+            emit Burned(id: self.id)
+        }
+    }
+
+    pub resource interface StandardNFT_TestCollectionPublic {
+        pub fun deposit(token: @NonFungibleToken.NFT)
+        pub fun getIDs(): [UInt64]
+        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
+        pub fun borrowStandardNFT_Test(id: UInt64): &StandardNFT_Test.NFT? {
+            post {
+                (result == nil) || (result?.id == id):
+                    \\"Cannot borrow StandardNFT_Test reference: The ID of the returned reference is incorrect\\"
+            }
+        }
+    }
+
+    pub resource Collection: StandardNFT_TestCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
+        
+        /// A dictionary of all NFTs in this collection indexed by ID.
+        ///
+        pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
+
+        init () {
+            self.ownedNFTs <- {}
+        }
+
+        /// Remove an NFT from the collection and move it to the caller.
+        ///
+        pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
+            let token <- self.ownedNFTs.remove(key: withdrawID) 
+                ?? panic(\\"Requested NFT to withdraw does not exist in this collection\\")
+
+            emit Withdraw(id: token.id, from: self.owner?.address)
+
+            return <- token
+        }
+
+        /// Deposit an NFT into this collection.
+        ///
+        pub fun deposit(token: @NonFungibleToken.NFT) {
+            let token <- token as! @StandardNFT_Test.NFT
+
+            let id: UInt64 = token.id
+
+            // add the new token to the dictionary which removes the old one
+            let oldToken <- self.ownedNFTs[id] <- token
+
+            emit Deposit(id: id, to: self.owner?.address)
+
+            destroy oldToken
+        }
+
+        /// Return an array of the NFT IDs in this collection.
+        ///
+        pub fun getIDs(): [UInt64] {
+            return self.ownedNFTs.keys
+        }
+
+        /// Return a reference to an NFT in this collection.
+        ///
+        /// This function panics if the NFT does not exist in this collection.
+        ///
+        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
+            return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
+        }
+
+        /// Return a reference to an NFT in this collection
+        /// typed as StandardNFT_Test.NFT.
+        ///
+        /// This function returns nil if the NFT does not exist in this collection.
+        ///
+        pub fun borrowStandardNFT_Test(id: UInt64): &StandardNFT_Test.NFT? {
+            if self.ownedNFTs[id] != nil {
+                let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
+                return ref as! &StandardNFT_Test.NFT
+            }
+
+            return nil
+        }
+
+        /// Return a reference to an NFT in this collection
+        /// typed as MetadataViews.Resolver.
+        ///
+        /// This function panics if the NFT does not exist in this collection.
+        ///
+        pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
+            let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
+            let nftRef = nft as! &StandardNFT_Test.NFT
+            return nftRef as &AnyResource{MetadataViews.Resolver}
+        }
+
+        destroy() {
+            destroy self.ownedNFTs
+        }
+    }
+
+    /// Return a new empty collection.
+    ///
+    pub fun createEmptyCollection(): @NonFungibleToken.Collection {
+        return <- create Collection()
+    }
+
+    /// The administrator resource used to mint and reveal NFTs.
+    ///
+    pub resource Admin {
+
+        /// Mint a new NFT.
+        ///
+        /// To mint an NFT, specify a value for each of its metadata fields.
+        ///
+        pub fun mintNFT(
+            name: String,
+            description: String,
+            thumbnail: String,
+            serialNumber: UInt64,
+        ): @StandardNFT_Test.NFT {
+
+            let metadata = Metadata(
+                name: name,
+                description: description,
+                thumbnail: thumbnail,
+                serialNumber: serialNumber,
+            )
+
+            let nft <- create StandardNFT_Test.NFT(metadata: metadata)
+
+            emit Minted(id: nft.id)
+
+            StandardNFT_Test.totalSupply = StandardNFT_Test.totalSupply + (1 as UInt64)
+
+            return <- nft
+        }
+
+        /// Set the royalty recipients for this contract.
+        ///
+        /// This function updates the royalty recipients for all NFTs
+        /// minted by this contract.
+        ///
+        pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
+            StandardNFT_Test.royalties = royalties
+        }
+    }
+
+    /// Return a public path that is scoped to this contract.
+    ///
+    pub fun getPublicPath(suffix: String): PublicPath {
+        return PublicPath(identifier: \\"StandardNFT_Test_\\".concat(suffix))!
+    }
+
+    /// Return a private path that is scoped to this contract.
+    ///
+    pub fun getPrivatePath(suffix: String): PrivatePath {
+        return PrivatePath(identifier: \\"StandardNFT_Test_\\".concat(suffix))!
+    }
+
+    /// Return a storage path that is scoped to this contract.
+    ///
+    pub fun getStoragePath(suffix: String): StoragePath {
+        return StoragePath(identifier: \\"StandardNFT_Test_\\".concat(suffix))!
+    }
+
+    priv fun initAdmin(admin: AuthAccount) {
+        // Create an empty collection and save it to storage
+        let collection <- StandardNFT_Test.createEmptyCollection()
+
+        admin.save(<- collection, to: StandardNFT_Test.CollectionStoragePath)
+
+        admin.link<&StandardNFT_Test.Collection>(StandardNFT_Test.CollectionPrivatePath, target: StandardNFT_Test.CollectionStoragePath)
+
+        admin.link<&StandardNFT_Test.Collection{NonFungibleToken.CollectionPublic, StandardNFT_Test.StandardNFT_TestCollectionPublic, MetadataViews.ResolverCollection}>(StandardNFT_Test.CollectionPublicPath, target: StandardNFT_Test.CollectionStoragePath)
+        
+        // Create an admin resource and save it to storage
+        let adminResource <- create Admin()
+
+        admin.save(<- adminResource, to: self.AdminStoragePath)
+    }
+
+    init(admin: AuthAccount) {
+
+        self.version = \\"0.0.29\\"
+
+        self.CollectionPublicPath = StandardNFT_Test.getPublicPath(suffix: \\"Collection\\")
+        self.CollectionStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Collection\\")
+        self.CollectionPrivatePath = StandardNFT_Test.getPrivatePath(suffix: \\"Collection\\")
+
+        self.AdminStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Admin\\")
+
+        self.royalties = []
+
+        self.totalSupply = 0
+
+        self.initAdmin(admin: admin)
+
+        emit ContractInitialized()
+    }
+}
+"
+`;

@@ -8,41 +8,26 @@ import {
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
-  randomContractName,
-  schema,
+  getTestSchema,
+  getTestNFTs,
+  royaltiesTests,
 } from '../testHelpers';
 
 describe('StandardNFTContract', () => {
   const contract = new StandardNFTContract({
-    name: randomContractName(),
-    schema,
+    name: 'StandardNFT_Test',
+    schema: getTestSchema(),
     owner: ownerAuthorizer,
   });
 
-  const nfts = [
-    {
-      name: 'NFT 1',
-      description: 'This is the first NFT.',
-      thumbnail: 'nft-1.jpeg',
-    },
-    {
-      name: 'NFT 2',
-      description: 'This is the second NFT.',
-      thumbnail: 'nft-2.jpeg',
-    },
-    {
-      name: 'NFT 3',
-      description: 'This is the third NFT.',
-      thumbnail: 'nft-3.jpeg',
-    },
-  ];
-
   it('should generate a contract', async () => {
-    contract.getSource(config.imports);
+    expect(contract.getSource(config.imports)).toMatchSnapshot();
   });
 
+  const nfts = getTestNFTs(3);
+
   it('should fail to mint NFTs before contract is deployed', async () => {
-    expect(async () => await client.send(contract.mintNFTs(nfts))).rejects.toThrow(MissingContractAddressError);
+    await expect(async () => await client.send(contract.mintNFTs(nfts))).rejects.toThrow(MissingContractAddressError);
   });
 
   it('should deploy a contract', async () => {
@@ -108,4 +93,6 @@ describe('StandardNFTContract', () => {
   it('should stop a sale', async () => {
     await client.send(sale.stop('default'));
   });
+
+  royaltiesTests(contract);
 });
