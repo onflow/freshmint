@@ -22,6 +22,8 @@ export async function generateProject(dir: string, contract: ContractConfig, nft
   await createFlowTestnetConfig(dir, contract.name);
   await createFlowMainnetConfig(dir, contract.name);
 
+  await generateNextjsApp(dir);
+
   await createReadme(dir, contract.name, { nftDataPath });
 }
 
@@ -230,6 +232,12 @@ async function createScaffold(dir: string) {
   await fs.copy(path.resolve(__dirname, 'templates/env.template'), path.resolve(dir, '.env'));
 
   await fs.copy(path.resolve(__dirname, 'templates/gitignore'), path.resolve(dir, '.gitignore'));
+}
+
+async function generateNextjsApp(dir: string) {
+  await fs.copy(path.resolve(__dirname, 'templates/nextjs'), path.resolve(dir, 'web'));
+  await fs.copy(path.resolve(__dirname, 'templates/nextjs/eslintrc.json'), path.resolve(dir, 'web/.eslintrc.json'));
+  await fs.copy(path.resolve(__dirname, 'templates/nextjs/gitignore'), path.resolve(dir, 'web/.gitignore'));
 }
 
 const createNFTsCSVFile = template('templates/nfts.csv', 'nfts.csv');
