@@ -193,7 +193,7 @@ export class ConfigMap<T> extends ConfigValue<T> {
 
     for (const name in this.fields) {
       const field = this.fields[name];
-      
+
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const value = this._value![name];
 
