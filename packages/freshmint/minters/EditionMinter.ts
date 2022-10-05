@@ -1,4 +1,4 @@
-import * as metadata from '@freshmint/core/metadata';
+import { hashMetadata, MetadataMap, Schema } from '@freshmint/core/metadata';
 
 import { MetadataLoader, Entry } from '../loaders';
 import FlowGateway from '../flow';
@@ -16,21 +16,16 @@ type EditionBatch = {
 type EditionInput = {
   size: number;
   hash: string;
-  metadata: metadata.MetadataMap;
+  metadata: MetadataMap;
 };
 
 export class EditionMinter {
-  schema: metadata.Schema;
+  schema: Schema;
   metadataProcessor: MetadataProcessor;
   flowGateway: FlowGateway;
   storage: Storage;
 
-  constructor(
-    schema: metadata.Schema,
-    metadataProcessor: MetadataProcessor,
-    flowGateway: FlowGateway,
-    storage: Storage,
-  ) {
+  constructor(schema: Schema, metadataProcessor: MetadataProcessor, flowGateway: FlowGateway, storage: Storage) {
     this.schema = schema;
     this.metadataProcessor = metadataProcessor;
     this.flowGateway = flowGateway;
@@ -97,7 +92,7 @@ export class EditionMinter {
   }
 
   async getOrCreateEditions(
-    editionInputs: { size: number; hash: string; metadata: metadata.MetadataMap }[],
+    editionInputs: { size: number; hash: string; metadata: MetadataMap }[],
   ): Promise<models.Edition[]> {
     // TODO: improve this function
 
@@ -146,7 +141,7 @@ export class EditionMinter {
 
   prepare(entries: Entry[]): EditionInput[] {
     return entries.map((values) => {
-      const metadata: metadata.MetadataMap = {};
+      const metadata: MetadataMap = {};
 
       this.schema.fields.forEach((field) => {
         const value = field.getValue(values);
@@ -154,7 +149,7 @@ export class EditionMinter {
         metadata[field.name] = value;
       });
 
-      const hash = metadata.hashMetadata(this.schema, metadata).toString('hex');
+      const hash = hashMetadata(this.schema, metadata).toString('hex');
 
       const size = parseInt(values.edition_size, 10);
 

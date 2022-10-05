@@ -1,4 +1,4 @@
-import * as metadata from '@freshmint/core/metadata';
+import { Field, hashMetadata, MetadataMap, Schema } from '@freshmint/core/metadata';
 
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import FlowGateway from '../flow';
@@ -9,21 +9,16 @@ import { MetadataProcessor } from '../processors';
 
 type NFTInput = {
   hash: string;
-  metadata: metadata.MetadataMap;
+  metadata: MetadataMap;
 };
 
 export class StandardMinter {
-  schema: metadata.Schema;
+  schema: Schema;
   metadataProcessor: MetadataProcessor;
   flowGateway: FlowGateway;
   storage: Storage;
 
-  constructor(
-    schema: metadata.Schema,
-    metadataProcessor: MetadataProcessor,
-    flowGateway: FlowGateway,
-    storage: Storage,
-  ) {
+  constructor(schema: Schema, metadataProcessor: MetadataProcessor, flowGateway: FlowGateway, storage: Storage) {
     this.schema = schema;
     this.metadataProcessor = metadataProcessor;
     this.flowGateway = flowGateway;
@@ -103,7 +98,7 @@ export class StandardMinter {
 
   prepare(entries: Entry[]): NFTInput[] {
     return entries.map((values) => {
-      const metadata: metadata.MetadataMap = {};
+      const metadata: MetadataMap = {};
 
       this.schema.fields.forEach((field) => {
         const value = field.getValue(values);
@@ -111,7 +106,7 @@ export class StandardMinter {
         metadata[field.name] = value;
       });
 
-      const hash = metadata.hashMetadata(this.schema, metadata).toString('hex');
+      const hash = hashMetadata(this.schema, metadata).toString('hex');
 
       return {
         hash,
@@ -159,7 +154,7 @@ export class StandardMinter {
   }
 }
 
-function groupBatchesByField(fields: metadata.Field[], batches: any[]) {
+function groupBatchesByField(fields: Field[], batches: any[]) {
   return fields.map((field) => ({
     ...field,
     values: batches.map((batch) => batch.metadata[field.name]),
