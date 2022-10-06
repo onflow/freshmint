@@ -9,6 +9,8 @@ const defaultDataPathEdition = 'editions.csv';
 const defaultAssetPath = 'assets';
 
 export type FreshmintConfig = {
+  name: string;
+  description: string;
   contract: ContractConfig;
   ipfsPinningService: IPFSPinningServiceConfig;
   nftDataPath: string;
