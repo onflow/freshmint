@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { Box, Text, Button, Code } from '@chakra-ui/react';
+import { Box, Text, Button } from '@chakra-ui/react';
 import { useFCL, useScript, useTransaction, TransactionResult } from '@freshmint/react';
 
 import getDrop from '../../cadence/scripts/get_drop.cdc';
