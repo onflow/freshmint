@@ -197,7 +197,7 @@ async function startDrop(price: string, { network }: { network: string }) {
 
   await fresh.startDrop(price);
 
-  // TODO: return confirmation to user
+  spinner.succeed(`Success! Your drop is live.`);
 }
 
 async function stopDrop({ network }: { network: string }) {
@@ -206,8 +206,9 @@ async function stopDrop({ network }: { network: string }) {
 
   await fresh.stopDrop();
 
-  // TODO: return confirmation to user
   // TODO: return error if no drop is active
+
+  spinner.succeed(`Your drop has been stopped.`);
 }
 
 function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
@@ -236,7 +237,7 @@ async function dumpNFTs(csvPath: string, { network, tail }: { network: string; t
 
   const count = await fresh.dumpNFTs(csvPath, tail);
 
-  spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
+  spinner.succeed(`${count} NFT records saved to ${csvPath}.`);
 }
 
 async function generateCadence() {
@@ -244,7 +245,7 @@ async function generateCadence() {
 
   await generateProjectCadence('./', config.contract, false);
 
-  spinner.succeed(`✨ Success! Regenerated Cadence files. ✨`);
+  spinner.succeed(`Success! Regenerated Cadence files.`);
 }
 
 function alignOutput(labelValuePairs: any[]) {
