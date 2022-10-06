@@ -10,12 +10,12 @@ This project requires the Flow CLI.
 
 ## Quick start
 
-This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) for rapid local development.
+This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) and [FCL Dev Wallet](https://github.com/onflow/fcl-dev-wallet) for rapid local development.
 
-### Start the emulator
+### Start the development server
 
 ```sh
-flow run
+fresh dev
 ```
 
 ### Configure your pinning service
@@ -42,12 +42,10 @@ This command mints the NFTs listed in `{{ nftDataPath }}`. Edit that file to add
 fresh mint
 ```
 
-### Inspect an NFT
-
-View the metadata for a single NFT.
+### View the mint results
 
 ```sh
-fresh get 0
+fresh dump minted.csv
 ```
 
 ## Deploy on testnet

@@ -31,22 +31,22 @@ export abstract class ConfigValue<T> {
     this._onLoad = func;
   }
 
-  setDefault(value: T): ConfigField<T> {
+  setDefault(value: T) {
     this._defaultValue = value;
     return this;
   }
 
-  setValue(value: T): ConfigField<T> {
+  setValue(value: T) {
     this._value = value;
     return this;
   }
 
-  setRawValue(rawValue: RawValue): ConfigField<T> {
+  setRawValue(rawValue: RawValue) {
     this._rawValue = rawValue;
     return this;
   }
 
-  setEnabled(enabled: boolean, reason?: string): ConfigField<T> {
+  setEnabled(enabled: boolean, reason?: string) {
     this._isEnabled = enabled;
     this._isEnabledReason = reason;
     return this;

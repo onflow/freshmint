@@ -16,7 +16,7 @@ import carlton from './carlton';
 import startCommand from './start';
 import { runDevServer } from './devServer';
 import { loadConfig, ContractType, FreshmintConfigSchema, ContractConfig } from './config';
-import { generateProjectCadence } from './generateProject';
+import { generateNextjsApp, generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
 import CSVLoader from './loaders/CSVLoader';
 import * as models from './models';
@@ -77,6 +77,7 @@ async function main() {
   const generate = program.command('generate').description('regenerate project files from config');
 
   generate.command('cadence').description('regenerate project Cadence files').action(generateCadence);
+  generate.command('web').description('regenerate project web app files').action(generateWeb);
 
   program
     .command('prince')
@@ -197,7 +198,7 @@ async function startDrop(price: string, { network }: { network: string }) {
 
   await fresh.startDrop(price);
 
-  // TODO: return confirmation to user
+  spinner.succeed(`Success! Your drop is live.`);
 }
 
 async function stopDrop({ network }: { network: string }) {
@@ -206,8 +207,9 @@ async function stopDrop({ network }: { network: string }) {
 
   await fresh.stopDrop();
 
-  // TODO: return confirmation to user
   // TODO: return error if no drop is active
+
+  spinner.succeed(`Your drop has been stopped.`);
 }
 
 function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
@@ -236,15 +238,23 @@ async function dumpNFTs(csvPath: string, { network, tail }: { network: string; t
 
   const count = await fresh.dumpNFTs(csvPath, tail);
 
-  spinner.succeed(`✨ Success! ${count} NFT records saved to ${csvPath}. ✨`);
+  spinner.succeed(`${count} NFT records saved to ${csvPath}.`);
 }
 
 async function generateCadence() {
   const config = loadConfig();
 
-  await generateProjectCadence('./', config.contract, false);
+  await generateProjectCadence('./', config.contract, [], false);
 
-  spinner.succeed(`✨ Success! Regenerated Cadence files. ✨`);
+  spinner.succeed(`Success! Regenerated Cadence files.`);
+}
+
+async function generateWeb() {
+  const config = loadConfig();
+
+  await generateNextjsApp('./', config.name, config.description);
+
+  spinner.succeed(`Success! Regenerated web files.`);
 }
 
 function alignOutput(labelValuePairs: any[]) {

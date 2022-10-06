@@ -14,6 +14,14 @@
         "mainnet": "0xf233dcee88fe0abe"
       }
     },
+    "FlowToken": {
+      "source": "cadence/contracts/FlowToken.cdc",
+      "aliases": {
+        "emulator": "0x0ae53cb6e3f42a79",
+        "testnet": "0x7e60df042a9c0868",
+        "mainnet": "0x1654653399040a61"
+      }
+    },
     "NonFungibleToken": {
       "source": "cadence/contracts/NonFungibleToken.cdc",
       "aliases": {
@@ -30,12 +38,16 @@
         "mainnet": "0x1d7e57aa55817448"
       }
     },
-    "FlowToken": {
-      "source": "cadence/contracts/FlowToken.cdc",
+    "FreshmintMetadataViews": {
+      "source": "cadence/contracts/FreshmintMetadataViews.cdc",
       "aliases": {
-        "emulator": "0x0ae53cb6e3f42a79",
-        "testnet": "0x7e60df042a9c0868",
-        "mainnet": "0x1654653399040a61"
+        "testnet": "0x3c67d33388b03a69"
+      }
+    },
+    "FreshmintClaimSale": {
+      "source": "cadence/contracts/FreshmintClaimSale.cdc",
+      "aliases": {
+        "testnet": "0x1ecfdf686eff2654"
       }
     },
     "FreshmintLockBox": {
@@ -63,6 +75,8 @@
       "emulator-account": [
         "NonFungibleToken",
         "MetadataViews",
+        "FreshmintMetadataViews",
+        "FreshmintClaimSale",
         "FreshmintLockBox",
         "{{name}}"
       ]
