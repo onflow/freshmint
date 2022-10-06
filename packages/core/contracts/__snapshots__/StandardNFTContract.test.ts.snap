@@ -346,7 +346,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
     init(admin: AuthAccount) {
 
-        self.version = \\"0.0.29\\"
+        self.version = \\"0.0.30\\"
 
         self.CollectionPublicPath = StandardNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Collection\\")
