@@ -18,11 +18,34 @@ const fieldChoices = metadata.fieldTypes
 const questions = [
   {
     type: 'input',
+    name: 'name',
+    message: 'Project name:',
+    validate: async function (input: string) {
+      if (!input) {
+        return 'Please enter a name for your project.';
+      }
+
+      return true;
+    },
+  },
+  {
+    type: 'input',
+    name: 'description',
+    message: 'Project description:',
+    default: (answers: any) => `This is the ${answers.name} project.`,
+  },
+  {
+    type: 'input',
     name: 'contractName',
-    message: 'Contract name (eg. MyNFT): ',
+    message: 'Contract name: ',
+    default: (answers: any) => suggestContractName(answers.name),
     validate: async function (input: string) {
       if (!input) {
         return 'Please enter a name for your contract.';
+      }
+
+      if (!isValidContractName(input)) {
+        return 'A contract name can only include letters, numbers and underscores.';
       }
 
       return true;
@@ -121,16 +144,23 @@ export default async function start(spinner: Ora, projectPath: string) {
   const schema = metadata.defaultSchema.extend(userSchema);
 
   const contract: ContractConfig = {
-    name: sanitizeContractName(answers.contractName),
+    name: answers.contractName,
     type: answers.contractType,
     schema,
   };
 
   spinner.start('Generating project files...');
 
-  await generateProject(projectPath, contract, getDefaultDataPath(contract.type));
+  await generateProject(projectPath, answers.name, answers.description, contract, getDefaultDataPath(contract.type));
 
-  saveConfig(contract, '${PINNING_SERVICE_ENDPOINT}', '${PINNING_SERVICE_KEY}', projectPath);
+  saveConfig(
+    answers.name,
+    answers.description,
+    contract,
+    '${PINNING_SERVICE_ENDPOINT}',
+    '${PINNING_SERVICE_KEY}',
+    projectPath,
+  );
 
   spinner.succeed(
     `✨ Project initialized in ${chalk.white(`${isCurrentDirectory ? 'the current directory.' : projectPath}\n`)}`,
@@ -143,15 +173,17 @@ export default async function start(spinner: Ora, projectPath: string) {
   ui.log.write(`Open ${chalk.blueBright(`${projectPath}/README.md`)} to learn how to use your new project!`);
 }
 
-function sanitizeContractName(name: string): string {
+function isValidContractName(name: string): boolean {
+  // A valid contract name only contains letters, numbers and underscores
+  return /^[a-zA-Z0-9_]*$/.test(name);
+}
+
+function suggestContractName(name: string): string {
   return (
     name
-      // Remove spaces from the contract name.
+      // Remove spaces from the contract name
       .replace(/\s*/g, '')
-      .trim()
-      .split(' ')
-      // Ensure title-case
-      .map((word: string) => word[0].toUpperCase() + word.slice(1))
-      .join(' ')
+      // Convert dashes to underscores
+      .replace(/-/g, '_')
   );
 }

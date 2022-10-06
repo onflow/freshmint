@@ -13,18 +13,24 @@ import {
 
 import { ContractConfig, ContractType } from './config';
 
-export async function generateProject(dir: string, contract: ContractConfig, nftDataPath: string) {
+export async function generateProject(
+  dir: string,
+  name: string,
+  description: string,
+  contract: ContractConfig,
+  nftDataPath: string,
+) {
   await createScaffold(dir);
 
   await generateProjectCadence(dir, contract);
 
-  await createFlowConfig(dir, contract.name);
-  await createFlowTestnetConfig(dir, contract.name);
-  await createFlowMainnetConfig(dir, contract.name);
+  await createFlowConfig(dir, { name: contract.name });
+  await createFlowTestnetConfig(dir, { name: contract.name });
+  await createFlowMainnetConfig(dir, { name: contract.name });
 
-  await generateNextjsApp(dir);
+  await generateNextjsApp(dir, name, description);
 
-  await createReadme(dir, contract.name, { nftDataPath });
+  await createReadme(dir, { name, nftDataPath });
 }
 
 const contracts = {
@@ -86,7 +92,7 @@ async function generateStandardProject(dir: string, contract: ContractConfig, in
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   if (includeCSVFile) {
-    await createNFTsCSVFile(dir, contract.name, { fields: contract.schema.fields });
+    await createNFTsCSVFile(dir, { fields: contract.schema.fields });
   }
 
   await writeFile(
@@ -138,7 +144,7 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   if (includeCSVFile) {
-    await createEditionsCSVFile(dir, contract.name, { fields: contract.schema.fields });
+    await createEditionsCSVFile(dir, { fields: contract.schema.fields });
   }
 
   await writeFile(
@@ -234,10 +240,16 @@ async function createScaffold(dir: string) {
   await fs.copy(path.resolve(__dirname, 'templates/gitignore'), path.resolve(dir, '.gitignore'));
 }
 
-async function generateNextjsApp(dir: string) {
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs'), path.resolve(dir, 'web'));
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs/eslintrc.json'), path.resolve(dir, 'web/.eslintrc.json'));
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs/gitignore'), path.resolve(dir, 'web/.gitignore'));
+const createNextjsConfig = template('templates/nextjs/next.config.js', 'next.config.js');
+
+async function generateNextjsApp(dir: string, name: string, description: string) {
+  const webDir = path.resolve(dir, 'web');
+
+  await fs.copy(path.resolve(__dirname, 'templates/nextjs'), webDir);
+  await fs.copy(path.resolve(__dirname, 'templates/nextjs/eslintrc.json'), path.resolve(webDir, '.eslintrc.json'));
+  await fs.copy(path.resolve(__dirname, 'templates/nextjs/gitignore'), path.resolve(webDir, '.gitignore'));
+
+  createNextjsConfig(webDir, { name, description });
 }
 
 const createNFTsCSVFile = template('templates/nfts.csv', 'nfts.csv');
@@ -252,19 +264,16 @@ const createFlowMainnetConfig = template('templates/flow.mainnet.json', 'flow.ma
 const createReadme = template('templates/README.md', 'README.md');
 
 function template(src: string, out: string) {
-  return async (dir: string, name: string, fields = {}) => {
+  return async (dir: string, context = {}) => {
     const templateSource = await fs.readFile(path.resolve(__dirname, src), 'utf8');
 
     const template = Handlebars.compile(templateSource);
 
-    const result = template(
-      { name, ...fields },
-      {
-        allowedProtoMethods: {
-          type: true,
-        },
+    const result = template(context, {
+      allowedProtoMethods: {
+        type: true,
       },
-    );
+    });
 
     await writeFile(path.resolve(dir, out), result);
   };

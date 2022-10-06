@@ -49,6 +49,8 @@ export function loadConfig(modifySchema?: (schema: FreshmintConfigSchema) => voi
 }
 
 export function saveConfig(
+  name: string,
+  description: string,
   contract: ContractConfig,
   ipfsPinningServiceEndpoint: string,
   ipfsPinningServiceKey: string,
@@ -56,7 +58,11 @@ export function saveConfig(
 ) {
   new config.ConfigWriter<FreshmintConfigSchema>(freshmintConfigSchema)
     .setValues((schema) => {
+      schema.name.setValue(name);
+      schema.description.setValue(description);
+
       schema.contract.setValue(contract);
+
       schema.ipfsPinningService.setRawValue({
         endpoint: ipfsPinningServiceEndpoint,
         key: ipfsPinningServiceKey,
@@ -75,6 +81,9 @@ export function getDefaultDataPath(contractType: ContractType): string {
 }
 
 function getConfigSchema() {
+  const name = config.Field<string>('name');
+  const description = config.Field<string>('description');
+
   const contract = config.Map<ContractConfig>('contract', {
     name: config.Field<string>('name'),
     type: config.Field<ContractType>('type', parseContractType),
@@ -102,6 +111,8 @@ function getConfigSchema() {
   });
 
   return {
+    name,
+    description,
     contract,
     ipfsPinningService,
     nftDataPath,
