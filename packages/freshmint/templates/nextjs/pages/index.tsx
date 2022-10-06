@@ -2,8 +2,8 @@ import Image from 'next/image';
 import { NextPage } from 'next/types';
 import { Box, Container, Heading, Text } from '@chakra-ui/react';
 
-import coverImage from '../public/cities.png';
-import Drop from '../components/Drop';
+import coverImage from '../public/banner.png';
+import NFTDrop from '../components/NFTDrop';
 import UserInfo from '../components/UserInfo';
 
 const Home: NextPage = () => {
@@ -18,7 +18,7 @@ const Home: NextPage = () => {
       <Text fontSize="lg" mb={3}>
         {process.env.projectDescription}
       </Text>
-      <Drop address="0xf8d6e0586b0a20c7" />
+      <NFTDrop address="0xf8d6e0586b0a20c7" />
       <UserInfo />
     </Container>
   );

@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { Box, Text, Button } from '@chakra-ui/react';
+import { Box, Text, Button, Code } from '@chakra-ui/react';
 import { useFCL, useScript, useTransaction, TransactionResult } from '@freshmint/react';
 
 import getDrop from '../../cadence/scripts/get_drop.cdc';
@@ -37,7 +37,7 @@ interface DropProps {
   id?: string;
 }
 
-export default function Drop({ address, id = 'default' }: DropProps) {
+export default function NFTDrop({ address, id = 'default' }: DropProps) {
   const router = useRouter();
   const { currentUser } = useFCL();
 
