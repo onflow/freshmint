@@ -36,7 +36,7 @@ pub contract FreshmintClaimSale {
         saleUUID: UInt64,
         saleID: String,
         saleAddress: Address?,
-        saleSupply: Int,
+        remainingSupply: Int,
         nftType: Type,
         nftID: UInt64
     )
@@ -317,13 +317,13 @@ pub contract FreshmintClaimSale {
                 .getCapability(self.receiverPath)
                 .borrow<&{NonFungibleToken.CollectionPublic}>()!
 
-            let newSupply = ids.length - 1
+            let remainingSupply = ids.length - 1
 
             emit NFTClaimed(
                 saleUUID: self.uuid,
                 saleID: self.id,
                 saleAddress: self.owner?.address,
-                saleSupply: newSupply,
+                remainingSupply: remainingSupply,
                 nftType: nft.getType(),
                 nftID: nft.id
             )
