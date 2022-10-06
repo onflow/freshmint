@@ -151,7 +151,14 @@ export default async function start(spinner: Ora, projectPath: string) {
 
   spinner.start('Generating project files...');
 
-  await generateProject(projectPath, answers.name, answers.description, contract, getDefaultDataPath(contract.type));
+  await generateProject(
+    projectPath,
+    answers.name,
+    answers.description,
+    contract,
+    getDefaultDataPath(contract.type),
+    userSchema.fields,
+  );
 
   saveConfig(
     answers.name,
