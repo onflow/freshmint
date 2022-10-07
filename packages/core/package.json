@@ -1,7 +1,7 @@
 {
   "name": "@freshmint/core",
   "version": "0.0.30-demo",
-  "description": "The minty fresh way to launch an NFT project.",
+  "description": "The core templates and logic that power Freshmint.",
   "contributors": [
     "Mackenzie Kieran",
     "Peter Siemens <peterjsiemens@gmail.com>"
