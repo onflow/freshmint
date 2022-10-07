@@ -44,6 +44,12 @@
 		},
 		"freshmint-lock-box-mainnet": {
 			"fromFile": "freshmint-lock-box-mainnet.private.json"
+		},
+		"freshmint-claim-sale-mainnet": {
+			"fromFile": "freshmint-claim-sale-mainnet.private.json"
+		},
+		"freshmint-metadata-views-mainnet": {
+			"fromFile": "freshmint-metadata-views-mainnet.private.json"
 		}
 	}
 }

@@ -41,7 +41,8 @@ export namespace FreshmintConfig {
       FungibleToken: '0xf233dcee88fe0abe',
       NonFungibleToken: '0x1d7e57aa55817448',
       MetadataViews: '0x1d7e57aa55817448',
-      FreshmintClaimSale: '', // TODO: deploy FreshmintClaimSale to mainnet
+      FreshmintMetadataViews: '0x0c82d33d4666f1f7',
+      FreshmintClaimSale: '0x16a3117d86821389',
       FreshmintLockBox: '0xdd1c2c328f849078',
     },
   };
