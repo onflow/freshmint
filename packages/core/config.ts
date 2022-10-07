@@ -30,8 +30,8 @@ export namespace FreshmintConfig {
       FungibleToken: '0x9a0766d93b6608b7',
       NonFungibleToken: '0x631e88ae7f1d7c20',
       MetadataViews: '0x631e88ae7f1d7c20',
-      FreshmintMetadataViews: '0x3c67d33388b03a69',
-      FreshmintClaimSale: '0x1ecfdf686eff2654',
+      FreshmintMetadataViews: '0xc270e330615c6fa0',
+      FreshmintClaimSale: '0x2d3d6874bc231156',
       FreshmintLockBox: '0x0cad7d1c09a3a433',
     },
   };
