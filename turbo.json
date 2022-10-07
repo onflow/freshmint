@@ -3,8 +3,7 @@
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"],
-      "inputs": ["./cadence/**"]
+      "outputs": ["dist/**"]
     },
     "lint": {
       "outputs": []
@@ -12,5 +11,8 @@
     "dev": {
       "cache": false
     }
-  }
+  },
+  "globalDependencies": [
+    "cadence/**"
+  ]
 }
