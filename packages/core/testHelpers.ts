@@ -1,7 +1,7 @@
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
 
-import { FreshmintConfig } from './config';
+import { EMULATOR } from './config';
 import { FreshmintClient } from './client';
 import { TransactionAuthorizer } from './transactions';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from './crypto';
@@ -10,7 +10,7 @@ import NFTContract from './contracts/NFTContract';
 
 fcl.config().put('accessNode.api', 'http://localhost:8888');
 
-export const config = FreshmintConfig.EMULATOR;
+export const config = EMULATOR;
 export const client = FreshmintClient.fromFCL(fcl, config);
 
 export const legacyFreshmintConfig = {

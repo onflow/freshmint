@@ -1,6 +1,7 @@
 export { version } from './version';
 
-export type { FreshmintConfig, ContractImports } from './config';
+export * as FreshmintConfig from './config';
+export type { ContractImports } from './config';
 
 export { FreshmintClient } from './client';
 
