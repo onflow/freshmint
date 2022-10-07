@@ -30,7 +30,7 @@ pub fun main(address: Address, id: UInt64): NFT? {
 
             if let blindNFTView = nft.resolveView(Type<FreshmintMetadataViews.BlindNFT>()) {
                 let blindNFT = blindNFTView as! FreshmintMetadataViews.BlindNFT
-                hash = String.encodeHex(blindNFT.metadataHash)
+                hash = String.encodeHex(blindNFT.hash)
             }
 
             return NFT(
