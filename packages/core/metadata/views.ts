@@ -70,9 +70,9 @@ registerHelper('whichFilePartial', (field) => {
   throw 'field must be a file field';
 });
 
-registerPartial('viewCase', require('../../../cadence/metadata-views/viewCase.partial.cdc'));
-registerPartial(httpFilePartial, require('../../../cadence/metadata-views/MetadataViews.HTTPFile.partial.cdc'));
-registerPartial(ipfsFilePartial, require('../../../cadence/metadata-views/MetadataViews.IPFSFile.partial.cdc'));
+registerPartial('viewCase', require('../../../cadence/nfts/metadata-views/viewCase.partial.cdc'));
+registerPartial(httpFilePartial, require('../../../cadence/nfts/metadata-views/MetadataViews.HTTPFile.partial.cdc'));
+registerPartial(ipfsFilePartial, require('../../../cadence/nfts/metadata-views/MetadataViews.IPFSFile.partial.cdc'));
 
 export const viewsTypes: ViewType<any>[] = [];
 
@@ -121,7 +121,7 @@ export const DisplayView = defineView<{
   id: 'display',
   cadenceTypeString: 'Type<MetadataViews.Display>()',
   cadenceResolverFunction: 'resolveDisplay',
-  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.Display.partial.cdc'),
+  cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.Display.partial.cdc'),
   requiresMetadata: true,
 });
 
@@ -129,7 +129,7 @@ export const ExternalURLView = defineView<{ cadenceTemplate: string }>({
   id: 'external-url',
   cadenceTypeString: 'Type<MetadataViews.ExternalURL>()',
   cadenceResolverFunction: 'resolveExternalURL',
-  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.ExternalURL.partial.cdc'),
+  cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.ExternalURL.partial.cdc'),
   requiresMetadata: false,
 });
 
@@ -171,7 +171,7 @@ export const NFTCollectionDisplayView = defineView<{
   id: 'nft-collection-display',
   cadenceTypeString: 'Type<MetadataViews.NFTCollectionDisplay>()',
   cadenceResolverFunction: 'resolveNFTCollectionDisplay',
-  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc'),
+  cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc'),
   requiresMetadata: false,
   transformOptions: (options) => {
     // Convert the legacy IPFS format to the new generic file format.
@@ -207,7 +207,7 @@ export const NFTCollectionDataView = defineView<void>({
   id: 'nft-collection-data',
   cadenceTypeString: 'Type<MetadataViews.NFTCollectionData>()',
   cadenceResolverFunction: 'resolveNFTCollectionData',
-  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.NFTCollectionData.partial.cdc'),
+  cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.NFTCollectionData.partial.cdc'),
   requiresMetadata: false,
 });
 
@@ -215,7 +215,7 @@ export const NFTView = defineView<void>({
   id: 'nft',
   cadenceTypeString: 'Type<MetadataViews.NFTView>()',
   cadenceResolverFunction: 'resolveNFTView',
-  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.NFTView.partial.cdc'),
+  cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.NFTView.partial.cdc'),
   requiresMetadata: true,
 });
 
@@ -223,7 +223,7 @@ export const RoyaltiesView = defineView<void>({
   id: 'royalties',
   cadenceTypeString: 'Type<MetadataViews.Royalties>()',
   cadenceResolverFunction: 'resolveRoyalties',
-  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.Royalties.partial.cdc'),
+  cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.Royalties.partial.cdc'),
   requiresMetadata: false,
 });
 
@@ -233,7 +233,7 @@ export const MediaView = defineView<{
 }>({
   id: 'media',
   cadenceTypeString: 'Type<MetadataViews.Media>()',
-  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.Media.partial.cdc'),
+  cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.Media.partial.cdc'),
   requiresMetadata: true,
 });
 
@@ -241,7 +241,7 @@ export const SerialView = defineView<{ serialNumber: Field }>({
   id: 'serial',
   cadenceTypeString: 'Type<MetadataViews.Serial>()',
   cadenceResolverFunction: 'resolveSerial',
-  cadenceTemplate: require('../../../cadence/metadata-views/MetadataViews.Serial.partial.cdc'),
+  cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.Serial.partial.cdc'),
   requiresMetadata: true,
   transformOptions: (options) => {
     if (options.serialNumber.type !== UInt64) {
