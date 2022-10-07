@@ -1,6 +1,6 @@
 {
   "name": "freshmint",
-  "version": "0.0.31-alpha",
+  "version": "0.0.32-alpha",
   "description": "The minty fresh way to launch an NFT project.",
   "contributors": [
     "Mackenzie Kieran",
@@ -26,7 +26,7 @@
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
-    "@freshmint/core": "0.0.31-alpha",
+    "@freshmint/core": "0.0.32-alpha",
     "@onflow/decode": "0.0.11",
     "@onflow/types": "^1.0.3",
     "chalk": "^4.1.0",
