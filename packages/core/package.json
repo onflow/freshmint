@@ -36,7 +36,7 @@
   },
   "scripts": {
     "test": "jest --runInBand --bail",
-    "build": "tsup index.ts crypto/index.ts metadata/index.ts --loader \".cdc=text\" --dts --sourcemap --format esm,cjs --splitting",
+    "build": "tsup index.ts crypto/index.ts metadata/index.ts --clean --loader \".cdc=text\" --dts --sourcemap --format esm,cjs --splitting",
     "dev": "npm run build -- --watch",
     "lint": "eslint . --ext .ts"
   },

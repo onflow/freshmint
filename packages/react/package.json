@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "tsup index.ts --dts --sourcemap --format esm,cjs",
+    "build": "tsup index.ts --clean --dts --sourcemap --format esm,cjs",
     "dev": "npm run build -- --watch",
     "lint": "eslint . --ext .ts"
   },
