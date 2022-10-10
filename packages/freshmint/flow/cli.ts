@@ -36,7 +36,7 @@ export default class FlowCliWrapper {
     this.configs = configs;
   }
 
-  async transaction(path: string, signer: string, args: any[]) {
+  async transaction(path: string, signer: string, args: any[], computeLimit = 1000) {
     const argString = formatArgString(args);
     const configString = formatConfigString(this.configs);
 
@@ -46,6 +46,7 @@ export default class FlowCliWrapper {
         --signer ${signer} \
         ${configString} \
         -o json \
+        --gas-limit ${gasLimit} \
         --args-json ${argString} \
         ${path}`,
       { cwd: process.cwd() },
