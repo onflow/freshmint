@@ -42,6 +42,19 @@ export class CommonNFTGenerator extends TemplateGenerator {
     });
   }
 
+  static getDuplicateNFTs({
+    contractName,
+    contractAddress,
+  }: {
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/scripts/get_duplicate_nfts.template.cdc'), {
+      contractName,
+      contractAddress,
+    });
+  }
+
   static setRoyalties({
     imports,
     contractName,
