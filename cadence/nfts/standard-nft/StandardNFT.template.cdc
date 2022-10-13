@@ -38,16 +38,61 @@ pub contract {{ contractName }}: NonFungibleToken {
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
         }
+
+        /// Encode this metadata object as a byte array.
+        ///
+        /// This can be used to hash the metadata and verify its integrity.
+        ///
+        pub fun encode(): [UInt8] {
+            {{#with fields.[0]}}
+            return self.{{ name }}.{{ getCadenceByteTemplate }}
+            {{/with}}
+            {{#each fields}}
+            {{#unless @first}}
+                .concat(self.{{ this.name }}.{{ this.getCadenceByteTemplate }})
+            {{/unless}}
+            {{/each}}
+        }
+
+        pub fun hash(): [UInt8] {
+            return HashAlgorithm.SHA3_256.hash(self.encode())
+        }
+    }
+
+    /// This dictionary holds the metadata for all NFTs
+    /// minted by this contract.
+    ///
+    access(contract) let metadata: {UInt64: Metadata}
+
+    /// Return the metadata for an NFT.
+    ///
+    pub fun getMetadata(nftID: UInt64): Metadata? {
+        return {{ contractName }}.metadata[nftID]
+    }
+
+    /// This dictionary stores all NFT IDs minted by this contract
+    /// indexed by their metadata hash.
+    ///
+    /// It is populated at mint time and used to prevent duplicate mints.
+    ///
+    access(contract) let nftsByHash: {String: UInt64}
+
+    pub fun getNFTIDByHash(hash: String): UInt64? {
+        return {{ contractName }}.nftsByHash[hash]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
-        pub let metadata: Metadata
 
-        init(metadata: Metadata) {
+        init() {
             self.id = self.uuid
-            self.metadata = metadata
+        }
+
+        /// Return the metadata for this NFT.
+        ///
+        pub fun getMetadata(): Metadata {
+            return {{ contractName }}.metadata[self.id]!
         }
 
         pub fun getViews(): [Type] {
@@ -59,9 +104,11 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
+            let metadata = self.getMetadata()
+
             switch view {
                 {{#each views }}
-                {{> viewCase view=this metadata="self.metadata" }}
+                {{> viewCase view=this metadata="metadata" }}
                 {{/each}}
             }
 
@@ -199,7 +246,21 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{/each}}
             )
 
-            let nft <- create {{ contractName }}.NFT(metadata: metadata)
+            let hexHash = String.encodeHex(metadata.hash())
+
+            // Prevent multiple NFTs from being minted with the same metadata hash.
+            assert(
+                {{ contractName }}.nftsByHash[hexHash] == nil,
+                message: "an NFT has already been minted with hash=".concat(hexHash)
+            )
+
+            let nft <- create {{ contractName }}.NFT()
+
+            // Save the metadata
+            {{ contractName }}.metadata[nft.id] = metadata
+
+            // Save the metadata hash
+            {{ contractName }}.nftsByHash[hexHash] = nft.id
 
             emit Minted(id: nft.id)
 
@@ -258,6 +319,9 @@ pub contract {{ contractName }}: NonFungibleToken {
         {{> royaltiesInit }}
 
         self.totalSupply = 0
+
+        self.metadata = {}
+        self.nftsByHash = {}
 
         self.initAdmin(admin: {{#if saveAdminResourceToContractAccount }}self.account{{ else }}admin{{/if}})
 

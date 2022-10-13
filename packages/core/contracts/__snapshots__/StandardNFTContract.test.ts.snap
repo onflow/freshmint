@@ -53,16 +53,57 @@ pub contract StandardNFT_Test: NonFungibleToken {
             self.thumbnail = thumbnail
             self.serialNumber = serialNumber
         }
+
+        /// Encode this metadata object as a byte array.
+        ///
+        /// This can be used to hash the metadata and verify its integrity.
+        ///
+        pub fun encode(): [UInt8] {
+            return self.name.utf8
+                .concat(self.description.utf8)
+                .concat(self.thumbnail.utf8)
+                .concat(self.serialNumber.toBigEndianBytes())
+        }
+
+        pub fun hash(): [UInt8] {
+            return HashAlgorithm.SHA3_256.hash(self.encode())
+        }
+    }
+
+    /// This dictionary holds the metadata for all NFTs
+    /// minted by this contract.
+    ///
+    access(contract) let metadata: {UInt64: Metadata}
+
+    /// Return the metadata for an NFT.
+    ///
+    pub fun getMetadata(nftID: UInt64): Metadata? {
+        return StandardNFT_Test.metadata[nftID]
+    }
+
+    /// This dictionary stores all NFT IDs minted by this contract
+    /// indexed by their metadata hash.
+    ///
+    /// It is populated at mint time and used to prevent duplicate mints.
+    ///
+    access(contract) let nftsByHash: {String: UInt64}
+
+    pub fun getNFTIDByHash(hash: String): UInt64? {
+        return StandardNFT_Test.nftsByHash[hash]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
-        pub let metadata: Metadata
 
-        init(metadata: Metadata) {
+        init() {
             self.id = self.uuid
-            self.metadata = metadata
+        }
+
+        /// Return the metadata for this NFT.
+        ///
+        pub fun getMetadata(): Metadata {
+            return StandardNFT_Test.metadata[self.id]!
         }
 
         pub fun getViews(): [Type] {
@@ -78,11 +119,13 @@ pub contract StandardNFT_Test: NonFungibleToken {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
+            let metadata = self.getMetadata()
+
             switch view {
                 case Type<MetadataViews.NFTView>():
-                    return self.resolveNFTView(self.metadata)
+                    return self.resolveNFTView(metadata)
                 case Type<MetadataViews.Display>():
-                    return self.resolveDisplay(self.metadata)
+                    return self.resolveDisplay(metadata)
                 case Type<MetadataViews.ExternalURL>():
                     return self.resolveExternalURL()
                 case Type<MetadataViews.NFTCollectionDisplay>():
@@ -92,7 +135,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
                 case Type<MetadataViews.Royalties>():
                     return self.resolveRoyalties()
                 case Type<MetadataViews.Serial>():
-                    return self.resolveSerial(self.metadata)
+                    return self.resolveSerial(metadata)
             }
 
             return nil
@@ -291,7 +334,21 @@ pub contract StandardNFT_Test: NonFungibleToken {
                 serialNumber: serialNumber,
             )
 
-            let nft <- create StandardNFT_Test.NFT(metadata: metadata)
+            let hexHash = String.encodeHex(metadata.hash())
+
+            // Prevent multiple NFTs from being minted with the same metadata hash.
+            assert(
+                StandardNFT_Test.nftsByHash[hexHash] == nil,
+                message: \\"an NFT has already been minted with hash=\\".concat(hexHash)
+            )
+
+            let nft <- create StandardNFT_Test.NFT()
+
+            // Save the metadata
+            StandardNFT_Test.metadata[nft.id] = metadata
+
+            // Save the metadata hash
+            StandardNFT_Test.nftsByHash[hexHash] = nft.id
 
             emit Minted(id: nft.id)
 
@@ -346,7 +403,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
     init(admin: AuthAccount) {
 
-        self.version = \\"0.0.30\\"
+        self.version = \\"0.0.32\\"
 
         self.CollectionPublicPath = StandardNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Collection\\")
@@ -357,6 +414,9 @@ pub contract StandardNFT_Test: NonFungibleToken {
         self.royalties = []
 
         self.totalSupply = 0
+
+        self.metadata = {}
+        self.nftsByHash = {}
 
         self.initAdmin(admin: admin)
 
