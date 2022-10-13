@@ -116,6 +116,11 @@ async function generateStandardProject(
     path.resolve(dir, `cadence/scripts/get_nfts.cdc`),
     CommonNFTGenerator.getNFTs({ imports: shiftedImports, contractName: contract.name, contractAddress }),
   );
+
+  await writeFile(
+    path.resolve(dir, `cadence/scripts/get_duplicate_nfts.cdc`),
+    CommonNFTGenerator.getDuplicateNFTs({ contractName: contract.name, contractAddress }),
+  );
 }
 
 async function generateEditionProject(
