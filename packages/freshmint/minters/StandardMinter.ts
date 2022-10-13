@@ -1,33 +1,27 @@
-import { Field, hashMetadata, MetadataMap, Schema } from '@freshmint/core/metadata';
+import { existsSync } from 'fs';
+import { unlink } from 'fs/promises';
+import { Schema, hashMetadata } from '@freshmint/core/metadata';
 
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import FlowGateway from '../flow';
-import Storage from '../storage';
-import * as models from '../models';
+import { FlowGateway } from '../flow';
 import { MetadataLoader, Entry } from '../loaders';
 import { MetadataProcessor } from '../processors';
+import { createBatches, groupMetadataByField, Minter, PreparedEntry, preparedValues, writeCSV } from '.';
 
-type NFTInput = {
-  hash: string;
-  metadata: MetadataMap;
-};
-
-export class StandardMinter {
+export class StandardMinter implements Minter {
   schema: Schema;
   metadataProcessor: MetadataProcessor;
   flowGateway: FlowGateway;
-  storage: Storage;
 
-  constructor(schema: Schema, metadataProcessor: MetadataProcessor, flowGateway: FlowGateway, storage: Storage) {
+  constructor(schema: Schema, metadataProcessor: MetadataProcessor, flowGateway: FlowGateway) {
     this.schema = schema;
     this.metadataProcessor = metadataProcessor;
     this.flowGateway = flowGateway;
-    this.storage = storage;
   }
 
   async mint(
     loader: MetadataLoader,
-    withClaimKey: boolean,
+    withClaimKeys: boolean,
     onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
@@ -35,141 +29,142 @@ export class StandardMinter {
   ) {
     const entries = await loader.loadEntries();
 
-    const tokens = this.prepare(entries);
+    const preparedEntries = await this.prepareMetadata(entries);
 
-    const newTokens: NFTInput[] = [];
+    const newEntries = await this.filterDuplicates(preparedEntries, batchSize);
 
-    for (const token of tokens) {
-      const existingNFT = await this.storage.loadNFTByHash(token.hash);
-      if (!existingNFT) {
-        newTokens.push(token);
-      }
-    }
+    const total = newEntries.length;
+    const skipped = entries.length - newEntries.length;
 
-    const total = newTokens.length;
-    const skipped = tokens.length - newTokens.length;
-
-    const batches: NFTInput[][] = [];
-
-    while (newTokens.length > 0) {
-      const batch = newTokens.splice(0, batchSize);
-      batches.push(batch);
-    }
+    const batches = createBatches(newEntries, batchSize);
 
     onStart(total, skipped, batches.length, batchSize);
 
-    for (const batch of batches) {
-      const batchSize = batch.length;
+    const timestamp = Date.now();
 
-      const processedBatch = await this.processTokenBatch(batch);
+    const outFile = `mint-${timestamp}.csv`;
+    const tempFile = `mint-${timestamp}.tmp.csv`;
 
-      const batchFields = groupBatchesByField(this.schema.fields, processedBatch);
+    for (const [batchIndex, nfts] of batches.entries()) {
 
-      let results;
+      // Process the NFT metadata fields (i.e. perform actions such as pinning files to IPFS).
+      await this.processMetadata(nfts);
 
-      try {
-        results = await this.createTokenBatch(batchFields, withClaimKey);
-      } catch (error: any) {
-        onError(error);
-        return;
+      if (withClaimKeys) {
+        await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, nfts, onError)
+      } else {
+        await this.mintNFTs(batchIndex, outFile, nfts, onError);
       }
 
-      const finalResults: models.NFT[] = results.map((result: any, index: number) => {
-        const { tokenId, txId, claimKey } = result;
-
-        const token = processedBatch[index];
-
-        return {
-          tokenId,
-          txId,
-          hash: token.hash,
-          metadata: token.metadata,
-          claimKey,
-        };
-      });
-
-      for (const result of finalResults) {
-        await this.storage.saveNFT(result);
-      }
+      const batchSize = nfts.length;
 
       onBatchComplete(batchSize);
     }
+
+    // Remove the temporary file used to store claim keys
+    if (existsSync(tempFile)) {
+      await unlink(tempFile);
+    }
   }
 
-  prepare(entries: Entry[]): NFTInput[] {
-    return entries.map((values) => {
-      const metadata: MetadataMap = {};
+  async prepareMetadata(entries: Entry[]): Promise<PreparedEntry[]> {
+    return Promise.all(
+      entries.map(async (entry: Entry) => {
+        const metadata = await this.metadataProcessor.prepare(entry)
+        const hash = hashMetadata(this.schema, preparedValues(metadata)).toString('hex');
 
-      this.schema.fields.forEach((field) => {
-        const value = field.getValue(values);
-
-        metadata[field.name] = value;
-      });
-
-      const hash = hashMetadata(this.schema, metadata).toString('hex');
-
-      return {
-        hash,
-        metadata,
-      };
-    });
-  }
-
-  async processTokenBatch(batch: any) {
-    return await Promise.all(
-      batch.map(async (token: any) => ({
-        ...token,
-        metadata: await this.metadataProcessor.process(token.metadata),
-      })),
+        return {
+          metadata,
+          hash,
+        }
+      })
     );
   }
 
-  async createTokenBatch(batchFields: any, withClaimKey: boolean) {
-    if (withClaimKey) {
-      return await this.mintTokensWithClaimKey(batchFields);
+  async processMetadata(entries: PreparedEntry[]): Promise<void> {
+    for (const entry of entries) {
+      await this.metadataProcessor.process(entry.metadata);
+    }
+  }
+
+  async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedEntry[], onError: (error: Error) => void) {
+    const metadataFields = groupMetadataByField(this.schema.fields, nfts);
+
+    let results;
+
+    try {
+      results = await this.flowGateway.mint(metadataFields);
+    } catch (error: any) {
+      onError(error);
+      return;
     }
 
-    return await this.mintTokens(batchFields);
+    const rows = results.map((result: any, i: number) => {
+      const { id, transactionId } = result;
+
+      const nft = nfts[i];
+
+      return {
+        _id: id,
+        _transaction_id: transactionId,
+        ...preparedValues(nft.metadata),
+      };
+    });
+
+    await writeCSV(outFile, rows, { append: batchIndex > 0 });
   }
 
-  async mintTokens(batchFields: any[]) {
-    const minted = await this.flowGateway.mint(batchFields);
-    return formatMintResults(minted);
+  async mintNFTsWithClaimKeys(batchIndex: number, outFile: string, tempFile: string, nfts: PreparedEntry[], onError: (error: Error) => void) {
+    const { privateKeys, publicKeys } = generateClaimKeyPairs(nfts.length);
+
+    await savePrivateKeysToFile(tempFile, nfts, privateKeys);
+
+    const metadataFields = groupMetadataByField(this.schema.fields, nfts);
+
+    let results;
+
+    try {
+      results = await this.flowGateway.mintWithClaimKey(publicKeys, metadataFields);
+    } catch (error: any) {
+      onError(error);
+      return;
+    }
+
+    const rows = results.map((result: any, i: number) => {
+      const { id, transactionId } = result;
+
+      const nft = nfts[i];
+
+      return {
+        _id: id,
+        _transaction_id: transactionId,
+        _claim_key: formatClaimKey(id, privateKeys[i]),
+        ...preparedValues(nft.metadata),
+      };
+    });
+
+    await writeCSV(outFile, rows, { append: batchIndex > 0 });
   }
 
-  async mintTokensWithClaimKey(batchFields: any[]) {
-    const batchSize = batchFields[0].values.length;
+  // filterDuplicates returns only the NFTs that have not yet been minted.
+  async filterDuplicates(nfts: PreparedEntry[], batchSize: number): Promise<PreparedEntry[]> {
+    const hashes = nfts.map((nft) => nft.hash);
 
-    const { privateKeys, publicKeys } = generateClaimKeyPairs(batchSize);
+    const batches = createBatches(hashes, batchSize);
 
-    const minted = await this.flowGateway.mintWithClaimKey(publicKeys, batchFields);
+    const duplicates = (await Promise.all(batches.map((batch) => this.flowGateway.getDuplicateNFTs(batch)))).flat();
 
-    const results = formatMintResults(minted);
-
-    return results.map((result: any, i: number) => ({
-      txId: result.txId,
-      tokenId: result.tokenId,
-      claimKey: formatClaimKey(result.tokenId, privateKeys[i]),
-    }));
+    return nfts.filter((_, index) => !duplicates[index]);
   }
 }
 
-function groupBatchesByField(fields: Field[], batches: any[]) {
-  return fields.map((field) => ({
-    ...field,
-    values: batches.map((batch) => batch.metadata[field.name]),
-  }));
-}
-
-function formatMintResults(txOutput: any) {
-  const deposits = txOutput.events.filter((event: any) => event.type.includes('.Deposit'));
-
-  return deposits.map((deposit: any) => {
-    const tokenId = deposit.values.value.fields.find((f: any) => f.name === 'id').value;
-
+async function savePrivateKeysToFile(filename: string, nfts: PreparedEntry[], privateKeys: string[]): Promise<void> {
+  const rows = nfts.map((nft: PreparedEntry, i) => {
     return {
-      tokenId: tokenId.value,
-      txId: txOutput.id,
+      _partial_claim_key: privateKeys[i],
+      ...preparedValues(nft.metadata),
     };
   });
+
+  return writeCSV(filename, rows);
 }

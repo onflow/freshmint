@@ -1,8 +1,12 @@
 import * as metadata from '@freshmint/core/metadata';
 
+import { Entry } from '../loaders';
+import { PreparedMetadata, PreparedMetadataValue } from '../minters';
+
 export interface FieldProcessor {
   fieldType: metadata.FieldType;
-  process(value: metadata.MetadataValue): Promise<metadata.MetadataValue>;
+  prepare(value: any): Promise<any>;
+  process(raw: any, prepared: any): Promise<void>;
 }
 
 export class MetadataProcessor {
@@ -18,25 +22,43 @@ export class MetadataProcessor {
     this.#fieldProcessors.push(fieldProcessor);
   }
 
-  async process(metadata: metadata.MetadataMap) {
-    const values: metadata.MetadataMap = {};
+  async prepare(entry: Entry): Promise<PreparedMetadata> {
+    const metadata: PreparedMetadata = {};
 
     for (const field of this.#schema.fields) {
-      const value = metadata[field.name];
+      const value = field.getValue(entry);
 
-      values[field.name] = await this.processField(field, value);
+      metadata[field.name] = {
+        raw: value,
+        prepared: await this.prepareField(field, value)
+      }
     }
 
-    return values;
+    return metadata;
   }
 
-  async processField(field: metadata.Field, value: metadata.MetadataValue) {
+  async prepareField(field: metadata.Field, value: any) {
     for (const fieldProcessor of this.#fieldProcessors) {
       if (field.type === fieldProcessor.fieldType) {
-        return fieldProcessor.process(value);
+        return fieldProcessor.prepare(value);
       }
     }
 
     return value;
+  }
+
+  async process(metadata: PreparedMetadata): Promise<void> {
+    for (const field of this.#schema.fields) {
+      const value = metadata[field.name];
+      await this.processField(field, value);
+    }
+  }
+
+  async processField(field: metadata.Field, value: PreparedMetadataValue) {
+    for (const fieldProcessor of this.#fieldProcessors) {
+      if (field.type === fieldProcessor.fieldType) {
+        await fieldProcessor.process(value.raw, value.prepared);
+      }
+    }
   }
 }

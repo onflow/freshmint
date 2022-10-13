@@ -26,7 +26,7 @@
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
-    "@freshmint/core": "0.0.32-alpha",
+    "@freshmint/core": "*",
     "@onflow/decode": "0.0.11",
     "@onflow/types": "^1.0.3",
     "chalk": "^4.1.0",
@@ -35,11 +35,12 @@
     "csv-writer": "^1.6.0",
     "dotenv": "^16.0.1",
     "elliptic": "^6.5.4",
+    "fast-csv": "^4.3.6",
     "fs-extra": "^10.0.0",
     "handlebars": "^4.7.7",
     "inquirer": "^8.2.2",
     "js-yaml": "^4.1.0",
-    "nft.storage": "^3.3.0",
+    "nft.storage": "^7.0.0",
     "node-fetch": "^2.6.7",
     "ora": "^5.4.1",
     "pouchdb": "^7.2.2",

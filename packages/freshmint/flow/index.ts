@@ -1,9 +1,21 @@
+import { Field } from '@freshmint/core/metadata';
+
 // @ts-ignore
 import * as t from '@onflow/types';
 
 import FlowCliWrapper from './cli';
 
-export default class FlowGateway {
+export interface BatchField {
+  field: Field,
+  values: any[]
+}
+
+export interface MintResult {
+  id: string;
+  transactionId: string;
+}
+
+export class FlowGateway {
   network: string;
   flow: FlowCliWrapper;
 
@@ -12,31 +24,35 @@ export default class FlowGateway {
     this.flow = new FlowCliWrapper(this.network);
   }
 
-  async mint(fields: any[]) {
-    return await this.flow.transaction(
+  async mint(fields: BatchField[]) {
+    const result = await this.flow.transaction(
       './cadence/transactions/mint.cdc',
       `${this.network}-account`,
-      fields.map((field) => ({
+      fields.map(({ field, values }) => ({
         type: t.Array(field.typeInstance.cadenceType),
-        value: field.values,
+        value: values,
       })),
     );
+
+    return parseMintResult(result);
   }
 
-  async mintWithClaimKey(publicKeys: string[], fields: any[]) {
+  async mintWithClaimKey(publicKeys: string[], fields: BatchField[]) {
     const args = [
       { type: t.Array(t.String), value: publicKeys },
-      ...fields.map((field) => ({
+      ...fields.map(({ field, values }) => ({
         type: t.Array(field.typeInstance.cadenceType),
-        value: field.values,
+        value: values,
       })),
     ];
 
-    return await this.flow.transaction(
+    const result = await this.flow.transaction(
       './cadence/transactions/mint_with_claim_key.cdc',
       `${this.network}-account`,
       args,
     );
+
+    return parseMintResult(result);
   }
 
   async getNFTDetails(address: string, nftId: string) {
@@ -85,7 +101,7 @@ export default class FlowGateway {
   }
 
   async getDrop() {
-    return await this.flow.script('./cadence/transactions/get_drop.cdc', []);
+    return await this.flow.script('./cadence/scripts/get_drop.cdc', []);
   }
 
   async stopDrop(saleId: string) {
@@ -93,4 +109,23 @@ export default class FlowGateway {
       { type: t.String, value: saleId },
     ]);
   }
+
+  async getDuplicateNFTs(hashes: string[]): Promise<boolean[]> {
+    return await this.flow.script('./cadence/scripts/get_duplicate_nfts.cdc', [
+      { type: t.Array(t.String), value: hashes },
+    ]);
+  }
+}
+
+function parseMintResult(txOutput: any): MintResult[] {
+  const deposits = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
+
+  return deposits.map((deposit: any) => {
+    const id = deposit.values.value.fields.find((f: any) => f.name === 'id').value;
+
+    return {
+      id: id.value,
+      transactionId: txOutput.id,
+    };
+  });
 }

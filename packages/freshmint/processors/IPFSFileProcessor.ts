@@ -17,12 +17,19 @@ export default class IPFSFileProcessor implements FieldProcessor {
     this.#ipfs = ipfs;
   }
 
-  async process(value: metadata.MetadataValue): Promise<metadata.MetadataValue> {
+  async prepare(value: any): Promise<any> {
     const data = await this.#readFile(value as string);
+    return this.#ipfs.getCID(data);
+  }
+
+  async process(raw: any, prepared: any): Promise<void> {
+    const data = await this.#readFile(raw as string);
 
     const cid = await this.#ipfs.pin(data);
 
-    return cid;
+    if (cid !== prepared) {
+      throw new MismatchedCIDError(prepared, cid)
+    }
   }
 
   async #readFile(value: string): Promise<Buffer> {
@@ -56,5 +63,16 @@ function isURL(value: string): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+export class MismatchedCIDError extends Error {
+  expected: string;
+  actual: string;
+  
+  constructor(expected: string, actual: string) {
+    super(`Expected file to have IPFS CID of ${expected} but got ${actual}`)
+    this.expected = expected;
+    this.actual = actual;
   }
 }

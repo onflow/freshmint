@@ -3,7 +3,7 @@ import { NFTStorage } from 'nft.storage';
 import * as metadata from '@freshmint/core/metadata';
 
 import { FreshmintConfig } from './config';
-import FlowGateway from './flow';
+import { FlowGateway } from './flow';
 import IPFS from './ipfs';
 import { Minter, createMinter } from './minters';
 import { MetadataProcessor } from './processors';
