@@ -15,6 +15,11 @@ export interface MintResult {
   transactionId: string;
 }
 
+// Use the maximum compute limit for minting transactions.
+//
+// This allows users to set the highest possible batch size.
+const mintComputeLimit = 9999;
+
 export class FlowGateway {
   network: string;
   flow: FlowCliWrapper;
@@ -25,13 +30,16 @@ export class FlowGateway {
   }
 
   async mint(fields: BatchField[]) {
+    const args = fields.map(({ field, values }) => ({
+      type: t.Array(field.typeInstance.cadenceType),
+      value: values,
+    }));
+
     const result = await this.flow.transaction(
       './cadence/transactions/mint.cdc',
       `${this.network}-account`,
-      fields.map(({ field, values }) => ({
-        type: t.Array(field.typeInstance.cadenceType),
-        value: values,
-      })),
+      args,
+      mintComputeLimit,
     );
 
     return parseMintResults(result);
@@ -50,6 +58,7 @@ export class FlowGateway {
       './cadence/transactions/mint_with_claim_key.cdc',
       `${this.network}-account`,
       args,
+      mintComputeLimit,
     );
 
     return parseMintResults(result);
@@ -75,29 +84,40 @@ export class FlowGateway {
       './cadence/transactions/create_editions.cdc',
       `${this.network}-account`,
       args,
+      mintComputeLimit,
     );
 
     return parseEditionResults(result);
   }
 
   async mintEdition(editionId: string, count: number) {
-    const result = await this.flow.transaction('./cadence/transactions/mint.cdc', `${this.network}-account`, [
+    const args = [
       { type: t.UInt64, value: editionId },
       { type: t.Int, value: count.toString(10) },
       { type: t.Optional(t.String), value: null },
-    ]);
+    ];
+
+    const result = await this.flow.transaction(
+      './cadence/transactions/mint.cdc',
+      `${this.network}-account`,
+      args,
+      mintComputeLimit,
+    );
 
     return parseEditionMintResults(result);
   }
 
   async mintEditionWithClaimKey(editionId: string, publicKeys: string[]) {
+    const args = [
+      { type: t.UInt64, value: editionId },
+      { type: t.Array(t.String), value: publicKeys },
+    ];
+
     const result = await this.flow.transaction(
       './cadence/transactions/mint_with_claim_key.cdc',
       `${this.network}-account`,
-      [
-        { type: t.UInt64, value: editionId },
-        { type: t.Array(t.String), value: publicKeys },
-      ],
+      args,
+      mintComputeLimit,
     );
 
     return parseEditionMintResults(result);
