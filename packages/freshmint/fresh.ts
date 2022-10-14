@@ -4,9 +4,9 @@ import * as metadata from '@freshmint/core/metadata';
 import { FreshmintConfig } from './config';
 import { FlowGateway } from './flow';
 import IPFS from './ipfs';
-import { Minter, createMinter } from './minters';
-import { MetadataProcessor } from './processors';
-import IPFSFileProcessor from './processors/IPFSFileProcessor';
+import { Minter, createMinter } from './mint';
+import { MetadataProcessor } from './mint/processors';
+import IPFSFileProcessor from './mint/processors/IPFSFileProcessor';
 
 export default class Fresh {
   config: FreshmintConfig;

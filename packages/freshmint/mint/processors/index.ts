@@ -1,7 +1,6 @@
 import * as metadata from '@freshmint/core/metadata';
 
-import { Entry } from '../loaders';
-import { PreparedMetadata, PreparedMetadataValue } from '../minters';
+import { Entry, PreparedMetadata, PreparedMetadataValue } from '../entries';
 
 export interface FieldProcessor {
   fieldType: metadata.FieldType;

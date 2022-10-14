@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import parse from 'csv-parse/lib/sync';
-import { MetadataLoader, Entry } from '.';
+import { MetadataLoader } from '.';
+import { Entry } from '../entries';
 
 export default class CSVLoader implements MetadataLoader {
   csvPath: string;

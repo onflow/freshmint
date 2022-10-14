@@ -17,7 +17,7 @@ import { runDevServer } from './devServer';
 import { loadConfig, FreshmintConfigSchema } from './config';
 import { generateNextjsApp, generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
-import CSVLoader from './loaders/CSVLoader';
+import CSVLoader from './mint/loaders/CSVLoader';
 
 const program = new Command();
 const spinner = ora();

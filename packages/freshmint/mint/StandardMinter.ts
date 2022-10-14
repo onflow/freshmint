@@ -1,12 +1,14 @@
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
-import { Schema, hashMetadata } from '@freshmint/core/metadata';
+import { hashMetadata, Field, Schema } from '@freshmint/core/metadata';
 
+import { MetadataLoader } from './loaders';
+import { BatchField, FlowGateway } from '../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import { FlowGateway } from '../flow';
-import { MetadataLoader, Entry } from '../loaders';
-import { MetadataProcessor } from '../processors';
-import { createBatches, groupMetadataByField, Minter, PreparedMetadata, preparedValues, writeCSV } from '.';
+import { MetadataProcessor } from './processors';
+import { Minter } from '.';
+import { Entry, PreparedMetadata, preparedValues } from './entries';
+import { writeCSV } from './csv';
 
 type PreparedNFTEntry = {
   metadata: PreparedMetadata;
@@ -166,6 +168,22 @@ export class StandardMinter implements Minter {
 
     return nfts.filter((_, index) => !duplicates[index]);
   }
+}
+
+function createBatches<T>(items: T[], batchSize: number): T[][] {
+  const batches = [];
+  while (items.length > 0) {
+    const batch = items.splice(0, batchSize);
+    batches.push(batch);
+  }
+  return batches;
+}
+
+function groupMetadataByField(fields: Field[], nfts: PreparedNFTEntry[]): BatchField[] {
+  return fields.map((field) => ({
+    field,
+    values: nfts.map((nft) => nft.metadata[field.name].prepared),
+  }));
 }
 
 async function savePrivateKeysToFile(filename: string, nfts: PreparedNFTEntry[], privateKeys: string[]): Promise<void> {
