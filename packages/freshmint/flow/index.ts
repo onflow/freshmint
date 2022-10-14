@@ -6,8 +6,8 @@ import * as t from '@onflow/types';
 import FlowCliWrapper from './cli';
 
 export interface BatchField {
-  field: Field,
-  values: any[]
+  field: Field;
+  values: any[];
 }
 
 export interface MintResult {
@@ -34,7 +34,7 @@ export class FlowGateway {
       })),
     );
 
-    return parseMintResult(result);
+    return parseMintResults(result);
   }
 
   async mintWithClaimKey(publicKeys: string[], fields: BatchField[]) {
@@ -52,7 +52,7 @@ export class FlowGateway {
       args,
     );
 
-    return parseMintResult(result);
+    return parseMintResults(result);
   }
 
   async getNFTDetails(address: string, nftId: string) {
@@ -71,22 +71,36 @@ export class FlowGateway {
       })),
     ];
 
-    return await this.flow.transaction('./cadence/transactions/create_editions.cdc', `${this.network}-account`, args);
+    const result = await this.flow.transaction(
+      './cadence/transactions/create_editions.cdc',
+      `${this.network}-account`,
+      args,
+    );
+
+    return parseEditionResults(result);
   }
 
   async mintEdition(editionId: string, count: number) {
-    return await this.flow.transaction('./cadence/transactions/mint.cdc', `${this.network}-account`, [
+    const result = await this.flow.transaction('./cadence/transactions/mint.cdc', `${this.network}-account`, [
       { type: t.UInt64, value: editionId },
       { type: t.Int, value: count.toString(10) },
       { type: t.Optional(t.String), value: null },
     ]);
+
+    return parseEditionMintResults(result);
   }
 
   async mintEditionWithClaimKey(editionId: string, publicKeys: string[]) {
-    return await this.flow.transaction('./cadence/transactions/mint_with_claim_key.cdc', `${this.network}-account`, [
-      { type: t.UInt64, value: editionId },
-      { type: t.Array(t.String), value: publicKeys },
-    ]);
+    const result = await this.flow.transaction(
+      './cadence/transactions/mint_with_claim_key.cdc',
+      `${this.network}-account`,
+      [
+        { type: t.UInt64, value: editionId },
+        { type: t.Array(t.String), value: publicKeys },
+      ],
+    );
+
+    return parseEditionMintResults(result);
   }
 
   async startDrop(saleId: string, price: string) {
@@ -115,9 +129,15 @@ export class FlowGateway {
       { type: t.Array(t.String), value: hashes },
     ]);
   }
+
+  async getEditionsByHash(hashes: string[]) {
+    return await this.flow.script('./cadence/scripts/get_editions_by_hash.cdc', [
+      { type: t.Array(t.String), value: hashes },
+    ]);
+  }
 }
 
-function parseMintResult(txOutput: any): MintResult[] {
+function parseMintResults(txOutput: any): MintResult[] {
   const deposits = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
 
   return deposits.map((deposit: any) => {
@@ -126,6 +146,43 @@ function parseMintResult(txOutput: any): MintResult[] {
     return {
       id: id.value,
       transactionId: txOutput.id,
+    };
+  });
+}
+
+function parseEditionResults(txOutput: any): { id: string; size: number; count: number }[] {
+  const editions = txOutput.events.filter((event: any) => event.type.includes('.EditionCreated'));
+
+  return editions.map((edition: any) => {
+    // TODO: improve event parsing. Use FCL?
+
+    const editionStruct = edition.values.value.fields.find((f: any) => f.name === 'edition').value;
+
+    const editionId = editionStruct.value.fields.find((f: any) => f.name === 'id').value.value;
+    const editionCount = editionStruct.value.fields.find((f: any) => f.name === 'count').value.value;
+    const editionSize = editionStruct.value.fields.find((f: any) => f.name === 'size').value.value;
+
+    return {
+      id: editionId,
+      size: editionSize,
+      count: editionCount,
+      txId: txOutput.id,
+    };
+  });
+}
+
+function parseEditionMintResults(txOutput: any) {
+  const mints = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
+
+  return mints.map((mint: any) => {
+    // TODO: improve event parsing. Use FCL?
+    const tokenId = mint.values.value.fields.find((f: any) => f.name === 'id').value;
+    const serialNumber = mint.values.value.fields.find((f: any) => f.name === 'serialNumber').value;
+
+    return {
+      tokenId: tokenId.value,
+      serialNumber: serialNumber.value,
+      txId: txOutput.id,
     };
   });
 }

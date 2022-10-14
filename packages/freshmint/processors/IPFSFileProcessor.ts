@@ -28,7 +28,7 @@ export default class IPFSFileProcessor implements FieldProcessor {
     const cid = await this.#ipfs.pin(data);
 
     if (cid !== prepared) {
-      throw new MismatchedCIDError(prepared, cid)
+      throw new MismatchedCIDError(prepared, cid);
     }
   }
 
@@ -69,9 +69,9 @@ function isURL(value: string): boolean {
 export class MismatchedCIDError extends Error {
   expected: string;
   actual: string;
-  
+
   constructor(expected: string, actual: string) {
-    super(`Expected file to have IPFS CID of ${expected} but got ${actual}`)
+    super(`Expected file to have IPFS CID of ${expected} but got ${actual}`);
     this.expected = expected;
     this.actual = actual;
   }

@@ -42,7 +42,7 @@ export default class Fresh {
       metadataProcessor.addFieldProcessor(ipfsFileProcessor);
     }
 
-    return createMinter(this.config.contract, metadataProcessor, this.flowGateway, this.storage);
+    return createMinter(this.config.contract, metadataProcessor, this.flowGateway);
   }
 
   async getNFT(tokenId: string): Promise<models.NFT | null> {

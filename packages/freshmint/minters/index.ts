@@ -6,13 +6,11 @@ import { ContractConfig, ContractType } from '../config';
 import { BatchField, FlowGateway } from '../flow';
 import { EditionMinter } from './EditionMinter';
 import { StandardMinter } from './StandardMinter';
-import Storage from '../storage';
-import { MetadataLoader } from '../loaders';
 import { MetadataProcessor } from '../processors';
+import { MetadataLoader } from '../loaders';
 
-export type PreparedEntry = {
+export interface PreparedEntry {
   metadata: PreparedMetadata;
-  hash: string;
 }
 
 export type PreparedMetadata = { [name: string]: PreparedMetadataValue };
@@ -20,48 +18,23 @@ export type PreparedMetadata = { [name: string]: PreparedMetadataValue };
 export type PreparedMetadataValue = {
   raw: any;
   prepared: any;
-}
+};
 
 export function preparedValues(preparedMetadata: PreparedMetadata): MetadataMap {
   const metadata: MetadataMap = {};
 
   for (const name in preparedMetadata) {
-    metadata[name] = preparedMetadata[name].prepared
+    metadata[name] = preparedMetadata[name].prepared;
   }
 
   return metadata;
 }
 
-export function groupMetadataByField(fields: Field[], nfts: PreparedEntry[]): BatchField[]  {
+export function groupMetadataByField(fields: Field[], nfts: PreparedEntry[]): BatchField[] {
   return fields.map((field) => ({
     field,
     values: nfts.map((nft) => nft.metadata[field.name].prepared),
   }));
-}
-
-export interface Minter {
-  mint(
-    loader: MetadataLoader,
-    withClaimKey: boolean,
-    onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
-    onBatchComplete: (batchSize: number) => void,
-    onError: (error: Error) => void,
-    batchSize: number,
-  ): Promise<void>;
-}
-
-export function createMinter(
-  contract: ContractConfig,
-  metadataProcessor: MetadataProcessor,
-  flowGateway: FlowGateway,
-  storage: Storage,
-): Minter {
-  switch (contract.type) {
-    case ContractType.Standard:
-      return new StandardMinter(contract.schema, metadataProcessor, flowGateway);
-    case ContractType.Edition:
-      return new EditionMinter(contract.schema, metadataProcessor, flowGateway, storage);
-  }
 }
 
 export function createBatches<T>(items: T[], batchSize: number): T[][] {
@@ -86,4 +59,28 @@ export async function writeCSV(filename: string, rows: any[], { append = false }
 
     csvStream.end();
   });
+}
+
+export interface Minter {
+  mint(
+    loader: MetadataLoader,
+    withClaimKey: boolean,
+    onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
+    onBatchComplete: (batchSize: number) => void,
+    onError: (error: Error) => void,
+    batchSize: number,
+  ): Promise<void>;
+}
+
+export function createMinter(
+  contract: ContractConfig,
+  metadataProcessor: MetadataProcessor,
+  flowGateway: FlowGateway,
+): Minter {
+  switch (contract.type) {
+    case ContractType.Standard:
+      return new StandardMinter(contract.schema, metadataProcessor, flowGateway);
+    case ContractType.Edition:
+      return new EditionMinter(contract.schema, metadataProcessor, flowGateway);
+  }
 }

@@ -1,7 +1,7 @@
 import * as metadata from '@freshmint/core/metadata';
 
 export type Edition = {
-  editionId: string;
+  id: string;
   size: number;
   count: number;
   txId: string;
@@ -10,11 +10,10 @@ export type Edition = {
 };
 
 export type NFT = {
-  tokenId: string;
-  txId: string;
-  hash: string;
-  metadata: metadata.MetadataMap;
+  id: string;
+  transactionId: string;
   editionId?: string;
   serialNumber?: string;
   claimKey?: string;
+  metadata: metadata.MetadataMap;
 };

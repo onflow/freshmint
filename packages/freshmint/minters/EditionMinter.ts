@@ -1,36 +1,38 @@
-import { hashMetadata, MetadataMap, Schema } from '@freshmint/core/metadata';
+import { hashMetadata, Schema } from '@freshmint/core/metadata';
 
 import { MetadataLoader, Entry } from '../loaders';
-import FlowGateway from '../flow';
-import Storage from '../storage';
-import * as models from '../models';
+import { FlowGateway } from '../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { MetadataProcessor } from '../processors';
+import { Minter, PreparedMetadata, preparedValues } from '.';
+
+type Edition = {
+  id: string;
+  size: number;
+  count: number;
+};
 
 type EditionBatch = {
-  edition: models.Edition;
+  edition: Edition;
   size: number;
   newCount: number;
 };
 
-type EditionInput = {
-  size: number;
+type PreparedEditionEntry = {
+  metadata: PreparedMetadata;
   hash: string;
-  metadata: MetadataMap;
+  size: number;
 };
 
-export class EditionMinter {
+export class EditionMinter implements Minter {
   schema: Schema;
   metadataProcessor: MetadataProcessor;
   flowGateway: FlowGateway;
-  storage: Storage;
 
-  constructor(schema: Schema, metadataProcessor: MetadataProcessor, flowGateway: FlowGateway, storage: Storage) {
+  constructor(schema: Schema, metadataProcessor: MetadataProcessor, flowGateway: FlowGateway) {
     this.schema = schema;
     this.metadataProcessor = metadataProcessor;
     this.flowGateway = flowGateway;
-
-    this.storage = storage;
   }
 
   async mint(
@@ -43,9 +45,10 @@ export class EditionMinter {
   ) {
     const entries = await loader.loadEntries();
 
-    const editionInputs = this.prepare(entries);
+    const preparedEntries = await this.prepareMetadata(entries);
 
-    const editions = await this.getOrCreateEditions(editionInputs);
+    const editions = await this.getOrCreateEditions(preparedEntries);
+
     const editionsToMint = editions.filter((edition) => edition.count < edition.size);
 
     const totalNFTCount = editions.reduce((size, edition) => size + edition.size, 0);
@@ -58,107 +61,82 @@ export class EditionMinter {
     onStart(newNFTCount, skippedNFTCount, batches.length, batchSize);
 
     for (const batch of batches) {
-      let results;
-
       try {
-        results = await this.mintBatch(batch, withClaimKey);
+        await this.mintBatch(batch, withClaimKey);
       } catch (error: any) {
         onError(error);
         return;
       }
 
-      await this.storage.updateEditionCount(batch.edition.editionId, batch.newCount);
-
-      const finalResults = results.map((result: any) => {
-        const { tokenId, serialNumber, txId, claimKey } = result;
-
-        return {
-          tokenId,
-          txId,
-          hash: batch.edition.hash,
-          metadata: batch.edition.metadata,
-          editionId: batch.edition.editionId,
-          serialNumber,
-          claimKey,
-        };
-      });
-
-      for (const result of finalResults) {
-        await this.storage.saveNFT(result);
-      }
+      // TODO: save results to CSV
 
       onBatchComplete(batch.size);
     }
   }
 
-  async getOrCreateEditions(
-    editionInputs: { size: number; hash: string; metadata: MetadataMap }[],
-  ): Promise<models.Edition[]> {
+  async getOrCreateEditions(entries: PreparedEditionEntry[]): Promise<Edition[]> {
     // TODO: improve this function
 
-    const editionMap: { [hash: string]: models.Edition } = {};
+    const hashes = entries.map((edition) => edition.hash);
 
-    const newEditions: EditionInput[] = [];
+    const existingEditions = await this.flowGateway.getEditionsByHash(hashes);
 
-    for (const editionInput of editionInputs) {
-      const edition = await this.storage.loadEditionByHash(editionInput.hash);
-      if (edition) {
-        editionMap[edition.hash] = edition;
+    const editions: { [hash: string]: Edition } = {};
+
+    const newEditions: PreparedEditionEntry[] = [];
+
+    for (const [i, entry] of entries.entries()) {
+      const existingEdition = existingEditions[i];
+
+      if (existingEdition) {
+        editions[entry.hash] = {
+          ...existingEdition,
+          // TODO: the on-chain ID needs to be converted to a string in order to be
+          // used as an FCL argument. Find a better way to sanitize this.
+          id: existingEdition.id.toString(),
+        };
       } else {
-        newEditions.push(editionInput);
+        newEditions.push(entry);
       }
     }
 
-    const processedEditions = await Promise.all(
-      newEditions.map(async (edition) => ({
-        ...edition,
-        metadata: await this.metadataProcessor.process(edition.metadata),
-      })),
-    );
+    // Process all edition metadata
+    for (const newEdition of newEditions) {
+      await this.metadataProcessor.process(newEdition.metadata);
+    }
 
-    const sizes = processedEditions.map((edition) => edition.size);
+    const sizes = newEditions.map((edition) => edition.size);
 
     const values = this.schema.fields.map((field) => ({
       cadenceType: field.asCadenceTypeObject(),
-      values: processedEditions.map((edition) => field.getValue(edition.metadata)),
+      values: newEditions.map((edition) => edition.metadata[field.name].prepared),
     }));
 
-    const result = await this.flowGateway.createEditions(sizes, values);
+    const results = await this.flowGateway.createEditions(sizes, values);
 
-    const createdEditions = formatEditionResults(result.id, result.events, processedEditions);
+    results.forEach((edition, i) => {
+      const newEdition = newEditions[i];
+      editions[newEdition.hash] = edition;
+    });
 
-    for (const createdEdition of createdEditions) {
-      // Save new editions with a count of zero
-      const edition = { ...createdEdition, count: 0 };
-
-      editionMap[createdEdition.hash] = edition;
-
-      await this.storage.saveEdition(edition);
-    }
-
-    return editionInputs.map((editionInput) => editionMap[editionInput.hash]);
+    return entries.map((entry) => editions[entry.hash]);
   }
 
-  prepare(entries: Entry[]): EditionInput[] {
-    return entries.map((values) => {
-      const metadata: MetadataMap = {};
+  async prepareMetadata(entries: Entry[]): Promise<PreparedEditionEntry[]> {
+    return Promise.all(
+      entries.map(async (entry: Entry) => {
+        const metadata = await this.metadataProcessor.prepare(entry);
+        const hash = hashMetadata(this.schema, preparedValues(metadata)).toString('hex');
 
-      this.schema.fields.forEach((field) => {
-        const value = field.getValue(values);
+        const size = parseInt(entry.edition_size, 10);
 
-        metadata[field.name] = value;
-      });
-
-      const hash = hashMetadata(this.schema, metadata).toString('hex');
-
-      const size = parseInt(values.edition_size, 10);
-
-      return {
-        size,
-        hash,
-        metadata,
-      };
-    });
+        return {
+          metadata,
+          hash,
+          size,
+        };
+      }),
+    );
   }
 
   async mintBatch(batch: EditionBatch, withClaimKey: boolean) {
@@ -170,16 +148,13 @@ export class EditionMinter {
   }
 
   async mintTokens(batch: EditionBatch) {
-    const minted = await this.flowGateway.mintEdition(batch.edition.editionId, batch.size);
-    return formatMintResults(minted);
+    return await this.flowGateway.mintEdition(batch.edition.id, batch.size);
   }
 
   async mintTokensWithClaimKey(batch: EditionBatch) {
     const { privateKeys, publicKeys } = generateClaimKeyPairs(batch.size);
 
-    const minted = await this.flowGateway.mintEditionWithClaimKey(batch.edition.editionId, publicKeys);
-
-    const results = formatMintResults(minted);
+    const results = await this.flowGateway.mintEditionWithClaimKey(batch.edition.id, publicKeys);
 
     return results.map((result: any, i: number) => ({
       ...result,
@@ -188,49 +163,11 @@ export class EditionMinter {
   }
 }
 
-function formatEditionResults(txId: string, events: any[], editions: any[]): models.Edition[] {
-  const editionEvents = events.filter((event) => event.type.includes('.EditionCreated'));
-
-  return editions.flatMap((edition, i) => {
-    // TODO: improve event parsing. Use FCL?
-    const editionEvent: any = editionEvents[i];
-
-    const editionStruct = editionEvent.values.value.fields.find((f: any) => f.name === 'edition').value;
-
-    const editionId = editionStruct.value.fields.find((f: any) => f.name === 'id').value.value;
-
-    return {
-      editionId,
-      size: edition.size,
-      count: edition.count,
-      txId,
-      metadata: edition.metadata,
-      hash: edition.hash,
-    };
-  });
-}
-
-function formatMintResults(txOutput: any) {
-  const mints = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
-
-  return mints.map((mint: any) => {
-    // TODO: improve event parsing. Use FCL?
-    const tokenId = mint.values.value.fields.find((f: any) => f.name === 'id').value;
-    const serialNumber = mint.values.value.fields.find((f: any) => f.name === 'serialNumber').value;
-
-    return {
-      tokenId: tokenId.value,
-      serialNumber: serialNumber.value,
-      txId: txOutput.id,
-    };
-  });
-}
-
-function createBatches(editions: models.Edition[], batchSize: number): EditionBatch[] {
+function createBatches(editions: Edition[], batchSize: number): EditionBatch[] {
   return editions.flatMap((edition) => createEditionBatches(edition, batchSize));
 }
 
-function createEditionBatches(edition: models.Edition, batchSize: number): EditionBatch[] {
+function createEditionBatches(edition: Edition, batchSize: number): EditionBatch[] {
   const batches: EditionBatch[] = [];
 
   let count = edition.count;

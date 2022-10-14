@@ -30,8 +30,8 @@ export class MetadataProcessor {
 
       metadata[field.name] = {
         raw: value,
-        prepared: await this.prepareField(field, value)
-      }
+        prepared: await this.prepareField(field, value),
+      };
     }
 
     return metadata;

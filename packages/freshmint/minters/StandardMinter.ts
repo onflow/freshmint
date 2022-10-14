@@ -6,7 +6,12 @@ import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { FlowGateway } from '../flow';
 import { MetadataLoader, Entry } from '../loaders';
 import { MetadataProcessor } from '../processors';
-import { createBatches, groupMetadataByField, Minter, PreparedEntry, preparedValues, writeCSV } from '.';
+import { createBatches, groupMetadataByField, Minter, PreparedMetadata, preparedValues, writeCSV } from '.';
+
+type PreparedNFTEntry = {
+  metadata: PreparedMetadata;
+  hash: string;
+};
 
 export class StandardMinter implements Minter {
   schema: Schema;
@@ -46,12 +51,11 @@ export class StandardMinter implements Minter {
     const tempFile = `mint-${timestamp}.tmp.csv`;
 
     for (const [batchIndex, nfts] of batches.entries()) {
-
       // Process the NFT metadata fields (i.e. perform actions such as pinning files to IPFS).
       await this.processMetadata(nfts);
 
       if (withClaimKeys) {
-        await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, nfts, onError)
+        await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, nfts, onError);
       } else {
         await this.mintNFTs(batchIndex, outFile, nfts, onError);
       }
@@ -67,27 +71,27 @@ export class StandardMinter implements Minter {
     }
   }
 
-  async prepareMetadata(entries: Entry[]): Promise<PreparedEntry[]> {
+  async prepareMetadata(entries: Entry[]): Promise<PreparedNFTEntry[]> {
     return Promise.all(
       entries.map(async (entry: Entry) => {
-        const metadata = await this.metadataProcessor.prepare(entry)
+        const metadata = await this.metadataProcessor.prepare(entry);
         const hash = hashMetadata(this.schema, preparedValues(metadata)).toString('hex');
 
         return {
           metadata,
           hash,
-        }
-      })
+        };
+      }),
     );
   }
 
-  async processMetadata(entries: PreparedEntry[]): Promise<void> {
+  async processMetadata(entries: PreparedNFTEntry[]): Promise<void> {
     for (const entry of entries) {
       await this.metadataProcessor.process(entry.metadata);
     }
   }
 
-  async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedEntry[], onError: (error: Error) => void) {
+  async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedNFTEntry[], onError: (error: Error) => void) {
     const metadataFields = groupMetadataByField(this.schema.fields, nfts);
 
     let results;
@@ -114,7 +118,13 @@ export class StandardMinter implements Minter {
     await writeCSV(outFile, rows, { append: batchIndex > 0 });
   }
 
-  async mintNFTsWithClaimKeys(batchIndex: number, outFile: string, tempFile: string, nfts: PreparedEntry[], onError: (error: Error) => void) {
+  async mintNFTsWithClaimKeys(
+    batchIndex: number,
+    outFile: string,
+    tempFile: string,
+    nfts: PreparedNFTEntry[],
+    onError: (error: Error) => void,
+  ) {
     const { privateKeys, publicKeys } = generateClaimKeyPairs(nfts.length);
 
     await savePrivateKeysToFile(tempFile, nfts, privateKeys);
@@ -147,7 +157,7 @@ export class StandardMinter implements Minter {
   }
 
   // filterDuplicates returns only the NFTs that have not yet been minted.
-  async filterDuplicates(nfts: PreparedEntry[], batchSize: number): Promise<PreparedEntry[]> {
+  async filterDuplicates(nfts: PreparedNFTEntry[], batchSize: number): Promise<PreparedNFTEntry[]> {
     const hashes = nfts.map((nft) => nft.hash);
 
     const batches = createBatches(hashes, batchSize);
@@ -158,8 +168,8 @@ export class StandardMinter implements Minter {
   }
 }
 
-async function savePrivateKeysToFile(filename: string, nfts: PreparedEntry[], privateKeys: string[]): Promise<void> {
-  const rows = nfts.map((nft: PreparedEntry, i) => {
+async function savePrivateKeysToFile(filename: string, nfts: PreparedNFTEntry[], privateKeys: string[]): Promise<void> {
+  const rows = nfts.map((nft: PreparedNFTEntry, i) => {
     return {
       _partial_claim_key: privateKeys[i],
       ...preparedValues(nft.metadata),

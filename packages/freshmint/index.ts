@@ -213,7 +213,7 @@ async function stopDrop({ network }: { network: string }) {
 }
 
 function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
-  const idOutput = ['ID:', chalk.green(nft.tokenId)];
+  const idOutput = ['ID:', chalk.green(nft.id)];
   const fieldOutput = contractConfig.schema.fields.map((field) => [
     ` ${field.name}:`,
     chalk.blue(field.getValue(nft.metadata)),
