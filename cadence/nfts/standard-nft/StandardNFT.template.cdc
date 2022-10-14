@@ -248,7 +248,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
             let hexHash = String.encodeHex(metadata.hash())
 
-            // Prevent multiple NFTs from being minted with the same metadata hash.
+            // Prevent multiple NFTs from being minted with the same metadata hash
             assert(
                 {{ contractName }}.nftsByHash[hexHash] == nil,
                 message: "an NFT has already been minted with hash=".concat(hexHash)
