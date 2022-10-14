@@ -113,10 +113,8 @@ export class EditionMinter implements Minter {
       }
     }
 
-    // Process all edition metadata
-    for (const newEdition of newEditions) {
-      await this.metadataProcessor.process(newEdition.metadata);
-    }
+    // Process the edition metadata fields (i.e. perform actions such as pinning files to IPFS)
+    await this.processMetadata(newEditions);
 
     const sizes = newEditions.map((edition) => edition.size);
 
@@ -158,6 +156,12 @@ export class EditionMinter implements Minter {
         };
       }),
     );
+  }
+
+  async processMetadata(entries: PreparedEditionEntry[]): Promise<void> {
+    for (const entry of entries) {
+      await this.metadataProcessor.process(entry.metadata);
+    }
   }
 
   async mintBatch(

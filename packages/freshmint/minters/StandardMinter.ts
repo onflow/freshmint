@@ -51,7 +51,7 @@ export class StandardMinter implements Minter {
     const tempFile = `mint-${timestamp}.tmp.csv`;
 
     for (const [batchIndex, nfts] of batches.entries()) {
-      // Process the NFT metadata fields (i.e. perform actions such as pinning files to IPFS).
+      // Process the NFT metadata fields (i.e. perform actions such as pinning files to IPFS)
       await this.processMetadata(nfts);
 
       if (withClaimKeys) {
