@@ -149,9 +149,9 @@ async function mint({
   await minter.mint(
     loader,
     claim,
-    (total: number, skipped: number, batchCount: number, batchSize: number) => {
-      if (skipped) {
-        spinner.info(`Skipped ${skipped} NFTs because they already exist.\n`);
+    (total: number, batchCount: number, batchSize: number, message?: string) => {
+      if (message) {
+        spinner.info(`${message}\n`);
       } else {
         spinner.succeed();
       }

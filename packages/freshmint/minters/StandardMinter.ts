@@ -27,7 +27,7 @@ export class StandardMinter implements Minter {
   async mint(
     loader: MetadataLoader,
     withClaimKeys: boolean,
-    onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
+    onStart: (total: number, batchCount: number, batchSize: number, message?: string) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
     batchSize = 10,
@@ -43,7 +43,7 @@ export class StandardMinter implements Minter {
 
     const batches = createBatches(newEntries, batchSize);
 
-    onStart(total, skipped, batches.length, batchSize);
+    onStart(total, batches.length, batchSize, makeSkippedMessage(skipped));
 
     const timestamp = Date.now();
 
@@ -177,4 +177,14 @@ async function savePrivateKeysToFile(filename: string, nfts: PreparedNFTEntry[],
   });
 
   return writeCSV(filename, rows);
+}
+
+function makeSkippedMessage(skippedNFTCount: number): string {
+  if (!skippedNFTCount) {
+    return '';
+  }
+
+  return skippedNFTCount > 1
+    ? `Skipped ${skippedNFTCount} NFTs because they have already been minted.`
+    : `Skipped 1 NFT because it has already been minted.`;
 }

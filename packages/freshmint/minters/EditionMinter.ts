@@ -1,15 +1,18 @@
+import { existsSync } from 'fs';
+import { unlink } from 'fs/promises';
 import { hashMetadata, Schema } from '@freshmint/core/metadata';
 
 import { MetadataLoader, Entry } from '../loaders';
 import { FlowGateway } from '../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { MetadataProcessor } from '../processors';
-import { Minter, PreparedMetadata, preparedValues } from '.';
+import { Minter, PreparedMetadata, preparedValues, writeCSV } from '.';
 
 type Edition = {
   id: string;
   size: number;
   count: number;
+  metadata: PreparedMetadata;
 };
 
 type EditionBatch = {
@@ -38,7 +41,7 @@ export class EditionMinter implements Minter {
   async mint(
     loader: MetadataLoader,
     withClaimKey: boolean,
-    onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
+    onStart: (total: number, batchCount: number, batchSize: number, message?: string) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
     batchSize = 10,
@@ -56,21 +59,30 @@ export class EditionMinter implements Minter {
     const batches = createBatches(editionsToMint, batchSize);
 
     const newNFTCount = batches.reduce((count, batch) => count + batch.size, 0);
+    const skippedEditionCount = editions.length - editionsToMint.length;
     const skippedNFTCount = totalNFTCount - newNFTCount;
 
-    onStart(newNFTCount, skippedNFTCount, batches.length, batchSize);
+    onStart(newNFTCount, batches.length, batchSize, makeSkippedMessage(skippedEditionCount, skippedNFTCount));
 
-    for (const batch of batches) {
+    const timestamp = Date.now();
+
+    const outFile = `mint-${timestamp}.csv`;
+    const tempFile = `mint-${timestamp}.tmp.csv`;
+
+    for (const [batchIndex, batch] of batches.entries()) {
       try {
-        await this.mintBatch(batch, withClaimKey);
+        await this.mintBatch(batchIndex, outFile, tempFile, batch, withClaimKey, onError);
       } catch (error: any) {
         onError(error);
         return;
       }
 
-      // TODO: save results to CSV
-
       onBatchComplete(batch.size);
+    }
+
+    // Remove the temporary file used to store claim keys
+    if (existsSync(tempFile)) {
+      await unlink(tempFile);
     }
   }
 
@@ -94,6 +106,7 @@ export class EditionMinter implements Minter {
           // TODO: the on-chain ID needs to be converted to a string in order to be
           // used as an FCL argument. Find a better way to sanitize this.
           id: existingEdition.id.toString(),
+          metadata: entry.metadata,
         };
       } else {
         newEditions.push(entry);
@@ -114,8 +127,16 @@ export class EditionMinter implements Minter {
 
     const results = await this.flowGateway.createEditions(sizes, values);
 
-    results.forEach((edition, i) => {
+    results.forEach((result, i) => {
       const newEdition = newEditions[i];
+
+      const edition = {
+        id: result.id,
+        count: result.count,
+        size: result.size,
+        metadata: newEdition.metadata,
+      };
+
       editions[newEdition.hash] = edition;
     });
 
@@ -139,27 +160,80 @@ export class EditionMinter implements Minter {
     );
   }
 
-  async mintBatch(batch: EditionBatch, withClaimKey: boolean) {
+  async mintBatch(
+    batchIndex: number,
+    outFile: string,
+    tempFile: string,
+    batch: EditionBatch,
+    withClaimKey: boolean,
+    onError: (error: Error) => void,
+  ) {
     if (withClaimKey) {
-      return await this.mintTokensWithClaimKey(batch);
+      return await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, batch, onError);
     }
 
-    return await this.mintTokens(batch);
+    return await this.mintNFTs(batchIndex, outFile, batch, onError);
   }
 
-  async mintTokens(batch: EditionBatch) {
-    return await this.flowGateway.mintEdition(batch.edition.id, batch.size);
+  async mintNFTs(batchIndex: number, outFile: string, batch: EditionBatch, onError: (error: Error) => void) {
+    let results;
+
+    try {
+      results = await this.flowGateway.mintEdition(batch.edition.id, batch.size);
+    } catch (error: any) {
+      onError(error);
+      return;
+    }
+
+    const rows = results.map((result: any) => {
+      const { id, serialNumber, transactionId } = result;
+
+      return {
+        _id: id,
+        _edition_id: batch.edition.id,
+        _serial_number: serialNumber,
+        _transaction_id: transactionId,
+        ...preparedValues(batch.edition.metadata),
+      };
+    });
+
+    await writeCSV(outFile, rows, { append: batchIndex > 0 });
   }
 
-  async mintTokensWithClaimKey(batch: EditionBatch) {
+  async mintNFTsWithClaimKeys(
+    batchIndex: number,
+    outFile: string,
+    tempFile: string,
+    batch: EditionBatch,
+    onError: (error: Error) => void,
+  ) {
     const { privateKeys, publicKeys } = generateClaimKeyPairs(batch.size);
 
-    const results = await this.flowGateway.mintEditionWithClaimKey(batch.edition.id, publicKeys);
+    await savePrivateKeysToFile(tempFile, batch, privateKeys);
 
-    return results.map((result: any, i: number) => ({
-      ...result,
-      claimKey: formatClaimKey(result.tokenId, privateKeys[i]),
-    }));
+    let results;
+
+    try {
+      results = await this.flowGateway.mintEditionWithClaimKey(batch.edition.id, publicKeys);
+    } catch (error: any) {
+      onError(error);
+      return;
+    }
+
+    const rows = results.map((result: any, i: number) => {
+      const { id, serialNumber, transactionId } = result;
+
+      return {
+        _id: id,
+        _edition_id: batch.edition.id,
+        _serial_number: serialNumber,
+        _transaction_id: transactionId,
+        _claim_key: formatClaimKey(id, privateKeys[i]),
+        ...preparedValues(batch.edition.metadata),
+      };
+    });
+
+    await writeCSV(outFile, rows, { append: batchIndex > 0 });
   }
 }
 
@@ -183,4 +257,29 @@ function createEditionBatches(edition: Edition, batchSize: number): EditionBatch
   }
 
   return batches;
+}
+
+async function savePrivateKeysToFile(filename: string, batch: EditionBatch, privateKeys: string[]): Promise<void> {
+  const rows = privateKeys.map((privateKey) => ({
+    _edition_id: batch.edition.id,
+    _partial_claim_key: privateKey,
+  }));
+
+  return writeCSV(filename, rows);
+}
+
+function makeSkippedMessage(skippedEditionCount: number, skippedNFTCount: number): string {
+  if (!skippedEditionCount && !skippedNFTCount) {
+    return '';
+  }
+
+  if (skippedNFTCount && !skippedEditionCount) {
+    return `Skipped ${skippedNFTCount} NFTs because they have already been minted.`;
+  }
+
+  const nftMessage = skippedNFTCount > 1 ? `${skippedNFTCount} NFTs` : '1 NFT';
+
+  return skippedEditionCount > 1
+    ? `Skipped ${skippedEditionCount} editions (${nftMessage}) because they have already been minted.`
+    : `Skipped 1 edition (${nftMessage}) because it has already been minted.`;
 }

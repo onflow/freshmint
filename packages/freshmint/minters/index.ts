@@ -65,7 +65,7 @@ export interface Minter {
   mint(
     loader: MetadataLoader,
     withClaimKey: boolean,
-    onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
+    onStart: (total: number, batchCount: number, batchSize: number, message?: string) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
     batchSize: number,

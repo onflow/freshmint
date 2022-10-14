@@ -166,7 +166,7 @@ function parseEditionResults(txOutput: any): { id: string; size: number; count: 
       id: editionId,
       size: editionSize,
       count: editionCount,
-      txId: txOutput.id,
+      transactionId: txOutput.id,
     };
   });
 }
@@ -176,13 +176,14 @@ function parseEditionMintResults(txOutput: any) {
 
   return mints.map((mint: any) => {
     // TODO: improve event parsing. Use FCL?
+
     const tokenId = mint.values.value.fields.find((f: any) => f.name === 'id').value;
     const serialNumber = mint.values.value.fields.find((f: any) => f.name === 'serialNumber').value;
 
     return {
-      tokenId: tokenId.value,
+      id: tokenId.value,
       serialNumber: serialNumber.value,
-      txId: txOutput.id,
+      transactionId: txOutput.id,
     };
   });
 }
