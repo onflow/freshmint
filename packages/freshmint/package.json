@@ -32,7 +32,6 @@
     "chalk": "^4.1.0",
     "commander": "^7.1.0",
     "csv-parse": "^4.16.3",
-    "csv-writer": "^1.6.0",
     "dotenv": "^16.0.1",
     "elliptic": "^6.5.4",
     "fast-csv": "^4.3.6",

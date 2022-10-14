@@ -4,9 +4,8 @@
 // See fresh.js for the core functionality.
 
 import * as path from 'path';
-import { Command, InvalidOptionArgumentError } from 'commander';
+import { Command } from 'commander';
 import ora from 'ora';
-import chalk from 'chalk';
 import ProgressBar from 'progress';
 import inquirer from 'inquirer';
 import * as metadata from '@freshmint/core/metadata';
@@ -15,23 +14,13 @@ import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
 import { runDevServer } from './devServer';
-import { loadConfig, ContractType, FreshmintConfigSchema, ContractConfig } from './config';
+import { loadConfig, FreshmintConfigSchema } from './config';
 import { generateNextjsApp, generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
 import CSVLoader from './loaders/CSVLoader';
-import * as models from './models';
 
 const program = new Command();
 const spinner = ora();
-
-function parseIntOption(value: string) {
-  const parsedValue = parseInt(value, 10);
-  if (isNaN(parsedValue)) {
-    throw new InvalidOptionArgumentError('Not a number.');
-  }
-
-  return parsedValue;
-}
 
 async function main() {
   program.command('start <project-path>').description('initialize a new project').action(start);
@@ -48,12 +37,6 @@ async function main() {
     .action(mint);
 
   program
-    .command('get <token-id>')
-    .description('fetch the information for an NFT')
-    .option('-n, --network <network>', "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
-    .action(getNFT);
-
-  program
     .command('start-drop <price>')
     .description('start a new drop')
     .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
@@ -66,13 +49,6 @@ async function main() {
     .action(stopDrop);
 
   // TODO: add get-drop command
-
-  program
-    .command('dump <csv-path>')
-    .description('dump all NFT data to a CSV file')
-    .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
-    .option('--tail <number>', 'Only dump the last <number> NFTs. ', parseIntOption)
-    .action(dumpNFTs);
 
   const generate = program.command('generate').description('regenerate project files from config');
 
@@ -176,22 +152,6 @@ async function mint({
   );
 }
 
-async function getNFT(tokenId: string, { network }: { network: string }) {
-  const config = loadConfig();
-  const fresh = new Fresh(config, network);
-
-  const nft = await fresh.getNFT(tokenId);
-
-  if (nft === null) {
-    // TODO: improve this error message
-    throw new Error('NFT could not be found');
-  }
-
-  const output = getNFTOutput(nft, config.contract);
-
-  alignOutput(output);
-}
-
 async function startDrop(price: string, { network }: { network: string }) {
   const config = loadConfig();
   const fresh = new Fresh(config, network);
@@ -212,35 +172,6 @@ async function stopDrop({ network }: { network: string }) {
   spinner.succeed(`Your drop has been stopped.`);
 }
 
-function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
-  const idOutput = ['ID:', chalk.green(nft.id)];
-  const fieldOutput = contractConfig.schema.fields.map((field) => [
-    ` ${field.name}:`,
-    chalk.blue(field.getValue(nft.metadata)),
-  ]);
-
-  if (contractConfig.type === ContractType.Edition) {
-    return [
-      idOutput,
-      ['Edition ID', chalk.green(nft.editionId ?? '')],
-      ['Edition Serial #', chalk.green(nft.serialNumber ?? '')],
-      ['Edition Fields:'],
-      ...fieldOutput,
-    ];
-  }
-
-  return [idOutput, ['Fields:'], ...fieldOutput];
-}
-
-async function dumpNFTs(csvPath: string, { network, tail }: { network: string; tail: number }) {
-  const config = loadConfig();
-  const fresh = new Fresh(config, network);
-
-  const count = await fresh.dumpNFTs(csvPath, tail);
-
-  spinner.succeed(`${count} NFT records saved to ${csvPath}.`);
-}
-
 async function generateCadence() {
   const config = loadConfig();
 
@@ -255,17 +186,6 @@ async function generateWeb() {
   await generateNextjsApp('./', config.name, config.description);
 
   spinner.succeed(`Success! Regenerated web files.`);
-}
-
-function alignOutput(labelValuePairs: any[]) {
-  const maxLabelLength = labelValuePairs.map(([l]) => l.length).reduce((len, max) => (len > max ? len : max));
-  for (const [label, value] of labelValuePairs) {
-    if (value) {
-      console.log(label.padEnd(maxLabelLength + 1), value);
-    } else {
-      console.log(label);
-    }
-  }
 }
 
 main()
