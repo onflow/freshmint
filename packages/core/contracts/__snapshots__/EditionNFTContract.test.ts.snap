@@ -55,6 +55,20 @@ pub contract EditionNFT_Test: NonFungibleToken {
             self.description = description
             self.thumbnail = thumbnail
         }
+
+        /// Encode this metadata object as a byte array.
+        ///
+        /// This can be used to hash the metadata and verify its integrity.
+        ///
+        pub fun encode(): [UInt8] {
+            return self.name.utf8
+                .concat(self.description.utf8)
+                .concat(self.thumbnail.utf8)
+        }
+
+        pub fun hash(): [UInt8] {
+            return HashAlgorithm.SHA3_256.hash(self.encode())
+        }
     }
 
     pub struct Edition {
@@ -105,6 +119,12 @@ pub contract EditionNFT_Test: NonFungibleToken {
 
     pub fun getEdition(id: UInt64): Edition? {
         return EditionNFT_Test.editions[id]
+    }
+
+    access(self) let editionsByHash: {String: UInt64}
+
+    pub fun getEditionIDByHash(hash: String): UInt64? {
+        return EditionNFT_Test.editionsByHash[hash]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
@@ -360,13 +380,25 @@ pub contract EditionNFT_Test: NonFungibleToken {
                 thumbnail: thumbnail,
             )
 
+            let hexHash = String.encodeHex(metadata.hash())
+
+            // Prevent multiple editions from being minted with the same metadata hash
+            assert(
+                EditionNFT_Test.editionsByHash[hexHash] == nil,
+                message: \\"an edition has already been created with hash=\\".concat(hexHash)
+            )
+
             let edition = Edition(
                 id: EditionNFT_Test.totalEditions,
                 size: size,
                 metadata: metadata
             )
 
+            // Save the edition
             EditionNFT_Test.editions[edition.id] = edition
+
+            // Save the edition hash
+            EditionNFT_Test.editionsByHash[hexHash] = edition.id
 
             emit EditionCreated(edition: edition)
 
@@ -468,6 +500,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         self.totalEditions = 0
 
         self.editions = {}
+        self.editionsByHash = {}
         
         self.initAdmin(admin: admin)
 
