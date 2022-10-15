@@ -170,6 +170,11 @@ async function generateEditionProject(
   }
 
   await writeFile(
+    path.resolve(dir, `cadence/scripts/get_editions_by_hash.cdc`),
+    EditionNFTGenerator.getEditionsByHash({ contractName: contract.name, contractAddress }),
+  );
+
+  await writeFile(
     path.resolve(dir, `cadence/scripts/get_nft.cdc`),
     CommonNFTGenerator.getNFT({ imports: shiftedImports, contractName: contract.name, contractAddress }),
   );
