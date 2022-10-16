@@ -49,6 +49,7 @@
     "sha3": "^2.1.4"
   },
   "devDependencies": {
+    "@onflow/flow-js-testing": "^0.3.0-alpha.16",
     "@types/elliptic": "^6.4.14",
     "@types/jest": "^28.1.6",
     "jest": "^28.1.3",

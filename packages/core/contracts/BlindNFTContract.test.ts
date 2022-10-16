@@ -3,16 +3,20 @@ import { ClaimSaleContract } from './ClaimSaleContract';
 
 import {
   client,
-  config,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
   getTestNFTs,
   royaltiesTests,
+  setupEmulator,
+  teardownEmulator,
 } from '../testHelpers';
 
 describe('BlindNFTContract', () => {
+  beforeAll(setupEmulator);
+  afterAll(teardownEmulator);
+
   const contract = new BlindNFTContract({
     name: 'BlindNFT_Test',
     schema: getTestSchema(),
@@ -20,7 +24,7 @@ describe('BlindNFTContract', () => {
   });
 
   it('should generate a contract', async () => {
-    expect(contract.getSource(config.imports)).toMatchSnapshot();
+    expect(contract.getSource(client.config.imports)).toMatchSnapshot();
   });
 
   it('should deploy a contract', async () => {
@@ -117,5 +121,5 @@ describe('BlindNFTContract', () => {
     }
   });
 
-  royaltiesTests(contract);
+  royaltiesTests(client, contract);
 });
