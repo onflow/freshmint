@@ -253,7 +253,7 @@ pub contract {{ contractName }}: NonFungibleToken {
             }
 
             // An NFT cannot be revealed unless the provided metadata values
-            // match the hash the was specified at mint time.
+            // match the hash that was specified at mint time.
 
             let hash = String.encodeHex(metadata.hash())
 
