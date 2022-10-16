@@ -161,9 +161,9 @@ export class EditionMinter implements Minter {
   }
 
   async processMetadata(entries: PreparedEditionEntry[]): Promise<void> {
-    for (const entry of entries) {
-      await this.metadataProcessor.process(entry.metadata);
-    }
+    await Promise.all(
+      entries.map(async (entry: PreparedEditionEntry) => this.metadataProcessor.process(entry.metadata)),
+    );
   }
 
   async mintBatch(

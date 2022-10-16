@@ -88,9 +88,7 @@ export class StandardMinter implements Minter {
   }
 
   async processMetadata(entries: PreparedNFTEntry[]): Promise<void> {
-    for (const entry of entries) {
-      await this.metadataProcessor.process(entry.metadata);
-    }
+    await Promise.all(entries.map(async (entry: PreparedNFTEntry) => this.metadataProcessor.process(entry.metadata)));
   }
 
   async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedNFTEntry[], onError: (error: Error) => void) {
