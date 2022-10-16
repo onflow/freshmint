@@ -15,8 +15,6 @@ jobs:
       steps:
         - name: Check out code
           uses: actions/checkout@v2
-          with:
-            fetch-depth: 2
 
         - name: Setup Node.js environment
           uses: actions/setup-node@v2
