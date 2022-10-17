@@ -8,8 +8,10 @@ const ipfsMedia = 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre';
 const httpMedia = 'http://foo.com/nft.jpeg';
 const mediaType = 'image/jpeg';
 
+const contractName = 'Foo';
+
 function generateView(view: metadata.View): string {
-  return TemplateGenerator.generate(view.type.cadenceTemplate, { view });
+  return TemplateGenerator.generate(view.type.cadenceTemplate, { contractName, view });
 }
 
 describe('NFTCollectionDisplayView', () => {
@@ -123,5 +125,37 @@ describe('SerialView', () => {
     expect(() => metadata.SerialView({ serialNumber: invalidSerialNumberField })).toThrow(
       `The serialNumber field passed to SerialView must have type UInt64. You passed the 'serialNumber' field which has type Int.`,
     );
+  });
+});
+
+describe('ExternalURLView', () => {
+  it('accepts a complete Cadence expression', () => {
+    const externalURLView = metadata.ExternalURLView({ cadenceTemplate: '"http://foo.com/nfts/".concat(self.id)' });
+    expect(generateView(externalURLView)).toMatchSnapshot();
+  });
+
+  it('accepts a raw template that uses no variables', () => {
+    const externalURLView = metadata.ExternalURLView('https://foo.com');
+    expect(generateView(externalURLView)).toMatchSnapshot();
+  });
+
+  it('accepts a raw template that uses the ${collection.url} variable', () => {
+    const externalURLView = metadata.ExternalURLView('${collection.url}/nfts');
+    expect(generateView(externalURLView)).toMatchSnapshot();
+  });
+
+  it('accepts a raw template that uses the ${nft.owner} variable', () => {
+    const externalURLView = metadata.ExternalURLView('http://foo.com/${nft.owner}');
+    expect(generateView(externalURLView)).toMatchSnapshot();
+  });
+
+  it('accepts a raw template that uses the ${nft.id} variable', () => {
+    const externalURLView = metadata.ExternalURLView('http://foo.com/${nft.id}');
+    expect(generateView(externalURLView)).toMatchSnapshot();
+  });
+
+  it('accepts a raw template that uses all variables', () => {
+    const externalURLView = metadata.ExternalURLView('${collection.url}/nfts/${nft.owner}/${nft.id}');
+    expect(generateView(externalURLView)).toMatchSnapshot();
   });
 });
