@@ -114,4 +114,27 @@ export default class Fresh {
   async stopDrop() {
     await this.flowGateway.stopDrop('default');
   }
+
+  async updateCollection() {
+    const collection = this.config.collection;
+
+    const collectonInput = {
+      name: collection.name,
+      description: collection.description,
+      externalUrl: collection.url,
+      squareImage: {
+        source: collection.images.square,
+        // TODO: remove hard-coded media type
+        mediaType: 'image/png',
+      },
+      bannerImage: {
+        source: collection.images.banner,
+        // TODO: remove hard-coded media type
+        mediaType: 'image/png',
+      },
+      socials: collection.socials,
+    };
+
+    await this.flowGateway.setCollectionDisplay(collectonInput);
+  }
 }

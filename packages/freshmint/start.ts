@@ -5,7 +5,7 @@ import { Ora } from 'ora';
 import inquirer from 'inquirer';
 import * as metadata from '@freshmint/core/metadata';
 
-import { saveConfig, ContractConfig, ContractType, getDefaultDataPath } from './config';
+import { saveConfig, ContractConfig, ContractType, getDefaultDataPath, CollectionConfig } from './config';
 import { generateProject } from './generateProject';
 
 const fieldChoices = metadata.fieldTypes
@@ -136,6 +136,19 @@ export default async function start(spinner: Ora, projectPath: string) {
 
   const answers = await inquirer.prompt(questions);
 
+  const collection: CollectionConfig = {
+    name: answers.name,
+    description: answers.description,
+    url: 'https://your-project.com',
+    images: {
+      square: 'square.png',
+      banner: 'banner.png',
+    },
+    socials: {
+      twitter: 'http://twitter.com/your-project',
+    },
+  };
+
   const userFields = await getCustomFields(answers.startCustomFields);
 
   const userSchema = metadata.parseSchema(userFields);
@@ -160,14 +173,7 @@ export default async function start(spinner: Ora, projectPath: string) {
     userSchema.fields,
   );
 
-  saveConfig(
-    answers.name,
-    answers.description,
-    contract,
-    '${PINNING_SERVICE_ENDPOINT}',
-    '${PINNING_SERVICE_KEY}',
-    projectPath,
-  );
+  saveConfig(collection, contract, '${PINNING_SERVICE_ENDPOINT}', '${PINNING_SERVICE_KEY}', projectPath);
 
   spinner.succeed(
     `✨ Project initialized in ${chalk.white(`${isCurrentDirectory ? 'the current directory.' : projectPath}\n`)}`,

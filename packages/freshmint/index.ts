@@ -111,6 +111,12 @@ async function main() {
     .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
     .option('--tail <number>', 'Only dump the last <number> NFTs. ', parseIntOption)
     .action(dumpNFTs);
+  
+  program
+    .command('update-collection')
+    .description('update the collection metadata on your contract')
+    .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
+    .action(updateCollection);
 
   const generate = program.command('generate').description('regenerate project files from config');
 
@@ -279,6 +285,16 @@ async function dumpNFTs(csvPath: string, { network, tail }: { network: string; t
   spinner.succeed(`${count} NFT records saved to ${csvPath}.`);
 }
 
+async function updateCollection({ network }: { network: string }) {
+  const config = loadConfig();
+  const fresh = new Fresh(config, network);
+
+  await fresh.updateCollection();
+
+  // TODO: print collection data here
+  spinner.succeed(`Your contract has been updated with new collection metadata.`);
+}
+
 async function generateCadence() {
   const config = loadConfig();
 
@@ -290,7 +306,7 @@ async function generateCadence() {
 async function generateWeb() {
   const config = loadConfig();
 
-  await generateNextjsApp('./', config.name, config.description);
+  await generateNextjsApp('./', config.collection.name, config.collection.description);
 
   spinner.succeed(`Success! Regenerated web files.`);
 }
