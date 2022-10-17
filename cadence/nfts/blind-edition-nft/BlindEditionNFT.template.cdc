@@ -214,18 +214,6 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    pub resource interface {{ contractName }}CollectionPublic {
-        pub fun deposit(token: @NonFungibleToken.NFT)
-        pub fun getIDs(): [UInt64]
-        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-        pub fun borrow{{ contractName }}(id: UInt64): &{{ contractName }}.NFT? {
-            post {
-                (result == nil) || (result?.id == id):
-                    "Cannot borrow {{ contractName }} reference: The ID of the returned reference is incorrect"
-            }
-        }
-    }
-
     {{> collection contractName=contractName }}
 
     /// The administrator resource used to create editions,
