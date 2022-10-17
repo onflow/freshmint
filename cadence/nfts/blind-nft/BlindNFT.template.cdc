@@ -207,12 +207,6 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     {{> collection contractName=contractName }}
 
-    /// Return a new empty collection.
-    ///
-    pub fun createEmptyCollection(): @NonFungibleToken.Collection {
-        return <- create Collection()
-    }
-
     /// The administrator resource used to mint and reveal NFTs.
     ///
     pub resource Admin {
