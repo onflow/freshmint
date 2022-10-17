@@ -1,5 +1,53 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`ExternalURLView accepts a complete Cadence expression 1`] = `
+"pub fun resolveExternalURL(): MetadataViews.ExternalURL {
+    return MetadataViews.ExternalURL(\\"http://foo.com/nfts/\\".concat(self.id))
+}
+"
+`;
+
+exports[`ExternalURLView accepts a raw template that uses all variables 1`] = `
+"pub fun resolveExternalURL(): MetadataViews.ExternalURL {
+    let collectionURL = Foo.collectionDisplay!.externalURL.url
+    let nftOwner = self.owner!.address.toString()
+    let nftID = self.id.toString()
+    return MetadataViews.ExternalURL(collectionURL.concat(\\"/nfts/\\").concat(nftOwner).concat(\\"/\\").concat(nftID))
+}
+"
+`;
+
+exports[`ExternalURLView accepts a raw template that uses no variables 1`] = `
+"pub fun resolveExternalURL(): MetadataViews.ExternalURL {
+    return MetadataViews.ExternalURL(\\"https://foo.com\\")
+}
+"
+`;
+
+exports[`ExternalURLView accepts a raw template that uses the \${collection.url} variable 1`] = `
+"pub fun resolveExternalURL(): MetadataViews.ExternalURL {
+    let collectionURL = Foo.collectionDisplay!.externalURL.url
+    return MetadataViews.ExternalURL(collectionURL.concat(\\"/nfts\\"))
+}
+"
+`;
+
+exports[`ExternalURLView accepts a raw template that uses the \${nft.id} variable 1`] = `
+"pub fun resolveExternalURL(): MetadataViews.ExternalURL {
+    let nftID = self.id.toString()
+    return MetadataViews.ExternalURL(\\"http://foo.com/\\".concat(nftID))
+}
+"
+`;
+
+exports[`ExternalURLView accepts a raw template that uses the \${nft.owner} variable 1`] = `
+"pub fun resolveExternalURL(): MetadataViews.ExternalURL {
+    let nftOwner = self.owner!.address.toString()
+    return MetadataViews.ExternalURL(\\"http://foo.com/\\".concat(nftOwner))
+}
+"
+`;
+
 exports[`NFTCollectionDisplayView generates a Cadence snippet with an HTTP media file 1`] = `
 "pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
     let media = MetadataViews.Media(
