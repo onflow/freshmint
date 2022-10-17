@@ -9,6 +9,11 @@ registerPartial('royaltiesFields', require('../../../cadence/nfts/common/partial
 registerPartial('royaltiesAdmin', require('../../../cadence/nfts/common/partials/royalties-admin.partial.cdc'));
 registerPartial('royaltiesInit', require('../../../cadence/nfts/common/partials/royalties-init.partial.cdc'));
 
+// Register the collection metadata partials
+registerPartial('collectionMetadataFields', require('../../../cadence/nfts/common/partials/collection-metadata-fields.partial.cdc'));
+registerPartial('collectionMetadataAdmin', require('../../../cadence/nfts/common/partials/collection-metadata-admin.partial.cdc'));
+registerPartial('collectionMetadataInit', require('../../../cadence/nfts/common/partials/collection-metadata-init.partial.cdc'));
+
 export class CommonNFTGenerator extends TemplateGenerator {
   static getNFT({
     imports,
