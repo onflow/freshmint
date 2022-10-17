@@ -3,7 +3,7 @@ import * as t from '@onflow/types';
 
 import FlowCliWrapper from './cli';
 
-export interface CollectionDisplayInput {
+export interface CollectionMetadataInput {
   name: string;
   description: string;
   externalUrl: string;
@@ -133,8 +133,8 @@ export default class FlowGateway {
     ]);
   }
 
-  async setCollectionDisplay(collection: CollectionDisplayInput) {
-    return await this.flow.transaction('./cadence/transactions/set_collection_display.cdc', `${this.network}-account`, [
+  async setCollectionMetadata(collection: CollectionMetadataInput) {
+    return await this.flow.transaction('./cadence/transactions/set_collection_metadata.cdc', `${this.network}-account`, [
       { type: t.String, value: collection.name },
       { type: t.String, value: collection.description },
       { type: t.String, value: collection.externalUrl },
