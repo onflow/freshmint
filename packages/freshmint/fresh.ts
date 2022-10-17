@@ -2,6 +2,9 @@ import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 import { NFTStorage } from 'nft.storage';
 import * as metadata from '@freshmint/core/metadata';
 
+// @ts-ignore
+import mime from 'mime-types';
+
 import { FreshmintConfig } from './config';
 import FlowGateway from './flow';
 import IPFS from './ipfs';
@@ -124,13 +127,11 @@ export default class Fresh {
       externalUrl: collection.url,
       squareImage: {
         source: collection.images.square,
-        // TODO: remove hard-coded media type
-        mediaType: 'image/png',
+        mediaType: mime.lookup(collection.images.square) || '',
       },
       bannerImage: {
         source: collection.images.banner,
-        // TODO: remove hard-coded media type
-        mediaType: 'image/png',
+        mediaType: mime.lookup(collection.images.banner) || '',
       },
       socials: collection.socials,
     };
