@@ -227,7 +227,7 @@ async function updateCollection({ network }: { network: string }) {
   spinner.succeed('Updated your contract with new collection metadata:');
 
   // TODO: pretty print instead of dumping the object
-  console.log(collectionMetadata)
+  console.log(collectionMetadata);
 }
 
 async function generateCadence() {

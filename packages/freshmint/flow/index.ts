@@ -160,16 +160,20 @@ export class FlowGateway {
   }
 
   async setCollectionMetadata(collection: CollectionMetadataInput) {
-    return await this.flow.transaction('./cadence/transactions/set_collection_metadata.cdc', `${this.network}-account`, [
-      { type: t.String, value: collection.name },
-      { type: t.String, value: collection.description },
-      { type: t.String, value: collection.externalUrl },
-      { type: t.String, value: collection.squareImage.source },
-      { type: t.String, value: collection.squareImage.mediaType },
-      { type: t.String, value: collection.bannerImage.source },
-      { type: t.String, value: collection.bannerImage.mediaType },
-      { type: t.Dictionary({ key: t.String, value: t.String }), value: objectToDictionary(collection.socials) },
-    ]);
+    return await this.flow.transaction(
+      './cadence/transactions/set_collection_metadata.cdc',
+      `${this.network}-account`,
+      [
+        { type: t.String, value: collection.name },
+        { type: t.String, value: collection.description },
+        { type: t.String, value: collection.externalUrl },
+        { type: t.String, value: collection.squareImage.source },
+        { type: t.String, value: collection.squareImage.mediaType },
+        { type: t.String, value: collection.bannerImage.source },
+        { type: t.String, value: collection.bannerImage.mediaType },
+        { type: t.Dictionary({ key: t.String, value: t.String }), value: objectToDictionary(collection.socials) },
+      ],
+    );
   }
 
   async getDuplicateNFTs(hashes: string[]): Promise<boolean[]> {

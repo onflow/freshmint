@@ -10,9 +10,18 @@ registerPartial('royaltiesAdmin', require('../../../cadence/nfts/common/partials
 registerPartial('royaltiesInit', require('../../../cadence/nfts/common/partials/royalties-init.partial.cdc'));
 
 // Register the collection metadata partials
-registerPartial('collectionMetadataFields', require('../../../cadence/nfts/common/partials/collection-metadata-fields.partial.cdc'));
-registerPartial('collectionMetadataAdmin', require('../../../cadence/nfts/common/partials/collection-metadata-admin.partial.cdc'));
-registerPartial('collectionMetadataInit', require('../../../cadence/nfts/common/partials/collection-metadata-init.partial.cdc'));
+registerPartial(
+  'collectionMetadataFields',
+  require('../../../cadence/nfts/common/partials/collection-metadata-fields.partial.cdc'),
+);
+registerPartial(
+  'collectionMetadataAdmin',
+  require('../../../cadence/nfts/common/partials/collection-metadata-admin.partial.cdc'),
+);
+registerPartial(
+  'collectionMetadataInit',
+  require('../../../cadence/nfts/common/partials/collection-metadata-init.partial.cdc'),
+);
 
 // Register the collection partial
 registerPartial('collection', require('../../../cadence/nfts/common/partials/collection.partial.cdc'));
