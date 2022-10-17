@@ -15,6 +15,21 @@ export interface MintResult {
   transactionId: string;
 }
 
+export interface CollectionDisplayInput {
+  name: string;
+  description: string;
+  externalUrl: string;
+  squareImage: {
+    source: string;
+    mediaType: string;
+  };
+  bannerImage: {
+    source: string;
+    mediaType: string;
+  };
+  socials: { [name: string]: string };
+}
+
 // Use the maximum compute limit for minting transactions.
 //
 // This allows users to set the highest possible batch size.
@@ -144,6 +159,19 @@ export class FlowGateway {
     ]);
   }
 
+  async setCollectionDisplay(collection: CollectionDisplayInput) {
+    return await this.flow.transaction('./cadence/transactions/set_collection_display.cdc', `${this.network}-account`, [
+      { type: t.String, value: collection.name },
+      { type: t.String, value: collection.description },
+      { type: t.String, value: collection.externalUrl },
+      { type: t.String, value: collection.squareImage.source },
+      { type: t.String, value: collection.squareImage.mediaType },
+      { type: t.String, value: collection.bannerImage.source },
+      { type: t.String, value: collection.bannerImage.mediaType },
+      { type: t.Dictionary({ key: t.String, value: t.String }), value: objectToDictionary(collection.socials) },
+    ]);
+  }
+
   async getDuplicateNFTs(hashes: string[]): Promise<boolean[]> {
     return await this.flow.script('./cadence/scripts/get_duplicate_nfts.cdc', [
       { type: t.Array(t.String), value: hashes },
@@ -206,4 +234,8 @@ function parseEditionMintResults(txOutput: any) {
       transactionId: txOutput.id,
     };
   });
+}
+
+function objectToDictionary(obj: { [key: string]: any }): { key: string; value: any }[] {
+  return Object.entries(obj).map(([key, value]) => ({ key, value }));
 }

@@ -9,12 +9,24 @@ const defaultDataPathEdition = 'editions.csv';
 const defaultAssetPath = 'assets';
 
 export type FreshmintConfig = {
-  name: string;
-  description: string;
+  collection: CollectionConfig;
   contract: ContractConfig;
   ipfsPinningService: IPFSPinningServiceConfig;
   nftDataPath: string;
   nftAssetPath: string;
+};
+
+export type CollectionConfig = {
+  name: string;
+  description: string;
+  url: string;
+  images: CollectionImagesConfig;
+  socials: { [name: string]: string };
+};
+
+export type CollectionImagesConfig = {
+  square: string;
+  banner: string;
 };
 
 export type ContractConfig = {
@@ -51,8 +63,7 @@ export function loadConfig(modifySchema?: (schema: FreshmintConfigSchema) => voi
 }
 
 export function saveConfig(
-  name: string,
-  description: string,
+  collection: CollectionConfig,
   contract: ContractConfig,
   ipfsPinningServiceEndpoint: string,
   ipfsPinningServiceKey: string,
@@ -60,8 +71,7 @@ export function saveConfig(
 ) {
   new config.ConfigWriter<FreshmintConfigSchema>(freshmintConfigSchema)
     .setValues((schema) => {
-      schema.name.setValue(name);
-      schema.description.setValue(description);
+      schema.collection.setValue(collection);
 
       schema.contract.setValue(contract);
 
@@ -83,8 +93,16 @@ export function getDefaultDataPath(contractType: ContractType): string {
 }
 
 function getConfigSchema() {
-  const name = config.Field<string>('name');
-  const description = config.Field<string>('description');
+  const collection = config.Map<CollectionConfig>('collection', {
+    name: config.Field<string>('name'),
+    description: config.Field<string>('description'),
+    url: config.Field<string>('url'),
+    images: config.Map<CollectionImagesConfig>('images', {
+      square: config.Field<string>('square'),
+      banner: config.Field<string>('banner'),
+    }),
+    socials: config.Field<{ [name: string]: string }>('socials'),
+  });
 
   const contract = config.Map<ContractConfig>('contract', {
     name: config.Field<string>('name'),
@@ -113,8 +131,7 @@ function getConfigSchema() {
   });
 
   return {
-    name,
-    description,
+    collection,
     contract,
     ipfsPinningService,
     nftDataPath,
