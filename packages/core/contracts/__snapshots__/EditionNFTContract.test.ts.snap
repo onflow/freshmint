@@ -40,6 +40,10 @@ pub contract EditionNFT_Test: NonFungibleToken {
         return EditionNFT_Test.royalties
     }
 
+    /// The collection-level metadata for all NFTs minted by this contract.
+    ///
+    access(contract) var collectionMetadata: MetadataViews.NFTCollectionDisplay?
+
     pub struct Metadata {
     
         pub let name: String
@@ -477,6 +481,12 @@ pub contract EditionNFT_Test: NonFungibleToken {
         pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
             EditionNFT_Test.royalties = royalties
         }
+
+        /// Set the collection metadata for this contract.
+        ///
+        pub fun setCollectionMetadata(_ collectionMetadata: MetadataViews.NFTCollectionDisplay) {
+            EditionNFT_Test.collectionMetadata = collectionMetadata
+        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -524,6 +534,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         self.AdminStoragePath = EditionNFT_Test.getStoragePath(suffix: \\"Admin\\")
 
         self.royalties = []
+        self.collectionMetadata = nil
 
         self.totalSupply = 0
         self.totalEditions = 0

@@ -41,6 +41,10 @@ pub contract BlindNFT_Test: NonFungibleToken {
         return BlindNFT_Test.royalties
     }
 
+    /// The collection-level metadata for all NFTs minted by this contract.
+    ///
+    access(contract) var collectionMetadata: MetadataViews.NFTCollectionDisplay?
+
     pub struct Metadata {
 
         /// A salt that is published when the metadata is revealed.
@@ -484,6 +488,12 @@ pub contract BlindNFT_Test: NonFungibleToken {
         pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
             BlindNFT_Test.royalties = royalties
         }
+
+        /// Set the collection metadata for this contract.
+        ///
+        pub fun setCollectionMetadata(_ collectionMetadata: MetadataViews.NFTCollectionDisplay) {
+            BlindNFT_Test.collectionMetadata = collectionMetadata
+        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -533,6 +543,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
         self.placeholderImage = placeholderImage
 
         self.royalties = []
+        self.collectionMetadata = nil
 
         self.totalSupply = 0
 
