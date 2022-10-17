@@ -71,6 +71,8 @@ export default class Fresh {
       socials: collection.socials,
     };
 
-    await this.flowGateway.setCollectionDisplay(collectonInput);
+    await this.flowGateway.setCollectionMetadata(collectonInput);
+
+    return collectonInput;
   }
 }
