@@ -15,7 +15,7 @@ export function isCadenceModule(cadence: any): cadence is CadenceModule {
 export type CadenceSourceCode = CadenceModule | string;
 
 export type ArgumentsList = any[];
-export type ArgumentsThunk = (arg: any, t: any) => any[];
+export type ArgumentsThunk = (arg: any, t: any) => { value: any }[];
 export type Arguments = ArgumentsList | ArgumentsThunk;
 
 export function resolveCadence(cadence: CadenceSourceCode, network: string, imports: CadenceImports = {}): string {

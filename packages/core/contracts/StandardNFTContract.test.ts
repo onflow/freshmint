@@ -4,16 +4,20 @@ import { ClaimSaleContract } from './ClaimSaleContract';
 
 import {
   client,
-  config,
   contractHashAlgorithm,
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
   getTestNFTs,
   royaltiesTests,
+  setupEmulator,
+  teardownEmulator,
 } from '../testHelpers';
 
 describe('StandardNFTContract', () => {
+  beforeAll(setupEmulator);
+  afterAll(teardownEmulator);
+
   const contract = new StandardNFTContract({
     name: 'StandardNFT_Test',
     schema: getTestSchema(),
@@ -21,7 +25,7 @@ describe('StandardNFTContract', () => {
   });
 
   it('should generate a contract', async () => {
-    expect(contract.getSource(config.imports)).toMatchSnapshot();
+    expect(contract.getSource(client.config.imports)).toMatchSnapshot();
   });
 
   const nfts = getTestNFTs(3);
@@ -94,5 +98,5 @@ describe('StandardNFTContract', () => {
     await client.send(sale.stop('default'));
   });
 
-  royaltiesTests(contract);
+  royaltiesTests(client, contract);
 });
