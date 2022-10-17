@@ -188,7 +188,7 @@ async function mint({
 
   let bar: ProgressBar;
 
-  spinner.start(`Checking for duplicate NFTs ...\n`);
+  spinner.start('Checking for duplicate NFTs ...\n');
 
   await minter.mint(
     loader,
@@ -253,7 +253,7 @@ async function stopDrop({ network }: { network: string }) {
 
   // TODO: return error if no drop is active
 
-  spinner.succeed(`Your drop has been stopped.`);
+  spinner.succeed('Your drop has been stopped.');
 }
 
 function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
@@ -289,10 +289,14 @@ async function updateCollection({ network }: { network: string }) {
   const config = loadConfig();
   const fresh = new Fresh(config, network);
 
-  await fresh.updateCollection();
+  spinner.start('Updating collection metadata ...\n');
 
-  // TODO: print collection data here
-  spinner.succeed(`Your contract has been updated with new collection metadata.`);
+  const collectionMetadata = await fresh.updateCollection();
+
+  spinner.succeed('Updated your contract with new collection metadata:');
+
+  // TODO: pretty print instead of dumping the object
+  console.log(collectionMetadata)
 }
 
 async function generateCadence() {
