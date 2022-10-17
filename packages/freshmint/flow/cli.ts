@@ -46,7 +46,7 @@ export default class FlowCliWrapper {
         --signer ${signer} \
         ${configString} \
         -o json \
-        --gas-limit ${gasLimit} \
+        --gas-limit ${computeLimit} \
         --args-json ${argString} \
         ${path}`,
       { cwd: process.cwd() },
