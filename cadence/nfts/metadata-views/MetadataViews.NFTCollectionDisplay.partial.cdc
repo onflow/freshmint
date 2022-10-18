@@ -1,4 +1,5 @@
 pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
+    {{#if view.options }}
     let media = MetadataViews.Media(
         {{#if view.options.media.ipfs }}
         file: MetadataViews.IPFSFile(
@@ -19,4 +20,7 @@ pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
         bannerImage: media,
         socials: {}
     )
+    {{ else }}
+    return {{ contractName }}.collectionMetadata
+    {{/if}}
 }

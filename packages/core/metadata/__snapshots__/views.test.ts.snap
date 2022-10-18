@@ -111,6 +111,13 @@ exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media
 "
 `;
 
+exports[`NFTCollectionDisplayView returns the collectionMetadata field when no options are passed 1`] = `
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
+    return Foo.collectionMetadata
+}
+"
+`;
+
 exports[`SerialView generates a Cadence snippet 1`] = `
 "pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
     return MetadataViews.Serial(metadata.serialNumber)
