@@ -109,6 +109,11 @@ describe('NFTCollectionDisplayView', () => {
 
     expect(generateView(view)).toMatchSnapshot();
   });
+
+  it('returns the collectionMetadata field when no options are passed', () => {
+    const view = metadata.NFTCollectionDisplayView();
+    expect(generateView(view)).toMatchSnapshot();
+  });
 });
 
 describe('SerialView', () => {
