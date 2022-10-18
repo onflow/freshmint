@@ -255,7 +255,7 @@ export const NFTCollectionDisplayView = defineView<{
       // the data defined in the `collectionMetadata` contract field.
       return;
     }
-    
+
     // Convert the legacy IPFS format to the new generic file format.
     //
     // TODO: deprecate the ipfsCid field.
