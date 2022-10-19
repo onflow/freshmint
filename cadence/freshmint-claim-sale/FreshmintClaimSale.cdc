@@ -154,6 +154,7 @@ pub contract FreshmintClaimSale {
 
         pub fun claim(payment: @FungibleToken.Vault, address: Address)
 
+        pub fun borrowPaymentReceiver(): &{FungibleToken.Receiver}
         pub fun borrowCollection(): &{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}
     }
 
@@ -180,7 +181,7 @@ pub contract FreshmintClaimSale {
 
         /// A capability to the receiver that will receive payments from this sale.
         ///
-        access(self) let paymentReceiver: Capability<&{FungibleToken.Receiver}>
+        pub let paymentReceiver: Capability<&{FungibleToken.Receiver}>
 
         /// An optional allowlist used to gate access to this sale.
         ///
@@ -245,7 +246,7 @@ pub contract FreshmintClaimSale {
         /// borrowPaymentReceiver returns a reference to the
         /// payment receiver for this sale.
         ///
-        access(self) fun borrowPaymentReceiver(): &{FungibleToken.Receiver} {
+        pub fun borrowPaymentReceiver(): &{FungibleToken.Receiver} {
             return self.paymentReceiver.borrow() 
                 ?? panic("failed to borrow payment receiver capability")
         }
