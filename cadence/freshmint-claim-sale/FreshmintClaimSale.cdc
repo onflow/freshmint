@@ -154,6 +154,7 @@ pub contract FreshmintClaimSale {
 
         pub fun claim(payment: @FungibleToken.Vault, address: Address)
 
+        pub fun borrowPaymentReceiver(): &{FungibleToken.Receiver}
         pub fun borrowCollection(): &{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}
     }
 
