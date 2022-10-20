@@ -111,7 +111,7 @@ async function main() {
     .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
     .option('--tail <number>', 'Only dump the last <number> NFTs. ', parseIntOption)
     .action(dumpNFTs);
-  
+
   program
     .command('update-collection')
     .description('update the collection metadata on your contract')
@@ -296,7 +296,7 @@ async function updateCollection({ network }: { network: string }) {
   spinner.succeed('Updated your contract with new collection metadata:');
 
   // TODO: pretty print instead of dumping the object
-  console.log(collectionMetadata)
+  console.log(collectionMetadata);
 }
 
 async function generateCadence() {
