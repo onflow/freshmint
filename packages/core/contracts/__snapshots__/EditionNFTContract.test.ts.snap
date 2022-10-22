@@ -42,7 +42,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
 
     /// The collection-level metadata for all NFTs minted by this contract.
     ///
-    access(contract) var collectionMetadata: MetadataViews.NFTCollectionDisplay?
+    pub var collectionMetadata: MetadataViews.NFTCollectionDisplay?
 
     pub struct Metadata {
     
@@ -193,7 +193,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
             return MetadataViews.ExternalURL(\\"http://foo.com/\\".concat(self.id.toString()))
         }
         
-        pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
+        pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay? {
             let media = MetadataViews.Media(
                 file: MetadataViews.IPFSFile(
                     cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 

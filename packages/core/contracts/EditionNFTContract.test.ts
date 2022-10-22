@@ -7,9 +7,10 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  royaltiesTests,
   setupEmulator,
   teardownEmulator,
+  royaltiesTests,
+  collectionMetadataTests,
 } from '../testHelpers';
 
 describe('EditionNFTContract', () => {
@@ -147,4 +148,5 @@ describe('EditionNFTContract', () => {
   });
 
   royaltiesTests(client, contract);
+  collectionMetadataTests(client, contract);
 });

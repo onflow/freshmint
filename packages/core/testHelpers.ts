@@ -9,7 +9,7 @@ import { FreshmintClient } from './client';
 import { TransactionAuthorizer } from './transactions';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from './crypto';
 import * as metadata from './metadata';
-import NFTContract from './contracts/NFTContract';
+import { NFTContract, CollectionMetadata } from './contracts/NFTContract';
 import { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 import { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 
@@ -225,5 +225,62 @@ export function royaltiesTests(client: FreshmintClient, contract: NFTContract) {
     const onChainRoyalties = await client.query(contract.getRoyalties());
 
     expect(onChainRoyalties).toEqual([]);
+  });
+}
+
+export function collectionMetadataTests(client: FreshmintClient, contract: NFTContract) {
+  it('collection metadata should be empty', async () => {
+    const collectionMetadata = await client.query(contract.getCollectionMetadata());
+    expect(collectionMetadata).toBe(null);
+  });
+
+  it('should be able to set collection metadata', async () => {
+    const collectionMetadataInput: CollectionMetadata = {
+      name: 'Foo NFT Collection',
+      description: 'This is the Foo NFT collection.',
+      externalUrl: 'https://foo.com',
+      squareImage: {
+        url: 'https://foo.com/square.png',
+        type: 'image/png',
+      },
+      bannerImage: {
+        url: 'https://foo.com/banner.png',
+        type: 'image/png',
+      },
+      socials: {
+        twitter: 'https://twitter.com/foo',
+      },
+    };
+
+    await client.send(contract.setCollectionMetadata(collectionMetadataInput));
+
+    const collectionMetadata = await client.query(contract.getCollectionMetadata());
+
+    expect(collectionMetadata).toEqual(collectionMetadataInput);
+  });
+
+  it('should be able to update collection metadata', async () => {
+    const collectionMetadataInput = {
+      name: 'Bar NFT Collection',
+      description: 'This is the Bar NFT collection.',
+      externalUrl: 'https://bar.com',
+      squareImage: {
+        url: 'https://bar.com/square.png',
+        type: 'image/png',
+      },
+      bannerImage: {
+        url: 'https://bar.com/banner.png',
+        type: 'image/png',
+      },
+      socials: {
+        twitter: 'https://twitter.com/bar',
+      },
+    };
+
+    await client.send(contract.setCollectionMetadata(collectionMetadataInput));
+
+    const collectionMetadata = await client.query(contract.getCollectionMetadata());
+
+    expect(collectionMetadata).toEqual(collectionMetadataInput);
   });
 }

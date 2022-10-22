@@ -3,7 +3,7 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import NFTContract from './NFTContract';
+import { NFTContract } from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { EditionNFTGenerator } from '../generators/EditionNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';

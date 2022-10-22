@@ -2,14 +2,30 @@ import {{ contractName }} from {{{ contractAddress }}}
 
 import MetadataViews from {{{ imports.MetadataViews }}}
 
+pub fun getFileView(maybeIPFSCID: String?, maybeIPFSPath: String?, maybeURL: String?): AnyStruct{MetadataViews.File} {
+    if let cid = maybeIPFSCID {
+        return MetadataViews.IPFSFile(cid: cid, path: maybeIPFSPath)
+    }
+
+    if let url = maybeURL {
+        return MetadataViews.HTTPFile(url)
+    }
+
+    panic("must specify either an IPFS CID or URL for each image")
+}
+
 transaction(
     name: String,
     description: String,
     externalURL: String,
-    squareImage: String,
-    squareImageType: String,
-    bannerImage: String,
-    bannerImageType: String,
+    squareImageIPFSCID: String?,
+    squareImageIPFSPath: String?,
+    squareImageURL: String?,
+    squareImageMediaType: String,
+    bannerImageIPFSCID: String?,
+    bannerImageIPFSPath: String?,
+    bannerImageURL: String?,
+    bannerImageMediaType: String,
     socials: {String: String}
 ) {
 
@@ -32,12 +48,20 @@ transaction(
             description: description,
             externalURL: MetadataViews.ExternalURL(externalURL),
             squareImage: MetadataViews.Media(
-                file: MetadataViews.IPFSFile(cid: squareImage, path: nil),
-                mediaType: squareImageType
+                file: getFileView(
+                    maybeIPFSCID: squareImageIPFSCID,
+                    maybeIPFSPath: squareImageIPFSPath,
+                    maybeURL: squareImageURL
+                ),
+                mediaType: squareImageMediaType
             ),
             bannerImage: MetadataViews.Media(
-                file: MetadataViews.IPFSFile(cid: bannerImage, path: nil),
-                mediaType: bannerImageType
+                file: getFileView(
+                    maybeIPFSCID: bannerImageIPFSCID,
+                    maybeIPFSPath: bannerImageIPFSPath,
+                    maybeURL: bannerImageURL
+                ),
+                mediaType: bannerImageMediaType
             ),
             socials: socialURLs
         )

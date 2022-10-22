@@ -9,9 +9,10 @@ import {
   ownerAuthorizer,
   getTestSchema,
   getTestNFTs,
-  royaltiesTests,
   setupEmulator,
   teardownEmulator,
+  royaltiesTests,
+  collectionMetadataTests,
 } from '../testHelpers';
 
 describe('StandardNFTContract', () => {
@@ -99,4 +100,5 @@ describe('StandardNFTContract', () => {
   });
 
   royaltiesTests(client, contract);
+  collectionMetadataTests(client, contract);
 });

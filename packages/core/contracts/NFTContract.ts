@@ -7,17 +7,27 @@ import * as metadata from '../metadata';
 import { FreshmintConfig } from '../config';
 import { Transaction, TransactionAuthorizer, TransactionSigners } from '../transactions';
 import { Script } from '../scripts';
-import { Path } from '../cadence/values';
+import { objectToDictionaryEntries, Path } from '../cadence';
 import { CommonNFTGenerator } from '../generators/CommonNFTGenerator';
+import { isHTTPMediaInput, isIPFSMediaInput, MediaInput } from '../metadata/views';
 
-export type Royalty = {
+export interface Royalty {
   address: string;
   receiverPath: string;
   cut: string;
   description?: string;
-};
+}
 
-export default abstract class NFTContract {
+export interface CollectionMetadata {
+  name: string;
+  description: string;
+  externalUrl: string;
+  squareImage: MediaInput;
+  bannerImage: MediaInput;
+  socials: { [name: string]: string };
+}
+
+export abstract class NFTContract {
   name: string;
   address?: string;
 
@@ -141,6 +151,55 @@ export default abstract class NFTContract {
         })),
     );
   }
+
+  setCollectionMetadata(collectionMetadata: CollectionMetadata) {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = CommonNFTGenerator.setCollectionMetadata({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [
+          fcl.arg(collectionMetadata.name, t.String),
+          fcl.arg(collectionMetadata.description, t.String),
+          fcl.arg(collectionMetadata.externalUrl, t.String),
+          fcl.arg(getIPFSCID(collectionMetadata.squareImage), t.Optional(t.String)),
+          fcl.arg(getIPFSPath(collectionMetadata.squareImage), t.Optional(t.String)),
+          fcl.arg(getHTTPURL(collectionMetadata.squareImage), t.Optional(t.String)),
+          fcl.arg(collectionMetadata.squareImage.type, t.String),
+          fcl.arg(getIPFSCID(collectionMetadata.bannerImage), t.Optional(t.String)),
+          fcl.arg(getIPFSPath(collectionMetadata.bannerImage), t.Optional(t.String)),
+          fcl.arg(getHTTPURL(collectionMetadata.bannerImage), t.Optional(t.String)),
+          fcl.arg(collectionMetadata.bannerImage.type, t.String),
+          fcl.arg(
+            objectToDictionaryEntries(collectionMetadata.socials),
+            t.Dictionary({ key: t.String, value: t.String }),
+          ),
+        ],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    }, Transaction.VoidResult);
+  }
+
+  getCollectionMetadata(): Script<CollectionMetadata | null> {
+    return new Script(({ imports }: FreshmintConfig) => {
+      const script = CommonNFTGenerator.getCollectionMetadata({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: () => [],
+        computeLimit: 9999,
+      };
+    }, parseCollectionMetadataResult);
+  }
 }
 
 export class MissingContractAddressError extends Error {
@@ -167,4 +226,80 @@ function prepareRoyalties(royalties: Royalty[]): {
   const royaltyDescriptions = royalties.map((royalty) => royalty.description ?? '');
 
   return { royaltyAddresses, royaltyReceiverPaths, royaltyCuts, royaltyDescriptions };
+}
+
+function getIPFSCID(mediaInput: MediaInput): string | null {
+  if (!isIPFSMediaInput(mediaInput)) {
+    return null;
+  }
+
+  return typeof mediaInput.ipfs === 'string' ? mediaInput.ipfs : mediaInput.ipfs.cid;
+}
+
+function getIPFSPath(mediaInput: MediaInput): string | null {
+  if (!isIPFSMediaInput(mediaInput)) {
+    return null;
+  }
+
+  return typeof mediaInput.ipfs === 'string' ? null : mediaInput.ipfs.path || null;
+}
+
+function getHTTPURL(mediaInput: MediaInput): string | null {
+  if (!isHTTPMediaInput(mediaInput)) {
+    return null;
+  }
+
+  return mediaInput.url;
+}
+
+function parseCollectionMetadataResult(result: any | null): CollectionMetadata | null {
+  if (result === null) {
+    return null;
+  }
+
+  return {
+    name: result.name,
+    description: result.description,
+    externalUrl: result.externalURL.url,
+    squareImage: parseMedia(result.squareImage),
+    bannerImage: parseMedia(result.bannerImage),
+    socials: parseSocials(result.socials),
+  };
+}
+
+function parseMedia(media: { mediaType: string; file: IPFSFile | HTTPFile }): MediaInput {
+  if (isIPFSFile(media.file)) {
+    return {
+      ipfs: { cid: media.file.cid, path: media.file.path ?? undefined },
+      type: media.mediaType,
+    };
+  }
+
+  return {
+    url: media.file.url,
+    type: media.mediaType,
+  };
+}
+
+interface IPFSFile {
+  cid: string;
+  path: string | null;
+}
+
+function isIPFSFile(file: IPFSFile | HTTPFile): file is IPFSFile {
+  return (file as IPFSFile).cid !== undefined;
+}
+
+interface HTTPFile {
+  url: string;
+}
+
+function parseSocials(socials: { [key: string]: { url: string } }): { [key: string]: string } {
+  const result: { [key: string]: string } = {};
+
+  for (const key in socials) {
+    result[key] = socials[key].url;
+  }
+
+  return result;
 }

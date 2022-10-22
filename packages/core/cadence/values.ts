@@ -401,3 +401,13 @@ export class Path {
     return `/${this.domain}/${this.identifier}`;
   }
 }
+
+// objectToDictionaryEntries converts a JavaScript object to key-value pairs that
+// can be used as input to an FCL argument with type t.Dictionary.
+//
+// For example, see this test case in FCL-JS:
+// https://github.com/onflow/fcl-js/blob/1790eec53fc83be411c7dffd9c97f949ef506e07/packages/types/src/types.test.js#L84-L91
+//
+export function objectToDictionaryEntries(obj: { [key: string]: any }): { key: string; value: any }[] {
+  return Object.entries(obj).map(([key, value]) => ({ key, value }));
+}

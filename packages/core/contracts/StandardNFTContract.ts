@@ -5,7 +5,7 @@ import * as t from '@onflow/types';
 
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
 
-import NFTContract from './NFTContract';
+import { NFTContract } from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { StandardNFTGenerator } from '../generators/StandardNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';

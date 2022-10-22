@@ -32,11 +32,16 @@
       "require": "./dist/metadata/index.js",
       "import": "./dist/metadata/index.mjs",
       "types": "./dist/metadata/index.d.ts"
+    },
+    "./cadence": {
+      "require": "./dist/cadence/index.js",
+      "import": "./dist/cadence/index.mjs",
+      "types": "./dist/cadence/index.d.ts"
     }
   },
   "scripts": {
     "test": "jest --runInBand --bail",
-    "build": "tsup index.ts crypto/index.ts metadata/index.ts --clean --loader \".cdc=text\" --dts --sourcemap --format esm,cjs --splitting",
+    "build": "tsup index.ts crypto/index.ts metadata/index.ts cadence/index.ts --clean --loader \".cdc=text\" --dts --sourcemap --format esm,cjs --splitting",
     "dev": "npm run build -- --watch",
     "lint": "eslint . --ext .ts"
   },

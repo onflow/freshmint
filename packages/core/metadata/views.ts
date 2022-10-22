@@ -230,11 +230,11 @@ function isLegacyIPFSMediaInput(media: MediaInput): media is LegacyIPFSMediaInpu
   return (media as LegacyIPFSMediaInput).ipfsCid !== undefined;
 }
 
-function isIPFSMediaInput(media: MediaInput): media is IPFSMediaInput {
+export function isIPFSMediaInput(media: MediaInput): media is IPFSMediaInput {
   return (media as IPFSMediaInput).ipfs !== undefined;
 }
 
-function isHTTPMediaInput(media: MediaInput): media is HTTPMediaInput {
+export function isHTTPMediaInput(media: MediaInput): media is HTTPMediaInput {
   return (media as HTTPMediaInput).url !== undefined;
 }
 

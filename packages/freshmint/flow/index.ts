@@ -1,22 +1,10 @@
+import { CollectionMetadata } from '@freshmint/core';
+import { objectToDictionaryEntries } from '@freshmint/core/cadence';
+
 // @ts-ignore
 import * as t from '@onflow/types';
 
 import FlowCliWrapper from './cli';
-
-export interface CollectionMetadataInput {
-  name: string;
-  description: string;
-  externalUrl: string;
-  squareImage: {
-    source: string;
-    mediaType: string;
-  };
-  bannerImage: {
-    source: string;
-    mediaType: string;
-  };
-  socials: { [name: string]: string };
-}
 
 // Use the maximum compute limit for minting transactions.
 //
@@ -133,7 +121,7 @@ export default class FlowGateway {
     ]);
   }
 
-  async setCollectionMetadata(collection: CollectionMetadataInput) {
+  async setCollectionMetadata(collection: CollectionMetadata) {
     return await this.flow.transaction(
       './cadence/transactions/set_collection_metadata.cdc',
       `${this.network}-account`,
@@ -145,12 +133,11 @@ export default class FlowGateway {
         { type: t.String, value: collection.squareImage.mediaType },
         { type: t.String, value: collection.bannerImage.source },
         { type: t.String, value: collection.bannerImage.mediaType },
-        { type: t.Dictionary({ key: t.String, value: t.String }), value: objectToDictionary(collection.socials) },
+        {
+          type: t.Dictionary({ key: t.String, value: t.String }),
+          value: objectToDictionaryEntries(collection.socials),
+        },
       ],
     );
   }
-}
-
-function objectToDictionary(obj: { [key: string]: any }): { key: string; value: any }[] {
-  return Object.entries(obj).map(([key, value]) => ({ key, value }));
 }

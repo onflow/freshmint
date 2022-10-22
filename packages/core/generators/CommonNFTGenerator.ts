@@ -103,4 +103,20 @@ export class CommonNFTGenerator extends TemplateGenerator {
       contractAddress,
     });
   }
+
+  static getCollectionMetadata({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/scripts/get_collection_metadata.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
 }
