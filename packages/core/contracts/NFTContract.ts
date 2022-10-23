@@ -21,7 +21,7 @@ export interface Royalty {
 export interface CollectionMetadata {
   name: string;
   description: string;
-  externalUrl: string;
+  url: string;
   squareImage: MediaInput;
   bannerImage: MediaInput;
   socials: { [name: string]: string };
@@ -165,7 +165,7 @@ export abstract class NFTContract {
         args: [
           fcl.arg(collectionMetadata.name, t.String),
           fcl.arg(collectionMetadata.description, t.String),
-          fcl.arg(collectionMetadata.externalUrl, t.String),
+          fcl.arg(collectionMetadata.url, t.String),
           fcl.arg(getIPFSCID(collectionMetadata.squareImage), t.Optional(t.String)),
           fcl.arg(getIPFSPath(collectionMetadata.squareImage), t.Optional(t.String)),
           fcl.arg(getHTTPURL(collectionMetadata.squareImage), t.Optional(t.String)),
@@ -228,7 +228,7 @@ function prepareRoyalties(royalties: Royalty[]): {
   return { royaltyAddresses, royaltyReceiverPaths, royaltyCuts, royaltyDescriptions };
 }
 
-function getIPFSCID(mediaInput: MediaInput): string | null {
+export function getIPFSCID(mediaInput: MediaInput): string | null {
   if (!isIPFSMediaInput(mediaInput)) {
     return null;
   }
@@ -236,7 +236,7 @@ function getIPFSCID(mediaInput: MediaInput): string | null {
   return typeof mediaInput.ipfs === 'string' ? mediaInput.ipfs : mediaInput.ipfs.cid;
 }
 
-function getIPFSPath(mediaInput: MediaInput): string | null {
+export function getIPFSPath(mediaInput: MediaInput): string | null {
   if (!isIPFSMediaInput(mediaInput)) {
     return null;
   }
@@ -244,7 +244,7 @@ function getIPFSPath(mediaInput: MediaInput): string | null {
   return typeof mediaInput.ipfs === 'string' ? null : mediaInput.ipfs.path || null;
 }
 
-function getHTTPURL(mediaInput: MediaInput): string | null {
+export function getHTTPURL(mediaInput: MediaInput): string | null {
   if (!isHTTPMediaInput(mediaInput)) {
     return null;
   }
@@ -260,7 +260,7 @@ function parseCollectionMetadataResult(result: any | null): CollectionMetadata |
   return {
     name: result.name,
     description: result.description,
-    externalUrl: result.externalURL.url,
+    url: result.externalURL.url,
     squareImage: parseMedia(result.squareImage),
     bannerImage: parseMedia(result.bannerImage),
     socials: parseSocials(result.socials),

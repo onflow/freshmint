@@ -1,4 +1,4 @@
-import { CollectionMetadata } from '@freshmint/core';
+import { CollectionMetadata, getHTTPURL, getIPFSCID, getIPFSPath } from '@freshmint/core';
 import { objectToDictionaryEntries } from '@freshmint/core/cadence';
 
 // @ts-ignore
@@ -128,11 +128,15 @@ export default class FlowGateway {
       [
         { type: t.String, value: collection.name },
         { type: t.String, value: collection.description },
-        { type: t.String, value: collection.externalUrl },
-        { type: t.String, value: collection.squareImage.source },
-        { type: t.String, value: collection.squareImage.mediaType },
-        { type: t.String, value: collection.bannerImage.source },
-        { type: t.String, value: collection.bannerImage.mediaType },
+        { type: t.String, value: collection.url },
+        { type: t.Optional(t.String), value: getIPFSCID(collection.squareImage) },
+        { type: t.Optional(t.String), value: getIPFSPath(collection.squareImage) },
+        { type: t.Optional(t.String), value: getHTTPURL(collection.squareImage) },
+        { type: t.String, value: collection.squareImage.type },
+        { type: t.Optional(t.String), value: getIPFSCID(collection.bannerImage) },
+        { type: t.Optional(t.String), value: getIPFSPath(collection.bannerImage) },
+        { type: t.Optional(t.String), value: getHTTPURL(collection.bannerImage) },
+        { type: t.String, value: collection.bannerImage.type },
         {
           type: t.Dictionary({ key: t.String, value: t.String }),
           value: objectToDictionaryEntries(collection.socials),

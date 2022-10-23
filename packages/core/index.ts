@@ -8,6 +8,7 @@ export { FreshmintClient } from './client';
 export { Transaction, TransactionAuthorizer } from './transactions';
 export type { TransactionResult, TransactionEvent } from './transactions';
 
+export { getIPFSCID, getIPFSPath, getHTTPURL } from './contracts/NFTContract';
 export type { Royalty, CollectionMetadata } from './contracts/NFTContract';
 
 export { StandardNFTContract } from './contracts/StandardNFTContract';
