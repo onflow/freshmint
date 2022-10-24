@@ -1071,14 +1071,16 @@ When calling `addToAllowlist` for the first time with a new name,
 Freshmint will automatically create the allowlist if it does not exist.
 You can execute this transaction again to add more addresses to the list.
 
-This example creates an allowlist with name `early-access-users` and 
+This example creates an allowlist with name `early_access_users` and 
 adds accounts 0x0ae53cb6e3f42a79 and 0xf8d6e0586b0a20c7,
 both of which will be allowed to claim 3 NFTs.
+
+note: The allowlist name can't contain hyphens `-`
 
 ```js
 await client.send(
   sale.addToAllowlist({
-    name: 'early-access-users',
+    name: 'early_access_users',
     addresses: ['0x0ae53cb6e3f42a79', '0xf8d6e0586b0a20c7'],
     claims: 3, // Each account will be allowed to claim 3 NFTs
   })
@@ -1087,7 +1089,7 @@ await client.send(
 
 #### Create a sale with an allowlist
 
-This example creates a sale and attaches the `early-access-users` allowlist created above.
+This example creates a sale and attaches the `early_access_users` allowlist created above.
 
 Only the the accounts 0x0ae53cb6e3f42a79 and 0xf8d6e0586b0a20c7 will be allowed to claim from the sale,
 up to a maximum of 3 NFTs each.
@@ -1099,7 +1101,7 @@ await client.send(sale.start({
   // Note: 'allowlist' is an optional argument. 
   //
   // If omitted, the sale will be open to anybody and with no claim limits.
-  allowlist: 'early-access-users'
+  allowlist: 'early_access_users'
 }));
 ```
 
