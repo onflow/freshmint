@@ -238,7 +238,7 @@ export function collectionMetadataTests(client: FreshmintClient, contract: NFTCo
     const collectionMetadataInput: CollectionMetadata = {
       name: 'Foo NFT Collection',
       description: 'This is the Foo NFT collection.',
-      externalUrl: 'https://foo.com',
+      url: 'https://foo.com',
       squareImage: {
         url: 'https://foo.com/square.png',
         type: 'image/png',
@@ -260,10 +260,10 @@ export function collectionMetadataTests(client: FreshmintClient, contract: NFTCo
   });
 
   it('should be able to update collection metadata', async () => {
-    const collectionMetadataInput = {
+    const collectionMetadataInput: CollectionMetadata = {
       name: 'Bar NFT Collection',
       description: 'This is the Bar NFT collection.',
-      externalUrl: 'https://bar.com',
+      url: 'https://bar.com',
       squareImage: {
         url: 'https://bar.com/square.png',
         type: 'image/png',
