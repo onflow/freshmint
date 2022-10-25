@@ -1075,7 +1075,7 @@ This example creates an allowlist with name `early_access_users` and
 adds accounts 0x0ae53cb6e3f42a79 and 0xf8d6e0586b0a20c7,
 both of which will be allowed to claim 3 NFTs.
 
-note: The allowlist name can't contain hyphens `-`
+Note: the allowlist name cannot contain spaces, hyphens (`-`), slashers or other special characters. Only alphanumeric characters and underscores are allowed.
 
 ```js
 await client.send(
