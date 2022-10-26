@@ -55,8 +55,7 @@ mint and distribute NFTs on Flow from a Node.js application.
         - [IPFS Media](#ipfs-media)
         - [HTTP Media](#http-media)
 - [Royalties](#royalties)
-  - [1. Enable the royalties view](#1-enable-the-royalties-view)
-  - [2. Set the royalty recipients](#2-set-the-royalty-recipients)
+  - [Enable the royalties view](#enable-the-royalties-view)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
