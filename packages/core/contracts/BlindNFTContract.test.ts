@@ -8,6 +8,7 @@ import {
   ownerAuthorizer,
   getTestSchema,
   getTestNFTs,
+  royaltiesTests,
   setupEmulator,
   teardownEmulator,
 } from '../testHelpers';
@@ -119,4 +120,6 @@ describe('BlindNFTContract', () => {
       expect(onChainHash).toEqual(nft.metadataHash);
     }
   });
+
+  royaltiesTests(client, contract);
 });

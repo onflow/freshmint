@@ -7,6 +7,7 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
+  royaltiesTests,
   setupEmulator,
   teardownEmulator,
 } from '../testHelpers';
@@ -144,4 +145,6 @@ describe('EditionNFTContract', () => {
       await client.send(sale.stop(sale2));
     });
   });
+
+  royaltiesTests(client, contract);
 });

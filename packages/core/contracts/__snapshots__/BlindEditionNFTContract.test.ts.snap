@@ -34,6 +34,17 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
     /// A placeholder image used to display NFTs that have not yet been revealed.
     pub let placeholderImage: String
 
+    /// A list of royalty recipients that is attached to all NFTs
+    /// minted by this contract.
+    ///
+    access(contract) var royalties: [MetadataViews.Royalty]
+    
+    /// Return the royalty recipients for this contract.
+    ///
+    pub fun getRoyalties(): [MetadataViews.Royalty] {
+        return BlindEditionNFT_Test.royalties
+    }
+
     pub struct Metadata {
     
         pub let name: String
@@ -269,13 +280,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties([
-                MetadataViews.Royalty(
-                    receiver: getAccount(0xf8d6e0586b0a20c7).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver),
-                    cut: 0.1,
-                    description: \\"10% of sale proceeds go to the NFT creator in FLOW.\\"
-                )
-            ])
+            return MetadataViews.Royalties(BlindEditionNFT_Test.royalties)
         }
         
         destroy() {
@@ -465,6 +470,15 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
                 editionSerial: editionSerial
             )
         }
+
+        /// Set the royalty recipients for this contract.
+        ///
+        /// This function updates the royalty recipients for all NFTs
+        /// minted by this contract.
+        ///
+        pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
+            BlindEditionNFT_Test.royalties = royalties
+        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -512,6 +526,8 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         self.AdminStoragePath = BlindEditionNFT_Test.getStoragePath(suffix: \\"Admin\\")
 
         self.placeholderImage = placeholderImage
+
+        self.royalties = []
 
         self.totalSupply = 0
         self.totalEditions = 0

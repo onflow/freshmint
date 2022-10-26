@@ -27,6 +27,8 @@ pub contract {{ contractName }}: NonFungibleToken {
     ///
     pub let placeholderImage: String
 
+    {{> royaltiesFields contractName=contractName }}
+
     pub struct Metadata {
 
         /// A salt that is published when the metadata is revealed.
@@ -361,6 +363,8 @@ pub contract {{ contractName }}: NonFungibleToken {
 
             emit Revealed(id: id)
         }
+
+        {{> royaltiesAdmin contractName=contractName }}
     }
 
     /// Return a public path that is scoped to this contract.
@@ -408,6 +412,8 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
 
         self.placeholderImage = placeholderImage
+
+        {{> royaltiesInit }}
 
         self.totalSupply = 0
 
