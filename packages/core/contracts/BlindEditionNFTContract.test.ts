@@ -7,7 +7,6 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  royaltiesTests,
   setupEmulator,
   teardownEmulator,
 } from '../testHelpers';
@@ -112,6 +111,4 @@ describe('BlindEditionNFTContract', () => {
   it('should reveal edition 2 NFTs', async () => {
     await client.send(contract.revealNFTs(edition2mintedNFTs));
   });
-
-  royaltiesTests(client, contract);
 });

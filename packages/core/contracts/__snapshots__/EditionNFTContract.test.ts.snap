@@ -29,17 +29,6 @@ pub contract EditionNFT_Test: NonFungibleToken {
     ///
     pub var totalEditions: UInt64
 
-    /// A list of royalty recipients that is attached to all NFTs
-    /// minted by this contract.
-    ///
-    access(contract) var royalties: [MetadataViews.Royalty]
-    
-    /// Return the royalty recipients for this contract.
-    ///
-    pub fun getRoyalties(): [MetadataViews.Royalty] {
-        return EditionNFT_Test.royalties
-    }
-
     pub struct Metadata {
     
         pub let name: String
@@ -223,7 +212,13 @@ pub contract EditionNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties(EditionNFT_Test.royalties)
+            return MetadataViews.Royalties([
+                MetadataViews.Royalty(
+                    receiver: getAccount(0xf8d6e0586b0a20c7).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver),
+                    cut: 0.1,
+                    description: \\"10% of sale proceeds go to the NFT creator in FLOW.\\"
+                )
+            ])
         }
         
         pub fun resolveEditionView(_ edition: Edition): MetadataViews.Edition {
@@ -407,15 +402,6 @@ pub contract EditionNFT_Test: NonFungibleToken {
 
             return <- nft
         }
-
-        /// Set the royalty recipients for this contract.
-        ///
-        /// This function updates the royalty recipients for all NFTs
-        /// minted by this contract.
-        ///
-        pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
-            EditionNFT_Test.royalties = royalties
-        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -461,8 +447,6 @@ pub contract EditionNFT_Test: NonFungibleToken {
         self.CollectionPrivatePath = EditionNFT_Test.getPrivatePath(suffix: \\"Collection\\")
 
         self.AdminStoragePath = EditionNFT_Test.getStoragePath(suffix: \\"Admin\\")
-
-        self.royalties = []
 
         self.totalSupply = 0
         self.totalEditions = 0

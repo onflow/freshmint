@@ -30,17 +30,6 @@ pub contract BlindNFT_Test: NonFungibleToken {
     ///
     pub let placeholderImage: String
 
-    /// A list of royalty recipients that is attached to all NFTs
-    /// minted by this contract.
-    ///
-    access(contract) var royalties: [MetadataViews.Royalty]
-    
-    /// Return the royalty recipients for this contract.
-    ///
-    pub fun getRoyalties(): [MetadataViews.Royalty] {
-        return BlindNFT_Test.royalties
-    }
-
     pub struct Metadata {
 
         /// A salt that is published when the metadata is revealed.
@@ -274,7 +263,13 @@ pub contract BlindNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties(BlindNFT_Test.royalties)
+            return MetadataViews.Royalties([
+                MetadataViews.Royalty(
+                    receiver: getAccount(0xf8d6e0586b0a20c7).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver),
+                    cut: 0.1,
+                    description: \\"10% of sale proceeds go to the NFT creator in FLOW.\\"
+                )
+            ])
         }
         
         pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
@@ -446,15 +441,6 @@ pub contract BlindNFT_Test: NonFungibleToken {
 
             emit Revealed(id: id)
         }
-
-        /// Set the royalty recipients for this contract.
-        ///
-        /// This function updates the royalty recipients for all NFTs
-        /// minted by this contract.
-        ///
-        pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
-            BlindNFT_Test.royalties = royalties
-        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -502,8 +488,6 @@ pub contract BlindNFT_Test: NonFungibleToken {
         self.AdminStoragePath = BlindNFT_Test.getStoragePath(suffix: \\"Admin\\")
 
         self.placeholderImage = placeholderImage
-
-        self.royalties = []
 
         self.totalSupply = 0
 

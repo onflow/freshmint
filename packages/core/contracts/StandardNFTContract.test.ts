@@ -9,7 +9,6 @@ import {
   ownerAuthorizer,
   getTestSchema,
   getTestNFTs,
-  royaltiesTests,
   setupEmulator,
   teardownEmulator,
 } from '../testHelpers';
@@ -97,6 +96,4 @@ describe('StandardNFTContract', () => {
   it('should stop a sale', async () => {
     await client.send(sale.stop('default'));
   });
-
-  royaltiesTests(client, contract);
 });

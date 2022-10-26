@@ -26,8 +26,6 @@ pub contract {{ contractName }}: NonFungibleToken {
     ///
     pub var totalEditions: UInt64
 
-    {{> royaltiesFields contractName=contractName }}
-
     pub struct Metadata {
     
         {{#each fields}}
@@ -327,8 +325,6 @@ pub contract {{ contractName }}: NonFungibleToken {
 
             return <- nft
         }
-
-        {{> royaltiesAdmin contractName=contractName }}
     }
 
     /// Return a public path that is scoped to this contract.
@@ -374,8 +370,6 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.CollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: "Collection")
 
         self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
-
-        {{> royaltiesInit }}
 
         self.totalSupply = 0
         self.totalEditions = 0
