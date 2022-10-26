@@ -111,6 +111,57 @@ exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media
 "
 `;
 
+exports[`RoyaltiesView generates a view with no royalties 1`] = `
+"pub fun resolveRoyalties(): MetadataViews.Royalties {
+    return MetadataViews.Royalties([])
+}
+"
+`;
+
+exports[`RoyaltiesView generates a view with one royalty 1`] = `
+"pub fun resolveRoyalties(): MetadataViews.Royalties {
+    return MetadataViews.Royalties([
+        MetadataViews.Royalty(
+            receiver: getAccount(0xf8d6e0586b0a20c7).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver),
+            cut: 0.1,
+            description: \\"10% of sale proceeds go to the NFT creator in FLOW.\\"
+        )
+    ])
+}
+"
+`;
+
+exports[`RoyaltiesView generates a view with two royalties 1`] = `
+"pub fun resolveRoyalties(): MetadataViews.Royalties {
+    return MetadataViews.Royalties([
+        MetadataViews.Royalty(
+            receiver: getAccount(0xf8d6e0586b0a20c7).getCapability<&{FungibleToken.Receiver}>(/public/flowTokenReceiver),
+            cut: 0.1,
+            description: \\"10% of sale proceeds go to the NFT creator in FLOW.\\"
+        ),
+        MetadataViews.Royalty(
+            receiver: getAccount(0xf8d6e0586b0a20c7).getCapability<&{FungibleToken.Receiver}>(/public/fusdReceiver),
+            cut: 0.05,
+            description: \\"5% of sale proceeds go to the NFT creator in FUSD.\\"
+        )
+    ])
+}
+"
+`;
+
+exports[`RoyaltiesView generates a view without a royalty description 1`] = `
+"pub fun resolveRoyalties(): MetadataViews.Royalties {
+    return MetadataViews.Royalties([
+        MetadataViews.Royalty(
+            receiver: getAccount(0xf8d6e0586b0a20c7).getCapability<&{FungibleToken.Receiver}>(/public/fusdReceiver),
+            cut: 0.03,
+            description: \\"\\"
+        )
+    ])
+}
+"
+`;
+
 exports[`SerialView generates a Cadence snippet 1`] = `
 "pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
     return MetadataViews.Serial(metadata.serialNumber)

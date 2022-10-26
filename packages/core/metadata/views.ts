@@ -295,7 +295,14 @@ export const NFTView = defineView<void>({
   requiresMetadata: true,
 });
 
-export const RoyaltiesView = defineView<void>({
+export type Royalty = {
+  address: string;
+  receiverPath: string;
+  cut: string;
+  description?: string;
+};
+
+export const RoyaltiesView = defineView<Royalty[]>({
   id: 'royalties',
   cadenceTypeString: 'Type<MetadataViews.Royalties>()',
   cadenceResolverFunction: 'resolveRoyalties',
