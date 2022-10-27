@@ -5,7 +5,7 @@ import * as metadata from '../metadata';
 import { FreshmintConfig } from '../config';
 import { TransactionAuthorizer, TransactionSigners } from '../transactions';
 import { Script } from '../scripts';
-import { Path } from '../cadence';
+import { Path } from '../cadence/values';
 import { CommonNFTGenerator } from '../generators/CommonNFTGenerator';
 import { HTTPMediaInput, IPFSMediaInput, isIPFSMediaInput } from '../metadata/views';
 
