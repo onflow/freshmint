@@ -43,7 +43,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
 
     /// The collection-level metadata for all NFTs minted by this contract.
     ///
-    pub var collectionMetadata: MetadataViews.NFTCollectionDisplay?
+    pub let collectionMetadata: MetadataViews.NFTCollectionDisplay
 
     pub struct Metadata {
 
@@ -486,7 +486,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(royalties: [MetadataViews.Royalty], placeholderImage: String, admin: AuthAccount) {
+    init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], placeholderImage: String, admin: AuthAccount) {
 
         self.version = \\"0.0.32\\"
 
@@ -499,7 +499,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
         self.placeholderImage = placeholderImage
 
         self.royalties = royalties
-        self.collectionMetadata = nil
+        self.collectionMetadata = collectionMetadata
 
         self.totalSupply = 0
 

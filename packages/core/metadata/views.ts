@@ -224,7 +224,11 @@ export type HTTPMediaInput = {
   type: string;
 };
 
-export type MediaInput = IPFSMediaInput | HTTPMediaInput;
+export type MediaInput = LegacyIPFSMediaInput | IPFSMediaInput | HTTPMediaInput;
+
+function isLegacyIPFSMediaInput(media: MediaInput): media is LegacyIPFSMediaInput {
+  return (media as LegacyIPFSMediaInput).ipfsCid !== undefined;
+}
 
 export function isIPFSMediaInput(media: MediaInput): media is IPFSMediaInput {
   return (media as IPFSMediaInput).ipfs !== undefined;
@@ -250,6 +254,18 @@ export const NFTCollectionDisplayView = defineView<{
       // If no options are passed, the resolver will return
       // the data defined in the `collectionMetadata` contract field.
       return;
+    }
+
+    // Convert the legacy IPFS format to the new generic file format.
+    //
+    // TODO: deprecate the ipfsCid field.
+    if (isLegacyIPFSMediaInput(options.media)) {
+      options.media = {
+        ipfs: {
+          cid: options.media.ipfsCid,
+        },
+        type: options.media.type,
+      };
     }
 
     if (isIPFSMediaInput(options.media) && isHTTPMediaInput(options.media)) {

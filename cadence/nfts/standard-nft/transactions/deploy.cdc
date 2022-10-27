@@ -34,7 +34,7 @@ transaction(
     publicKeyHex: String,
     signatureAlgorithm: UInt8,
     hashAlgorithm: UInt8,
-    collectionMetadata: MetadataViews.NFTCollectionDisplay?,
+    collectionMetadata: MetadataViews.NFTCollectionDisplay,
     royaltyAddresses: [Address],
     royaltyReceiverPaths: [PublicPath],
     royaltyCuts: [UFix64],

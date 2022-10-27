@@ -34,6 +34,7 @@ transaction(
     publicKeyHex: String,
     signatureAlgorithm: UInt8,
     hashAlgorithm: UInt8,
+    collectionMetadata: MetadataViews.NFTCollectionDisplay,
     royaltyAddresses: [Address],
     royaltyReceiverPaths: [PublicPath],
     royaltyCuts: [UFix64],
@@ -65,12 +66,14 @@ transaction(
             account.contracts.add(
                 name: contractName,
                 code: contractCode.decodeHex(),
+                collectionMetadata,
                 royalties,
             )
         } else {
             account.contracts.add(
                 name: contractName,
                 code: contractCode.decodeHex(),
+                collectionMetadata,
                 royalties,
                 admin
             )

@@ -23,7 +23,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     {{> royalties-field contractName=contractName }}
 
-    {{> collectionMetadataFields }}
+    {{> collection-metadata-field }}
 
     pub struct Metadata {
 
@@ -245,7 +245,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(collectionMetadata: MetadataViews.NFTCollectionDisplay?, royalties: [MetadataViews.Royalty]{{#unless saveAdminResourceToContractAccount }}, admin: AuthAccount{{/unless}}) {
+    init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty]{{#unless saveAdminResourceToContractAccount }}, admin: AuthAccount{{/unless}}) {
 
         self.version = "{{ freshmintVersion }}"
 

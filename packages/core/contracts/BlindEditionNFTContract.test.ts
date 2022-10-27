@@ -9,6 +9,7 @@ import {
   getTestSchema,
   setupEmulator,
   teardownEmulator,
+  collectionMetadata,
 } from '../testHelpers';
 
 describe('BlindEditionNFTContract', () => {
@@ -31,6 +32,7 @@ describe('BlindEditionNFTContract', () => {
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
         placeholderImage: 'sample-image.jpeg',
+        collectionMetadata,
       }),
     );
   });

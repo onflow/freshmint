@@ -1,1 +1,0 @@
-self.collectionMetadata = nil

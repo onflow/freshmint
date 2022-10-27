@@ -7,18 +7,10 @@ import TemplateGenerator from './TemplateGenerator';
 // Register the royalties partial
 registerPartial('royalties-field', require('../../../cadence/nfts/common/partials/royalties-field.partial.cdc'));
 
-// Register the collection metadata partials
+// Register the collection metadata partial
 registerPartial(
-  'collectionMetadataFields',
-  require('../../../cadence/nfts/common/partials/collection-metadata-fields.partial.cdc'),
-);
-registerPartial(
-  'collectionMetadataAdmin',
-  require('../../../cadence/nfts/common/partials/collection-metadata-admin.partial.cdc'),
-);
-registerPartial(
-  'collectionMetadataInit',
-  require('../../../cadence/nfts/common/partials/collection-metadata-init.partial.cdc'),
+  'collection-metadata-field',
+  require('../../../cadence/nfts/common/partials/collection-metadata-field.partial.cdc'),
 );
 
 export class CommonNFTGenerator extends TemplateGenerator {
@@ -64,22 +56,6 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractAddress: string;
   }): string {
     return this.generate(require('../../../cadence/nfts/common/scripts/get_royalties.template.cdc'), {
-      imports,
-      contractName,
-      contractAddress,
-    });
-  }
-
-  static setCollectionMetadata({
-    imports,
-    contractName,
-    contractAddress,
-  }: {
-    imports: ContractImports;
-    contractName: string;
-    contractAddress: string;
-  }): string {
-    return this.generate(require('../../../cadence/nfts/common/transactions/set_collection_metadata.template.cdc'), {
       imports,
       contractName,
       contractAddress,

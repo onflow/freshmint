@@ -55,7 +55,7 @@ describe('StandardNFTContract', () => {
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
-        collectionMetadata
+        collectionMetadata,
       }),
     );
   });
