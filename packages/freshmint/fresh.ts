@@ -1,10 +1,6 @@
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 import { NFTStorage } from 'nft.storage';
-import { CollectionMetadata } from '@freshmint/core';
 import * as metadata from '@freshmint/core/metadata';
-
-// @ts-ignore
-import mime from 'mime-types';
 
 import { FreshmintConfig } from './config';
 import FlowGateway from './flow';
@@ -117,28 +113,5 @@ export default class Fresh {
 
   async stopDrop() {
     await this.flowGateway.stopDrop('default');
-  }
-
-  async updateCollection() {
-    const collection = this.config.collection;
-
-    const collectonMetadata: CollectionMetadata = {
-      name: collection.name,
-      description: collection.description,
-      url: collection.url,
-      squareImage: {
-        url: collection.images.square,
-        type: mime.lookup(collection.images.square) || '',
-      },
-      bannerImage: {
-        url: collection.images.banner,
-        type: mime.lookup(collection.images.banner) || '',
-      },
-      socials: collection.socials,
-    };
-
-    await this.flowGateway.setCollectionMetadata(collectonMetadata);
-
-    return collectonMetadata;
   }
 }

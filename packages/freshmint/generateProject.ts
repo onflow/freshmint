@@ -116,11 +116,6 @@ async function generateStandardProject(
     path.resolve(dir, `cadence/scripts/get_nfts.cdc`),
     CommonNFTGenerator.getNFTs({ imports: shiftedImports, contractName: contract.name, contractAddress }),
   );
-
-  await writeFile(
-    path.resolve(dir, `cadence/transactions/set_collection_metadata.cdc`),
-    CommonNFTGenerator.setCollectionMetadata({ imports: shiftedImports, contractName: contract.name, contractAddress }),
-  );
 }
 
 async function generateEditionProject(
@@ -177,11 +172,6 @@ async function generateEditionProject(
   await writeFile(
     path.resolve(dir, `cadence/scripts/get_nfts.cdc`),
     CommonNFTGenerator.getNFTs({ imports: shiftedImports, contractName: contract.name, contractAddress }),
-  );
-
-  await writeFile(
-    path.resolve(dir, `cadence/transactions/set_collection_metadata.cdc`),
-    CommonNFTGenerator.setCollectionMetadata({ imports: shiftedImports, contractName: contract.name, contractAddress }),
   );
 }
 

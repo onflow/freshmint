@@ -1,6 +1,3 @@
-import { CollectionMetadata, getHTTPURL, getIPFSCID, getIPFSPath } from '@freshmint/core';
-import { objectToDictionaryEntries } from '@freshmint/core/cadence';
-
 // @ts-ignore
 import * as t from '@onflow/types';
 
@@ -119,29 +116,5 @@ export default class FlowGateway {
     return await this.flow.transaction('./cadence/transactions/stop_drop.cdc', `${this.network}-account`, [
       { type: t.String, value: saleId },
     ]);
-  }
-
-  async setCollectionMetadata(collection: CollectionMetadata) {
-    return await this.flow.transaction(
-      './cadence/transactions/set_collection_metadata.cdc',
-      `${this.network}-account`,
-      [
-        { type: t.String, value: collection.name },
-        { type: t.String, value: collection.description },
-        { type: t.String, value: collection.url },
-        { type: t.Optional(t.String), value: getIPFSCID(collection.squareImage) },
-        { type: t.Optional(t.String), value: getIPFSPath(collection.squareImage) },
-        { type: t.Optional(t.String), value: getHTTPURL(collection.squareImage) },
-        { type: t.String, value: collection.squareImage.type },
-        { type: t.Optional(t.String), value: getIPFSCID(collection.bannerImage) },
-        { type: t.Optional(t.String), value: getIPFSPath(collection.bannerImage) },
-        { type: t.Optional(t.String), value: getHTTPURL(collection.bannerImage) },
-        { type: t.String, value: collection.bannerImage.type },
-        {
-          type: t.Dictionary({ key: t.String, value: t.String }),
-          value: objectToDictionaryEntries(collection.socials),
-        },
-      ],
-    );
   }
 }

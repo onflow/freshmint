@@ -112,12 +112,6 @@ async function main() {
     .option('--tail <number>', 'Only dump the last <number> NFTs. ', parseIntOption)
     .action(dumpNFTs);
 
-  program
-    .command('update-collection')
-    .description('update the collection metadata on your contract')
-    .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
-    .action(updateCollection);
-
   const generate = program.command('generate').description('regenerate project files from config');
 
   generate.command('cadence').description('regenerate project Cadence files').action(generateCadence);
@@ -283,20 +277,6 @@ async function dumpNFTs(csvPath: string, { network, tail }: { network: string; t
   const count = await fresh.dumpNFTs(csvPath, tail);
 
   spinner.succeed(`${count} NFT records saved to ${csvPath}.`);
-}
-
-async function updateCollection({ network }: { network: string }) {
-  const config = loadConfig();
-  const fresh = new Fresh(config, network);
-
-  spinner.start('Updating collection metadata ...\n');
-
-  const collectionMetadata = await fresh.updateCollection();
-
-  spinner.succeed('Updated your contract with new collection metadata:');
-
-  // TODO: pretty print instead of dumping the object
-  console.log(collectionMetadata);
 }
 
 async function generateCadence() {
