@@ -118,6 +118,13 @@ exports[`NFTCollectionDisplayView returns the collectionMetadata field when no o
 "
 `;
 
+exports[`RoyaltiesView generates a royalties view 1`] = `
+"pub fun resolveRoyalties(): MetadataViews.Royalties {
+    return MetadataViews.Royalties(Foo.getRoyalties())
+}
+"
+`;
+
 exports[`SerialView generates a Cadence snippet 1`] = `
 "pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
     return MetadataViews.Serial(metadata.serialNumber)

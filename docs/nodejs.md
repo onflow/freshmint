@@ -56,7 +56,7 @@ mint and distribute NFTs on Flow from a Node.js application.
         - [HTTP Media](#http-media)
 - [Royalties](#royalties)
   - [1. Enable the royalties view](#1-enable-the-royalties-view)
-  - [2. Set the royalty recipients](#2-set-the-royalty-recipients)
+  - [2. Deploy your contract with royalties recipients](#2-deploy-your-contract-with-royalties-recipients)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1071,14 +1071,16 @@ When calling `addToAllowlist` for the first time with a new name,
 Freshmint will automatically create the allowlist if it does not exist.
 You can execute this transaction again to add more addresses to the list.
 
-This example creates an allowlist with name `early-access-users` and 
+This example creates an allowlist with name `early_access_users` and 
 adds accounts 0x0ae53cb6e3f42a79 and 0xf8d6e0586b0a20c7,
 both of which will be allowed to claim 3 NFTs.
+
+Note: the allowlist name cannot contain spaces, hyphens (`-`), slashers or other special characters. Only alphanumeric characters and underscores are allowed.
 
 ```js
 await client.send(
   sale.addToAllowlist({
-    name: 'early-access-users',
+    name: 'early_access_users',
     addresses: ['0x0ae53cb6e3f42a79', '0xf8d6e0586b0a20c7'],
     claims: 3, // Each account will be allowed to claim 3 NFTs
   })
@@ -1087,7 +1089,7 @@ await client.send(
 
 #### Create a sale with an allowlist
 
-This example creates a sale and attaches the `early-access-users` allowlist created above.
+This example creates a sale and attaches the `early_access_users` allowlist created above.
 
 Only the the accounts 0x0ae53cb6e3f42a79 and 0xf8d6e0586b0a20c7 will be allowed to claim from the sale,
 up to a maximum of 3 NFTs each.
@@ -1099,7 +1101,7 @@ await client.send(sale.start({
   // Note: 'allowlist' is an optional argument. 
   //
   // If omitted, the sale will be open to anybody and with no claim limits.
-  allowlist: 'early-access-users'
+  allowlist: 'early_access_users'
 }));
 ```
 
@@ -1214,7 +1216,7 @@ There are two steps to configuring royalties for your contract.
 
 First, ensure that your schema contains the royalties metadata view.
 This view exposes your royalty information to wallets and marketplaces.
-Without it, your royalties will not be applied.
+Without it your royalties will not be applied.
 
 Note: `metadata.defaultSchema` already contains the royalties view.
 
@@ -1230,30 +1232,30 @@ const schema = metadata.createSchema({
 });
 ```
 
-## 2. Set the royalty recipients
+## 2. Deploy your contract with royalties recipients
 
-After you deploy your contract, you can use the `setRoyalties` function
-to set or update the royalty information for your contract.
-
-You can call this function at any point to update your royalties.
-This function will update the royalty information for all NFTs minted by your
-contract, past and present, regardless of where they are stored.
+Configure your royalties when deploying your contract:
 
 ```js
 const royalties = [
   {
     address: '0xf8d6e0586b0a20c7',
     receiverPath: '/public/flowTokenReceiver',
-    cut: '0.03',
+    // Cut must be between 0.0 and 1.0 (100%)
+    cut: '0.1', // 10% of sales go to this recipient
     // Description is an optional field
-    description: '0.3% of sale proceeds go to 0xf8d6e0586b0a20c7 in FLOW.',
+    description: '10% of sale proceeds go to 0xf8d6e0586b0a20c7 in FLOW.',
   },
   {
     address: '0x0ae53cb6e3f42a79',
     receiverPath: '/public/flowTokenReceiver',
-    cut: '0.05'
+    cut: '0.05' // 5% of sales go to this recipient
   },
 ];
 
-await client.send(contract.setRoyalties(royalties));
+await client.send(contract.deploy({
+  publicKey,
+  hashAlgorithm,
+  royalties
+}));
 ```

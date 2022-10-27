@@ -1,11 +1,6 @@
-// @ts-ignore
-import * as fcl from '@onflow/fcl';
-// @ts-ignore
-import * as t from '@onflow/types';
-
 import * as metadata from '../metadata';
 import { FreshmintConfig } from '../config';
-import { Transaction, TransactionAuthorizer, TransactionSigners } from '../transactions';
+import { TransactionAuthorizer, TransactionSigners } from '../transactions';
 import { Script } from '../scripts';
 import { objectToDictionaryEntries, Path } from '../cadence';
 import { CommonNFTGenerator } from '../generators/CommonNFTGenerator';
@@ -103,30 +98,6 @@ export abstract class NFTContract {
     };
   }
 
-  setRoyalties(royalties: Royalty[]): Transaction<void> {
-    return new Transaction(({ imports }: FreshmintConfig) => {
-      const script = CommonNFTGenerator.setRoyalties({
-        imports,
-        contractName: this.name,
-        contractAddress: this.getAddress(),
-      });
-
-      const { royaltyAddresses, royaltyReceiverPaths, royaltyCuts, royaltyDescriptions } = prepareRoyalties(royalties);
-
-      return {
-        script,
-        args: [
-          fcl.arg(royaltyAddresses, t.Array(t.Address)),
-          fcl.arg(royaltyReceiverPaths, t.Array(t.Path)),
-          fcl.arg(royaltyCuts, t.Array(t.UFix64)),
-          fcl.arg(royaltyDescriptions, t.Array(t.String)),
-        ],
-        computeLimit: 9999,
-        signers: this.getSigners(),
-      };
-    }, Transaction.VoidResult);
-  }
-
   getRoyalties(): Script<Royalty[]> {
     return new Script(
       ({ imports }: FreshmintConfig) => {
@@ -146,8 +117,9 @@ export abstract class NFTContract {
         royalties.map((royalty: any) => ({
           address: royalty.receiver.address,
           receiverPath: new Path(royalty.receiver.path.value).toString(),
-          cut: royalty.cut,
-          description: royalty.description,
+          // Trim trailing zeros (0.01000 becomes 0.01)
+          cut: parseFloat(royalty.cut).toString(),
+          description: royalty.description !== '' ? royalty.description : undefined,
         })),
     );
   }
@@ -214,7 +186,7 @@ export class MissingContractAddressError extends Error {
   }
 }
 
-function prepareRoyalties(royalties: Royalty[]): {
+export function prepareRoyalties(royalties: Royalty[]): {
   royaltyAddresses: string[];
   royaltyReceiverPaths: Path[];
   royaltyCuts: string[];

@@ -37,7 +37,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
     /// A list of royalty recipients that is attached to all NFTs
     /// minted by this contract.
     ///
-    access(contract) var royalties: [MetadataViews.Royalty]
+    access(contract) let royalties: [MetadataViews.Royalty]
     
     /// Return the royalty recipients for this contract.
     ///
@@ -284,7 +284,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties(BlindEditionNFT_Test.royalties)
+            return MetadataViews.Royalties(BlindEditionNFT_Test.getRoyalties())
         }
         
         destroy() {
@@ -474,21 +474,6 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
                 editionSerial: editionSerial
             )
         }
-
-        /// Set the royalty recipients for this contract.
-        ///
-        /// This function updates the royalty recipients for all NFTs
-        /// minted by this contract.
-        ///
-        pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
-            BlindEditionNFT_Test.royalties = royalties
-        }
-
-        /// Set the collection metadata for this contract.
-        ///
-        pub fun setCollectionMetadata(_ collectionMetadata: MetadataViews.NFTCollectionDisplay) {
-            BlindEditionNFT_Test.collectionMetadata = collectionMetadata
-        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -525,7 +510,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(admin: AuthAccount, placeholderImage: String) {
+    init(royalties: [MetadataViews.Royalty], placeholderImage: String, admin: AuthAccount) {
 
         self.version = \\"0.0.32\\"
 
@@ -537,7 +522,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
 
         self.placeholderImage = placeholderImage
 
-        self.royalties = []
+        self.royalties = royalties
         self.collectionMetadata = nil
 
         self.totalSupply = 0
