@@ -9,7 +9,7 @@ import { FreshmintClient } from './client';
 import { TransactionAuthorizer } from './transactions';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from './crypto';
 import * as metadata from './metadata';
-import { NFTContract, CollectionMetadata } from './contracts/NFTContract';
+import { CollectionMetadata } from './contracts/NFTContract';
 import { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 import { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 
