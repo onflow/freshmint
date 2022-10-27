@@ -3,8 +3,8 @@ import {{ contractName }} from {{{ contractAddress }}}
 transaction(
     ids: [UInt64],
     editionIDs: [UInt64],
-    editionSerials: [UInt64],
-    editionSalts: [String]
+    serialNumbers: [UInt64],
+    salts: [String]
 ) {
     
     let admin: &{{ contractName }}.Admin
@@ -19,9 +19,9 @@ transaction(
             self.admin.revealNFT(
                 id: id,
                 editionID: editionIDs[i],
-                editionSerial: editionSerials[i],
+                serialNumber: serialNumbers[i],
                 // Convert salt from hex string to byte array
-                editionSalt: editionSalts[i].decodeHex()
+                salt: salts[i].decodeHex()
             )
         }
     }

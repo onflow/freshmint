@@ -26,7 +26,7 @@ pub fun getOrCreateCollection(account: AuthAccount, collectionName: String): &{N
     return collectionRef
 }
 
-transaction(editionHashes: [String], collectionName: String?) {
+transaction(hashes: [String], collectionName: String?) {
     
     let admin: &{{ contractName }}.Admin
     let collection: &{NonFungibleToken.CollectionPublic}
@@ -39,8 +39,8 @@ transaction(editionHashes: [String], collectionName: String?) {
     }
 
     execute {
-        for editionHash in editionHashes {
-            let token <- self.admin.mintNFT(editionHash: editionHash.decodeHex())
+        for hash in hashes {
+            let token <- self.admin.mintNFT(hash: hash.decodeHex())
 
             self.collection.deposit(token: <- token)
         }

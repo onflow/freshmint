@@ -219,16 +219,16 @@ export class BlindEditionNFTContract extends NFTContract {
 
       const nftIds = nfts.map((nft) => nft.id);
       const editionIds = nfts.map((nft) => nft.editionId);
-      const editionSerials = nfts.map((nft) => nft.editionSerial);
-      const editionSalts = nfts.map((nft) => nft.editionSalt);
+      const serialNumbers = nfts.map((nft) => nft.editionSerial);
+      const salts = nfts.map((nft) => nft.editionSalt);
 
       return {
         script,
         args: [
           fcl.arg(nftIds, t.Array(t.UInt64)),
           fcl.arg(editionIds, t.Array(t.UInt64)),
-          fcl.arg(editionSerials, t.Array(t.UInt64)),
-          fcl.arg(editionSalts, t.Array(t.String)),
+          fcl.arg(serialNumbers, t.Array(t.UInt64)),
+          fcl.arg(salts, t.Array(t.String)),
         ],
         computeLimit: 9999,
         signers: this.getSigners(),
