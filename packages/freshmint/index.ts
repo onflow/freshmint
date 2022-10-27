@@ -182,7 +182,7 @@ async function mint({
 
   let bar: ProgressBar;
 
-  spinner.start('Checking for duplicate NFTs ...\n');
+  spinner.start(`Checking for duplicate NFTs ...\n`);
 
   await minter.mint(
     loader,
@@ -247,7 +247,7 @@ async function stopDrop({ network }: { network: string }) {
 
   // TODO: return error if no drop is active
 
-  spinner.succeed('Your drop has been stopped.');
+  spinner.succeed(`Your drop has been stopped.`);
 }
 
 function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
@@ -290,7 +290,7 @@ async function generateCadence() {
 async function generateWeb() {
   const config = loadConfig();
 
-  await generateNextjsApp('./', config.collection.name, config.collection.description);
+  await generateNextjsApp('./', config.name, config.description);
 
   spinner.succeed(`Success! Regenerated web files.`);
 }
