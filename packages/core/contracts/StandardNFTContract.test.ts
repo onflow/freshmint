@@ -13,6 +13,23 @@ import {
   teardownEmulator,
 } from '../testHelpers';
 
+const collectionMetadata = {
+  name: 'Foo NFT Collection',
+  description: 'This is the Foo NFT collection.',
+  url: 'https://foo.com',
+  squareImage: {
+    url: 'https://foo.com/square.png',
+    type: 'image/png',
+  },
+  bannerImage: {
+    url: 'https://foo.com/banner.png',
+    type: 'image/png',
+  },
+  socials: {
+    twitter: 'https://twitter.com/foo',
+  },
+};
+
 describe('StandardNFTContract', () => {
   beforeAll(setupEmulator);
   afterAll(teardownEmulator);
@@ -38,6 +55,7 @@ describe('StandardNFTContract', () => {
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
+        collectionMetadata
       }),
     );
   });

@@ -339,7 +339,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(royalties: [MetadataViews.Royalty], admin: AuthAccount) {
+    init(collectionMetadata: MetadataViews.NFTCollectionDisplay?, royalties: [MetadataViews.Royalty], admin: AuthAccount) {
 
         self.version = \\"0.0.32\\"
 
@@ -350,7 +350,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         self.AdminStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Admin\\")
 
         self.royalties = royalties
-        self.collectionMetadata = nil
+        self.collectionMetadata = collectionMetadata
 
         self.totalSupply = 0
 

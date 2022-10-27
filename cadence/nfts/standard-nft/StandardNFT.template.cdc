@@ -245,7 +245,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(royalties: [MetadataViews.Royalty]{{#unless saveAdminResourceToContractAccount }}, admin: AuthAccount{{/unless}}) {
+    init(collectionMetadata: MetadataViews.NFTCollectionDisplay?, royalties: [MetadataViews.Royalty]{{#unless saveAdminResourceToContractAccount }}, admin: AuthAccount{{/unless}}) {
 
         self.version = "{{ freshmintVersion }}"
 
@@ -256,7 +256,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
 
         self.royalties = royalties
-        self.collectionMetadata = nil
+        self.collectionMetadata = collectionMetadata
 
         self.totalSupply = 0
 

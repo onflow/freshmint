@@ -3,7 +3,7 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { NFTContract, prepareRoyalties, Royalty } from './NFTContract';
+import { CollectionMetadata, NFTContract, prepareCollectionMetadata, prepareRoyalties, Royalty } from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { StandardNFTGenerator } from '../generators/StandardNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
@@ -30,11 +30,13 @@ export class StandardNFTContract extends NFTContract {
     publicKey,
     hashAlgorithm,
     royalties,
+    collectionMetadata,
     saveAdminResourceToContractAccount,
   }: {
     publicKey: PublicKey;
     hashAlgorithm: HashAlgorithm;
     royalties?: Royalty[];
+    collectionMetadata: CollectionMetadata,
     saveAdminResourceToContractAccount?: boolean;
   }): Transaction<string> {
     return new Transaction(
@@ -58,6 +60,7 @@ export class StandardNFTContract extends NFTContract {
             fcl.arg(publicKey.toHex(), t.String),
             fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
             fcl.arg(HashAlgorithm.toCadence(hashAlgorithm), t.UInt8),
+            fcl.arg(prepareCollectionMetadata(imports.MetadataViews, collectionMetadata), t.Identity),
             fcl.arg(royaltyAddresses, t.Array(t.Address)),
             fcl.arg(royaltyReceiverPaths, t.Array(t.Path)),
             fcl.arg(royaltyCuts, t.Array(t.UFix64)),

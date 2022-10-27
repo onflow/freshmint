@@ -10,7 +10,7 @@ import { Transaction, TransactionAuthorizer, TransactionSigners } from '../trans
 import { Script } from '../scripts';
 import { objectToDictionaryEntries, Path } from '../cadence';
 import { CommonNFTGenerator } from '../generators/CommonNFTGenerator';
-import { isHTTPMediaInput, isIPFSMediaInput, MediaInput } from '../metadata/views';
+import { HTTPMediaInput, IPFSMediaInput, isHTTPMediaInput, isIPFSMediaInput, MediaInput } from '../metadata/views';
 
 export interface Royalty {
   address: string;
@@ -119,14 +119,16 @@ export abstract class NFTContract {
           computeLimit: 9999,
         };
       },
-      (royalties) =>
-        royalties.map((royalty: any) => ({
+      (royalties) => {
+        console.log(royalties);
+        return royalties.map((royalty: any) => ({
           address: royalty.receiver.address,
           receiverPath: new Path(royalty.receiver.path.value).toString(),
           // Trim trailing zeros (0.01000 becomes 0.01)
           cut: parseFloat(royalty.cut).toString(),
           description: royalty.description !== '' ? royalty.description : undefined,
-        })),
+        }));
+      },
     );
   }
 
@@ -281,3 +283,268 @@ function parseSocials(socials: { [key: string]: { url: string } }): { [key: stri
 
   return result;
 }
+
+export function prepareCollectionMetadata(metadataViewsAddress: string, collectionMetadata: CollectionMetadata) {
+  return prepareStruct(
+    `A.${fcl.sansPrefix(metadataViewsAddress)}.MetadataViews.NFTCollectionDisplay`,
+    [
+      prepareStructField('name', prepareString(collectionMetadata.name)),
+      prepareStructField('description', prepareString(collectionMetadata.description)),
+      prepareStructField('externalURL', prepareExternalURL(metadataViewsAddress, collectionMetadata.url)),
+      prepareStructField('squareImage', prepareMedia(metadataViewsAddress, collectionMetadata.squareImage)),
+      prepareStructField('bannerImage', prepareMedia(metadataViewsAddress, collectionMetadata.bannerImage)),
+      prepareStructField('socials', prepareSocials(metadataViewsAddress, collectionMetadata.socials)),
+    ]
+  )
+}
+
+function prepareStruct(typeId: string, fields: any[]) {
+  return {
+    type: 'Struct',
+    value: {
+      id: typeId,
+      fields
+    }
+  }
+}
+
+function prepareStructField(name: string, value: any) {
+  return {
+    name,
+    value
+  }
+}
+
+function prepareDictionary(pairs: any[]) {
+  return {
+    type: 'Dictionary',
+    value: pairs
+  }
+}
+
+function prepareString(value: string) {
+  return {
+    type: 'String',
+    value,
+  }
+}
+
+function prepareOptional(value: any | null) {
+  return {
+    type: 'Optional',
+    value,
+  }
+}
+
+function prepareExternalURL(metadataViewsAddress: string, url: string) {
+  return prepareStruct(`A.${fcl.sansPrefix(metadataViewsAddress)}.MetadataViews.ExternalURL`, [prepareStructField('url', prepareString(url))])
+}
+
+function prepareMedia(metadataViewsAddress: string, media: MediaInput) {
+  const file = prepareFile(metadataViewsAddress, media);
+  
+  return prepareStruct(`A.${fcl.sansPrefix(metadataViewsAddress)}.MetadataViews.Media`, [
+    prepareStructField('file', file),
+    prepareStructField('mediaType', prepareString(media.type))
+  ]);
+}
+
+function prepareFile(metadataViewsAddress: string, media: MediaInput) {
+  if (isIPFSMediaInput(media)) {
+    return prepareIPFSFile(metadataViewsAddress, media)
+  }
+
+  return prepareHTTPFile(metadataViewsAddress, media);
+}
+
+function prepareIPFSFile(metadataViewsAddress: string, media: IPFSMediaInput) {
+  if (typeof media.ipfs === 'string') {
+    return prepareStruct(`A.${fcl.sansPrefix(metadataViewsAddress)}.MetadataViews.IPFSFile`, [
+      prepareStructField('cid', prepareString(media.ipfs)),
+      prepareStructField('path', prepareOptional(null)),
+    ])
+  }
+
+  return prepareStruct(`A.${fcl.sansPrefix(metadataViewsAddress)}.MetadataViews.IPFSFile`, [
+    prepareStructField('cid', prepareString(media.ipfs.cid)),
+    prepareStructField('path', prepareOptional(media.ipfs.path ? prepareString(media.ipfs.path) : null)),
+  ])
+}
+
+function prepareHTTPFile(metadataViewsAddress: string, media: HTTPMediaInput) {
+  return prepareStruct(`A.${fcl.sansPrefix(metadataViewsAddress)}.MetadataViews.HTTPFile`, [
+    prepareStructField('url', prepareString(media.url))
+  ])
+}
+
+function prepareSocials(metadataViewsAddress: string, socials: { [key: string]: string }) {
+  const pairs = [];
+
+  for (const key in socials) {
+    pairs.push({ key: prepareString(key), value: prepareExternalURL(metadataViewsAddress, socials[key])})
+  }
+
+  return prepareDictionary(pairs)
+}
+
+const collectionMetadata = {
+  type: 'Struct',
+  value: {
+    id: 'A.f8d6e0586b0a20c7.MetadataViews.NFTCollectionDisplay',
+    fields: [
+      {
+        name: 'name',
+        value: {
+          type: 'String',
+          value: 'FOO',
+        },
+      },
+      {
+        name: 'description',
+        value: {
+          type: 'String',
+          value: 'FOO',
+        },
+      },
+      {
+        name: 'externalURL',
+        value: {
+          type: 'Struct',
+          value: {
+            id: 'A.f8d6e0586b0a20c7.MetadataViews.ExternalURL',
+            fields: [
+              {
+                name: 'url',
+                value: {
+                  type: 'String',
+                  value: 'FOO',
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        name: 'squareImage',
+        value: {
+          type: 'Struct',
+          value: {
+            id: 'A.f8d6e0586b0a20c7.MetadataViews.Media',
+            fields: [
+              {
+                name: 'file',
+                value: {
+                  type: 'Struct',
+                  value: {
+                    id: 'A.f8d6e0586b0a20c7.MetadataViews.IPFSFile',
+                    fields: [
+                      {
+                        name: 'cid',
+                        value: {
+                          type: 'String',
+                          value: 'FOO',
+                        },
+                      },
+                      {
+                        name: 'path',
+                        value: {
+                          type: 'Optional',
+                          value: {
+                            type: 'String',
+                            value: 'FOO',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                name: 'mediaType',
+                value: {
+                  type: 'String',
+                  value: 'FOO',
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        name: 'bannerImage',
+        value: {
+          type: 'Struct',
+          value: {
+            id: 'A.f8d6e0586b0a20c7.MetadataViews.Media',
+            fields: [
+              {
+                name: 'file',
+                value: {
+                  type: 'Struct',
+                  value: {
+                    id: 'A.f8d6e0586b0a20c7.MetadataViews.IPFSFile',
+                    fields: [
+                      {
+                        name: 'cid',
+                        value: {
+                          type: 'String',
+                          value: 'FOO',
+                        },
+                      },
+                      {
+                        name: 'path',
+                        value: {
+                          type: 'Optional',
+                          value: {
+                            type: 'String',
+                            value: 'FOO',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                name: 'mediaType',
+                value: {
+                  type: 'String',
+                  value: 'FOO',
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        name: 'socials',
+        value: {
+          type: 'Dictionary',
+          value: [
+            {
+              key: {
+                type: 'String',
+                value: 'twitter',
+              },
+              value: {
+                type: 'Struct',
+                value: {
+                  id: 'A.f8d6e0586b0a20c7.MetadataViews.ExternalURL',
+                  fields: [
+                    {
+                      name: 'url',
+                      value: {
+                        type: 'String',
+                        value: 'FOO',
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+};
