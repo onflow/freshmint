@@ -1207,40 +1207,54 @@ const view = metadata.NFTCollectionDisplayView({
 # Royalties
 
 Freshmint allows you to configure one or more royalty recipients
-that will receive a portion of the sales on all NFTs minted by your contract.
+who will receive a portion of the sales on all NFTs minted by your contract.
 
-## Enable the royalties view
+There are two steps to configuring royalties for your contract.
 
-Use the royalties metadata view to enable royalties on your contract.
+## 1. Enable the royalties view
+
+First, ensure that your schema contains the royalties metadata view.
 This view exposes your royalty information to wallets and marketplaces.
+Without it, your royalties will not be applied.
 
-Note: all NFTs minted by your contract will have the same royalty
-recipients. Freshmint does not support defining royalties on a per-NFT basis.
+Note: `metadata.defaultSchema` already contains the royalties view.
 
 ```js
 import { metadata } from 'freshmint';
-
-const royalties = [
-  {
-    address: '0xf8d6e0586b0a20c7',
-    receiverPath: '/public/flowTokenReceiver',
-    // Cut must be between 0.0 and 1.0
-    cut: '0.1', // 10%
-    // Description is an optional field
-    description: '10% of sale proceeds go to 0xf8d6e0586b0a20c7 in FLOW.',
-  },
-  {
-    address: '0x0ae53cb6e3f42a79',
-    receiverPath: '/public/flowTokenReceiver',
-    cut: '0.05' // 5%
-  },
-];
 
 const schema = metadata.createSchema({
   // ...
   views: (fields) => [
     // ...
-    metadata.RoyaltiesView(royalties)
+    metadata.RoyaltiesView()
   ]
 });
+```
+
+## 2. Set the royalty recipients
+
+After you deploy your contract, you can use the `setRoyalties` function
+to set or update the royalty information for your contract.
+
+You can call this function at any point to update your royalties.
+This function will update the royalty information for all NFTs minted by your
+contract, past and present, regardless of where they are stored.
+
+```js
+const royalties = [
+  {
+    address: '0xf8d6e0586b0a20c7',
+    receiverPath: '/public/flowTokenReceiver',
+    cut: '0.03',
+    // Description is an optional field
+    description: '0.3% of sale proceeds go to 0xf8d6e0586b0a20c7 in FLOW.',
+  },
+  {
+    address: '0x0ae53cb6e3f42a79',
+    receiverPath: '/public/flowTokenReceiver',
+    cut: '0.05'
+  },
+];
+
+await client.send(contract.setRoyalties(royalties));
 ```
