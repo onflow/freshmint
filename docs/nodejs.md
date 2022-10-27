@@ -315,7 +315,7 @@ const publicKey = privateKey.getPublicKey();
 const hashAlgorithm = HashAlgorithm.SHA3_256;
 
 // Note: contract.address will automatically update once the transaction succeeds.
-const deployTransaction = contract.deploy(publicKey, hashAlgorithm);
+const deployTransaction = contract.deploy({ publicKey, hashAlgorithm });
 
 const contractAddress = await client.send(deployTransaction);
 ```
@@ -353,10 +353,10 @@ const hashAlgorithm = HashAlgorithm.SHA3_256;
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
-const address = await client.send(contract.deploy(
-  publicKey,
+const address = await client.send(contract.deploy({ 
+  publicKey, 
   hashAlgorithm
-));
+}));
 ```
 
 ### Mint the NFTs
@@ -442,10 +442,10 @@ const hashAlgorithm = HashAlgorithm.SHA3_256;
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
-const address = await client.send(contract.deploy(
-  publicKey,
+const address = await client.send(contract.deploy({ 
+  publicKey, 
   hashAlgorithm
-));
+}));
 ```
 
 ### Step 1: Create one or more editions
@@ -627,11 +627,11 @@ const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
-const address = await client.send(contract.deploy(
-  publicKey,
+const address = await client.send(contract.deploy({ 
+  publicKey, 
   hashAlgorithm,
   placeholderImage
-));
+}));
 ```
 
 ### Step 1: Mint NFTs
@@ -775,11 +775,11 @@ const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
-const address = await client.send(contract.deploy(
-  publicKey,
+const address = await client.send(contract.deploy({ 
+  publicKey, 
   hashAlgorithm,
   placeholderImage
-));
+}));
 ```
 
 ### Step 1: Create one or more editions
