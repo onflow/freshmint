@@ -31,7 +31,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     /// A placeholder image used to display NFTs that have not yet been revealed.
     pub let placeholderImage: String
 
-    {{> royaltiesFields contractName=contractName }}
+    {{> royalties-field contractName=contractName }}
 
     pub struct Metadata {
     
@@ -394,8 +394,6 @@ pub contract {{ contractName }}: NonFungibleToken {
                 editionSerial: editionSerial
             )
         }
-
-        {{> royaltiesAdmin contractName=contractName }}
     }
 
     /// Return a public path that is scoped to this contract.
@@ -432,7 +430,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init({{#unless saveAdminResourceToContractAccount }}admin: AuthAccount, {{/unless}}placeholderImage: String) {
+    init(royalties: [MetadataViews.Royalty], placeholderImage: String{{#unless saveAdminResourceToContractAccount }}, admin: AuthAccount{{/unless}}) {
 
         self.version = "{{ freshmintVersion }}"
 
@@ -444,7 +442,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.placeholderImage = placeholderImage
 
-        {{> royaltiesInit }}
+        self.royalties = royalties
 
         self.totalSupply = 0
         self.totalEditions = 0

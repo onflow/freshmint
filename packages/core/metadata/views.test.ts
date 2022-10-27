@@ -161,43 +161,8 @@ describe('ExternalURLView', () => {
 });
 
 describe('RoyaltiesView', () => {
-  const royaltyA = {
-    address: '0xf8d6e0586b0a20c7',
-    receiverPath: '/public/flowTokenReceiver',
-    cut: '0.1',
-    description: '10% of sale proceeds go to the NFT creator in FLOW.',
-  };
-
-  const royaltyB = {
-    address: '0xf8d6e0586b0a20c7',
-    receiverPath: '/public/fusdReceiver',
-    cut: '0.05',
-    description: '5% of sale proceeds go to the NFT creator in FUSD.',
-  };
-
-  const royaltyC = {
-    address: '0xf8d6e0586b0a20c7',
-    receiverPath: '/public/fusdReceiver',
-    cut: '0.03',
-  };
-
-  it('generates a view with no royalties', () => {
-    const view = metadata.RoyaltiesView([]);
-    expect(generateView(view)).toMatchSnapshot();
-  });
-
-  it('generates a view with one royalty', () => {
-    const view = metadata.RoyaltiesView([royaltyA]);
-    expect(generateView(view)).toMatchSnapshot();
-  });
-
-  it('generates a view with two royalties', () => {
-    const view = metadata.RoyaltiesView([royaltyA, royaltyB]);
-    expect(generateView(view)).toMatchSnapshot();
-  });
-
-  it('generates a view without a royalty description', () => {
-    const view = metadata.RoyaltiesView([royaltyC]);
+  it('generates a royalties view', () => {
+    const view = metadata.RoyaltiesView();
     expect(generateView(view)).toMatchSnapshot();
   });
 });

@@ -302,7 +302,7 @@ export type Royalty = {
   description?: string;
 };
 
-export const RoyaltiesView = defineView<Royalty[]>({
+export const RoyaltiesView = defineView<void>({
   id: 'royalties',
   cadenceTypeString: 'Type<MetadataViews.Royalties>()',
   cadenceResolverFunction: 'resolveRoyalties',
