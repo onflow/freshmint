@@ -9,7 +9,7 @@ import {
   getTestSchema,
   getTestNFTs,
   setupEmulator,
-  teardownEmulator
+  teardownEmulator,
 } from '../testHelpers';
 
 describe('BlindNFTContract', () => {

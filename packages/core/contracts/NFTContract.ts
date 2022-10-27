@@ -1,6 +1,12 @@
+// @ts-ignore
+import * as fcl from '@onflow/fcl';
+
+// @ts-ignore
+import * as t from '@onflow/types';
+
 import * as metadata from '../metadata';
 import { FreshmintConfig } from '../config';
-import { TransactionAuthorizer, TransactionSigners } from '../transactions';
+import { Transaction, TransactionAuthorizer, TransactionSigners } from '../transactions';
 import { Script } from '../scripts';
 import { objectToDictionaryEntries, Path } from '../cadence';
 import { CommonNFTGenerator } from '../generators/CommonNFTGenerator';

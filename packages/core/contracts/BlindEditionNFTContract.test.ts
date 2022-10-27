@@ -8,7 +8,7 @@ import {
   ownerAuthorizer,
   getTestSchema,
   setupEmulator,
-  teardownEmulator
+  teardownEmulator,
 } from '../testHelpers';
 
 describe('BlindEditionNFTContract', () => {
