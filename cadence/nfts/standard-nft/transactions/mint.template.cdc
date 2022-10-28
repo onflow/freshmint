@@ -1,4 +1,6 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import FreshmintQueue from {{{ imports.FreshmintQueue }}}
+
 import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(
@@ -8,15 +10,15 @@ transaction(
 ) {
     
     let admin: &{{ contractName }}.Admin
-    let receiver: &{NonFungibleToken.CollectionPublic}
+    let mintQueue: &FreshmintQueue.CollectionQueue
 
     prepare(signer: AuthAccount) {
         self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
             ?? panic("Could not borrow a reference to the NFT admin")
-        
-        self.receiver = signer
-            .getCapability({{ contractName }}.CollectionPublicPath)!
-            .borrow<&{NonFungibleToken.CollectionPublic}>()
+                
+        self.mintQueue = signer
+            .getCapability<&FreshmintQueue.CollectionQueue>({{ contractName }}.QueuePrivatePath)
+            .borrow()
             ?? panic("Could not get receiver reference to the NFT Collection")
     }
 
@@ -31,7 +33,11 @@ transaction(
                 {{/each}}
             )
         
-            self.receiver.deposit(token: <- token)
+            // NFTs are minted into a queue to preserve the mint order.
+            // A CollectionQueue is linked to a collection. All NFTs minted into 
+            // the queue are deposited into the underlying collection.
+            //
+            self.mintQueue.deposit(token: <- token)
 
             i = i +1
         }
