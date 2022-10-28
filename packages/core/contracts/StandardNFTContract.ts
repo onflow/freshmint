@@ -3,12 +3,11 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
-
-import { NFTContract, prepareRoyalties, Royalty } from './NFTContract';
+import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { StandardNFTGenerator } from '../generators/StandardNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
+import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
 import { Transaction, TransactionResult } from '../transactions';
 
 export type NFTMintResult = {
@@ -30,11 +29,13 @@ export class StandardNFTContract extends NFTContract {
   deploy({
     publicKey,
     hashAlgorithm,
+    collectionMetadata,
     royalties,
     saveAdminResourceToContractAccount,
   }: {
     publicKey: PublicKey;
     hashAlgorithm: HashAlgorithm;
+    collectionMetadata: CollectionMetadata;
     royalties?: Royalty[];
     saveAdminResourceToContractAccount?: boolean;
   }): Transaction<string> {
@@ -59,6 +60,7 @@ export class StandardNFTContract extends NFTContract {
             fcl.arg(publicKey.toHex(), t.String),
             fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
             fcl.arg(HashAlgorithm.toCadence(hashAlgorithm), t.UInt8),
+            fcl.arg(prepareCollectionMetadata(imports.MetadataViews, collectionMetadata), t.Identity),
             fcl.arg(royaltyAddresses, t.Array(t.Address)),
             fcl.arg(royaltyReceiverPaths, t.Array(t.Path)),
             fcl.arg(royaltyCuts, t.Array(t.UFix64)),

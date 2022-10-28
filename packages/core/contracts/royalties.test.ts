@@ -5,6 +5,7 @@ import { BlindEditionNFTContract } from './BlindEditionNFTContract';
 
 import {
   client,
+  collectionMetadata,
   contractHashAlgorithm,
   contractPublicKey,
   getTestSchema,
@@ -61,6 +62,7 @@ describe.each(suites)('Royalties - $contractClass.name', ({ contractClass }) => 
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
         placeholderImage: 'foo.jpeg',
+        collectionMetadata,
         royalties,
       }),
     );

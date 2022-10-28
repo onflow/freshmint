@@ -9,7 +9,7 @@ exports[`ExternalURLView accepts a complete Cadence expression 1`] = `
 
 exports[`ExternalURLView accepts a raw template that uses all variables 1`] = `
 "pub fun resolveExternalURL(): MetadataViews.ExternalURL {
-    let collectionURL = Foo.collectionDisplay!.externalURL.url
+    let collectionURL = Foo.collectionMetadata.externalURL.url
     let nftOwner = self.owner!.address.toString()
     let nftID = self.id.toString()
     return MetadataViews.ExternalURL(collectionURL.concat(\\"/nfts/\\").concat(nftOwner).concat(\\"/\\").concat(nftID))
@@ -26,7 +26,7 @@ exports[`ExternalURLView accepts a raw template that uses no variables 1`] = `
 
 exports[`ExternalURLView accepts a raw template that uses the \${collection.url} variable 1`] = `
 "pub fun resolveExternalURL(): MetadataViews.ExternalURL {
-    let collectionURL = Foo.collectionDisplay!.externalURL.url
+    let collectionURL = Foo.collectionMetadata.externalURL.url
     return MetadataViews.ExternalURL(collectionURL.concat(\\"/nfts\\"))
 }
 "
@@ -107,6 +107,13 @@ exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media
         bannerImage: media,
         socials: {}
     )
+}
+"
+`;
+
+exports[`NFTCollectionDisplayView returns the collectionMetadata field when no options are passed 1`] = `
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
+    return Foo.collectionMetadata
 }
 "
 `;

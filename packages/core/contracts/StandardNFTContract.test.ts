@@ -11,6 +11,7 @@ import {
   getTestNFTs,
   setupEmulator,
   teardownEmulator,
+  collectionMetadata,
 } from '../testHelpers';
 
 describe('StandardNFTContract', () => {
@@ -38,6 +39,7 @@ describe('StandardNFTContract', () => {
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
+        collectionMetadata,
       }),
     );
   });

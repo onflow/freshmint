@@ -35,6 +35,7 @@ transaction(
     signatureAlgorithm: UInt8,
     hashAlgorithm: UInt8,
     placeholderImage: String,
+    collectionMetadata: MetadataViews.NFTCollectionDisplay,
     royaltyAddresses: [Address],
     royaltyReceiverPaths: [PublicPath],
     royaltyCuts: [UFix64],
@@ -66,6 +67,7 @@ transaction(
             account.contracts.add(
                 name: contractName,
                 code: contractCode.decodeHex(),
+                collectionMetadata,
                 royalties,
                 placeholderImage
             )
@@ -73,6 +75,7 @@ transaction(
             account.contracts.add(
                 name: contractName,
                 code: contractCode.decodeHex(),
+                collectionMetadata,
                 royalties,
                 placeholderImage,
                 admin

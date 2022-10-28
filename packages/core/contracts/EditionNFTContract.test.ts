@@ -9,6 +9,7 @@ import {
   getTestSchema,
   setupEmulator,
   teardownEmulator,
+  collectionMetadata,
 } from '../testHelpers';
 
 describe('EditionNFTContract', () => {
@@ -30,6 +31,7 @@ describe('EditionNFTContract', () => {
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
+        collectionMetadata,
       }),
     );
   });

@@ -7,6 +7,12 @@ import TemplateGenerator from './TemplateGenerator';
 // Register the royalties partial
 registerPartial('royalties-field', require('../../../cadence/nfts/common/partials/royalties-field.partial.cdc'));
 
+// Register the collection metadata partial
+registerPartial(
+  'collection-metadata-field',
+  require('../../../cadence/nfts/common/partials/collection-metadata-field.partial.cdc'),
+);
+
 export class CommonNFTGenerator extends TemplateGenerator {
   static getNFT({
     imports,
@@ -50,6 +56,22 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractAddress: string;
   }): string {
     return this.generate(require('../../../cadence/nfts/common/scripts/get_royalties.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
+
+  static getCollectionMetadata({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/scripts/get_collection_metadata.template.cdc'), {
       imports,
       contractName,
       contractAddress,

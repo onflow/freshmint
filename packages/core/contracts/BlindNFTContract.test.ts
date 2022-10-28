@@ -10,6 +10,7 @@ import {
   getTestNFTs,
   setupEmulator,
   teardownEmulator,
+  collectionMetadata,
 } from '../testHelpers';
 
 describe('BlindNFTContract', () => {
@@ -32,6 +33,7 @@ describe('BlindNFTContract', () => {
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
         placeholderImage: 'sample-image.jpeg',
+        collectionMetadata,
       }),
     );
   });

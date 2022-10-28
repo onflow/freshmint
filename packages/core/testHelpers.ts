@@ -9,6 +9,7 @@ import { FreshmintClient } from './client';
 import { TransactionAuthorizer } from './transactions';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from './crypto';
 import * as metadata from './metadata';
+import { CollectionMetadata } from './contracts/NFTContract';
 import { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 import { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 
@@ -89,18 +90,8 @@ export function getTestSchema(includeSerialNumber = true): metadata.Schema {
         description: fields.description,
         thumbnail: fields.thumbnail,
       }),
-      metadata.ExternalURLView({
-        cadenceTemplate: `"http://foo.com/".concat(self.id.toString())`,
-      }),
-      metadata.NFTCollectionDisplayView({
-        name: 'My Collection',
-        description: 'This is my collection.',
-        url: 'http://foo.com',
-        media: {
-          ipfs: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
-          type: 'image/jpeg',
-        },
-      }),
+      metadata.ExternalURLView('${collection.url}/nfts/${nft.owner}/${nft.id}'),
+      metadata.NFTCollectionDisplayView(),
       metadata.NFTCollectionDataView(),
       metadata.RoyaltiesView(),
     ],
@@ -141,3 +132,20 @@ export function getTestNFTs(count: number, includeSerialNumber = true): metadata
 
   return nfts;
 }
+
+export const collectionMetadata: CollectionMetadata = {
+  name: 'Foo NFT Collection',
+  description: 'This is the Foo NFT collection.',
+  url: 'https://foo.com',
+  squareImage: {
+    url: 'https://foo.com/square.png',
+    type: 'image/png',
+  },
+  bannerImage: {
+    url: 'https://foo.com/banner.png',
+    type: 'image/png',
+  },
+  socials: {
+    twitter: 'https://twitter.com/foo',
+  },
+};

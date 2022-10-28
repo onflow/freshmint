@@ -35,6 +35,10 @@ pub contract StandardNFT_Test: NonFungibleToken {
         return StandardNFT_Test.royalties
     }
 
+    /// The collection-level metadata for all NFTs minted by this contract.
+    ///
+    pub let collectionMetadata: MetadataViews.NFTCollectionDisplay
+
     pub struct Metadata {
 
         pub let name: String
@@ -120,26 +124,14 @@ pub contract StandardNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveExternalURL(): MetadataViews.ExternalURL {
-            return MetadataViews.ExternalURL(\\"http://foo.com/\\".concat(self.id.toString()))
+            let collectionURL = StandardNFT_Test.collectionMetadata.externalURL.url
+            let nftOwner = self.owner!.address.toString()
+            let nftID = self.id.toString()
+            return MetadataViews.ExternalURL(collectionURL.concat(\\"/nfts/\\").concat(nftOwner).concat(\\"/\\").concat(nftID))
         }
         
         pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
-            let media = MetadataViews.Media(
-                file: MetadataViews.IPFSFile(
-                    cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 
-                    path: nil
-                ),
-                mediaType: \\"image/jpeg\\"
-            )
-        
-            return MetadataViews.NFTCollectionDisplay(
-                name: \\"My Collection\\",
-                description: \\"This is my collection.\\",
-                externalURL: MetadataViews.ExternalURL(\\"http://foo.com\\"),
-                squareImage: media,
-                bannerImage: media,
-                socials: {}
-            )
+            return StandardNFT_Test.collectionMetadata
         }
         
         pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
@@ -335,7 +327,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(royalties: [MetadataViews.Royalty], admin: AuthAccount) {
+    init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], admin: AuthAccount) {
 
         self.version = \\"0.0.33\\"
 
@@ -346,6 +338,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         self.AdminStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Admin\\")
 
         self.royalties = royalties
+        self.collectionMetadata = collectionMetadata
 
         self.totalSupply = 0
 

@@ -3,7 +3,7 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { NFTContract, prepareRoyalties, Royalty } from './NFTContract';
+import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { BlindEditionNFTGenerator } from '../generators/BlindEditionNFTGenerator';
 import { hashValuesWithSalt } from '../hash';
@@ -70,12 +70,14 @@ export class BlindEditionNFTContract extends NFTContract {
     publicKey,
     hashAlgorithm,
     placeholderImage,
+    collectionMetadata,
     royalties,
     saveAdminResourceToContractAccount,
   }: {
     publicKey: PublicKey;
     hashAlgorithm: HashAlgorithm;
     placeholderImage: string;
+    collectionMetadata: CollectionMetadata;
     royalties?: Royalty[];
     saveAdminResourceToContractAccount?: boolean;
   }): Transaction<string> {
@@ -101,6 +103,7 @@ export class BlindEditionNFTContract extends NFTContract {
             fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
             fcl.arg(HashAlgorithm.toCadence(hashAlgorithm), t.UInt8),
             fcl.arg(placeholderImage, t.String),
+            fcl.arg(prepareCollectionMetadata(imports.MetadataViews, collectionMetadata), t.Identity),
             fcl.arg(royaltyAddresses, t.Array(t.Address)),
             fcl.arg(royaltyReceiverPaths, t.Array(t.Path)),
             fcl.arg(royaltyCuts, t.Array(t.UFix64)),
