@@ -28,6 +28,14 @@ pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&F
     return account.getCapability<&FreshmintClaimSale.Allowlist>(privatePath)
 }
 
+pub fun getCollectionName(bucketName maybeBucketName: String?): String {
+    if let bucketName = maybeBucketName {
+        return "Collection_".concat(bucketName)
+    }
+
+    return "Collection"
+}
+
 // This transaction starts a new claim sale.
 //
 // Parameters:
@@ -54,11 +62,7 @@ transaction(
 
         self.sales = getOrCreateSaleCollection(account: signer)
 
-        var collectionName = "Collection"
-
-        if let bucket = bucketName {
-            collectionName = "Collection_".concat(bucket)
-        }
+        let collectionName = getCollectionName(bucketName: bucketName)
 
         let nftCollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: collectionName)
 
