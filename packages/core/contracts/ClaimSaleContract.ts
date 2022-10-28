@@ -10,8 +10,16 @@ import NFTContract from './NFTContract';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionAuthorizer, TransactionResult } from '../transactions';
 import { Path } from '../cadence/values';
+import { Script } from '../scripts';
 
 const flowTokenReceiverPublicPath = '/public/flowTokenReceiver';
+
+export interface ClaimSale {
+  id: string;
+  price: string;
+  size: number;
+  supply: number;
+}
 
 export class ClaimSaleContract {
   nftContract: NFTContract;
@@ -147,7 +155,31 @@ export class ClaimSaleContract {
         const nftId = claimedEvent.data['nftID'];
 
         return nftId;
-      },
+      }
     );
+  }
+
+  getSale(saleAddress: string, saleId: string): Script<ClaimSale | null> {
+    return new Script(({ imports }: FreshmintConfig) => {
+      const script = ClaimSaleGenerator.getClaimSale({ imports });
+
+      return {
+        script,
+        args: (arg, t) => [arg(saleAddress, t.Address), arg(saleId, t.String)],
+        computeLimit: 9999,
+      };
+    },
+    (result) => {
+      if (!result) {
+        return null
+      }
+      
+      return {
+        id: result.id,
+        price: result.price,
+        supply: parseInt(result.supply, 10),
+        size: parseInt(result.size, 10)
+      }
+    });
   }
 }
