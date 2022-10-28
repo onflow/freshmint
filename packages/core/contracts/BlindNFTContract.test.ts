@@ -8,7 +8,6 @@ import {
   ownerAuthorizer,
   getTestSchema,
   getTestNFTs,
-  royaltiesTests,
   setupEmulator,
   teardownEmulator,
 } from '../testHelpers';
@@ -28,7 +27,13 @@ describe('BlindNFTContract', () => {
   });
 
   it('should deploy a contract', async () => {
-    await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm, 'sample-image.jpeg'));
+    await client.send(
+      contract.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+        placeholderImage: 'sample-image.jpeg',
+      }),
+    );
   });
 
   const nfts = getTestNFTs(3);
@@ -120,6 +125,4 @@ describe('BlindNFTContract', () => {
       expect(onChainHash).toEqual(nft.metadataHash);
     }
   });
-
-  royaltiesTests(client, contract);
 });

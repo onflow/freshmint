@@ -32,7 +32,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
     /// A list of royalty recipients that is attached to all NFTs
     /// minted by this contract.
     ///
-    access(contract) var royalties: [MetadataViews.Royalty]
+    access(contract) let royalties: [MetadataViews.Royalty]
     
     /// Return the royalty recipients for this contract.
     ///
@@ -223,7 +223,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties(EditionNFT_Test.royalties)
+            return MetadataViews.Royalties(EditionNFT_Test.getRoyalties())
         }
         
         pub fun resolveEditionView(_ edition: Edition): MetadataViews.Edition {
@@ -407,15 +407,6 @@ pub contract EditionNFT_Test: NonFungibleToken {
 
             return <- nft
         }
-
-        /// Set the royalty recipients for this contract.
-        ///
-        /// This function updates the royalty recipients for all NFTs
-        /// minted by this contract.
-        ///
-        pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
-            EditionNFT_Test.royalties = royalties
-        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -452,7 +443,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(admin: AuthAccount) {
+    init(royalties: [MetadataViews.Royalty], admin: AuthAccount) {
 
         self.version = \\"0.0.32\\"
 
@@ -462,7 +453,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
 
         self.AdminStoragePath = EditionNFT_Test.getStoragePath(suffix: \\"Admin\\")
 
-        self.royalties = []
+        self.royalties = royalties
 
         self.totalSupply = 0
         self.totalEditions = 0

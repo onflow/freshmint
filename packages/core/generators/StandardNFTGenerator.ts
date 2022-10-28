@@ -25,8 +25,8 @@ export class StandardNFTGenerator extends TemplateGenerator {
     });
   }
 
-  static deploy(): string {
-    return this.generate(require('../../../cadence/nfts/standard-nft/transactions/deploy.cdc'));
+  static deploy({ imports }: { imports: ContractImports }): string {
+    return this.generate(require('../../../cadence/nfts/standard-nft/transactions/deploy.cdc'), { imports });
   }
 
   static mint({

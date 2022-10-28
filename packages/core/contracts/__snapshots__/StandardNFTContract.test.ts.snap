@@ -27,7 +27,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
     /// A list of royalty recipients that is attached to all NFTs
     /// minted by this contract.
     ///
-    access(contract) var royalties: [MetadataViews.Royalty]
+    access(contract) let royalties: [MetadataViews.Royalty]
     
     /// Return the royalty recipients for this contract.
     ///
@@ -157,7 +157,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties(StandardNFT_Test.royalties)
+            return MetadataViews.Royalties(StandardNFT_Test.getRoyalties())
         }
         
         pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
@@ -299,15 +299,6 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
             return <- nft
         }
-
-        /// Set the royalty recipients for this contract.
-        ///
-        /// This function updates the royalty recipients for all NFTs
-        /// minted by this contract.
-        ///
-        pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
-            StandardNFT_Test.royalties = royalties
-        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -344,7 +335,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(admin: AuthAccount) {
+    init(royalties: [MetadataViews.Royalty], admin: AuthAccount) {
 
         self.version = \\"0.0.32\\"
 
@@ -354,7 +345,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
         self.AdminStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Admin\\")
 
-        self.royalties = []
+        self.royalties = royalties
 
         self.totalSupply = 0
 

@@ -3,7 +3,7 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import NFTContract from './NFTContract';
+import { NFTContract, prepareRoyalties, Royalty } from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { EditionNFTGenerator } from '../generators/EditionNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
@@ -51,23 +51,29 @@ export class EditionNFTContract extends NFTContract {
     });
   }
 
-  deploy(
-    publicKey: PublicKey,
-    hashAlgo: HashAlgorithm,
-    options?: {
-      saveAdminResourceToContractAccount?: boolean;
-    },
-  ): Transaction<string> {
+  deploy({
+    publicKey,
+    hashAlgorithm,
+    royalties,
+    saveAdminResourceToContractAccount,
+  }: {
+    publicKey: PublicKey;
+    hashAlgorithm: HashAlgorithm;
+    royalties?: Royalty[];
+    saveAdminResourceToContractAccount?: boolean;
+  }): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = EditionNFTGenerator.deploy();
-
-        const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
+        const script = EditionNFTGenerator.deploy({ imports });
 
         const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
         const sigAlgo = publicKey.signatureAlgorithm();
+
+        const { royaltyAddresses, royaltyReceiverPaths, royaltyCuts, royaltyDescriptions } = prepareRoyalties(
+          royalties ?? [],
+        );
 
         return {
           script,
@@ -76,8 +82,12 @@ export class EditionNFTContract extends NFTContract {
             fcl.arg(contractCodeHex, t.String),
             fcl.arg(publicKey.toHex(), t.String),
             fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
-            fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
-            fcl.arg(saveAdminResourceToContractAccount, t.Bool),
+            fcl.arg(HashAlgorithm.toCadence(hashAlgorithm), t.UInt8),
+            fcl.arg(royaltyAddresses, t.Array(t.Address)),
+            fcl.arg(royaltyReceiverPaths, t.Array(t.Path)),
+            fcl.arg(royaltyCuts, t.Array(t.UFix64)),
+            fcl.arg(royaltyDescriptions, t.Array(t.String)),
+            fcl.arg(saveAdminResourceToContractAccount ?? false, t.Bool),
           ],
           computeLimit: 9999,
           signers: this.getSigners(),

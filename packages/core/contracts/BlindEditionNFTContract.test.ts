@@ -7,7 +7,6 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  royaltiesTests,
   setupEmulator,
   teardownEmulator,
 } from '../testHelpers';
@@ -27,7 +26,13 @@ describe('BlindEditionNFTContract', () => {
   });
 
   it('should deploy a contract', async () => {
-    await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm, 'sample-image.jpeg'));
+    await client.send(
+      contract.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+        placeholderImage: 'sample-image.jpeg',
+      }),
+    );
   });
 
   let edition1: EditionResult;
@@ -112,6 +117,4 @@ describe('BlindEditionNFTContract', () => {
   it('should reveal edition 2 NFTs', async () => {
     await client.send(contract.revealNFTs(edition2mintedNFTs));
   });
-
-  royaltiesTests(client, contract);
 });

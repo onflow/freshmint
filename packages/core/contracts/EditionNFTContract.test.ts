@@ -7,7 +7,6 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  royaltiesTests,
   setupEmulator,
   teardownEmulator,
 } from '../testHelpers';
@@ -27,7 +26,12 @@ describe('EditionNFTContract', () => {
   });
 
   it('should deploy a contract', async () => {
-    await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm));
+    await client.send(
+      contract.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+      }),
+    );
   });
 
   let edition1: EditionResult;
@@ -145,6 +149,4 @@ describe('EditionNFTContract', () => {
       await client.send(sale.stop(sale2));
     });
   });
-
-  royaltiesTests(client, contract);
 });
