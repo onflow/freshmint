@@ -1,6 +1,6 @@
 pub fun resolveExternalURL(): MetadataViews.ExternalURL {
     {{#if view.options.includesCollectionUrl }}
-    let collectionURL = {{ contractName }}.collectionMetadata!.externalURL.url
+    let collectionURL = {{ contractName }}.collectionMetadata.externalURL.url
     {{/if}}
     {{#if view.options.includesNftOwner }}
     let nftOwner = self.owner!.address.toString()

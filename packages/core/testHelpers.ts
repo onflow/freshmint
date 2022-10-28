@@ -90,9 +90,7 @@ export function getTestSchema(includeSerialNumber = true): metadata.Schema {
         description: fields.description,
         thumbnail: fields.thumbnail,
       }),
-      metadata.ExternalURLView({
-        cadenceTemplate: `"http://foo.com/".concat(self.id.toString())`,
-      }),
+      metadata.ExternalURLView('${collection.url}/nfts/${nft.owner}/${nft.id}'),
       metadata.NFTCollectionDisplayView(),
       metadata.NFTCollectionDataView(),
       metadata.RoyaltiesView(),
