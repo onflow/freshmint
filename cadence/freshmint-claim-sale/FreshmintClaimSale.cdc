@@ -213,7 +213,6 @@ pub contract FreshmintClaimSale {
             // The size of the sale is the initial size of the queue
             self.size = queueRef.remaining()
 
-
             self.allowlist = allowlist
 
             if let allowlist = self.allowlist {
@@ -256,8 +255,6 @@ pub contract FreshmintClaimSale {
                 ?? panic("failed to borrow payment receiver capability")
         }
 
-        }
-
         /// If an allowlist is set, check that the provided address can claim
         /// and decrement their claim counter.
         ///
@@ -280,7 +277,7 @@ pub contract FreshmintClaimSale {
 
         /// The claim function is called by a user to claim an NFT from this sale.
         ///
-        /// The user will receive the next available NFT in the collection
+        /// The user will receive the next available NFT in the queue
         /// if they pass a vault with the correct price and,
         /// if an allowlist is set, their address exists in the allowlist.
         ///
@@ -293,14 +290,6 @@ pub contract FreshmintClaimSale {
             }
 
             self.checkAllowlist(address: address)
-
-            let collection = self.collection.borrow() ?? panic("failed to borrow sale collection")
-
-            let ids = collection.getIDs()
-
-            if ids.length == 0 {
-                panic("Sale is sold out")
-            }
 
             let queue = self.queue.borrow() ?? panic("failed to borrow NFT queue")
 
