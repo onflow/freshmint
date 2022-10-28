@@ -3,12 +3,11 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
-
-import NFTContract from './NFTContract';
+import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { StandardNFTGenerator } from '../generators/StandardNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
+import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
 import { Transaction, TransactionResult } from '../transactions';
 
 export type NFTMintResult = {
@@ -27,23 +26,31 @@ export class StandardNFTContract extends NFTContract {
     });
   }
 
-  deploy(
-    publicKey: PublicKey,
-    hashAlgo: HashAlgorithm,
-    options?: {
-      saveAdminResourceToContractAccount?: boolean;
-    },
-  ): Transaction<string> {
+  deploy({
+    publicKey,
+    hashAlgorithm,
+    collectionMetadata,
+    royalties,
+    saveAdminResourceToContractAccount,
+  }: {
+    publicKey: PublicKey;
+    hashAlgorithm: HashAlgorithm;
+    collectionMetadata: CollectionMetadata;
+    royalties?: Royalty[];
+    saveAdminResourceToContractAccount?: boolean;
+  }): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = StandardNFTGenerator.deploy();
-
-        const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
+        const script = StandardNFTGenerator.deploy({ imports });
 
         const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
         const sigAlgo = publicKey.signatureAlgorithm();
+
+        const { royaltyAddresses, royaltyReceiverPaths, royaltyCuts, royaltyDescriptions } = prepareRoyalties(
+          royalties ?? [],
+        );
 
         return {
           script,
@@ -52,8 +59,13 @@ export class StandardNFTContract extends NFTContract {
             fcl.arg(contractCodeHex, t.String),
             fcl.arg(publicKey.toHex(), t.String),
             fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
-            fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
-            fcl.arg(saveAdminResourceToContractAccount, t.Bool),
+            fcl.arg(HashAlgorithm.toCadence(hashAlgorithm), t.UInt8),
+            fcl.arg(prepareCollectionMetadata(imports.MetadataViews, collectionMetadata), t.Identity),
+            fcl.arg(royaltyAddresses, t.Array(t.Address)),
+            fcl.arg(royaltyReceiverPaths, t.Array(t.Path)),
+            fcl.arg(royaltyCuts, t.Array(t.UFix64)),
+            fcl.arg(royaltyDescriptions, t.Array(t.String)),
+            fcl.arg(saveAdminResourceToContractAccount ?? false, t.Bool),
           ],
           computeLimit: 9999,
           signers: this.getSigners(),

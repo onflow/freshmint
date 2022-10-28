@@ -9,7 +9,7 @@ import { FreshmintClient } from './client';
 import { TransactionAuthorizer } from './transactions';
 import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorithm } from './crypto';
 import * as metadata from './metadata';
-import NFTContract from './contracts/NFTContract';
+import { CollectionMetadata } from './contracts/NFTContract';
 import { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 import { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 import { FreshmintQueueGenerator } from './generators/FreshmintQueueGenerator';
@@ -97,18 +97,8 @@ export function getTestSchema(includeSerialNumber = true): metadata.Schema {
         description: fields.description,
         thumbnail: fields.thumbnail,
       }),
-      metadata.ExternalURLView({
-        cadenceTemplate: `"http://foo.com/".concat(self.id.toString())`,
-      }),
-      metadata.NFTCollectionDisplayView({
-        name: 'My Collection',
-        description: 'This is my collection.',
-        url: 'http://foo.com',
-        media: {
-          ipfs: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
-          type: 'image/jpeg',
-        },
-      }),
+      metadata.ExternalURLView('${collection.url}/nfts/${nft.owner}/${nft.id}'),
+      metadata.NFTCollectionDisplayView(),
       metadata.NFTCollectionDataView(),
       metadata.RoyaltiesView(),
     ],
@@ -150,87 +140,19 @@ export function getTestNFTs(count: number, includeSerialNumber = true): metadata
   return nfts;
 }
 
-export function royaltiesTests(client: FreshmintClient, contract: NFTContract) {
-  const royaltyA = {
-    address: ownerAuthorizer.address,
-    receiverPath: '/public/flowTokenReceiver',
-    cut: '0.1',
-    description: '10% of sale proceeds go to the NFT creator in FLOW.',
-  };
-
-  const royaltyB = {
-    address: ownerAuthorizer.address,
-    receiverPath: '/public/fusdReceiver',
-    cut: '0.05',
-    description: '5% of sale proceeds go to the NFT creator in FUSD.',
-  };
-
-  it('should set a royalty recipient', async () => {
-    const royalties = [royaltyA];
-
-    await client.send(contract.setRoyalties(royalties));
-
-    const onChainRoyalties = await client.query(contract.getRoyalties());
-
-    onChainRoyalties.forEach((onChainRoyalty, i) => {
-      const royalty = royalties[i];
-
-      expect(onChainRoyalty.address).toEqual(royalty.address);
-      expect(onChainRoyalty.receiverPath).toEqual(royalty.receiverPath);
-      expect(parseFloat(onChainRoyalty.cut)).toEqual(parseFloat(royalty.cut));
-      expect(onChainRoyalty.description).toEqual(royalty.description);
-    });
-  });
-
-  it('should add royalty recipient', async () => {
-    // Add royalty B to the list
-    const royalties = [royaltyA, royaltyB];
-
-    await client.send(contract.setRoyalties(royalties));
-
-    const onChainRoyalties = await client.query(contract.getRoyalties());
-
-    onChainRoyalties.forEach((onChainRoyalty, i) => {
-      const royalty = royalties[i];
-
-      expect(onChainRoyalty.address).toEqual(royalty.address);
-      expect(onChainRoyalty.receiverPath).toEqual(royalty.receiverPath);
-      expect(parseFloat(onChainRoyalty.cut)).toEqual(parseFloat(royalty.cut));
-      expect(onChainRoyalty.description).toEqual(royalty.description);
-    });
-  });
-
-  it('should update a royalty recipient', async () => {
-    const updatedRoyaltyA = {
-      ...royaltyA,
-      // Switch to the generic fungible token receiver
-      receiverPath: '/public/GenericFTReceiver',
-      // Update cut to 3%
-      cut: '0.03',
-    };
-
-    // Update royalty A
-    const royalties = [updatedRoyaltyA, royaltyB];
-
-    await client.send(contract.setRoyalties(royalties));
-
-    const onChainRoyalties = await client.query(contract.getRoyalties());
-
-    onChainRoyalties.forEach((onChainRoyalty, i) => {
-      const royalty = royalties[i];
-
-      expect(onChainRoyalty.address).toEqual(royalty.address);
-      expect(onChainRoyalty.receiverPath).toEqual(royalty.receiverPath);
-      expect(parseFloat(onChainRoyalty.cut)).toEqual(parseFloat(royalty.cut));
-      expect(onChainRoyalty.description).toEqual(royalty.description);
-    });
-  });
-
-  it('should remove all royalty recipients', async () => {
-    await client.send(contract.setRoyalties([]));
-
-    const onChainRoyalties = await client.query(contract.getRoyalties());
-
-    expect(onChainRoyalties).toEqual([]);
-  });
-}
+export const collectionMetadata: CollectionMetadata = {
+  name: 'Foo NFT Collection',
+  description: 'This is the Foo NFT collection.',
+  url: 'https://foo.com',
+  squareImage: {
+    url: 'https://foo.com/square.png',
+    type: 'image/png',
+  },
+  bannerImage: {
+    url: 'https://foo.com/banner.png',
+    type: 'image/png',
+  },
+  socials: {
+    twitter: 'https://twitter.com/foo',
+  },
+};

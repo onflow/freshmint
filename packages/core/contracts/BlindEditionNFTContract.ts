@@ -3,7 +3,7 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import NFTContract from './NFTContract';
+import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
 import { MetadataMap } from '../metadata';
 import { BlindEditionNFTGenerator } from '../generators/BlindEditionNFTGenerator';
 import { hashValuesWithSalt } from '../hash';
@@ -66,24 +66,33 @@ export class BlindEditionNFTContract extends NFTContract {
     });
   }
 
-  deploy(
-    publicKey: PublicKey,
-    hashAlgo: HashAlgorithm,
-    placeholderImage: string,
-    options?: {
-      saveAdminResourceToContractAccount?: boolean;
-    },
-  ): Transaction<string> {
+  deploy({
+    publicKey,
+    hashAlgorithm,
+    placeholderImage,
+    collectionMetadata,
+    royalties,
+    saveAdminResourceToContractAccount,
+  }: {
+    publicKey: PublicKey;
+    hashAlgorithm: HashAlgorithm;
+    placeholderImage: string;
+    collectionMetadata: CollectionMetadata;
+    royalties?: Royalty[];
+    saveAdminResourceToContractAccount?: boolean;
+  }): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = BlindEditionNFTGenerator.deploy();
-
-        const saveAdminResourceToContractAccount = options?.saveAdminResourceToContractAccount ?? false;
+        const script = BlindEditionNFTGenerator.deploy({ imports });
 
         const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
 
         const sigAlgo = publicKey.signatureAlgorithm();
+
+        const { royaltyAddresses, royaltyReceiverPaths, royaltyCuts, royaltyDescriptions } = prepareRoyalties(
+          royalties ?? [],
+        );
 
         return {
           script,
@@ -92,9 +101,14 @@ export class BlindEditionNFTContract extends NFTContract {
             fcl.arg(contractCodeHex, t.String),
             fcl.arg(publicKey.toHex(), t.String),
             fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
-            fcl.arg(HashAlgorithm.toCadence(hashAlgo), t.UInt8),
+            fcl.arg(HashAlgorithm.toCadence(hashAlgorithm), t.UInt8),
             fcl.arg(placeholderImage, t.String),
-            fcl.arg(saveAdminResourceToContractAccount, t.Bool),
+            fcl.arg(prepareCollectionMetadata(imports.MetadataViews, collectionMetadata), t.Identity),
+            fcl.arg(royaltyAddresses, t.Array(t.Address)),
+            fcl.arg(royaltyReceiverPaths, t.Array(t.Path)),
+            fcl.arg(royaltyCuts, t.Array(t.UFix64)),
+            fcl.arg(royaltyDescriptions, t.Array(t.String)),
+            fcl.arg(saveAdminResourceToContractAccount ?? false, t.Bool),
           ],
           computeLimit: 1000,
           signers: this.getSigners(),
@@ -219,16 +233,16 @@ export class BlindEditionNFTContract extends NFTContract {
 
       const nftIds = nfts.map((nft) => nft.id);
       const editionIds = nfts.map((nft) => nft.editionId);
-      const editionSerials = nfts.map((nft) => nft.editionSerial);
-      const editionSalts = nfts.map((nft) => nft.editionSalt);
+      const serialNumbers = nfts.map((nft) => nft.editionSerial);
+      const salts = nfts.map((nft) => nft.editionSalt);
 
       return {
         script,
         args: [
           fcl.arg(nftIds, t.Array(t.UInt64)),
           fcl.arg(editionIds, t.Array(t.UInt64)),
-          fcl.arg(editionSerials, t.Array(t.UInt64)),
-          fcl.arg(editionSalts, t.Array(t.String)),
+          fcl.arg(serialNumbers, t.Array(t.UInt64)),
+          fcl.arg(salts, t.Array(t.String)),
         ],
         computeLimit: 9999,
         signers: this.getSigners(),

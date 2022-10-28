@@ -4,7 +4,7 @@ import MetadataViews from {{{ imports.MetadataViews }}}
 /// FreshmintQueue defines an interface for distributing NFTs in a queue.
 ///
 /// The queue interface can be implemented in a variety of ways.
-/// For example, a queue implementation can contain a fixed supply of 
+/// For example, a queue implementation can be backed by a fixed supply of 
 /// pre-minted NFTs or can mint NFTs on demand. 
 ///
 pub contract FreshmintQueue {
