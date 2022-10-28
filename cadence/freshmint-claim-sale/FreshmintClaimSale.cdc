@@ -1,14 +1,15 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
+import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 
 /// FreshmintClaimSale provides functionality to operate a claim-style sale of NFTs.
 ///
-/// In a claim sale, users can claim NFTs from a collection
-/// for a fee. All NFTs in a sale are sold for the same price.
+/// In a claim sale, users can claim NFTs from a queue for a fee.
+/// All NFTs in a sale are sold for the same price.
 ///
 /// Unlike in the NFTStorefront contract, a user cannot purchase a specific NFT by ID.
-/// On each claim, the user receives the next available NFT in the collection.
+/// On each claim, the user receives the next available NFT in the queue.
 /// 
 pub contract FreshmintClaimSale {
 
@@ -19,7 +20,7 @@ pub contract FreshmintClaimSale {
         id: String,
         price: UFix64,
         paymentVaultType: Type,
-        size: Int
+        size: Int?
     )
 
     /// The SaleInserted event is emitted when a sale is inserted into a sale collection.
@@ -36,7 +37,7 @@ pub contract FreshmintClaimSale {
         saleUUID: UInt64,
         saleID: String,
         saleAddress: Address?,
-        remainingSupply: Int,
+        remainingSupply: Int?,
         nftType: Type,
         nftID: UInt64
     )
@@ -119,15 +120,15 @@ pub contract FreshmintClaimSale {
         pub let id: String
         pub let price: UFix64
         pub let paymentVaultType: Type
-        pub let size: Int
-        pub let supply: Int
+        pub let size: Int?
+        pub let supply: Int?
 
         init(
             id: String,
             price: UFix64,
             paymentVaultType: Type,
-            size: Int,
-            supply: Int
+            size: Int?,
+            supply: Int?
         ) {
             self.id = id
             self.price = price
@@ -146,16 +147,16 @@ pub contract FreshmintClaimSale {
 
         pub let id: String
         pub let price: UFix64
-        pub let size: Int
+        pub let size: Int?
+        pub let receiverPath: PublicPath
 
         pub fun getPaymentVaultType(): Type
-        pub fun getSupply(): Int
+        pub fun getSupply(): Int?
         pub fun getInfo(): SaleInfo
 
         pub fun claim(payment: @FungibleToken.Vault, address: Address)
 
         pub fun borrowPaymentReceiver(): &{FungibleToken.Receiver}
-        pub fun borrowCollection(): &{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}
     }
 
     /// A Sale is a resource that lists NFTs that can be claimed for a fee.
@@ -166,12 +167,12 @@ pub contract FreshmintClaimSale {
     
         pub let id: String
         pub let price: UFix64
-        pub let size: Int
+        pub let size: Int?
 
-        /// A capability to the underlying base NFT collection
-        /// that will store the claimable NFTs.
+        /// A capability to the underlying to the queue
+        /// that returns the NFTs to be sold in this sale.
         ///
-        access(self) let collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
+        access(self) let queue: Capability<&{FreshmintQueue.Queue}>
         
         /// When moving a claimed NFT into an account, 
         /// the sale will deposit the NFT into the NonFungibleToken.CollectionPublic 
@@ -189,7 +190,7 @@ pub contract FreshmintClaimSale {
 
         init(
             id: String,
-            collection: Capability<&AnyResource{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>,
+            queue: Capability<&{FreshmintQueue.Queue}>,
             receiverPath: PublicPath,
             paymentReceiver: Capability<&{FungibleToken.Receiver}>,
             price: UFix64,
@@ -197,7 +198,7 @@ pub contract FreshmintClaimSale {
         ) {
             self.id = id
             self.price = price
-            self.collection = collection
+            self.queue = queue
             self.receiverPath = receiverPath
             self.paymentReceiver = paymentReceiver
 
@@ -205,12 +206,13 @@ pub contract FreshmintClaimSale {
             self.paymentReceiver.borrow() 
                 ?? panic("init: failed to borrow payment receiver capability")
 
-            // Check that collection capability is linked
-            let collectionRef = self.collection.borrow() 
-                ?? panic("init: failed to borrow collection capability")
+            // Check that queue capability is linked
+            let queueRef = self.queue.borrow() 
+                ?? panic("failed to borrow queue capability")
 
-            // The size of the sale is the initial size of the collection
-            self.size = collectionRef.getIDs().length
+            // The size of the sale is the initial size of the queue
+            self.size = queueRef.remaining()
+
 
             self.allowlist = allowlist
 
@@ -239,8 +241,11 @@ pub contract FreshmintClaimSale {
 
         /// getSupply returns the number of NFTs remaining in this sale.
         ///
-        pub fun getSupply(): Int {
-            return self.borrowCollection().getIDs().length
+        pub fun getSupply(): Int? {
+            let queueRef = self.queue.borrow() 
+                ?? panic("failed to borrow queue capability")
+
+            return queueRef.remaining()
         }
 
         /// borrowPaymentReceiver returns a reference to the
@@ -251,15 +256,6 @@ pub contract FreshmintClaimSale {
                 ?? panic("failed to borrow payment receiver capability")
         }
 
-        /// borrowCollection returns a public reference to the
-        /// underlying collection for this sale.
-        ///
-        /// Callers can use this to read information about NFTs in this sale.
-        ///
-        pub fun borrowCollection(): &AnyResource{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection} {
-            let collection = self.collection.borrow() 
-                ?? panic("failed to borrow sale collection")
-            return collection as! &AnyResource{NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}
         }
 
         /// If an allowlist is set, check that the provided address can claim
@@ -306,25 +302,24 @@ pub contract FreshmintClaimSale {
                 panic("Sale is sold out")
             }
 
+            let queue = self.queue.borrow() ?? panic("failed to borrow NFT queue")
+
             let paymentReceiver = self.borrowPaymentReceiver()
 
             paymentReceiver.deposit(from: <- payment)
 
-            // Remove the next NFT from the collection.
-            let nextID = ids[0]
-            let nft <- collection.withdraw(withdrawID: nextID)
+            // Get the next NFT from the queue
+            let nft <- queue.getNextNFT() ?? panic("sale is sold out")
 
             let nftReceiver = getAccount(address)
                 .getCapability(self.receiverPath)
                 .borrow<&{NonFungibleToken.CollectionPublic}>()!
 
-            let remainingSupply = ids.length - 1
-
             emit NFTClaimed(
                 saleUUID: self.uuid,
                 saleID: self.id,
                 saleAddress: self.owner?.address,
-                remainingSupply: remainingSupply,
+                remainingSupply: queue.remaining(),
                 nftType: nft.getType(),
                 nftID: nft.id
             )
@@ -397,7 +392,7 @@ pub contract FreshmintClaimSale {
 
     pub fun createSale(
         id: String,
-        collection: Capability<&AnyResource{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>,
+        queue: Capability<&{FreshmintQueue.Queue}>,
         receiverPath: PublicPath,
         paymentReceiver: Capability<&{FungibleToken.Receiver}>,
         price: UFix64,
@@ -405,7 +400,7 @@ pub contract FreshmintClaimSale {
     ): @Sale {
         let sale <- create Sale(
             id: id,
-            collection: collection,
+            queue: queue,
             receiverPath: receiverPath,
             paymentReceiver: paymentReceiver,
             price: price,
