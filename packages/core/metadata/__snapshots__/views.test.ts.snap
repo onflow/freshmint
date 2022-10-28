@@ -49,7 +49,7 @@ exports[`ExternalURLView accepts a raw template that uses the \${nft.owner} vari
 `;
 
 exports[`NFTCollectionDisplayView generates a Cadence snippet with an HTTP media file 1`] = `
-"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay? {
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
     let media = MetadataViews.Media(
         file: MetadataViews.HTTPFile(url: \\"http://foo.com/nft.jpeg\\"),
         mediaType: \\"image/jpeg\\"
@@ -68,7 +68,7 @@ exports[`NFTCollectionDisplayView generates a Cadence snippet with an HTTP media
 `;
 
 exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media file with a path 1`] = `
-"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay? {
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
     let media = MetadataViews.Media(
         file: MetadataViews.IPFSFile(
             cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 
@@ -90,7 +90,7 @@ exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media
 `;
 
 exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media file with no path 1`] = `
-"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay? {
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
     let media = MetadataViews.Media(
         file: MetadataViews.IPFSFile(
             cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 
@@ -112,7 +112,7 @@ exports[`NFTCollectionDisplayView generates a Cadence snippet with an IPFS media
 `;
 
 exports[`NFTCollectionDisplayView returns the collectionMetadata field when no options are passed 1`] = `
-"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay? {
+"pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
     return Foo.collectionMetadata
 }
 "

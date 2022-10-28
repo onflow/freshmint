@@ -193,7 +193,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
             return MetadataViews.ExternalURL(\\"http://foo.com/\\".concat(self.id.toString()))
         }
         
-        pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay? {
+        pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
             return EditionNFT_Test.collectionMetadata
         }
         
