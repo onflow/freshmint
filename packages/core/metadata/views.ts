@@ -230,11 +230,11 @@ function isLegacyIPFSMediaInput(media: MediaInput): media is LegacyIPFSMediaInpu
   return (media as LegacyIPFSMediaInput).ipfsCid !== undefined;
 }
 
-function isIPFSMediaInput(media: MediaInput): media is IPFSMediaInput {
+export function isIPFSMediaInput(media: MediaInput): media is IPFSMediaInput {
   return (media as IPFSMediaInput).ipfs !== undefined;
 }
 
-function isHTTPMediaInput(media: MediaInput): media is HTTPMediaInput {
+export function isHTTPMediaInput(media: MediaInput): media is HTTPMediaInput {
   return (media as HTTPMediaInput).url !== undefined;
 }
 
@@ -243,13 +243,19 @@ export const NFTCollectionDisplayView = defineView<{
   description: string;
   url: string;
   media: MediaInput;
-}>({
+} | void>({
   id: 'nft-collection-display',
   cadenceTypeString: 'Type<MetadataViews.NFTCollectionDisplay>()',
   cadenceResolverFunction: 'resolveNFTCollectionDisplay',
   cadenceTemplate: require('../../../cadence/nfts/metadata-views/MetadataViews.NFTCollectionDisplay.partial.cdc'),
   requiresMetadata: false,
   parseOptions: (options) => {
+    if (!options) {
+      // If no options are passed, the resolver will return
+      // the data defined in the `collectionMetadata` contract field.
+      return;
+    }
+
     // Convert the legacy IPFS format to the new generic file format.
     //
     // TODO: deprecate the ipfsCid field.
