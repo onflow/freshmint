@@ -6,7 +6,7 @@ import * as t from '@onflow/types';
 
 import { ClaimSaleGenerator } from '../generators/ClaimSaleGenerator';
 
-import NFTContract from './NFTContract';
+import { NFTContract } from './NFTContract';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionAuthorizer, TransactionResult } from '../transactions';
 import { Path } from '../cadence/values';

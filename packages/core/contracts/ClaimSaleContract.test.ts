@@ -10,6 +10,7 @@ import {
   getTestNFTs,
   setupEmulator,
   teardownEmulator,
+  collectionMetadata,
 } from '../testHelpers';
 
 describe('ClaimSaleContract', () => {
@@ -23,7 +24,13 @@ describe('ClaimSaleContract', () => {
   });
 
   it('should deploy the NFT contract', async () => {
-    await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm));
+    await client.send(
+      contract.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+        collectionMetadata,
+      }),
+    );
   });
 
   const sale = new ClaimSaleContract(contract);

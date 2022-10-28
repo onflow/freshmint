@@ -1,3 +1,3 @@
 pub fun resolveRoyalties(): MetadataViews.Royalties {
-    return MetadataViews.Royalties({{ contractName }}.royalties)
+    return MetadataViews.Royalties({{ contractName }}.getRoyalties())
 }

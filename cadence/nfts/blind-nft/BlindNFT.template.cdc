@@ -32,7 +32,9 @@ pub contract {{ contractName }}: NonFungibleToken {
     ///
     pub let placeholderImage: String
 
-    {{> royaltiesFields contractName=contractName }}
+    {{> royalties-field contractName=contractName }}
+
+    {{> collection-metadata-field }}
 
     pub struct Metadata {
 
@@ -368,8 +370,6 @@ pub contract {{ contractName }}: NonFungibleToken {
 
             emit Revealed(id: id)
         }
-
-        {{> royaltiesAdmin contractName=contractName }}
     }
 
     /// Return a public path that is scoped to this contract.
@@ -419,7 +419,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init({{#unless saveAdminResourceToContractAccount }}admin: AuthAccount, {{/unless}}placeholderImage: String) {
+    init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], placeholderImage: String{{#unless saveAdminResourceToContractAccount }}, admin: AuthAccount{{/unless}}) {
 
         self.version = "{{ freshmintVersion }}"
 
@@ -434,7 +434,8 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.placeholderImage = placeholderImage
 
-        {{> royaltiesInit }}
+        self.royalties = royalties
+        self.collectionMetadata = collectionMetadata
 
         self.totalSupply = 0
 
