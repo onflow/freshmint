@@ -1,7 +1,7 @@
+import {{ contractName }} from {{{ contractAddress }}}
+
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import FreshmintQueue from {{{ imports.FreshmintQueue }}}
-
-import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(
     {{#each fields}}
@@ -19,7 +19,7 @@ transaction(
         self.mintQueue = signer
             .getCapability<&FreshmintQueue.CollectionQueue>({{ contractName }}.QueuePrivatePath)
             .borrow()
-            ?? panic("Could not get receiver reference to the NFT Collection")
+            ?? panic("Could not borrow a reference to the mint queue")
     }
 
     execute {
