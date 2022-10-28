@@ -25,8 +25,8 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     });
   }
 
-  static deploy(): string {
-    return this.generate(require('../../../cadence/nfts/blind-edition-nft/transactions/deploy.cdc'), {});
+  static deploy({ imports }: { imports: ContractImports }): string {
+    return this.generate(require('../../../cadence/nfts/blind-edition-nft/transactions/deploy.cdc'), { imports });
   }
 
   static createEditions({

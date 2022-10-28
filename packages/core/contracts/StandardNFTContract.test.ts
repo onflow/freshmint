@@ -9,9 +9,9 @@ import {
   ownerAuthorizer,
   getTestSchema,
   getTestNFTs,
-  royaltiesTests,
   setupEmulator,
   teardownEmulator,
+  collectionMetadata,
 } from '../testHelpers';
 
 describe('StandardNFTContract', () => {
@@ -35,7 +35,13 @@ describe('StandardNFTContract', () => {
   });
 
   it('should deploy a contract', async () => {
-    await client.send(contract.deploy(contractPublicKey, contractHashAlgorithm));
+    await client.send(
+      contract.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+        collectionMetadata,
+      }),
+    );
   });
 
   it('should mint NFTs', async () => {
@@ -97,6 +103,4 @@ describe('StandardNFTContract', () => {
   it('should stop a sale', async () => {
     await client.send(sale.stop('default'));
   });
-
-  royaltiesTests(client, contract);
 });
