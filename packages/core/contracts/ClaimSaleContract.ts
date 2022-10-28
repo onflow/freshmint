@@ -40,6 +40,7 @@ export class ClaimSaleContract {
     paymentReceiverAddress,
     paymentReceiverPath,
     bucket,
+    claimLimit,
     allowlist,
   }: {
     id: string;
@@ -47,6 +48,7 @@ export class ClaimSaleContract {
     paymentReceiverAddress?: string;
     paymentReceiverPath?: string;
     bucket?: string;
+    claimLimit?: number;
     allowlist?: string;
   }): Transaction<void> {
     const signers = this.nftContract.getSigners();
@@ -72,6 +74,7 @@ export class ClaimSaleContract {
           fcl.arg(receiverAddress, t.Address),
           fcl.arg(Path.fromString(receiverPath), t.Path),
           fcl.arg(bucket, t.Optional(t.String)),
+          fcl.arg(claimLimit ?? null, t.Optional(t.UInt)),
           fcl.arg(allowlist ?? null, t.Optional(t.String)),
         ],
         computeLimit: 9999,

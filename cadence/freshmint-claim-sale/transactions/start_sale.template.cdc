@@ -43,7 +43,8 @@ transaction(
     paymentReceiverAddress: Address?,
     paymentReceiverPath: PublicPath?,
     collectionName: String?,
-    allowlistName: String?
+    claimLimit: UInt?,
+    allowlistName: String?,
 ) {
 
     let sales: &FreshmintClaimSale.SaleCollection
@@ -77,6 +78,7 @@ transaction(
             receiverPath: {{ contractName }}.CollectionPublicPath,
             paymentReceiver: self.paymentReceiver,
             price: price,
+            claimLimit: claimLimit,
             allowlist: self.allowlist
         )
 

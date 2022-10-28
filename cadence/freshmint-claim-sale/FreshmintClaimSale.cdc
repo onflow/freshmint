@@ -153,6 +153,7 @@ pub contract FreshmintClaimSale {
         pub fun getPaymentVaultType(): Type
         pub fun getSupply(): Int?
         pub fun getInfo(): SaleInfo
+        pub fun getRemainingClaims(address: Address): UInt?
 
         pub fun claim(payment: @FungibleToken.Vault, address: Address)
 
@@ -184,9 +185,17 @@ pub contract FreshmintClaimSale {
         ///
         pub let paymentReceiver: Capability<&{FungibleToken.Receiver}>
 
+        /// A dictionary that tracks the number of NFTs claimed per address.
+        ///
+        access(self) let claims: {Address: UInt}
+
+        /// An optional limit on the number of NFTs that can be claimed per address.
+        ///
+        pub var claimLimit: UInt?
+
         /// An optional allowlist used to gate access to this sale.
         ///
-        access(self) let allowlist: Capability<&Allowlist>?
+        access(self) var allowlist: Capability<&Allowlist>?
 
         init(
             id: String,
@@ -194,6 +203,7 @@ pub contract FreshmintClaimSale {
             receiverPath: PublicPath,
             paymentReceiver: Capability<&{FungibleToken.Receiver}>,
             price: UFix64,
+            claimLimit: UInt?,
             allowlist: Capability<&Allowlist>?
         ) {
             self.id = id
@@ -204,7 +214,7 @@ pub contract FreshmintClaimSale {
 
             // Check that payment receiver capability is linked
             self.paymentReceiver.borrow() 
-                ?? panic("init: failed to borrow payment receiver capability")
+                ?? panic("failed to borrow payment receiver capability")
 
             // Check that queue capability is linked
             let queueRef = self.queue.borrow() 
@@ -213,11 +223,45 @@ pub contract FreshmintClaimSale {
             // The size of the sale is the initial size of the queue
             self.size = queueRef.remaining()
 
+            self.claims = {}
+
+            self.claimLimit = claimLimit
+            self.allowlist = allowlist
+
+            if self.claimLimit != nil && self.allowlist != nil {
+                panic("cannot set a claim limit and an allowlist at the same time")
+            }
+
+            if let allowlist = self.allowlist {
+                allowlist.borrow() ?? panic("failed to borrow allowlist capability")
+            }
+        }
+
+        /// setClaimLimit sets the claim limit for this sale.
+        ///
+        /// Pass nil to remove the claim limit from this sale.
+        ///
+        pub fun setClaimLimit(limit: UInt?) {
+            pre {
+                self.allowlist == nil: "cannot set a claim limit on a sale that has an allowlist"
+            }
+
+            self.claimLimit = limit
+        }
+
+        /// setAllowlist sets the allowlist for this sale.
+        ///
+        /// Pass nil to remove the allowlist from this sale.
+        ///
+        pub fun setAllowlist(allowlist: Capability<&Allowlist>?) {
+            pre {
+                self.claimLimit == nil: "cannot set an allowlist on a sale that has a claim limit"
+            }
 
             self.allowlist = allowlist
 
             if let allowlist = self.allowlist {
-                allowlist.borrow() ?? panic("init: failed to borrow allowlist capability")
+                allowlist.borrow() ?? panic("failed to borrow allowlist capability")
             }
         }
 
@@ -239,6 +283,21 @@ pub contract FreshmintClaimSale {
             return self.borrowPaymentReceiver().getType()
         }
 
+        /// getRemainingClaims returns the number of claims remaining for a given address.
+        ///
+        /// This function returns nil if there is no claim limit.
+        ///
+        pub fun getRemainingClaims(address: Address): UInt? {
+            if let claimLimit = self.claimLimit {
+                let claims = self.claims[address] ?? 0
+                return claimLimit - claims
+            }
+
+            // Return nil if there is no claim limit to indicate that 
+            // this address has unlimited remaining claims.
+            return nil
+        }
+
         /// getSupply returns the number of NFTs remaining in this sale.
         ///
         pub fun getSupply(): Int? {
@@ -256,15 +315,19 @@ pub contract FreshmintClaimSale {
                 ?? panic("failed to borrow payment receiver capability")
         }
 
+        access(self) fun borrowAllowlist(): &Allowlist? {
+            if let allowlistCap = self.allowlist {
+                return allowlistCap.borrow() ?? panic("failed to borrow allowlist")
+            }
+
+            return nil
         }
 
         /// If an allowlist is set, check that the provided address can claim
         /// and decrement their claim counter.
         ///
         access(self) fun checkAllowlist(address: Address) {
-            if let allowlistCap = self.allowlist {
-
-                let allowlist = allowlistCap.borrow() ?? panic("failed to borrow allowlist")
+            if let allowlist = self.borrowAllowlist() {
 
                 if let claims = allowlist.getClaims(address: address) {
                     if claims == 0 {
@@ -294,13 +357,14 @@ pub contract FreshmintClaimSale {
 
             self.checkAllowlist(address: address)
 
-            let collection = self.collection.borrow() ?? panic("failed to borrow sale collection")
+            let claims = self.claims[address] ?? 0
 
-            let ids = collection.getIDs()
-
-            if ids.length == 0 {
-                panic("Sale is sold out")
+            // Enforce the claim limit if it is set
+            if let claimLimit = self.claimLimit {
+                assert(claims < claimLimit, message: "reached claim limit")
             }
+
+            self.claims[address] = claims + 1
 
             let queue = self.queue.borrow() ?? panic("failed to borrow NFT queue")
 
@@ -342,7 +406,7 @@ pub contract FreshmintClaimSale {
         /// The integer value is the number of NFTs an  
         /// address is entitled to claim.
         ///
-        access(self) let claimsByAddress: {Address: UInt}
+        pub let claimsByAddress: {Address: UInt}
 
         init() {
             self.claimsByAddress = {}
@@ -396,6 +460,7 @@ pub contract FreshmintClaimSale {
         receiverPath: PublicPath,
         paymentReceiver: Capability<&{FungibleToken.Receiver}>,
         price: UFix64,
+        claimLimit: UInt?,
         allowlist: Capability<&Allowlist>?
     ): @Sale {
         let sale <- create Sale(
@@ -404,6 +469,7 @@ pub contract FreshmintClaimSale {
             receiverPath: receiverPath,
             paymentReceiver: paymentReceiver,
             price: price,
+            claimLimit: claimLimit,
             allowlist: allowlist
         )
 
