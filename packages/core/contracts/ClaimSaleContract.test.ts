@@ -34,7 +34,7 @@ describe('ClaimSaleContract', () => {
     const mintedNFTs = await client.send(contract.mintNFTs(getTestNFTs(10)));
 
     await client.send(sale.start({ id: saleID, price: '10.0' }));
-    
+
     const saleResultA = await client.query(sale.getSale(ownerAuthorizer.address, saleID));
 
     expect(saleResultA?.id).toEqual(saleID);

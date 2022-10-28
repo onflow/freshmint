@@ -155,31 +155,33 @@ export class ClaimSaleContract {
         const nftId = claimedEvent.data['nftID'];
 
         return nftId;
-      }
+      },
     );
   }
 
   getSale(saleAddress: string, saleId: string): Script<ClaimSale | null> {
-    return new Script(({ imports }: FreshmintConfig) => {
-      const script = ClaimSaleGenerator.getClaimSale({ imports });
+    return new Script(
+      ({ imports }: FreshmintConfig) => {
+        const script = ClaimSaleGenerator.getClaimSale({ imports });
 
-      return {
-        script,
-        args: (arg, t) => [arg(saleAddress, t.Address), arg(saleId, t.String)],
-        computeLimit: 9999,
-      };
-    },
-    (result) => {
-      if (!result) {
-        return null
-      }
-      
-      return {
-        id: result.id,
-        price: result.price,
-        supply: parseInt(result.supply, 10),
-        size: parseInt(result.size, 10)
-      }
-    });
+        return {
+          script,
+          args: (arg, t) => [arg(saleAddress, t.Address), arg(saleId, t.String)],
+          computeLimit: 9999,
+        };
+      },
+      (result) => {
+        if (!result) {
+          return null;
+        }
+
+        return {
+          id: result.id,
+          price: result.price,
+          supply: parseInt(result.supply, 10),
+          size: parseInt(result.size, 10),
+        };
+      },
+    );
   }
 }
