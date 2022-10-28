@@ -20,6 +20,7 @@ export const EMULATOR: FreshmintConfig = {
     FreshmintMetadataViews: '0xf8d6e0586b0a20c7',
     FreshmintClaimSale: '0xf8d6e0586b0a20c7',
     FreshmintLockBox: '0xf8d6e0586b0a20c7',
+    FreshmintQueue: '0xf8d6e0586b0a20c7'
   },
 };
 
