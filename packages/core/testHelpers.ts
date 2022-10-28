@@ -93,15 +93,7 @@ export function getTestSchema(includeSerialNumber = true): metadata.Schema {
       metadata.ExternalURLView({
         cadenceTemplate: `"http://foo.com/".concat(self.id.toString())`,
       }),
-      metadata.NFTCollectionDisplayView({
-        name: 'My Collection',
-        description: 'This is my collection.',
-        url: 'http://foo.com',
-        media: {
-          ipfs: 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre',
-          type: 'image/jpeg',
-        },
-      }),
+      metadata.NFTCollectionDisplayView(),
       metadata.NFTCollectionDataView(),
       metadata.RoyaltiesView(),
     ],

@@ -245,22 +245,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay? {
-            let media = MetadataViews.Media(
-                file: MetadataViews.IPFSFile(
-                    cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 
-                    path: nil
-                ),
-                mediaType: \\"image/jpeg\\"
-            )
-        
-            return MetadataViews.NFTCollectionDisplay(
-                name: \\"My Collection\\",
-                description: \\"This is my collection.\\",
-                externalURL: MetadataViews.ExternalURL(\\"http://foo.com\\"),
-                squareImage: media,
-                bannerImage: media,
-                socials: {}
-            )
+            return BlindNFT_Test.collectionMetadata
         }
         
         pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
