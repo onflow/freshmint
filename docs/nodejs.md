@@ -56,7 +56,7 @@ mint and distribute NFTs on Flow from a Node.js application.
         - [HTTP Media](#http-media)
 - [Royalties](#royalties)
   - [1. Enable the royalties view](#1-enable-the-royalties-view)
-  - [2. Set the royalty recipients](#2-set-the-royalty-recipients)
+  - [2. Deploy your contract with royalties recipients](#2-deploy-your-contract-with-royalties-recipients)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -315,7 +315,7 @@ const publicKey = privateKey.getPublicKey();
 const hashAlgorithm = HashAlgorithm.SHA3_256;
 
 // Note: contract.address will automatically update once the transaction succeeds.
-const deployTransaction = contract.deploy(publicKey, hashAlgorithm);
+const deployTransaction = contract.deploy({ publicKey, hashAlgorithm });
 
 const contractAddress = await client.send(deployTransaction);
 ```
@@ -353,10 +353,10 @@ const hashAlgorithm = HashAlgorithm.SHA3_256;
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
-const address = await client.send(contract.deploy(
-  publicKey,
+const address = await client.send(contract.deploy({ 
+  publicKey, 
   hashAlgorithm
-));
+}));
 ```
 
 ### Mint the NFTs
@@ -442,10 +442,10 @@ const hashAlgorithm = HashAlgorithm.SHA3_256;
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
-const address = await client.send(contract.deploy(
-  publicKey,
+const address = await client.send(contract.deploy({ 
+  publicKey, 
   hashAlgorithm
-));
+}));
 ```
 
 ### Step 1: Create one or more editions
@@ -627,11 +627,11 @@ const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
-const address = await client.send(contract.deploy(
-  publicKey,
+const address = await client.send(contract.deploy({ 
+  publicKey, 
   hashAlgorithm,
   placeholderImage
-));
+}));
 ```
 
 ### Step 1: Mint NFTs
@@ -775,11 +775,11 @@ const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
-const address = await client.send(contract.deploy(
-  publicKey,
+const address = await client.send(contract.deploy({ 
+  publicKey, 
   hashAlgorithm,
   placeholderImage
-));
+}));
 ```
 
 ### Step 1: Create one or more editions
@@ -1216,7 +1216,7 @@ There are two steps to configuring royalties for your contract.
 
 First, ensure that your schema contains the royalties metadata view.
 This view exposes your royalty information to wallets and marketplaces.
-Without it, your royalties will not be applied.
+Without it your royalties will not be applied.
 
 Note: `metadata.defaultSchema` already contains the royalties view.
 
@@ -1232,30 +1232,30 @@ const schema = metadata.createSchema({
 });
 ```
 
-## 2. Set the royalty recipients
+## 2. Deploy your contract with royalties recipients
 
-After you deploy your contract, you can use the `setRoyalties` function
-to set or update the royalty information for your contract.
-
-You can call this function at any point to update your royalties.
-This function will update the royalty information for all NFTs minted by your
-contract, past and present, regardless of where they are stored.
+Configure your royalties when deploying your contract:
 
 ```js
 const royalties = [
   {
     address: '0xf8d6e0586b0a20c7',
     receiverPath: '/public/flowTokenReceiver',
-    cut: '0.03',
+    // Cut must be between 0.0 and 1.0 (100%)
+    cut: '0.1', // 10% of sales go to this recipient
     // Description is an optional field
-    description: '0.3% of sale proceeds go to 0xf8d6e0586b0a20c7 in FLOW.',
+    description: '10% of sale proceeds go to 0xf8d6e0586b0a20c7 in FLOW.',
   },
   {
     address: '0x0ae53cb6e3f42a79',
     receiverPath: '/public/flowTokenReceiver',
-    cut: '0.05'
+    cut: '0.05' // 5% of sales go to this recipient
   },
 ];
 
-await client.send(contract.setRoyalties(royalties));
+await client.send(contract.deploy({
+  publicKey,
+  hashAlgorithm,
+  royalties
+}));
 ```

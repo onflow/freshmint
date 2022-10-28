@@ -37,13 +37,17 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
     /// A list of royalty recipients that is attached to all NFTs
     /// minted by this contract.
     ///
-    access(contract) var royalties: [MetadataViews.Royalty]
+    access(contract) let royalties: [MetadataViews.Royalty]
     
     /// Return the royalty recipients for this contract.
     ///
     pub fun getRoyalties(): [MetadataViews.Royalty] {
         return BlindEditionNFT_Test.royalties
     }
+
+    /// The collection-level metadata for all NFTs minted by this contract.
+    ///
+    pub let collectionMetadata: MetadataViews.NFTCollectionDisplay
 
     pub struct Metadata {
     
@@ -243,26 +247,14 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveExternalURL(): MetadataViews.ExternalURL {
-            return MetadataViews.ExternalURL(\\"http://foo.com/\\".concat(self.id.toString()))
+            let collectionURL = BlindEditionNFT_Test.collectionMetadata.externalURL.url
+            let nftOwner = self.owner!.address.toString()
+            let nftID = self.id.toString()
+            return MetadataViews.ExternalURL(collectionURL.concat(\\"/nfts/\\").concat(nftOwner).concat(\\"/\\").concat(nftID))
         }
         
         pub fun resolveNFTCollectionDisplay(): MetadataViews.NFTCollectionDisplay {
-            let media = MetadataViews.Media(
-                file: MetadataViews.IPFSFile(
-                    cid: \\"bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre\\", 
-                    path: nil
-                ),
-                mediaType: \\"image/jpeg\\"
-            )
-        
-            return MetadataViews.NFTCollectionDisplay(
-                name: \\"My Collection\\",
-                description: \\"This is my collection.\\",
-                externalURL: MetadataViews.ExternalURL(\\"http://foo.com\\"),
-                squareImage: media,
-                bannerImage: media,
-                socials: {}
-            )
+            return BlindEditionNFT_Test.collectionMetadata
         }
         
         pub fun resolveNFTCollectionData(): MetadataViews.NFTCollectionData {
@@ -280,7 +272,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         }
         
         pub fun resolveRoyalties(): MetadataViews.Royalties {
-            return MetadataViews.Royalties(BlindEditionNFT_Test.royalties)
+            return MetadataViews.Royalties(BlindEditionNFT_Test.getRoyalties())
         }
         
         destroy() {
@@ -471,15 +463,6 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
                 salt: salt
             )
         }
-
-        /// Set the royalty recipients for this contract.
-        ///
-        /// This function updates the royalty recipients for all NFTs
-        /// minted by this contract.
-        ///
-        pub fun setRoyalties(_ royalties: [MetadataViews.Royalty]) {
-            BlindEditionNFT_Test.royalties = royalties
-        }
     }
 
     /// Return a public path that is scoped to this contract.
@@ -516,9 +499,9 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(admin: AuthAccount, placeholderImage: String) {
+    init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], placeholderImage: String, admin: AuthAccount) {
 
-        self.version = \\"0.0.32\\"
+        self.version = \\"0.0.33\\"
 
         self.CollectionPublicPath = BlindEditionNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = BlindEditionNFT_Test.getStoragePath(suffix: \\"Collection\\")
@@ -528,7 +511,8 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
 
         self.placeholderImage = placeholderImage
 
-        self.royalties = []
+        self.royalties = royalties
+        self.collectionMetadata = collectionMetadata
 
         self.totalSupply = 0
         self.totalEditions = 0

@@ -8,6 +8,8 @@ export { FreshmintClient } from './client';
 export { Transaction, TransactionAuthorizer } from './transactions';
 export type { TransactionResult, TransactionEvent } from './transactions';
 
+export type { Royalty, CollectionMetadata } from './contracts/NFTContract';
+
 export { StandardNFTContract } from './contracts/StandardNFTContract';
 export { BlindNFTContract } from './contracts/BlindNFTContract';
 export { EditionNFTContract } from './contracts/EditionNFTContract';
