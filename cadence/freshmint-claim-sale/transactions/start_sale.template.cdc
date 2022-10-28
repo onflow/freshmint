@@ -42,9 +42,9 @@ transaction(
     price: UFix64,
     paymentReceiverAddress: Address?,
     paymentReceiverPath: PublicPath?,
-    collectionName: String?,
+    bucketName: String?,
     claimLimit: UInt?,
-    allowlistName: String?,
+    allowlistName: String?
 ) {
 
     let sales: &FreshmintClaimSale.SaleCollection
@@ -56,7 +56,13 @@ transaction(
 
         self.sales = getOrCreateSaleCollection(account: signer)
 
-        let queuePrivatePath = {{ contractName }}.getPrivatePath(suffix: collectionName ?? "Queue")
+        var queueName = "Queue"
+
+        if let bucket = bucketName {
+            queueName = "Queue_".concat(bucket)
+        }
+
+        let queuePrivatePath = {{ contractName }}.getPrivatePath(suffix: queueName)
 
         self.mintQueue = signer
             .getCapability<&{FreshmintQueue.Queue}>(queuePrivatePath)

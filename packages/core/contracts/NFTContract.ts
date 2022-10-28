@@ -103,9 +103,7 @@ export default abstract class NFTContract {
 
       return {
         script,
-        args: [
-          fcl.arg(id, t.UInt64),
-        ],
+        args: [fcl.arg(id, t.UInt64)],
         computeLimit: 9999,
         signers: this.getSigners(),
       };

@@ -315,19 +315,14 @@ pub contract FreshmintClaimSale {
                 ?? panic("failed to borrow payment receiver capability")
         }
 
-        access(self) fun borrowAllowlist(): &Allowlist? {
-            if let allowlistCap = self.allowlist {
-                return allowlistCap.borrow() ?? panic("failed to borrow allowlist")
-            }
-
-            return nil
-        }
-
         /// If an allowlist is set, check that the provided address can claim
         /// and decrement their claim counter.
         ///
         access(self) fun checkAllowlist(address: Address) {
-            if let allowlist = self.borrowAllowlist() {
+            if let allowlistCap = self.allowlist {
+
+                let allowlist = allowlistCap.borrow() 
+                    ?? panic("failed to borrow allowlist")
 
                 if let claims = allowlist.getClaims(address: address) {
                     if claims == 0 {
@@ -343,7 +338,7 @@ pub contract FreshmintClaimSale {
 
         /// The claim function is called by a user to claim an NFT from this sale.
         ///
-        /// The user will receive the next available NFT in the collection
+        /// The user will receive the next available NFT in the queue
         /// if they pass a vault with the correct price and,
         /// if an allowlist is set, their address exists in the allowlist.
         ///
