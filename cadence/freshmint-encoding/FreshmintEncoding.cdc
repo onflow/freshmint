@@ -1,8 +1,7 @@
-/// FreshmintEncoding includes a set of utilities for encoding Cadence values as byte arrays.
+/// FreshmintEncoding is a set of utilities for encoding Cadence values as byte arrays.
 ///
 /// Variable-legnth values (String, Int, UInt) include a fixed-size length prefix to
-/// prevent distinct sets of values from encoding to the same byte sequence
-/// when multiple values are concatenated.
+/// prevent distinct sets of values from encoding to the same byte sequence when concatenated.
 ///
 /// For example, for a structure with two fields:
 ///
@@ -19,14 +18,6 @@
 /// let encoding = encodeString(foo).concat(encodeString(bar))
 ///
 pub contract FreshmintEncoding {
-
-    pub fun encodeInt(_ value: Int): [UInt8] {
-        let bytes = value.toBigEndianBytes()
-        let length = UInt16(bytes.length)
-
-        // Prefix byte encoding with a fixed-size encoding of its length
-        return length.toBigEndianBytes().concat(bytes)
-    }
 
     pub fun encodeUInt(_ value: UInt): [UInt8] {
         let bytes = value.toBigEndianBytes()
@@ -58,6 +49,14 @@ pub contract FreshmintEncoding {
 
     pub fun encodeUInt256(_ value: UInt256): [UInt8] {
         return value.toBigEndianBytes()
+    }
+
+    pub fun encodeInt(_ value: Int): [UInt8] {
+        let bytes = value.toBigEndianBytes()
+        let length = UInt16(bytes.length)
+
+        // Prefix byte encoding with a fixed-size encoding of its length
+        return length.toBigEndianBytes().concat(bytes)
     }
 
     pub fun encodeInt8(_ value: Int8): [UInt8] {
