@@ -1,6 +1,7 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
+import FreshmintEncoding from {{{ imports.FreshmintEncoding }}}
 import FreshmintMetadataViews from {{{ imports.FreshmintMetadataViews }}}
 
 pub contract {{ contractName }}: NonFungibleToken {
@@ -64,7 +65,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun encode(): [UInt8] {
             return self.salt
             {{#each fields}}
-                .concat(self.{{ this.name }}.{{ this.getCadenceByteTemplate }})
+                .concat({{ this.getCadenceByteTemplate }})
             {{/each}}
         }
 
