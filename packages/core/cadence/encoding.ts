@@ -58,7 +58,7 @@ export function encodeCadenceValue(cadenceType: CadenceType, value: any): Buffer
       return new BoolValue(value).toBytes();
   }
 
-  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be encoded off chain.`);
+  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be encoded in JavaScript.`);
 }
 
 function encodeInt(value: string): Buffer {
@@ -121,5 +121,5 @@ export function getCadenceEncodingTemplate(name: string, cadenceType: CadenceTyp
       return `FreshmintEncoding.encodeAddress(self.${name})`;
   }
 
-  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be encoded on chain.`);
+  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be encoded in Cadence.`);
 }

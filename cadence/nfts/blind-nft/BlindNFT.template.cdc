@@ -65,7 +65,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun encode(): [UInt8] {
             return self.salt
             {{#each fields}}
-                .concat({{ this.getCadenceByteTemplate }})
+                .concat({{ this.getCadenceEncodingTemplate }})
             {{/each}}
         }
 
