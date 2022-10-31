@@ -371,7 +371,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         // the queue are deposited into the underlying collection.
         //
         let queue <- FreshmintQueue.createCollectionQueue(
-            collection: admin.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPrivatePath)
+            collection: admin.getCapability<&NonFungibleToken.Collection>({{ contractName }}.CollectionPrivatePath)
         )
 
         admin.save(<- queue, to: {{ contractName }}.QueueStoragePath)

@@ -333,7 +333,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         // the queue are deposited into the underlying collection.
         //
         let queue <- FreshmintQueue.createCollectionQueue(
-            collection: admin.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(StandardNFT_Test.CollectionPrivatePath)
+            collection: admin.getCapability<&NonFungibleToken.Collection>(StandardNFT_Test.CollectionPrivatePath)
         )
 
         admin.save(<- queue, to: StandardNFT_Test.QueueStoragePath)

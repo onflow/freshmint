@@ -480,7 +480,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
         // the queue are deposited into the underlying collection.
         //
         let queue <- FreshmintQueue.createCollectionQueue(
-            collection: admin.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(BlindNFT_Test.CollectionPrivatePath)
+            collection: admin.getCapability<&NonFungibleToken.Collection>(BlindNFT_Test.CollectionPrivatePath)
         )
 
         admin.save(<- queue, to: BlindNFT_Test.QueueStoragePath)

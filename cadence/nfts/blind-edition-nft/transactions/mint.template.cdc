@@ -52,7 +52,7 @@ pub fun getOrCreateMintQueue(
     account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(collectionPublicPath, target: collectionStoragePath)
     
     let queue <- FreshmintQueue.createCollectionQueue(
-        collection: account.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(collectionPrivatePath)
+        collection: account.getCapability<&NonFungibleToken.Collection>(collectionPrivatePath)
     )
     
     let queueRef = &queue as &FreshmintQueue.CollectionQueue
