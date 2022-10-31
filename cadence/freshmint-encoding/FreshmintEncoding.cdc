@@ -1,6 +1,6 @@
 /// FreshmintEncoding is a set of utilities for encoding Cadence values as byte arrays.
 ///
-/// Variable-legnth values (String, Int, UInt) include a fixed-size length prefix to
+/// Variable-length values (String, Int, UInt) include a fixed-size length prefix to
 /// prevent distinct sets of values from encoding to the same byte sequence when concatenated.
 ///
 /// For example, for a structure with two fields:
