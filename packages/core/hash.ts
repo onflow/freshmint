@@ -10,7 +10,7 @@ export function hashValues(values: Buffer[]): Buffer {
 }
 
 export function hashValuesWithSalt(values: Buffer[]): { hash: Buffer; salt: Buffer } {
-  const salt = randomBytes(16);
+  const salt = randomBytes(32);
 
   const hash = hashValues([salt, ...values]);
 
