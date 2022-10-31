@@ -33,7 +33,7 @@ export class SHA2_256Hasher {
 }
 
 export class SHA3_256Hasher {
-  static size = 256 as const;
+  private static size = 256 as const;
 
   hash(message: Buffer): Buffer {
     const hash = new SHA3(SHA3_256Hasher.size);
