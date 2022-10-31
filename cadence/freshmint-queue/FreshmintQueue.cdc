@@ -48,9 +48,6 @@ pub contract FreshmintQueue {
             self.ids = []
 
             self.collection = collection
-
-            self.collection.borrow() 
-                ?? panic("CollectionQueue.init: failed to borrow collection capability")
         }
 
         /// Deposit an NFT into this queue.
