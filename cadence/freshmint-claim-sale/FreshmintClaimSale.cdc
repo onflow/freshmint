@@ -329,7 +329,8 @@ pub contract FreshmintClaimSale {
                         panic("address has already consumed all claims")
                     }
 
-                    allowlist.consumeClaim(address: address)
+                    // Reduce the claim count by one
+                    allowlist.setClaims(address: address, claims: claims - 1)
                 } else {
                     panic("address is not in the allowlist")
                 }
@@ -418,23 +419,6 @@ pub contract FreshmintClaimSale {
         ///
         pub fun getClaims(address: Address): UInt? {
             return self.claimsByAddress[address]
-        }
-
-        /// consumeClaim is called when a user exercises one of their claims.
-        ///
-        /// This function returns true if the address can claim an NFT.
-        /// It returns false is the address is not in the allowlist or has
-        /// excercised all of its claims.
-        ///
-        /// Each call to consumeClaim decrements the address's claim
-        /// count by one.
-        ///
-        pub fun consumeClaim(address: Address) {
-            if let claims = self.claimsByAddress[address] {
-                if claims != 0 {
-                    self.claimsByAddress[address] = claims - 1
-                }
-            }
         }
     }
 
