@@ -1,5 +1,4 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
-import MetadataViews from {{{ imports.MetadataViews }}}
 
 /// FreshmintQueue defines an interface for distributing NFTs in a queue.
 ///
@@ -41,10 +40,10 @@ pub contract FreshmintQueue {
 
         /// The collection containing the NFTs to be distributed by this queue.
         ///
-        access(self) let collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
+        access(self) let collection: Capability<&NonFungibleToken.Collection>
 
         init(
-            collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
+            collection: Capability<&NonFungibleToken.Collection>
         ) {
             self.ids = []
 
@@ -92,15 +91,17 @@ pub contract FreshmintQueue {
             let collection = self.collection.borrow() 
                 ?? panic("CollectionQueue.getNextNFT: failed to borrow collection capability")
 
-            let availableIDs = collection.getIDs()
-
             // Withdraw the next available NFT from the collection,
             // skipping over NFTs that exist in the ID list but have
-            // been removed from the underlying collection.
+            // been removed from the underlying collection
+            //
             while self.ids.length > 0 {
                 let id = self.ids.removeFirst()
 
-                if availableIDs.contains(id) {
+                // This is the only efficient way to check if the collection
+                // contains an NFT without triggering a panic
+                //
+                if collection.ownedNFTs.containsKey(id) {
                     return <- collection.withdraw(withdrawID: id)
                 }
             }
@@ -116,7 +117,7 @@ pub contract FreshmintQueue {
     }
 
     pub fun createCollectionQueue(
-        collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
+        collection: Capability<&NonFungibleToken.Collection>
     ): @CollectionQueue {
         return <- create CollectionQueue(collection: collection)
     }
