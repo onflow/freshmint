@@ -17,6 +17,7 @@ export const EMULATOR: FreshmintConfig = {
     NonFungibleToken: '0xf8d6e0586b0a20c7',
     FlowToken: '0x0ae53cb6e3f42a79',
     MetadataViews: '0xf8d6e0586b0a20c7',
+    FreshmintEncoding: '0xf8d6e0586b0a20c7',
     FreshmintMetadataViews: '0xf8d6e0586b0a20c7',
     FreshmintClaimSale: '0xf8d6e0586b0a20c7',
     FreshmintLockBox: '0xf8d6e0586b0a20c7',
@@ -32,6 +33,7 @@ export const TESTNET: FreshmintConfig = {
     FreshmintMetadataViews: '0xc270e330615c6fa0',
     FreshmintClaimSale: '0x2d3d6874bc231156',
     FreshmintLockBox: '0x0cad7d1c09a3a433',
+    FreshmintQueue: '0x10077395fa5d2436'
   },
 };
 

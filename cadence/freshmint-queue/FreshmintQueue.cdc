@@ -32,7 +32,7 @@ pub contract FreshmintQueue {
     /// NFTs removed from the underlying collection will be skipped 
     /// when withdrawing from the queue.
     ///
-    pub resource CollectionQueue: Queue {
+    pub resource CollectionQueue: Queue, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
 
         /// The IDs array contains the NFT IDs in order of insertion.
         ///
@@ -48,9 +48,6 @@ pub contract FreshmintQueue {
             self.ids = []
 
             self.collection = collection
-
-            self.collection.borrow() 
-                ?? panic("CollectionQueue.init: failed to borrow collection capability")
         }
 
         /// Deposit an NFT into this queue.
@@ -66,6 +63,21 @@ pub contract FreshmintQueue {
             self.ids.append(token.id)
 
             collection.deposit(token: <- token)
+        }
+
+        /// Return the NFT IDs in this queue.
+        ///
+        pub fun getIDs(): [UInt64] {
+            return self.ids
+        }
+
+        /// Borrow a reference to an NFT in this queue.
+        ///
+        pub fun borrowNFT(id: UInt64): &NFT {
+            let collection = self.collection.borrow() 
+                ?? panic("CollectionQueue.borrowNFT: failed to borrow collection capability")
+
+            return collection.borrowNFT(id: id)
         }
 
         /// Insert an ID into this queue.
