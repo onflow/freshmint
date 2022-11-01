@@ -12,6 +12,7 @@ import * as metadata from './metadata';
 import { CollectionMetadata } from './contracts/NFTContract';
 import { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 import { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
+import { FreshmintEncodingGenerator } from './generators/FreshmintEncodingGenerator';
 
 import flowConfig from './flow.json';
 
@@ -48,6 +49,12 @@ export async function setupEmulator() {
 
   // FCL is noisy; silence it.
   fcl.config().put('logger.level', 0);
+
+  await deployContract({
+    code: FreshmintEncodingGenerator.contract(),
+    to: emulatorServiceAccount,
+    name: 'FreshmintEncoding',
+  });
 
   await deployContract({
     code: FreshmintMetadataViewsGenerator.contract(),
