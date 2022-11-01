@@ -4,28 +4,12 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 
-pub fun getQueueName(bucketName maybeBucketName: String?): String {
-    if let bucketName = maybeBucketName {
-        return "Queue_".concat(bucketName)
-    }
-
-    return "Queue"
-}
-
-pub fun getCollectionName(bucketName maybeBucketName: String?): String {
-    if let bucketName = maybeBucketName {
-        return "Collection_".concat(bucketName)
-    }
-
-    return "Collection"
-}
-
 pub fun getOrCreateCollection(
     account: AuthAccount,
     bucketName: String?
 ): Capability<&NonFungibleToken.Collection> {
 
-    let collectionName = getCollectionName(bucketName: bucketName)
+    let collectionName = {{ contractName }}.makeCollectionName(bucketName: bucketName)
 
     let collectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: collectionName)
 
@@ -55,7 +39,7 @@ pub fun getOrCreateMintQueue(
     bucketName: String?
 ): &FreshmintQueue.CollectionQueue {
 
-    let queueName = getQueueName(bucketName: bucketName)
+    let queueName = {{ contractName }}.makeQueueName(bucketName: bucketName)
 
     let queuePrivatePath = {{ contractName }}.getPrivatePath(suffix: queueName)
 

@@ -459,6 +459,26 @@ pub contract BlindNFT_Test: NonFungibleToken {
         return StoragePath(identifier: \\"BlindNFT_Test_\\".concat(suffix))!
     }
 
+    /// Return a collection name with an optional bucket suffix.
+    ///
+    pub fun makeCollectionName(bucketName maybeBucketName: String?): String {
+        if let bucketName = maybeBucketName {
+            return \\"Collection_\\".concat(bucketName)
+        }
+
+        return \\"Collection\\"
+    }
+
+    /// Return a queue name with an optional bucket suffix.
+    ///
+    pub fun makeQueueName(bucketName maybeBucketName: String?): String {
+        if let bucketName = maybeBucketName {
+            return \\"Queue_\\".concat(bucketName)
+        }
+
+        return \\"Queue\\"
+    }
+
     priv fun initAdmin(admin: AuthAccount) {
         // Create an empty collection and save it to storage
         let collection <- BlindNFT_Test.createEmptyCollection()
@@ -468,7 +488,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
         admin.link<&BlindNFT_Test.Collection>(BlindNFT_Test.CollectionPrivatePath, target: BlindNFT_Test.CollectionStoragePath)
 
         admin.link<&BlindNFT_Test.Collection{NonFungibleToken.CollectionPublic, BlindNFT_Test.BlindNFT_TestCollectionPublic, MetadataViews.ResolverCollection}>(BlindNFT_Test.CollectionPublicPath, target: BlindNFT_Test.CollectionStoragePath)
-        
+
         // Create an admin resource and save it to storage
         let adminResource <- create Admin()
 

@@ -386,6 +386,26 @@ pub contract {{ contractName }}: NonFungibleToken {
         return StoragePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
+    /// Return a collection name with an optional bucket suffix.
+    ///
+    pub fun makeCollectionName(bucketName maybeBucketName: String?): String {
+        if let bucketName = maybeBucketName {
+            return "Collection_".concat(bucketName)
+        }
+
+        return "Collection"
+    }
+
+    /// Return a queue name with an optional bucket suffix.
+    ///
+    pub fun makeQueueName(bucketName maybeBucketName: String?): String {
+        if let bucketName = maybeBucketName {
+            return "Queue_".concat(bucketName)
+        }
+
+        return "Queue"
+    }
+
     priv fun initAdmin(admin: AuthAccount) {
         // Create an empty collection and save it to storage
         let collection <- {{ contractName }}.createEmptyCollection()
@@ -395,7 +415,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
 
         admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
-        
+
         // Create an admin resource and save it to storage
         let adminResource <- create Admin()
 
