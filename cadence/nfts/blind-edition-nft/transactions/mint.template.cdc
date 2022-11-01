@@ -20,13 +20,42 @@ pub fun getCollectionName(bucketName maybeBucketName: String?): String {
     return "Collection"
 }
 
+pub fun getOrCreateCollection(
+    account: AuthAccount,
+    bucketName: String?
+): Capability<&NonFungibleToken.Collection> {
+
+    let collectionName = getCollectionName(bucketName: bucketName)
+
+    let collectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: collectionName)
+
+    let collectionCap = account.getCapability<&NonFungibleToken.Collection>(collectionPrivatePath)
+
+    if collectionCap.check() {
+        return collectionCap
+    }
+
+    // Create an empty collection if one does not exist
+
+    let collection <- {{ contractName }}.createEmptyCollection()
+
+    let collectionStoragePath = {{ contractName }}.getStoragePath(suffix: collectionName)
+    let collectionPublicPath = {{ contractName }}.getPublicPath(suffix: collectionName)
+
+    account.save(<-collection, to: collectionStoragePath)
+
+    account.link<&{{ contractName }}.Collection>(collectionPrivatePath, target: collectionStoragePath)
+    account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(collectionPublicPath, target: collectionStoragePath)
+    
+    return collectionCap
+}
+
 pub fun getOrCreateMintQueue(
     account: AuthAccount,
     bucketName: String?
 ): &FreshmintQueue.CollectionQueue {
 
     let queueName = getQueueName(bucketName: bucketName)
-    let collectionName = getCollectionName(bucketName: bucketName)
 
     let queuePrivatePath = {{ contractName }}.getPrivatePath(suffix: queueName)
 
@@ -36,23 +65,10 @@ pub fun getOrCreateMintQueue(
         return queueRef
     }
 
-    // If no queue exists, create a new collection and queue
+    // Create a new queue if one does not exist
 
-    let collection <- {{ contractName }}.createEmptyCollection()
-
-    let collectionRef = &collection as &{NonFungibleToken.CollectionPublic}
-
-    let collectionStoragePath = {{ contractName }}.getStoragePath(suffix: collectionName)
-    let collectionPublicPath = {{ contractName }}.getPublicPath(suffix: collectionName)
-    let collectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: collectionName)
-
-    account.save(<-collection, to: collectionStoragePath)
-
-    account.link<&{{ contractName }}.Collection>(collectionPrivatePath, target: collectionStoragePath)
-    account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(collectionPublicPath, target: collectionStoragePath)
-    
     let queue <- FreshmintQueue.createCollectionQueue(
-        collection: account.getCapability<&NonFungibleToken.Collection>(collectionPrivatePath)
+        collection: getOrCreateCollection(account: account, bucketName: bucketName)
     )
     
     let queueRef = &queue as &FreshmintQueue.CollectionQueue

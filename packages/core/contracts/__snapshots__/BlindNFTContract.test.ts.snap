@@ -6,7 +6,6 @@ import MetadataViews from 0xf8d6e0586b0a20c7
 import FungibleToken from 0xee82856bf20e2aa6
 import FreshmintEncoding from 0xf8d6e0586b0a20c7
 import FreshmintMetadataViews from 0xf8d6e0586b0a20c7
-import FreshmintQueue from 0xf8d6e0586b0a20c7
 
 pub contract BlindNFT_Test: NonFungibleToken {
 
@@ -22,10 +21,6 @@ pub contract BlindNFT_Test: NonFungibleToken {
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
     pub let CollectionPrivatePath: PrivatePath
-
-    pub let QueueStoragePath: StoragePath
-    pub let QueuePrivatePath: PrivatePath
-
     pub let AdminStoragePath: StoragePath
 
     /// The total number of BlindNFT_Test NFTs that have been minted.
@@ -474,19 +469,6 @@ pub contract BlindNFT_Test: NonFungibleToken {
 
         admin.link<&BlindNFT_Test.Collection{NonFungibleToken.CollectionPublic, BlindNFT_Test.BlindNFT_TestCollectionPublic, MetadataViews.ResolverCollection}>(BlindNFT_Test.CollectionPublicPath, target: BlindNFT_Test.CollectionStoragePath)
 
-        // Create a queue to hold minted NFTs.
-        //
-        // NFTs are minted into a queue to preserve the mint order.
-        // A CollectionQueue is linked to a collection. All NFTs minted into 
-        // the queue are deposited into the underlying collection.
-        //
-        let queue <- FreshmintQueue.createCollectionQueue(
-            collection: admin.getCapability<&NonFungibleToken.Collection>(BlindNFT_Test.CollectionPrivatePath)
-        )
-
-        admin.save(<- queue, to: BlindNFT_Test.QueueStoragePath)
-        admin.link<&FreshmintQueue.CollectionQueue>(BlindNFT_Test.QueuePrivatePath, target: BlindNFT_Test.QueueStoragePath)
-
         // Create an admin resource and save it to storage
         let adminResource <- create Admin()
 
@@ -500,9 +482,6 @@ pub contract BlindNFT_Test: NonFungibleToken {
         self.CollectionPublicPath = BlindNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = BlindNFT_Test.getStoragePath(suffix: \\"Collection\\")
         self.CollectionPrivatePath = BlindNFT_Test.getPrivatePath(suffix: \\"Collection\\")
-
-        self.QueueStoragePath = BlindNFT_Test.getStoragePath(suffix: \\"Queue\\")
-        self.QueuePrivatePath = BlindNFT_Test.getPrivatePath(suffix: \\"Queue\\")
 
         self.AdminStoragePath = BlindNFT_Test.getStoragePath(suffix: \\"Admin\\")
 

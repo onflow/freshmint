@@ -4,7 +4,6 @@ exports[`StandardNFTContract should generate a contract 1`] = `
 "import NonFungibleToken from 0xf8d6e0586b0a20c7
 import MetadataViews from 0xf8d6e0586b0a20c7
 import FungibleToken from 0xee82856bf20e2aa6
-import FreshmintQueue from 0xf8d6e0586b0a20c7
 
 pub contract StandardNFT_Test: NonFungibleToken {
 
@@ -18,11 +17,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
-    pub let CollectionPrivatePath: PrivatePath
-
-    pub let QueueStoragePath: StoragePath
-    pub let QueuePrivatePath: PrivatePath
-    
+    pub let CollectionPrivatePath: PrivatePath    
     pub let AdminStoragePath: StoragePath
 
     /// The total number of StandardNFT_Test NFTs that have been minted.
@@ -326,19 +321,6 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
         admin.link<&StandardNFT_Test.Collection{NonFungibleToken.CollectionPublic, StandardNFT_Test.StandardNFT_TestCollectionPublic, MetadataViews.ResolverCollection}>(StandardNFT_Test.CollectionPublicPath, target: StandardNFT_Test.CollectionStoragePath)
         
-        // Create a queue to hold minted NFTs.
-        //
-        // NFTs are minted into a queue to preserve the mint order.
-        // A CollectionQueue is linked to a collection. All NFTs minted into 
-        // the queue are deposited into the underlying collection.
-        //
-        let queue <- FreshmintQueue.createCollectionQueue(
-            collection: admin.getCapability<&NonFungibleToken.Collection>(StandardNFT_Test.CollectionPrivatePath)
-        )
-
-        admin.save(<- queue, to: StandardNFT_Test.QueueStoragePath)
-        admin.link<&FreshmintQueue.CollectionQueue>(StandardNFT_Test.QueuePrivatePath, target: StandardNFT_Test.QueueStoragePath)
-
         // Create an admin resource and save it to storage
         let adminResource <- create Admin()
 
@@ -352,9 +334,6 @@ pub contract StandardNFT_Test: NonFungibleToken {
         self.CollectionPublicPath = StandardNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Collection\\")
         self.CollectionPrivatePath = StandardNFT_Test.getPrivatePath(suffix: \\"Collection\\")
-
-        self.QueueStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Queue\\")
-        self.QueuePrivatePath = StandardNFT_Test.getPrivatePath(suffix: \\"Queue\\")
 
         self.AdminStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Admin\\")
 

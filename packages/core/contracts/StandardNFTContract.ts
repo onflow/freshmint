@@ -84,7 +84,7 @@ export class StandardNFTContract extends NFTContract {
     );
   }
 
-  mintNFTs(metadata: MetadataMap[]): Transaction<NFTMintResult[]> {
+  mintNFTs(metadata: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
         const script = StandardNFTGenerator.mint({
@@ -97,6 +97,7 @@ export class StandardNFTContract extends NFTContract {
         return {
           script,
           args: [
+            fcl.arg(bucket, t.Optional(t.String)),
             ...this.schema.fields.map((field) => {
               return fcl.arg(
                 metadata.map((values) => field.getValue(values)),
