@@ -12,6 +12,7 @@ import * as metadata from './metadata';
 import { CollectionMetadata } from './contracts/NFTContract';
 import { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 import { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
+import { FreshmintQueueGenerator } from './generators/FreshmintQueueGenerator';
 import { FreshmintEncodingGenerator } from './generators/FreshmintEncodingGenerator';
 
 import flowConfig from './flow.json';
@@ -60,6 +61,12 @@ export async function setupEmulator() {
     code: FreshmintMetadataViewsGenerator.contract(),
     to: emulatorServiceAccount,
     name: 'FreshmintMetadataViews',
+  });
+
+  await deployContract({
+    code: FreshmintQueueGenerator.contract({ imports: config.imports }),
+    to: emulatorServiceAccount,
+    name: 'FreshmintQueue',
   });
 
   await deployContract({
