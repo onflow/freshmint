@@ -14,7 +14,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
-    pub let CollectionPrivatePath: PrivatePath    
+    pub let CollectionPrivatePath: PrivatePath
     pub let AdminStoragePath: StoragePath
 
     /// The total number of {{ contractName }} NFTs that have been minted.

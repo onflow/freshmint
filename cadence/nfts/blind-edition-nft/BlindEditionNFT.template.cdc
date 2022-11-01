@@ -440,7 +440,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.CollectionPublicPath = {{ contractName }}.getPublicPath(suffix: "Collection")
         self.CollectionStoragePath = {{ contractName }}.getStoragePath(suffix: "Collection")
         self.CollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: "Collection")
-        
+
         self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
 
         self.placeholderImage = placeholderImage

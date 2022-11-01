@@ -506,7 +506,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         self.CollectionPublicPath = BlindEditionNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = BlindEditionNFT_Test.getStoragePath(suffix: \\"Collection\\")
         self.CollectionPrivatePath = BlindEditionNFT_Test.getPrivatePath(suffix: \\"Collection\\")
-        
+
         self.AdminStoragePath = BlindEditionNFT_Test.getStoragePath(suffix: \\"Admin\\")
 
         self.placeholderImage = placeholderImage

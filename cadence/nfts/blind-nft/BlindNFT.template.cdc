@@ -395,7 +395,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
 
         admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
-
+        
         // Create an admin resource and save it to storage
         let adminResource <- create Admin()
 
