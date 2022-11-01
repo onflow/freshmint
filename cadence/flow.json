@@ -4,7 +4,7 @@
 		"FreshmintClaimSale": "./freshmint-claim-sale/FreshmintClaimSale.cdc",
 		"FreshmintMetadataViews": "./freshmint-metadata-views/FreshmintMetadataViews.cdc",
 		"FreshmintQueue": "./freshmint-queue/FreshmintQueue.cdc",
-		"FreshmintEncoding": "./freshmint-queue/FreshmintEncoding.cdc"
+		"FreshmintEncoding": "./freshmint-encoding/FreshmintEncoding.cdc"
 	},
 	"networks": {
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
