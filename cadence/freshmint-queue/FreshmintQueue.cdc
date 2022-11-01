@@ -1,4 +1,4 @@
-import NonFungibleToken from {{{ imports.NonFungibleToken }}}
+import NonFungibleToken from 0x631e88ae7f1d7c20
 
 /// FreshmintQueue defines an interface for distributing NFTs in a queue.
 ///
@@ -73,7 +73,7 @@ pub contract FreshmintQueue {
 
         /// Borrow a reference to an NFT in this queue.
         ///
-        pub fun borrowNFT(id: UInt64): &NFT {
+        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             let collection = self.collection.borrow() 
                 ?? panic("CollectionQueue.borrowNFT: failed to borrow collection capability")
 
