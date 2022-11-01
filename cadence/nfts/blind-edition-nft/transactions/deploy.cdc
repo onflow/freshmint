@@ -67,6 +67,7 @@ transaction(
             account.contracts.add(
                 name: contractName,
                 code: contractCode.decodeHex(),
+                collectionMetadata,
                 royalties,
                 placeholderImage
             )
