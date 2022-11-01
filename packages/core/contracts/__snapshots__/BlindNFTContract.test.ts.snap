@@ -4,6 +4,7 @@ exports[`BlindNFTContract should generate a contract 1`] = `
 "import NonFungibleToken from 0xf8d6e0586b0a20c7
 import MetadataViews from 0xf8d6e0586b0a20c7
 import FungibleToken from 0xee82856bf20e2aa6
+import FreshmintEncoding from 0xf8d6e0586b0a20c7
 import FreshmintMetadataViews from 0xf8d6e0586b0a20c7
 
 pub contract BlindNFT_Test: NonFungibleToken {
@@ -80,10 +81,10 @@ pub contract BlindNFT_Test: NonFungibleToken {
         ///
         pub fun encode(): [UInt8] {
             return self.salt
-                .concat(self.name.utf8)
-                .concat(self.description.utf8)
-                .concat(self.thumbnail.utf8)
-                .concat(self.serialNumber.toBigEndianBytes())
+                .concat(FreshmintEncoding.encodeString(self.name))
+                .concat(FreshmintEncoding.encodeString(self.description))
+                .concat(FreshmintEncoding.encodeString(self.thumbnail))
+                .concat(FreshmintEncoding.encodeUInt64(self.serialNumber))
         }
 
         pub fun hash(): [UInt8] {
@@ -476,7 +477,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
 
     init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], placeholderImage: String, admin: AuthAccount) {
 
-        self.version = \\"0.0.33\\"
+        self.version = \\"0.1.0\\"
 
         self.CollectionPublicPath = BlindNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = BlindNFT_Test.getStoragePath(suffix: \\"Collection\\")

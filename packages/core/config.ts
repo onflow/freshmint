@@ -17,6 +17,7 @@ export const EMULATOR: FreshmintConfig = {
     NonFungibleToken: '0xf8d6e0586b0a20c7',
     FlowToken: '0x0ae53cb6e3f42a79',
     MetadataViews: '0xf8d6e0586b0a20c7',
+    FreshmintEncoding: '0xf8d6e0586b0a20c7',
     FreshmintMetadataViews: '0xf8d6e0586b0a20c7',
     FreshmintClaimSale: '0xf8d6e0586b0a20c7',
     FreshmintLockBox: '0xf8d6e0586b0a20c7',
