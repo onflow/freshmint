@@ -1,4 +1,4 @@
-import NonFungibleToken from 0x631e88ae7f1d7c20
+import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 
 /// FreshmintQueue defines an interface for distributing NFTs in a queue.
 ///
