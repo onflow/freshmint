@@ -44,6 +44,24 @@ describe('StandardNFTContract', () => {
     );
   });
 
+  // TODO: refactor this test case into a separate test suite
+  it('should deploy a contract and save the admin resource to the contract account', async () => {
+    const contractWithAdmin = new StandardNFTContract({
+      name: 'StandardNFT_Test_ContractAdmin',
+      schema: getTestSchema(),
+      owner: ownerAuthorizer,
+    });
+
+    await client.send(
+      contractWithAdmin.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+        collectionMetadata,
+        saveAdminResourceToContractAccount: true,
+      }),
+    );
+  });
+
   it('should mint NFTs', async () => {
     await client.send(contract.mintNFTs(nfts));
   });
