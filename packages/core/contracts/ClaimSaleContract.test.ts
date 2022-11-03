@@ -17,6 +17,9 @@ import {
   TestAccount,
 } from '../testHelpers';
 
+// Increase test timeout for longer emulator tests
+jest.setTimeout(10000);
+
 describe('ClaimSaleContract', () => {
   beforeAll(setupEmulator);
   afterAll(teardownEmulator);
