@@ -110,6 +110,15 @@ pub contract FreshmintClaimSale {
         pub fun borrowSale(id: String): &{SalePublic}? {
             return &self.sales[id] as &{SalePublic}?
         }
+
+        /// Borrow a full reference to a sale.
+        ///
+        /// Use this function to modify properties of the sale
+        /// (e.g. to set an allowlist or claim limit).
+        ///
+        pub fun borrowSaleAuth(id: String): &Sale? {
+            return &self.sales[id] as &Sale?
+        }
     }
 
     /// SaleInfo is a struct containing the information

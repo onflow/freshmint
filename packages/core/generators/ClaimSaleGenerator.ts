@@ -74,6 +74,12 @@ export class ClaimSaleGenerator extends TemplateGenerator {
     });
   }
 
+  static setClaimLimit({ imports }: { imports: ContractImports }): string {
+    return this.generate(require('../../../cadence/freshmint-claim-sale/transactions/set_claim_limit.template.cdc'), {
+      imports,
+    });
+  }
+
   static getClaimSale({ imports }: { imports: ContractImports }): string {
     return this.generate(require('../../../cadence/freshmint-claim-sale/scripts/get_claim_sale.cdc'), {
       imports,

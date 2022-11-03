@@ -162,6 +162,21 @@ export class ClaimSaleContract {
     );
   }
 
+  setClaimLimit(saleId: string, claimLimit: number | null): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = ClaimSaleGenerator.setClaimLimit({
+        imports,
+      });
+
+      return {
+        script,
+        args: [fcl.arg(saleId, t.String), fcl.arg(claimLimit, t.Optional(t.UInt))],
+        computeLimit: 9999,
+        signers: this.nftContract.getSigners(),
+      };
+    }, Transaction.VoidResult);
+  }
+
   getSale(saleAddress: string, saleId: string): Script<ClaimSale | null> {
     return new Script(
       ({ imports }: FreshmintConfig) => {
