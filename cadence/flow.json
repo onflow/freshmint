@@ -2,6 +2,7 @@
 	"contracts": {
 		"FreshmintLockBox": "./freshmint-lock-box/FreshmintLockBox.cdc",
 		"FreshmintClaimSale": "./freshmint-claim-sale/FreshmintClaimSale.cdc",
+		"FreshmintClaimSaleV2": "./freshmint-claim-sale-v2/FreshmintClaimSaleV2.cdc",
 		"FreshmintMetadataViews": "./freshmint-metadata-views/FreshmintMetadataViews.cdc",
 		"FreshmintQueue": "./freshmint-queue/FreshmintQueue.cdc",
 		"FreshmintEncoding": "./freshmint-encoding/FreshmintEncoding.cdc"
@@ -17,6 +18,9 @@
 			],
 			"freshmint-claim-sale-testnet": [
 				"FreshmintClaimSale"
+			],
+			"freshmint-claim-sale-v2-testnet": [
+				"FreshmintClaimSaleV2"
 			],
 			"freshmint-metadata-views-testnet": [
 				"FreshmintMetadataViews"
@@ -46,6 +50,9 @@
 		},
 		"freshmint-claim-sale-testnet": {
 			"fromFile": "freshmint-claim-sale-testnet.private.json"
+		},
+		"freshmint-claim-sale-v2-testnet": {
+			"fromFile": "freshmint-claim-sale-v2-testnet.private.json"
 		},
 		"freshmint-metadata-views-testnet": {
 			"fromFile": "freshmint-metadata-views-testnet.private.json"
