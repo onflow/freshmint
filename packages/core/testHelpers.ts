@@ -18,7 +18,8 @@ import { HashAlgorithm, InMemoryECPrivateKey, InMemoryECSigner, SignatureAlgorit
 import * as metadata from './metadata';
 import { CollectionMetadata } from './contracts/NFTContract';
 import { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
-import { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
+import { FreshmintClaimSaleGenerator } from './generators/FreshmintClaimSaleGenerator';
+import { FreshmintClaimSaleV2Generator } from './generators/FreshmintClaimSaleV2Generator';
 import { FreshmintQueueGenerator } from './generators/FreshmintQueueGenerator';
 import { FreshmintEncodingGenerator } from './generators/FreshmintEncodingGenerator';
 
@@ -77,9 +78,15 @@ export async function setupEmulator() {
   });
 
   await deployContract({
-    code: ClaimSaleGenerator.contract({ imports: config.imports }),
+    code: FreshmintClaimSaleGenerator.contract({ imports: config.imports }),
     to: emulatorServiceAccount,
     name: 'FreshmintClaimSale',
+  });
+
+  await deployContract({
+    code: FreshmintClaimSaleV2Generator.contract({ imports: config.imports }),
+    to: emulatorServiceAccount,
+    name: 'FreshmintClaimSaleV2',
   });
 }
 

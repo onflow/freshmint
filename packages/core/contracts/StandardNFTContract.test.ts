@@ -1,6 +1,6 @@
 import { StandardNFTContract } from './StandardNFTContract';
 import { MissingContractAddressError } from './NFTContract';
-import { ClaimSaleContract } from './ClaimSaleContract';
+import { FreshmintClaimSaleContract } from './FreshmintClaimSaleContract';
 
 import {
   client,
@@ -66,7 +66,7 @@ describe('StandardNFTContract', () => {
     await client.send(contract.mintNFTs(nfts));
   });
 
-  const sale = new ClaimSaleContract(contract);
+  const sale = new FreshmintClaimSaleContract(contract);
 
   const allowlistName = 'default';
 

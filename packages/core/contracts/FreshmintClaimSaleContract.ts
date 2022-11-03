@@ -4,7 +4,7 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { ClaimSaleGenerator } from '../generators/ClaimSaleGenerator';
+import { FreshmintClaimSaleGenerator } from '../generators/FreshmintClaimSaleGenerator';
 
 import { NFTContract } from './NFTContract';
 import { FreshmintConfig, ContractImports } from '../config';
@@ -13,7 +13,7 @@ import { Path } from '../cadence/values';
 
 const flowTokenReceiverPublicPath = '/public/flowTokenReceiver';
 
-export class ClaimSaleContract {
+export class FreshmintClaimSaleContract {
   nftContract: NFTContract;
 
   constructor(nftContract: NFTContract) {
@@ -21,7 +21,7 @@ export class ClaimSaleContract {
   }
 
   getSource(imports: ContractImports): string {
-    return ClaimSaleGenerator.contract({
+    return FreshmintClaimSaleGenerator.contract({
       imports,
     });
   }
@@ -50,7 +50,7 @@ export class ClaimSaleContract {
     const receiverPath = paymentReceiverPath ?? flowTokenReceiverPublicPath;
 
     return new Transaction(({ imports }: FreshmintConfig) => {
-      const script = ClaimSaleGenerator.startSale({
+      const script = FreshmintClaimSaleGenerator.startSale({
         imports,
         contractName: this.nftContract.name,
         contractAddress: this.nftContract.getAddress(),
@@ -74,7 +74,7 @@ export class ClaimSaleContract {
 
   stop(id: string): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
-      const script = ClaimSaleGenerator.stopSale({
+      const script = FreshmintClaimSaleGenerator.stopSale({
         imports,
         contractName: this.nftContract.name,
         contractAddress: this.nftContract.getAddress(),
@@ -99,7 +99,7 @@ export class ClaimSaleContract {
     claims: number;
   }): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
-      const script = ClaimSaleGenerator.addToAllowlist({
+      const script = FreshmintClaimSaleGenerator.addToAllowlist({
         imports,
         contractName: this.nftContract.name,
         contractAddress: this.nftContract.getAddress(),
@@ -123,7 +123,7 @@ export class ClaimSaleContract {
   claimNFT(saleAddress: string, authorizer: TransactionAuthorizer, saleId: string): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = ClaimSaleGenerator.claimNFT({
+        const script = FreshmintClaimSaleGenerator.claimNFT({
           imports,
           contractName: this.nftContract.name,
           contractAddress: this.nftContract.getAddress(),

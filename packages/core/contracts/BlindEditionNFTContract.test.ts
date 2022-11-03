@@ -1,5 +1,5 @@
 import { BlindEditionNFTContract, EditionResult, NFTMintResult } from './BlindEditionNFTContract';
-import { ClaimSaleContract } from './ClaimSaleContract';
+import { FreshmintClaimSaleContract } from './FreshmintClaimSaleContract';
 
 import {
   client,
@@ -98,7 +98,7 @@ describe('BlindEditionNFTContract', () => {
     edition2mintedNFTs = await client.send(contract.mintNFTs(edition2.nfts, { bucket: edition2Bucket }));
   });
 
-  const sale = new ClaimSaleContract(contract);
+  const sale = new FreshmintClaimSaleContract(contract);
 
   const sale1 = 'sale1';
   const sale2 = 'sale2';

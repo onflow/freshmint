@@ -1,5 +1,5 @@
 import { EditionNFTContract, EditionResult } from './EditionNFTContract';
-import { ClaimSaleContract } from './ClaimSaleContract';
+import { FreshmintClaimSaleContract } from './FreshmintClaimSaleContract';
 
 import {
   client,
@@ -137,7 +137,7 @@ describe('EditionNFTContract', () => {
     await client.send(contract.mintNFTs({ editionId: edition2.id, count: edition2.size, bucket: edition2Bucket }));
   });
 
-  const sale = new ClaimSaleContract(contract);
+  const sale = new FreshmintClaimSaleContract(contract);
 
   const sale1 = 'sale1';
   const sale2 = 'sale2';

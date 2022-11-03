@@ -1,5 +1,5 @@
 import { StandardNFTContract } from './StandardNFTContract';
-import { ClaimSaleContract } from './ClaimSaleContract';
+import { FreshmintClaimSaleV2Contract } from './FreshmintClaimSaleV2Contract';
 
 import {
   client,
@@ -20,12 +20,12 @@ import {
 // Increase test timeout for longer emulator tests
 jest.setTimeout(10000);
 
-describe('ClaimSaleContract', () => {
+describe('FreshmintClaimSaleV2Contract', () => {
   beforeAll(setupEmulator);
   afterAll(teardownEmulator);
 
   const contract = new StandardNFTContract({
-    name: 'StandardNFT_ClaimSale_Test',
+    name: 'StandardNFT_FreshmintClaimSaleV2_Test',
     schema: getTestSchema(),
     owner: ownerAuthorizer,
   });
@@ -40,7 +40,7 @@ describe('ClaimSaleContract', () => {
     );
   });
 
-  const sale = new ClaimSaleContract(contract);
+  const sale = new FreshmintClaimSaleV2Contract(contract);
 
   const saleID = 'default';
 
