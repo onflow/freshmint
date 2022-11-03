@@ -198,10 +198,81 @@ describe('ClaimSaleContract', () => {
 
     // Last claim should fail since queue is empty
     await expect(async () => {
-      await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, saleID));
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
     }).rejects.toThrow();
 
     await client.send(sale.stop(saleID));
+  });
+
+  describe('With claim limit', () => {
+    let buyer: TestAccount;
+
+    beforeEach(async () => {
+      buyer = await createAccount();
+      await mintFLOW(buyer.address, '1000.0');
+
+      await client.send(contract.mintNFTs(getTestNFTs(5)));
+    });
+
+    it('should sell to an address below the claim limit', async () => {
+      // Start sale with a claim limit of 3
+      await client.send(sale.start({ id: saleID, price: '10.0', claimLimit: 3 }));
+
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+    });
+
+    it('should not sell to an address at the claim limit', async () => {
+      // Start sale with a claim limit of 3
+      await client.send(sale.start({ id: saleID, price: '10.0', claimLimit: 3 }));
+
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+
+      // Buyer has used all 3 claims
+      await expect(async () => {
+        await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      }).rejects.toThrow();
+    });
+
+    it('should not sell to an address above the claim limit', async () => {
+      // Start sale with no claim limit
+      await client.send(sale.start({ id: saleID, price: '10.0' }));
+
+      // Buyer has claimed 3 NFTs
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+
+      // Set a claim limit of 3
+      await client.send(sale.setClaimLimit(saleID, 3));
+
+      // Buyer has used all 3 claims
+      await expect(async () => {
+        await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      }).rejects.toThrow();
+    });
+
+    it('should sell to an address after removing the claim limit', async () => {
+      // Start sale with no claim limit
+      await client.send(sale.start({ id: saleID, price: '10.0', claimLimit: 3 }));
+
+      // Buyer has claimed 3 NFTs
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+
+      // Buyer has used all 3 claims
+      await expect(async () => {
+        await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+      }).rejects.toThrow();
+
+      // Remove the claim limit
+      await client.send(sale.setClaimLimit(saleID, null));
+
+      // Buyer can claim another NFT
+      await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, saleID));
+    });
   });
 
   describe('With allowlist', () => {
