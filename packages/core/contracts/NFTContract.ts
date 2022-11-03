@@ -1,9 +1,12 @@
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
 
+// @ts-ignore
+import * as t from '@onflow/types';
+
 import * as metadata from '../metadata';
 import { FreshmintConfig } from '../config';
-import { TransactionAuthorizer, TransactionSigners } from '../transactions';
+import { Transaction, TransactionAuthorizer, TransactionSigners } from '../transactions';
 import { Script } from '../scripts';
 import { Path } from '../cadence/values';
 import { CommonNFTGenerator } from '../generators/CommonNFTGenerator';
@@ -99,6 +102,42 @@ export abstract class NFTContract {
       proposer,
       authorizers: [owner],
     };
+  }
+
+  getNFT(address: string, id: string): Script<{ id: string }> {
+    return new Script(
+      ({ imports }: FreshmintConfig) => {
+        const script = CommonNFTGenerator.getNFT({
+          imports,
+          contractName: this.name,
+          contractAddress: this.getAddress(),
+        });
+
+        return {
+          script,
+          args: (arg, t) => [arg(address, t.Address), arg(id, t.UInt64)],
+          computeLimit: 9999,
+        };
+      },
+      (result) => result,
+    );
+  }
+
+  destroyNFT(id: string): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = CommonNFTGenerator.destroyNFT({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [fcl.arg(id, t.UInt64)],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    }, Transaction.VoidResult);
   }
 
   getCollectionMetadata(): Script<CollectionMetadata | null> {

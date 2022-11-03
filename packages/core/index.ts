@@ -20,8 +20,19 @@ export { BlindNFTGenerator } from './generators/BlindNFTGenerator';
 export { EditionNFTGenerator } from './generators/EditionNFTGenerator';
 export { BlindEditionNFTGenerator } from './generators/BlindEditionNFTGenerator';
 
-export { ClaimSaleContract } from './contracts/ClaimSaleContract';
-export { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
+import { FreshmintClaimSaleContract } from './contracts/FreshmintClaimSaleContract';
+import { FreshmintClaimSaleGenerator } from './generators/FreshmintClaimSaleGenerator';
+
+export { FreshmintClaimSaleContract };
+export { FreshmintClaimSaleGenerator };
+
+// TODO: deprecate ClaimSaleContract, ClaimSaleGenerator. These are legacy export names
+// that are now aliases for FreshmintClaimSaleContract, FreshmintClaimSaleGenerator.
+export { FreshmintClaimSaleContract as ClaimSaleContract };
+export { FreshmintClaimSaleGenerator as ClaimSaleGenerator };
+
+export { FreshmintClaimSaleV2Contract } from './contracts/FreshmintClaimSaleV2Contract';
+export { FreshmintClaimSaleV2Generator } from './generators/FreshmintClaimSaleV2Generator';
 
 export { LockBoxGenerator } from './generators/LockBoxGenerator';
 export { CommonNFTGenerator } from './generators/CommonNFTGenerator';

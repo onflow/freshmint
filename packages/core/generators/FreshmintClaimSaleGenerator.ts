@@ -3,7 +3,7 @@
 import { ContractImports } from '../config';
 import TemplateGenerator from './TemplateGenerator';
 
-export class ClaimSaleGenerator extends TemplateGenerator {
+export class FreshmintClaimSaleGenerator extends TemplateGenerator {
   static contract({ imports }: { imports: ContractImports }): string {
     return this.generate(require('../../../cadence/freshmint-claim-sale/FreshmintClaimSale.cdc'), {
       imports,

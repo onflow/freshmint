@@ -1,5 +1,5 @@
 import { BlindNFTContract, NFTMintResult } from './BlindNFTContract';
-import { ClaimSaleContract } from './ClaimSaleContract';
+import { FreshmintClaimSaleContract } from './FreshmintClaimSaleContract';
 
 import {
   client,
@@ -72,7 +72,7 @@ describe('BlindNFTContract', () => {
     );
   });
 
-  const sale = new ClaimSaleContract(contract);
+  const sale = new FreshmintClaimSaleContract(contract);
 
   it('should start a sale', async () => {
     await client.send(sale.start({ id: 'default', price: '10.0' }));
