@@ -11,7 +11,7 @@ export default class TemplateGenerator {
     return template(context, {
       allowedProtoMethods: {
         asCadenceTypeString: true,
-        getCadenceByteTemplate: true,
+        getCadenceEncodingTemplate: true,
       },
     });
   }

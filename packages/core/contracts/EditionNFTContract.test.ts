@@ -36,6 +36,24 @@ describe('EditionNFTContract', () => {
     );
   });
 
+  // TODO: refactor this test case into a separate test suite
+  it('should deploy a contract and save the admin resource to the contract account', async () => {
+    const contractWithAdmin = new EditionNFTContract({
+      name: 'EditionNFT_Test_ContractAdmin',
+      schema: getTestSchema(false),
+      owner: ownerAuthorizer,
+    });
+
+    await client.send(
+      contractWithAdmin.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+        collectionMetadata,
+        saveAdminResourceToContractAccount: true,
+      }),
+    );
+  });
+
   let edition1: EditionResult;
   let edition2: EditionResult;
 

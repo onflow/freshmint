@@ -29,14 +29,6 @@ pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&F
     return account.getCapability<&FreshmintClaimSale.Allowlist>(privatePath)
 }
 
-pub fun getQueueName(bucketName maybeBucketName: String?): String {
-    if let bucketName = maybeBucketName {
-        return "Queue_".concat(bucketName)
-    }
-
-    return "Queue"
-}
-
 // This transaction starts a new claim sale.
 //
 // Parameters:
@@ -63,7 +55,7 @@ transaction(
 
         self.sales = getOrCreateSaleCollection(account: signer)
 
-        let queueName = getQueueName(bucketName: bucketName)
+        let queueName = {{ contractName }}.makeQueueName(bucketName: bucketName)
         let queuePrivatePath = {{ contractName }}.getPrivatePath(suffix: queueName)
 
         self.mintQueue = signer

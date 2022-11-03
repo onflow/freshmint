@@ -1,5 +1,4 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
-import MetadataViews from {{{ imports.MetadataViews }}}
 
 /// FreshmintQueue defines an interface for distributing NFTs in a queue.
 ///
@@ -33,7 +32,7 @@ pub contract FreshmintQueue {
     /// NFTs removed from the underlying collection will be skipped 
     /// when withdrawing from the queue.
     ///
-    pub resource CollectionQueue: Queue {
+    pub resource CollectionQueue: Queue, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
 
         /// The IDs array contains the NFT IDs in order of insertion.
         ///
@@ -41,17 +40,14 @@ pub contract FreshmintQueue {
 
         /// The collection containing the NFTs to be distributed by this queue.
         ///
-        access(self) let collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
+        access(self) let collection: Capability<&NonFungibleToken.Collection>
 
         init(
-            collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
+            collection: Capability<&NonFungibleToken.Collection>
         ) {
             self.ids = []
 
             self.collection = collection
-
-            self.collection.borrow() 
-                ?? panic("CollectionQueue.init: failed to borrow collection capability")
         }
 
         /// Deposit an NFT into this queue.
@@ -67,6 +63,21 @@ pub contract FreshmintQueue {
             self.ids.append(token.id)
 
             collection.deposit(token: <- token)
+        }
+
+        /// Return the NFT IDs in this queue.
+        ///
+        pub fun getIDs(): [UInt64] {
+            return self.ids
+        }
+
+        /// Borrow a reference to an NFT in this queue.
+        ///
+        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
+            let collection = self.collection.borrow() 
+                ?? panic("CollectionQueue.borrowNFT: failed to borrow collection capability")
+
+            return collection.borrowNFT(id: id)
         }
 
         /// Insert an ID into this queue.
@@ -92,15 +103,17 @@ pub contract FreshmintQueue {
             let collection = self.collection.borrow() 
                 ?? panic("CollectionQueue.getNextNFT: failed to borrow collection capability")
 
-            let availableIDs = collection.getIDs()
-
             // Withdraw the next available NFT from the collection,
             // skipping over NFTs that exist in the ID list but have
-            // been removed from the underlying collection.
+            // been removed from the underlying collection
+            //
             while self.ids.length > 0 {
                 let id = self.ids.removeFirst()
 
-                if availableIDs.contains(id) {
+                // This is the only efficient way to check if the collection
+                // contains an NFT without triggering a panic
+                //
+                if collection.ownedNFTs.containsKey(id) {
                     return <- collection.withdraw(withdrawID: id)
                 }
             }
@@ -116,7 +129,7 @@ pub contract FreshmintQueue {
     }
 
     pub fun createCollectionQueue(
-        collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
+        collection: Capability<&NonFungibleToken.Collection>
     ): @CollectionQueue {
         return <- create CollectionQueue(collection: collection)
     }

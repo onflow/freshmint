@@ -1,9 +1,3 @@
-// @ts-ignore
-import * as t from '@onflow/types';
-
-// @ts-ignore
-import { sansPrefix } from '@onflow/util-address';
-
 import { parseFixedPointValue } from './fixedPoint';
 
 export interface CadenceType {
@@ -12,75 +6,6 @@ export interface CadenceType {
 
 export interface CadenceValue {
   toBytes(): Buffer;
-}
-
-export function getCadenceByteTemplate(cadenceType: CadenceType): string {
-  // TODO: support Bool and Character types
-
-  switch (cadenceType) {
-    case t.UInt:
-    case t.Int:
-    case t.UInt8:
-    case t.Int8:
-    case t.UInt16:
-    case t.Int16:
-    case t.UInt32:
-    case t.Int32:
-    case t.UInt64:
-    case t.Int64:
-    case t.UInt128:
-    case t.Int128:
-    case t.UInt256:
-    case t.Int256:
-    case t.UFix64:
-    case t.Fix64:
-      return 'toBigEndianBytes()';
-    case t.String:
-      return 'utf8';
-    case t.Address:
-      return 'toBytes()';
-  }
-
-  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized on chain.`);
-}
-
-export function serializeCadenceValue(cadenceType: CadenceType, value: any): Buffer {
-  // TODO: support Character type
-
-  switch (cadenceType) {
-    case t.Int:
-      return new IntValue(value).toBytes();
-    case t.Int8:
-      return new Int8Value(value).toBytes();
-    case t.Int16:
-      return new Int16Value(value).toBytes();
-    case t.Int32:
-      return new Int32Value(value).toBytes();
-    case t.Int64:
-      return new Int64Value(value).toBytes();
-    case t.UInt:
-      return new UIntValue(value).toBytes();
-    case t.UInt8:
-      return new UInt8Value(value).toBytes();
-    case t.UInt16:
-      return new UInt16Value(value).toBytes();
-    case t.UInt32:
-      return new UInt32Value(value).toBytes();
-    case t.UInt64:
-      return new UInt64Value(value).toBytes();
-    case t.UFix64:
-      return new UFix64Value(value).toBytes();
-    case t.Fix64:
-      return new Fix64Value(value).toBytes();
-    case t.String:
-      return Buffer.from(value, 'utf-8');
-    case t.Address:
-      return Buffer.from(sansPrefix(value), 'hex');
-    case t.Bool:
-      return new BoolValue(value).toBytes();
-  }
-
-  throw new Error(`The '${cadenceType.label}' Cadence type cannot yet be serialized off chain.`);
 }
 
 export class IntValue {
@@ -339,6 +264,18 @@ export class UFix64Value {
     buffer.writeBigUInt64BE(this.number);
 
     return buffer;
+  }
+}
+
+export class StringValue {
+  value: string;
+
+  constructor(value: string) {
+    this.value = value;
+  }
+
+  toBytes(): Buffer {
+    return Buffer.from(this.value, 'utf-8');
   }
 }
 
