@@ -225,15 +225,8 @@ pub contract FreshmintClaimSale {
             self.claims = {}
 
             self.claimLimit = claimLimit
+
             self.allowlist = allowlist
-
-            if self.claimLimit != nil && self.allowlist != nil {
-                panic("cannot set a claim limit and an allowlist at the same time")
-            }
-
-            if let allowlist = self.allowlist {
-                allowlist.borrow() ?? panic("failed to borrow allowlist capability")
-            }
         }
 
         /// setClaimLimit sets the claim limit for this sale.
@@ -241,10 +234,6 @@ pub contract FreshmintClaimSale {
         /// Pass nil to remove the claim limit from this sale.
         ///
         pub fun setClaimLimit(limit: UInt?) {
-            pre {
-                self.allowlist == nil: "cannot set a claim limit on a sale that has an allowlist"
-            }
-
             self.claimLimit = limit
         }
 
@@ -253,15 +242,7 @@ pub contract FreshmintClaimSale {
         /// Pass nil to remove the allowlist from this sale.
         ///
         pub fun setAllowlist(allowlist: Capability<&Allowlist>?) {
-            pre {
-                self.claimLimit == nil: "cannot set an allowlist on a sale that has a claim limit"
-            }
-
             self.allowlist = allowlist
-
-            if let allowlist = self.allowlist {
-                allowlist.borrow() ?? panic("failed to borrow allowlist capability")
-            }
         }
 
         /// getInfo returns a read-only summary of this sale.
