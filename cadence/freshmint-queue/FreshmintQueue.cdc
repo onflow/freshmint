@@ -58,7 +58,7 @@ pub contract FreshmintQueue {
         pub fun deposit(token: @NonFungibleToken.NFT) {
 
             let collection = self.collection.borrow() 
-                ?? panic("CollectionQueue.getNextNFT: failed to borrow collection capability")
+                ?? panic("CollectionQueue.deposit: failed to borrow collection capability")
 
             self.ids.append(token.id)
 
