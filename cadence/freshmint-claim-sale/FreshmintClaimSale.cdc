@@ -391,7 +391,7 @@ pub contract FreshmintClaimSale {
         /// The integer value is the number of NFTs an  
         /// address is entitled to claim.
         ///
-        pub let claimsByAddress: {Address: UInt}
+        access(self) let claimsByAddress: {Address: UInt}
 
         init() {
             self.claimsByAddress = {}
