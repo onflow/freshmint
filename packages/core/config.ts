@@ -34,6 +34,7 @@ export const TESTNET: FreshmintConfig = {
     FreshmintEncoding: '0x8ab7897dd9d69819',
     FreshmintMetadataViews: '0xc270e330615c6fa0',
     FreshmintClaimSale: '0x2d3d6874bc231156',
+    FreshmintClaimSaleV2: '0x3b8959a9823c62b4',
     FreshmintLockBox: '0x0cad7d1c09a3a433',
     FreshmintQueue: '0x10077395fa5d2436',
   },
