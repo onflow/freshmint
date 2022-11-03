@@ -104,6 +104,25 @@ export abstract class NFTContract {
     };
   }
 
+  getNFT(address: string, id: string): Script<{ id: string }> {
+    return new Script(
+      ({ imports }: FreshmintConfig) => {
+        const script = CommonNFTGenerator.getNFT({
+          imports,
+          contractName: this.name,
+          contractAddress: this.getAddress(),
+        });
+
+        return {
+          script,
+          args: (arg, t) => [arg(address, t.Address), arg(id, t.UInt64)],
+          computeLimit: 9999,
+        };
+      },
+      (result) => result,
+    );
+  }
+
   destroyNFT(id: string): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
       const script = CommonNFTGenerator.destroyNFT({
