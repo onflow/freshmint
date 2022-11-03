@@ -40,6 +40,7 @@ export class ClaimSaleContract {
     paymentReceiverAddress,
     paymentReceiverPath,
     bucket,
+    claimLimit,
     allowlist,
   }: {
     id: string;
@@ -47,6 +48,7 @@ export class ClaimSaleContract {
     paymentReceiverAddress?: string;
     paymentReceiverPath?: string;
     bucket?: string;
+    claimLimit?: number;
     allowlist?: string;
   }): Transaction<void> {
     const signers = this.nftContract.getSigners();
@@ -72,6 +74,7 @@ export class ClaimSaleContract {
           fcl.arg(receiverAddress, t.Address),
           fcl.arg(Path.fromString(receiverPath), t.Path),
           fcl.arg(bucket, t.Optional(t.String)),
+          fcl.arg(claimLimit ?? null, t.Optional(t.UInt)),
           fcl.arg(allowlist ?? null, t.Optional(t.String)),
         ],
         computeLimit: 9999,
@@ -157,6 +160,21 @@ export class ClaimSaleContract {
         return nftId;
       },
     );
+  }
+
+  setClaimLimit(saleId: string, claimLimit: number | null): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = ClaimSaleGenerator.setClaimLimit({
+        imports,
+      });
+
+      return {
+        script,
+        args: [fcl.arg(saleId, t.String), fcl.arg(claimLimit, t.Optional(t.UInt))],
+        computeLimit: 9999,
+        signers: this.nftContract.getSigners(),
+      };
+    }, Transaction.VoidResult);
   }
 
   getSale(saleAddress: string, saleId: string): Script<ClaimSale | null> {

@@ -43,6 +43,7 @@ transaction(
     paymentReceiverAddress: Address?,
     paymentReceiverPath: PublicPath?,
     bucketName: String?,
+    claimLimit: UInt?,
     allowlistName: String?
 ) {
 
@@ -78,6 +79,7 @@ transaction(
             receiverPath: {{ contractName }}.CollectionPublicPath,
             paymentReceiver: self.paymentReceiver,
             price: price,
+            claimLimit: claimLimit,
             allowlist: self.allowlist
         )
 

@@ -91,8 +91,8 @@ pub contract FreshmintClaimSale {
             destroy oldSale
         }
 
-        pub fun remove(saleID: String): @Sale {
-            let sale <- self.sales.remove(key: saleID) ?? panic("sale does not exist")
+        pub fun remove(id: String): @Sale {
+            let sale <- self.sales.remove(key: id) ?? panic("sale does not exist")
 
             emit SaleRemoved(
                 uuid: sale.uuid,
@@ -109,6 +109,15 @@ pub contract FreshmintClaimSale {
         
         pub fun borrowSale(id: String): &{SalePublic}? {
             return &self.sales[id] as &{SalePublic}?
+        }
+
+        /// Borrow a full reference to a sale.
+        ///
+        /// Use this function to modify properties of the sale
+        /// (e.g. to set an allowlist or claim limit).
+        ///
+        pub fun borrowSaleAuth(id: String): &Sale? {
+            return &self.sales[id] as &Sale?
         }
     }
 
@@ -153,6 +162,7 @@ pub contract FreshmintClaimSale {
         pub fun getPaymentVaultType(): Type
         pub fun getSupply(): Int?
         pub fun getInfo(): SaleInfo
+        pub fun getRemainingClaims(address: Address): UInt?
 
         pub fun claim(payment: @FungibleToken.Vault, address: Address)
 
@@ -183,9 +193,17 @@ pub contract FreshmintClaimSale {
         ///
         pub let paymentReceiver: Capability<&{FungibleToken.Receiver}>
 
+        /// A dictionary that tracks the number of NFTs claimed per address.
+        ///
+        access(self) let claims: {Address: UInt}
+
+        /// An optional limit on the number of NFTs that can be claimed per address.
+        ///
+        pub var claimLimit: UInt?
+
         /// An optional allowlist used to gate access to this sale.
         ///
-        access(self) let allowlist: Capability<&Allowlist>?
+        access(self) var allowlist: Capability<&Allowlist>?
 
         init(
             id: String,
@@ -193,6 +211,7 @@ pub contract FreshmintClaimSale {
             receiverPath: PublicPath,
             paymentReceiver: Capability<&{FungibleToken.Receiver}>,
             price: UFix64,
+            claimLimit: UInt?,
             allowlist: Capability<&Allowlist>?
         ) {
             self.id = id
@@ -203,7 +222,7 @@ pub contract FreshmintClaimSale {
 
             // Check that payment receiver capability is linked
             self.paymentReceiver.borrow() 
-                ?? panic("init: failed to borrow payment receiver capability")
+                ?? panic("failed to borrow payment receiver capability")
 
             // Check that queue capability is linked
             let queueRef = self.queue.borrow() 
@@ -212,11 +231,27 @@ pub contract FreshmintClaimSale {
             // The size of the sale is the initial size of the queue
             self.size = queueRef.remaining()
 
-            self.allowlist = allowlist
+            self.claims = {}
 
-            if let allowlist = self.allowlist {
-                allowlist.borrow() ?? panic("init: failed to borrow allowlist capability")
-            }
+            self.claimLimit = claimLimit
+
+            self.allowlist = allowlist
+        }
+
+        /// setClaimLimit sets the claim limit for this sale.
+        ///
+        /// Pass nil to remove the claim limit from this sale.
+        ///
+        pub fun setClaimLimit(limit: UInt?) {
+            self.claimLimit = limit
+        }
+
+        /// setAllowlist sets the allowlist for this sale.
+        ///
+        /// Pass nil to remove the allowlist from this sale.
+        ///
+        pub fun setAllowlist(allowlist: Capability<&Allowlist>?) {
+            self.allowlist = allowlist
         }
 
         /// getInfo returns a read-only summary of this sale.
@@ -235,6 +270,21 @@ pub contract FreshmintClaimSale {
         ///
         pub fun getPaymentVaultType(): Type {
             return self.borrowPaymentReceiver().getType()
+        }
+
+        /// getRemainingClaims returns the number of claims remaining for a given address.
+        ///
+        /// This function returns nil if there is no claim limit.
+        ///
+        pub fun getRemainingClaims(address: Address): UInt? {
+            if let claimLimit = self.claimLimit {
+                let claims = self.claims[address] ?? 0
+                return claimLimit - claims
+            }
+
+            // Return nil if there is no claim limit to indicate that 
+            // this address has unlimited remaining claims.
+            return nil
         }
 
         /// getSupply returns the number of NFTs remaining in this sale.
@@ -260,14 +310,16 @@ pub contract FreshmintClaimSale {
         access(self) fun checkAllowlist(address: Address) {
             if let allowlistCap = self.allowlist {
 
-                let allowlist = allowlistCap.borrow() ?? panic("failed to borrow allowlist")
+                let allowlist = allowlistCap.borrow() 
+                    ?? panic("failed to borrow allowlist")
 
                 if let claims = allowlist.getClaims(address: address) {
                     if claims == 0 {
                         panic("address has already consumed all claims")
                     }
 
-                    allowlist.consumeClaim(address: address)
+                    // Reduce the claim count by one
+                    allowlist.setClaims(address: address, claims: claims - 1)
                 } else {
                     panic("address is not in the allowlist")
                 }
@@ -289,6 +341,15 @@ pub contract FreshmintClaimSale {
             }
 
             self.checkAllowlist(address: address)
+
+            let claims = self.claims[address] ?? 0
+
+            // Enforce the claim limit if it is set
+            if let claimLimit = self.claimLimit {
+                assert(claims < claimLimit, message: "reached claim limit")
+            }
+
+            self.claims[address] = claims + 1
 
             let queue = self.queue.borrow() ?? panic("failed to borrow NFT queue")
 
@@ -348,23 +409,6 @@ pub contract FreshmintClaimSale {
         pub fun getClaims(address: Address): UInt? {
             return self.claimsByAddress[address]
         }
-
-        /// consumeClaim is called when a user exercises one of their claims.
-        ///
-        /// This function returns true if the address can claim an NFT.
-        /// It returns false is the address is not in the allowlist or has
-        /// excercised all of its claims.
-        ///
-        /// Each call to consumeClaim decrements the address's claim
-        /// count by one.
-        ///
-        pub fun consumeClaim(address: Address) {
-            if let claims = self.claimsByAddress[address] {
-                if claims != 0 {
-                    self.claimsByAddress[address] = claims - 1
-                }
-            }
-        }
     }
 
     /// makeAllowlistName is a utility function that constructs
@@ -384,6 +428,7 @@ pub contract FreshmintClaimSale {
         receiverPath: PublicPath,
         paymentReceiver: Capability<&{FungibleToken.Receiver}>,
         price: UFix64,
+        claimLimit: UInt?,
         allowlist: Capability<&Allowlist>?
     ): @Sale {
         let sale <- create Sale(
@@ -392,6 +437,7 @@ pub contract FreshmintClaimSale {
             receiverPath: receiverPath,
             paymentReceiver: paymentReceiver,
             price: price,
+            claimLimit: claimLimit,
             allowlist: allowlist
         )
 

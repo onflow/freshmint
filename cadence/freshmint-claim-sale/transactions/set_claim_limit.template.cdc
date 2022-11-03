@@ -1,11 +1,12 @@
 import FreshmintClaimSale from {{{ imports.FreshmintClaimSale }}}
 
-// This transaction stops an existing claim sale.
+// This transaction sets a claim limit on an existing sale.
 //
 // Parameters:
 // - saleID: the ID of the sale to stop.
+// - claimLimit: the claim limit to set on the sale.
 //
-transaction(saleID: String) {
+transaction(saleID: String, claimLimit: UInt?) {
     
     let sales: &FreshmintClaimSale.SaleCollection
 
@@ -14,8 +15,8 @@ transaction(saleID: String) {
     }
 
     execute {
-        let sale <- self.sales.remove(id: saleID)
+        let sale = self.sales.borrowSaleAuth(id: saleID) ?? panic("sale does not exist")
 
-        destroy sale
+        sale.setClaimLimit(limit: claimLimit)
     }
 }
