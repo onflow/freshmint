@@ -37,6 +37,25 @@ describe('BlindEditionNFTContract', () => {
     );
   });
 
+  // TODO: refactor this test case into a separate test suite
+  it('should deploy a contract and save the admin resource to the contract account', async () => {
+    const contractWithAdmin = new BlindEditionNFTContract({
+      name: 'BlindEditionNFT_Test_ContractAdmin',
+      schema: getTestSchema(false),
+      owner: ownerAuthorizer,
+    });
+
+    await client.send(
+      contractWithAdmin.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+        placeholderImage: 'sample-image.jpeg',
+        collectionMetadata,
+        saveAdminResourceToContractAccount: true,
+      }),
+    );
+  });
+
   let edition1: EditionResult;
   let edition2: EditionResult;
 

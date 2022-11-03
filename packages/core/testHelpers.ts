@@ -1,8 +1,15 @@
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
 
-// @ts-ignore
-import { init, emulator, deployContract } from '@onflow/flow-js-testing';
+import {
+  init,
+  emulator,
+  deployContract,
+  createAccount as createAccountOnEmulator,
+  pubFlowKey,
+  mintFlow,
+  // @ts-ignore
+} from '@onflow/flow-js-testing';
 
 import { EMULATOR } from './config';
 import { FreshmintClient } from './client';
@@ -13,6 +20,7 @@ import { CollectionMetadata } from './contracts/NFTContract';
 import { FreshmintMetadataViewsGenerator } from './generators/FreshmintMetadataViewsGenerator';
 import { ClaimSaleGenerator } from './generators/ClaimSaleGenerator';
 import { FreshmintQueueGenerator } from './generators/FreshmintQueueGenerator';
+import { FreshmintEncodingGenerator } from './generators/FreshmintEncodingGenerator';
 
 import flowConfig from './flow.json';
 
@@ -51,6 +59,12 @@ export async function setupEmulator() {
   fcl.config().put('logger.level', 0);
 
   await deployContract({
+    code: FreshmintEncodingGenerator.contract(),
+    to: emulatorServiceAccount,
+    name: 'FreshmintEncoding',
+  });
+
+  await deployContract({
     code: FreshmintMetadataViewsGenerator.contract(),
     to: emulatorServiceAccount,
     name: 'FreshmintMetadataViews',
@@ -77,11 +91,54 @@ const privateKey = InMemoryECPrivateKey.fromHex(emulatorServiceAccountPrivateKey
 const signer = new InMemoryECSigner(privateKey, HashAlgorithm.SHA3_256);
 
 export const ownerAuthorizer = new TransactionAuthorizer({ address: emulatorServiceAccount, keyIndex: 0, signer });
-
 export const payerAuthorizer = new TransactionAuthorizer({ address: emulatorServiceAccount, keyIndex: 0, signer });
 
 export const contractPublicKey = privateKey.getPublicKey();
 export const contractHashAlgorithm = HashAlgorithm.SHA3_256;
+
+export type TestAccount = {
+  address: string;
+  authorizer: TransactionAuthorizer;
+};
+
+export async function createAccount(): Promise<{ address: string; authorizer: TransactionAuthorizer }> {
+  const publicKey = await pubFlowKey({
+    privateKey: emulatorServiceAccountPrivateKey,
+    hashAlgorithm: 3, // SHA3_256
+    signatureAlgorithm: 2, // ECDSA_P256
+    weight: 1000,
+  });
+
+  const address = await createAccountOnEmulator({ name: '', keys: [publicKey] });
+  const authorizer = new TransactionAuthorizer({ address, keyIndex: 0, signer });
+
+  return {
+    address,
+    authorizer,
+  };
+}
+
+export async function getFLOWBalance(address: string): Promise<number> {
+  const result = await fcl.query({
+    cadence: `
+      import FungibleToken from ${config.imports.FungibleToken}
+      import FlowToken from ${config.imports.FlowToken}
+    
+      pub fun main(address: Address): UFix64 {
+          let account = getAccount(address)
+          let vaultRef = account.getCapability(/public/flowTokenBalance)!.borrow<&FlowToken.Vault{FungibleToken.Balance}>()
+              ?? panic("failed to borrow a reference to the balance capability")
+      
+          return vaultRef.balance
+      }
+    `,
+    args: (arg: any, t: any) => [arg(address, t.Address)],
+  });
+
+  return parseFloat(result as unknown as string);
+}
+
+export { mintFlow as mintFLOW };
 
 export function getTestSchema(includeSerialNumber = true): metadata.Schema {
   const schema = metadata.createSchema({

@@ -56,12 +56,7 @@ transaction(
 
         self.sales = getOrCreateSaleCollection(account: signer)
 
-        var queueName = "Queue"
-
-        if let bucket = bucketName {
-            queueName = "Queue_".concat(bucket)
-        }
-
+        let queueName = {{ contractName }}.makeQueueName(bucketName: bucketName)
         let queuePrivatePath = {{ contractName }}.getPrivatePath(suffix: queueName)
 
         self.mintQueue = signer

@@ -38,6 +38,25 @@ describe('BlindNFTContract', () => {
     );
   });
 
+  // TODO: refactor this test case into a separate test suite
+  it('should deploy a contract and save the admin resource to the contract account', async () => {
+    const contractWithAdmin = new BlindNFTContract({
+      name: 'BlindNFT_Test_ContractAdmin',
+      schema: getTestSchema(),
+      owner: ownerAuthorizer,
+    });
+
+    await client.send(
+      contractWithAdmin.deploy({
+        publicKey: contractPublicKey,
+        hashAlgorithm: contractHashAlgorithm,
+        placeholderImage: 'sample-image.jpeg',
+        collectionMetadata,
+        saveAdminResourceToContractAccount: true,
+      }),
+    );
+  });
+
   const nfts = getTestNFTs(3);
 
   let mintedNFTs: NFTMintResult[];

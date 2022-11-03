@@ -170,8 +170,7 @@ pub contract FreshmintClaimSale {
         pub let price: UFix64
         pub let size: Int?
 
-        /// A capability to the underlying to the queue
-        /// that returns the NFTs to be sold in this sale.
+        /// A capability to the queue that returns the NFTs to be sold in this sale.
         ///
         access(self) let queue: Capability<&{FreshmintQueue.Queue}>
         

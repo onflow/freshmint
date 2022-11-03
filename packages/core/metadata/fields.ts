@@ -2,7 +2,8 @@
 import * as t from '@onflow/types';
 
 import { MetadataMap, MetadataValue } from '.';
-import { CadenceType, getCadenceByteTemplate, parseBool, serializeCadenceValue } from '../cadence/values';
+import { CadenceType, parseBool } from '../cadence/values';
+import { encodeCadenceValue, getCadenceEncodingTemplate } from '../cadence/encoding';
 
 export class Field {
   name: string;
@@ -30,12 +31,12 @@ export class Field {
     return this.typeInstance.cadenceType.label;
   }
 
-  getCadenceByteTemplate(): string {
-    return getCadenceByteTemplate(this.asCadenceTypeObject());
+  getCadenceEncodingTemplate(): string {
+    return getCadenceEncodingTemplate(this.name, this.asCadenceTypeObject());
   }
 
-  serializeValue(value: MetadataValue): Buffer {
-    return this.typeInstance.serializeValue(value);
+  encodeValue(value: MetadataValue): Buffer {
+    return this.typeInstance.encodeValue(value);
   }
 
   export(): FieldInput {
@@ -65,8 +66,8 @@ export class FieldTypeInstance {
     return value;
   }
 
-  serializeValue(value: MetadataValue): Buffer {
-    return serializeCadenceValue(this.cadenceType, value as string);
+  encodeValue(value: MetadataValue): Buffer {
+    return encodeCadenceValue(this.cadenceType, value as string);
   }
 }
 

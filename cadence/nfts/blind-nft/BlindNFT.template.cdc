@@ -1,8 +1,8 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
+import FreshmintEncoding from {{{ imports.FreshmintEncoding }}}
 import FreshmintMetadataViews from {{{ imports.FreshmintMetadataViews }}}
-import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 
 pub contract {{ contractName }}: NonFungibleToken {
 
@@ -18,10 +18,6 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
     pub let CollectionPrivatePath: PrivatePath
-
-    pub let QueueStoragePath: StoragePath
-    pub let QueuePrivatePath: PrivatePath
-
     pub let AdminStoragePath: StoragePath
 
     /// The total number of {{ contractName }} NFTs that have been minted.
@@ -69,7 +65,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun encode(): [UInt8] {
             return self.salt
             {{#each fields}}
-                .concat(self.{{ this.name }}.{{ this.getCadenceByteTemplate }})
+                .concat({{ this.getCadenceEncodingTemplate }})
             {{/each}}
         }
 
@@ -390,6 +386,26 @@ pub contract {{ contractName }}: NonFungibleToken {
         return StoragePath(identifier: "{{ contractName }}_".concat(suffix))!
     }
 
+    /// Return a collection name with an optional bucket suffix.
+    ///
+    pub fun makeCollectionName(bucketName maybeBucketName: String?): String {
+        if let bucketName = maybeBucketName {
+            return "Collection_".concat(bucketName)
+        }
+
+        return "Collection"
+    }
+
+    /// Return a queue name with an optional bucket suffix.
+    ///
+    pub fun makeQueueName(bucketName maybeBucketName: String?): String {
+        if let bucketName = maybeBucketName {
+            return "Queue_".concat(bucketName)
+        }
+
+        return "Queue"
+    }
+
     priv fun initAdmin(admin: AuthAccount) {
         // Create an empty collection and save it to storage
         let collection <- {{ contractName }}.createEmptyCollection()
@@ -399,19 +415,6 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.link<&{{ contractName }}.Collection>({{ contractName }}.CollectionPrivatePath, target: {{ contractName }}.CollectionStoragePath)
 
         admin.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPublicPath, target: {{ contractName }}.CollectionStoragePath)
-
-        // Create a queue to hold minted NFTs.
-        //
-        // NFTs are minted into a queue to preserve the mint order.
-        // A CollectionQueue is linked to a collection. All NFTs minted into 
-        // the queue are deposited into the underlying collection.
-        //
-        let queue <- FreshmintQueue.createCollectionQueue(
-            collection: admin.getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>({{ contractName }}.CollectionPrivatePath)
-        )
-
-        admin.save(<- queue, to: {{ contractName }}.QueueStoragePath)
-        admin.link<&FreshmintQueue.CollectionQueue>({{ contractName }}.QueuePrivatePath, target: {{ contractName }}.QueueStoragePath)
 
         // Create an admin resource and save it to storage
         let adminResource <- create Admin()
@@ -426,9 +429,6 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.CollectionPublicPath = {{ contractName }}.getPublicPath(suffix: "Collection")
         self.CollectionStoragePath = {{ contractName }}.getStoragePath(suffix: "Collection")
         self.CollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: "Collection")
-
-        self.QueueStoragePath = {{ contractName }}.getStoragePath(suffix: "Queue")
-        self.QueuePrivatePath = {{ contractName }}.getPrivatePath(suffix: "Queue")
 
         self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
 

@@ -107,12 +107,12 @@ export class BlindNFTContract extends NFTContract {
     );
   }
 
-  mintNFTs(metadata: MetadataMap[]): Transaction<NFTMintResult[]> {
+  mintNFTs(metadata: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
     const hashedNFTs = this.hashNFTs(metadata);
-    return this.mintHashedNFTs(hashedNFTs);
+    return this.mintHashedNFTs(hashedNFTs, bucket);
   }
 
-  mintHashedNFTs(hashedNFTs: HashedNFT[]): Transaction<NFTMintResult[]> {
+  mintHashedNFTs(hashedNFTs: HashedNFT[], bucket?: string): Transaction<NFTMintResult[]> {
     const hashes = hashedNFTs.map((nft) => nft.metadataHash);
 
     return new Transaction(
@@ -125,7 +125,7 @@ export class BlindNFTContract extends NFTContract {
 
         return {
           script,
-          args: [fcl.arg(hashes, t.Array(t.String))],
+          args: [fcl.arg(hashes, t.Array(t.String)), fcl.arg(bucket, t.Optional(t.String))],
           computeLimit: 9999,
           signers: this.getSigners(),
         };
