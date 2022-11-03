@@ -1,7 +1,6 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
 import FreshmintClaimSale from {{{ imports.FreshmintClaimSale }}}
-import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
@@ -43,12 +42,11 @@ transaction(
     paymentReceiverAddress: Address?,
     paymentReceiverPath: PublicPath?,
     bucketName: String?,
-    claimLimit: UInt?,
     allowlistName: String?
 ) {
 
     let sales: &FreshmintClaimSale.SaleCollection
-    let mintQueue: Capability<&{FreshmintQueue.Queue}>
+    let collection: Capability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>
     let paymentReceiver: Capability<&{FungibleToken.Receiver}>
     let allowlist: Capability<&FreshmintClaimSale.Allowlist>?
 
@@ -56,11 +54,12 @@ transaction(
 
         self.sales = getOrCreateSaleCollection(account: signer)
 
-        let queueName = {{ contractName }}.makeQueueName(bucketName: bucketName)
-        let queuePrivatePath = {{ contractName }}.getPrivatePath(suffix: queueName)
+        let collectionName = {{ contractName }}.makeCollectionName(bucketName: bucketName)
 
-        self.mintQueue = signer
-            .getCapability<&{FreshmintQueue.Queue}>(queuePrivatePath)
+        let nftCollectionPrivatePath = {{ contractName }}.getPrivatePath(suffix: collectionName)
+
+        self.collection = signer
+            .getCapability<&{NonFungibleToken.Provider, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection}>(nftCollectionPrivatePath)
 
         self.paymentReceiver = getAccount(paymentReceiverAddress ?? signer.address)
             .getCapability<&{FungibleToken.Receiver}>(paymentReceiverPath ?? /public/flowTokenReceiver)
@@ -75,11 +74,10 @@ transaction(
     execute {
         let sale <- FreshmintClaimSale.createSale(
             id: saleID,
-            queue: self.mintQueue,
+            collection: self.collection,
             receiverPath: {{ contractName }}.CollectionPublicPath,
             paymentReceiver: self.paymentReceiver,
             price: price,
-            claimLimit: claimLimit,
             allowlist: self.allowlist
         )
 
