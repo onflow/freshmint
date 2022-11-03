@@ -14,7 +14,7 @@ transaction(saleID: String) {
     }
 
     execute {
-        let sale <- self.sales.remove(saleID: saleID)
+        let sale <- self.sales.remove(id: saleID)
 
         destroy sale
     }

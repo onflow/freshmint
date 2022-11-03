@@ -91,8 +91,8 @@ pub contract FreshmintClaimSale {
             destroy oldSale
         }
 
-        pub fun remove(saleID: String): @Sale {
-            let sale <- self.sales.remove(key: saleID) ?? panic("sale does not exist")
+        pub fun remove(id: String): @Sale {
+            let sale <- self.sales.remove(key: id) ?? panic("sale does not exist")
 
             emit SaleRemoved(
                 uuid: sale.uuid,
