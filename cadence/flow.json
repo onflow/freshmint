@@ -39,8 +39,17 @@
 			"freshmint-claim-sale-mainnet": [
 				"FreshmintClaimSale"
 			],
+			"freshmint-claim-sale-v2-mainnet": [
+				"FreshmintClaimSaleV2"
+			],
 			"freshmint-metadata-views-mainnet": [
 				"FreshmintMetadataViews"
+			],
+			"freshmint-queue-mainnet": [
+				"FreshmintQueue"
+			],
+			"freshmint-encoding-mainnet": [
+				"FreshmintEncoding"
 			]
 		}
 	},
@@ -68,6 +77,15 @@
 		},
 		"freshmint-claim-sale-mainnet": {
 			"fromFile": "freshmint-claim-sale-mainnet.private.json"
+		},
+		"freshmint-claim-sale-v2-mainnet": {
+			"fromFile": "freshmint-claim-sale-v2-mainnet.private.json"
+		},
+		"freshmint-queue-mainnet": {
+			"fromFile": "freshmint-queue-mainnet.private.json"
+		},
+		"freshmint-encoding-mainnet": {
+			"fromFile": "freshmint-encoding-mainnet.private.json"
 		},
 		"freshmint-metadata-views-mainnet": {
 			"fromFile": "freshmint-metadata-views-mainnet.private.json"
