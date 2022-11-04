@@ -1,2 +1,2 @@
 // TODO: include version tag automatically in build
-export const version = '0.2.1';
+export const version = '0.2.2';
