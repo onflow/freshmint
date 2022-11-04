@@ -45,8 +45,11 @@ export const MAINNET: FreshmintConfig = {
     FungibleToken: '0xf233dcee88fe0abe',
     NonFungibleToken: '0x1d7e57aa55817448',
     MetadataViews: '0x1d7e57aa55817448',
+    FreshmintEncoding: '0xad7ea9b6c112b937',
     FreshmintMetadataViews: '0x0c82d33d4666f1f7',
     FreshmintClaimSale: '0x16a3117d86821389',
+    FreshmintClaimSaleV2: '0x0ed88e62be7037ac',
     FreshmintLockBox: '0xdd1c2c328f849078',
+    FreshmintQueue: '0xb442022ad78b11a2',
   },
 };
