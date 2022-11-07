@@ -163,17 +163,6 @@ async function mint({
   claim: boolean;
   batchSize: string;
 }) {
-  // const config = loadConfig((schema: FreshmintConfigSchema) => {
-  //   schema.contract.fields.schema.onLoad((metadataSchema: metadata.Schema) => {
-  //     if (metadataSchema.includesFieldType(metadata.IPFSFile)) {
-  //       schema.ipfsPinningService.setEnabled(
-  //         true,
-  //         'This field is required because your metadata schema specifies an "ipfs-file" field.',
-  //       );
-  //     }
-  //   });
-  // });
-
   const config = await loadConfig();
 
   const fresh = new Fresh(config, network);

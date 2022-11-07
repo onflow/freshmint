@@ -75,10 +75,19 @@ const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
           .shape(Object.fromEntries(Object.keys(value).map((key) => [key, yup.string().defined()])));
       }),
     }),
-  ipfsPinningService: yup.object({
-    endpoint: yup.string().defined(),
-    key: yup.string().defined(),
-  }),
+  ipfsPinningService: yup
+    .object()
+    // IPFS configuration is required when using an IPFS file field
+    .when('contract.schema', {
+      is: (schema: metadata.Schema) => {
+        return schema.includesFieldType(metadata.IPFSFile)
+      },
+      then: (schema) => schema.defined()
+    })
+    .shape({
+      endpoint: yup.string().defined(),
+      key: yup.string().defined(),
+    }),
   nftDataPath: yup.string().when('contract.type', {
     is: ContractType.Standard,
     then: (schema) => schema.default(defaultDataPathStandard),
