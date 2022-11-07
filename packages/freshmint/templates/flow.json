@@ -41,23 +41,34 @@
     "FreshmintMetadataViews": {
       "source": "cadence/contracts/FreshmintMetadataViews.cdc",
       "aliases": {
-        "testnet": "0x3c67d33388b03a69"
+        "testnet": "0xc270e330615c6fa0"
+      }
+    },
+    "FreshmintQueue": {
+      "source": "cadence/contracts/FreshmintQueue.cdc",
+      "aliases": {
+        "testnet": "0x10077395fa5d2436"
       }
     },
     "FreshmintClaimSale": {
       "source": "cadence/contracts/FreshmintClaimSale.cdc",
       "aliases": {
-        "testnet": "0x1ecfdf686eff2654"
+        "testnet": "0x2d3d6874bc231156"
       }
     },
     "FreshmintLockBox": {
       "source": "cadence/contracts/FreshmintLockBox.cdc",
       "aliases": {
-        "testnet": "0x3c67d33388b03a69",
+        "testnet": "0x0cad7d1c09a3a433",
         "mainnet": "0xdd1c2c328f849078"
       }
     },
-    "{{name}}": "cadence/contracts/{{name}}.cdc"
+    "{{ contractName }}": {
+      "source": "cadence/contracts/{{ contractName }}.cdc",
+      "aliases": {
+        "emulator": "0xf8d6e0586b0a20c7"
+      }
+    }
   },
   "networks": {
     "emulator": "127.0.0.1:3569",
@@ -66,7 +77,7 @@
   },
   "accounts": {
     "emulator-account": {
-      "address": "f8d6e0586b0a20c7",
+      "address": "0xf8d6e0586b0a20c7",
       "key": "4d9287571c8bff7482ffc27ef68d5b4990f9bd009a1e9fa812aae08ba167d57f"
     }
   },
@@ -76,9 +87,9 @@
         "NonFungibleToken",
         "MetadataViews",
         "FreshmintMetadataViews",
+        "FreshmintQueue",
         "FreshmintClaimSale",
-        "FreshmintLockBox",
-        "{{name}}"
+        "FreshmintLockBox"
       ]
     }
   }

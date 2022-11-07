@@ -24,6 +24,7 @@ const questions = [
   {
     type: 'input',
     name: 'contractName',
+    message: 'Contract name:',
     default: (answers: any) => suggestContractName(answers.name),
     validate: async function (input: string) {
       if (!input) {
@@ -54,8 +55,6 @@ const questions = [
   },
 ];
 
-}
-
 export default async function start(spinner: Ora, projectPath: string) {
   const isCurrentDirectory = projectPath === '.';
 
@@ -74,12 +73,7 @@ export default async function start(spinner: Ora, projectPath: string) {
 
   const answers = await inquirer.prompt(questions);
 
-  const userFields = await getCustomFields(answers.startCustomFields);
-
-  const userSchema = metadata.parseSchema(userFields);
-
-  // Extend default schema with user fields
-  const schema = metadata.defaultSchema.extend(userSchema);
+  const schema = metadata.defaultSchema;
 
   const contract: ContractConfig = {
     name: answers.contractName,
@@ -89,23 +83,9 @@ export default async function start(spinner: Ora, projectPath: string) {
 
   spinner.start('Generating project files...');
 
-  await generateProject(
-    projectPath,
-    answers.name,
-    answers.description,
-    contract,
-    getDefaultDataPath(contract.type),
-    userSchema.fields,
-  );
+  const description = `This is the ${answers.name} project.`;
 
-  saveConfig(
-    answers.name,
-    answers.description,
-    contract,
-    '${PINNING_SERVICE_ENDPOINT}',
-    '${PINNING_SERVICE_KEY}',
-    projectPath,
-  );
+  await generateProject(projectPath, answers.name, description, contract, getDefaultDataPath(contract.type));
 
   spinner.succeed(
     `✨ Project initialized in ${chalk.white(`${isCurrentDirectory ? 'the current directory.' : projectPath}\n`)}`,

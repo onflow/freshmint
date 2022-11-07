@@ -6,11 +6,11 @@ import {
   StandardNFTGenerator,
   EditionNFTGenerator,
   FreshmintMetadataViewsGenerator,
+  FreshmintQueueGenerator,
   CommonNFTGenerator,
   ClaimSaleGenerator,
   LockBoxGenerator,
 } from '@freshmint/core';
-import { Field } from '@freshmint/core/metadata';
 
 import { ContractConfig, ContractType } from './config';
 
@@ -25,9 +25,9 @@ export async function generateProject(
 
   await generateProjectCadence(dir, contract);
 
-  await createFlowConfig(dir, { name: contract.name });
-  await createFlowTestnetConfig(dir, { name: contract.name });
-  await createFlowMainnetConfig(dir, { name: contract.name });
+  await createFlowConfig(dir, { contractName: contract.name });
+  await createFlowTestnetConfig(dir, { contractName: contract.name });
+  await createFlowMainnetConfig(dir, { contractName: contract.name });
 
   await generateNextjsApp(dir, name, description);
 
@@ -43,6 +43,7 @@ const contracts = {
   FreshmintLockBox: './FreshmintLockBox.cdc',
   FreshmintMetadataViews: './FreshmintMetadataViews.cdc',
   FreshmintClaimSale: './FreshmintClaimSale.cdc',
+  FreshmintQueue: './FreshmintQueue.cdc',
 };
 
 const imports = prepareImports(contracts);
@@ -60,6 +61,7 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
 
   await generateFreshmintMetadataViews(dir);
   await generateFreshmintLockBox(dir);
+  await generateFreshmintQueue(dir);
   await generateFreshmintClaimSale(dir, contract);
 }
 
@@ -173,6 +175,13 @@ async function generateFreshmintMetadataViews(dir: string) {
 
 async function generateFreshmintLockBox(dir: string) {
   await writeFile(path.resolve(dir, `cadence/contracts/FreshmintLockBox.cdc`), LockBoxGenerator.contract({ imports }));
+}
+
+async function generateFreshmintQueue(dir: string) {
+  await writeFile(
+    path.resolve(dir, `cadence/contracts/FreshmintQueue.cdc`),
+    FreshmintQueueGenerator.contract({ imports }),
+  );
 }
 
 async function generateFreshmintClaimSale(dir: string, contract: ContractConfig) {
