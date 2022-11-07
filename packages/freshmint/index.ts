@@ -9,7 +9,6 @@ import ora from 'ora';
 import chalk from 'chalk';
 import ProgressBar from 'progress';
 import inquirer from 'inquirer';
-import * as metadata from '@freshmint/core/metadata';
 
 import Fresh from './fresh';
 import carlton from './carlton';
@@ -20,6 +19,7 @@ import { generateNextjsApp, generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
 import CSVLoader from './loaders/CSVLoader';
 import * as models from './models';
+import { FlowNetwork } from './flow';
 
 const program = new Command();
 const spinner = ora();
@@ -74,6 +74,12 @@ async function main() {
   program.command('start <project-path>').description('initialize a new project').action(start);
 
   program.command('dev').description('start the Freshmint development server').action(dev);
+
+  program
+    .command('deploy')
+    .description('fetch the information for an NFT')
+    .option('-n, --network <network>', "Network to deploy to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
+    .action(deploy);
 
   program
     .command('mint')
@@ -135,13 +141,24 @@ async function dev() {
   await runDevServer();
 }
 
+async function deploy({ network }: { network: FlowNetwork }) {
+  const config = await loadConfig();
+  const fresh = new Fresh(config, network);
+
+  spinner.start(`Deploying ${config.contract.name} to ${network}...`);
+
+  await fresh.deploy();
+
+  spinner.succeed();
+}
+
 async function mint({
   network,
   data,
   claim,
   batchSize,
 }: {
-  network: string;
+  network: FlowNetwork;
   data: string | undefined;
   claim: boolean;
   batchSize: string;
@@ -216,7 +233,7 @@ async function mint({
   );
 }
 
-async function getNFT(tokenId: string, { network }: { network: string }) {
+async function getNFT(tokenId: string, { network }: { network: FlowNetwork }) {
   const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
@@ -232,7 +249,7 @@ async function getNFT(tokenId: string, { network }: { network: string }) {
   alignOutput(output);
 }
 
-async function startDrop(price: string, { network }: { network: string }) {
+async function startDrop(price: string, { network }: { network: FlowNetwork }) {
   const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
@@ -241,7 +258,7 @@ async function startDrop(price: string, { network }: { network: string }) {
   spinner.succeed(`Success! Your drop is live.`);
 }
 
-async function stopDrop({ network }: { network: string }) {
+async function stopDrop({ network }: { network: FlowNetwork }) {
   const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
@@ -272,7 +289,7 @@ function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
   return [idOutput, ['Fields:'], ...fieldOutput];
 }
 
-async function dumpNFTs(csvPath: string, { network, tail }: { network: string; tail: number }) {
+async function dumpNFTs(csvPath: string, { network, tail }: { network: FlowNetwork; tail: number }) {
   const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
@@ -292,7 +309,7 @@ async function generateCadence() {
 async function generateWeb() {
   const config = await loadConfig();
 
-  await generateNextjsApp('./', 'TODO', 'TODO');
+  await generateNextjsApp('./', config.collection.name, config.collection.description);
 
   spinner.succeed(`Success! Regenerated web files.`);
 }

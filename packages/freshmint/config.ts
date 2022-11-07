@@ -12,6 +12,7 @@ const defaultAssetPath = 'assets';
 
 export interface FreshmintConfig {
   contract: ContractConfig;
+  collection: CollectionConfig;
   ipfsPinningService: IPFSPinningServiceConfig;
   nftDataPath: string;
   nftAssetPath: string;
@@ -28,6 +29,17 @@ export enum ContractType {
   Edition = 'edition',
 }
 
+export interface CollectionConfig {
+  name: string;
+  description: string;
+  url: string;
+  images: {
+    square: string;
+    banner: string;
+  };
+  socials: { [key: string]: string };
+}
+
 export interface IPFSPinningServiceConfig {
   endpoint: string;
   key: string;
@@ -36,6 +48,7 @@ export interface IPFSPinningServiceConfig {
 const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
   contract: yup
     .object()
+    .defined()
     .shape({
       name: yup.string().defined(),
       type: yup.string().oneOf(Object.values(ContractType)).required(),
@@ -43,8 +56,25 @@ const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
         .mixed((input): input is metadata.Schema => input instanceof metadata.Schema)
         .transform((value) => metadata.parseSchema(value))
         .defined(),
-    })
-    .defined(),
+    }),
+  collection: yup
+    .object()
+    .defined()
+    .shape({
+      name: yup.string().defined(),
+      description: yup.string().defined(),
+      url: yup.string().defined(),
+      images: yup.object().defined().shape({
+        square: yup.string().defined(),
+        banner: yup.string().defined(),
+      }),
+      socials: yup.lazy((value) => {
+        return yup
+          .object()
+          .defined()
+          .shape(Object.fromEntries(Object.keys(value).map((key) => [key, yup.string().defined()])));
+      }),
+    }),
   ipfsPinningService: yup.object({
     endpoint: yup.string().defined(),
     key: yup.string().defined(),

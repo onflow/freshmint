@@ -1,25 +1,34 @@
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 import { NFTStorage } from 'nft.storage';
 import * as metadata from '@freshmint/core/metadata';
+import * as fs from 'fs/promises';
+
+// @ts-ignore
+import * as mime from 'mime-types';
 
 import { FreshmintConfig } from './config';
-import FlowGateway from './flow';
+import { FlowGateway, FlowNetwork } from './flow';
 import IPFS from './ipfs';
 import { Minter, createMinter } from './minters';
 import { MetadataProcessor } from './processors';
 import IPFSFileProcessor from './processors/IPFSFileProcessor';
 import Storage from './storage';
 import * as models from './models';
+import { FlowJSONConfig } from './flow/config';
+import { FreshmintError } from './errors';
 import { envsubst } from './envsubst';
+import { CollectionMetadata } from '@freshmint/core';
+
+const flowJSONConfigPath = 'flow.json';
 
 export default class Fresh {
   config: FreshmintConfig;
-  network: string;
+  network: FlowNetwork;
   flowGateway: FlowGateway;
 
   storage: Storage;
 
-  constructor(config: FreshmintConfig, network: string) {
+  constructor(config: FreshmintConfig, network: FlowNetwork) {
     this.config = config;
     this.network = network;
     this.flowGateway = new FlowGateway(this.network);
@@ -47,6 +56,36 @@ export default class Fresh {
     }
 
     return createMinter(this.config.contract, metadataProcessor, this.flowGateway, this.storage);
+  }
+
+  async deploy() {
+    const contractName = this.config.contract.name;
+    const flowConfig = await FlowJSONConfig.load(flowJSONConfigPath);
+
+    const contractPath = flowConfig.getContract(contractName);
+
+    if (!contractPath) {
+      throw new FreshmintError(`Contract ${contractName} is not defined in flow.json.`);
+    }
+
+    const collectionMetadata: CollectionMetadata = {
+      name: this.config.collection.name,
+      description: this.config.collection.description,
+      url: this.config.collection.url,
+      squareImage: {
+        url: this.config.collection.images.square,
+        type: mime.lookup(this.config.collection.images.square),
+      },
+      bannerImage: {
+        url: this.config.collection.images.banner,
+        type: mime.lookup(this.config.collection.images.banner),
+      },
+      socials: this.config.collection.socials,
+    };
+
+    const contract = await fs.readFile(contractPath, 'utf-8');
+
+    await this.flowGateway.deploy(contractName, contract, collectionMetadata, []);
   }
 
   async getNFT(tokenId: string): Promise<models.NFT | null> {

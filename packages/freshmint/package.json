@@ -25,8 +25,9 @@
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
-    "@freshmint/core": "0.0.32-alpha",
+    "@freshmint/core": "*",
     "@onflow/decode": "0.0.11",
+    "@onflow/flow-cadut": "^0.2.0-alpha.9",
     "@onflow/types": "^1.0.3",
     "chalk": "^4.1.0",
     "commander": "^9.4.1",
@@ -38,6 +39,7 @@
     "handlebars": "^4.7.7",
     "inquirer": "^8.2.2",
     "js-yaml": "^4.1.0",
+    "mime-types": "^2.1.35",
     "nft.storage": "^3.3.0",
     "node-fetch": "^2.6.7",
     "ora": "^5.4.1",
