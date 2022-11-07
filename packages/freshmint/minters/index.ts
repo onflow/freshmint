@@ -1,5 +1,5 @@
 import { ContractConfig, ContractType } from '../config';
-import FlowGateway from '../flow';
+import { FlowGateway } from '../flow';
 import { EditionMinter } from './EditionMinter';
 import { StandardMinter } from './StandardMinter';
 import Storage from '../storage';
