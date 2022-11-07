@@ -20,11 +20,10 @@ export async function generateProject(
   description: string,
   contract: ContractConfig,
   nftDataPath: string,
-  customFields: Field[],
 ) {
   await createScaffold(dir);
 
-  await generateProjectCadence(dir, contract, customFields);
+  await generateProjectCadence(dir, contract);
 
   await createFlowConfig(dir, { name: contract.name });
   await createFlowTestnetConfig(dir, { name: contract.name });
@@ -32,6 +31,7 @@ export async function generateProject(
 
   await generateNextjsApp(dir, name, description);
 
+  await createFreshmintYaml(dir, { name, contract });
   await createReadme(dir, { name, nftDataPath });
 }
 
@@ -48,18 +48,13 @@ const contracts = {
 const imports = prepareImports(contracts);
 const shiftedImports = prepareImports(contracts, '../contracts');
 
-export async function generateProjectCadence(
-  dir: string,
-  contract: ContractConfig,
-  customFields: Field[],
-  includeCSVFile = true,
-) {
+export async function generateProjectCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
   switch (contract.type) {
     case ContractType.Standard:
-      await generateStandardProject(dir, contract, customFields, includeCSVFile);
+      await generateStandardProject(dir, contract, includeCSVFile);
       break;
     case ContractType.Edition:
-      await generateEditionProject(dir, contract, customFields, includeCSVFile);
+      await generateEditionProject(dir, contract, includeCSVFile);
       break;
   }
 
@@ -68,12 +63,7 @@ export async function generateProjectCadence(
   await generateFreshmintClaimSale(dir, contract);
 }
 
-async function generateStandardProject(
-  dir: string,
-  contract: ContractConfig,
-  customFields: Field[],
-  includeCSVFile = true,
-) {
+async function generateStandardProject(dir: string, contract: ContractConfig, includeCSVFile = true) {
   const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
   const contractSource = StandardNFTGenerator.contract({
@@ -94,6 +84,10 @@ async function generateStandardProject(
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
 
+  const deployTransaction = StandardNFTGenerator.deployToExistingAccount({ imports: shiftedImports });
+
+  await writeFile(path.resolve(dir, 'cadence/transactions/deploy.cdc'), deployTransaction);
+
   const mintWithClaimKeyTransaction = StandardNFTGenerator.mintWithClaimKey({
     imports: shiftedImports,
     contractName: contract.name,
@@ -104,7 +98,7 @@ async function generateStandardProject(
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   if (includeCSVFile) {
-    await createNFTsCSVFile(dir, { fields: customFields });
+    await createNFTsCSVFile(dir);
   }
 
   await writeFile(
@@ -118,12 +112,7 @@ async function generateStandardProject(
   );
 }
 
-async function generateEditionProject(
-  dir: string,
-  contract: ContractConfig,
-  customFields: Field[],
-  includeCSVFile = true,
-) {
+async function generateEditionProject(dir: string, contract: ContractConfig, includeCSVFile = true) {
   const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
   const contractSource = EditionNFTGenerator.contract({
@@ -161,7 +150,7 @@ async function generateEditionProject(
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
   if (includeCSVFile) {
-    await createEditionsCSVFile(dir, { fields: customFields });
+    await createEditionsCSVFile(dir);
   }
 
   await writeFile(
@@ -277,6 +266,8 @@ const createFlowConfig = template('templates/flow.json', 'flow.json');
 const createFlowTestnetConfig = template('templates/flow.testnet.json', 'flow.testnet.json');
 
 const createFlowMainnetConfig = template('templates/flow.mainnet.json', 'flow.mainnet.json');
+
+const createFreshmintYaml = template('templates/freshmint.yaml', 'freshmint.yaml');
 
 const createReadme = template('templates/README.md', 'README.md');
 

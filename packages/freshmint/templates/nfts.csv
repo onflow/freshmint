@@ -1,5 +1,5 @@
-name,description,thumbnail{{#each fields}},{{ this.name }}{{/each}}
-London,"A watercolor scene from London, UK.",london.png{{#each fields}},{{ this.type.sampleValue }}{{/each}}
-New York,"A watercolor scene from New York City, USA.",new-york.png{{#each fields}},{{ this.type.sampleValue }}{{/each}}
-San Francisco,"A watercolor scene from San Francisco, USA.",san-francisco.png{{#each fields}},{{ this.type.sampleValue }}{{/each}}
-Tokyo,"A watercolor scene from Tokyo, Japan.",tokyo.png{{#each fields}},{{ this.type.sampleValue }}{{/each}}
+name,description,thumbnail
+London,"A watercolor scene from London, UK.",london.png
+New York,"A watercolor scene from New York City, USA.",new-york.png
+San Francisco,"A watercolor scene from San Francisco, USA.",san-francisco.png
+Tokyo,"A watercolor scene from Tokyo, Japan.",tokyo.png

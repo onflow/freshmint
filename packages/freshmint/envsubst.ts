@@ -1,4 +1,4 @@
-import { EmptyEnvironmentVariableError, MissingEnvironmentVariableError } from './errors';
+import { FreshmintError } from '../errors';
 
 const varNames = '[a-zA-Z_]+[a-zA-Z0-9_]*';
 const placeholders = ['\\$_', '\\${_}', '{{_}}'];
@@ -28,4 +28,28 @@ export function envsubst(input: string) {
       throw new MissingEnvironmentVariableError(varName);
     })
     .reduce((acc, { varInput, varValue }) => acc.replace(varInput, varValue), input);
+}
+
+export class MissingEnvironmentVariableError extends FreshmintError {
+  name = 'MissingEnvironmentVariableError';
+
+  variableName: string;
+
+  constructor(variableName: string) {
+    super(`${variableName} environment variable is not set`);
+
+    this.variableName = variableName;
+  }
+}
+
+export class EmptyEnvironmentVariableError extends FreshmintError {
+  name = 'EmptyEnvironmentVariableError';
+
+  variableName: string;
+
+  constructor(variableName: string) {
+    super(`The ${variableName} environment variable is empty.`);
+
+    this.variableName = variableName;
+  }
 }

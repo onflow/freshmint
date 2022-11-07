@@ -15,7 +15,7 @@ import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
 import { runDevServer } from './devServer';
-import { loadConfig, ContractType, FreshmintConfigSchema, ContractConfig } from './config';
+import { loadConfig, ContractType, ContractConfig } from './config';
 import { generateNextjsApp, generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
 import CSVLoader from './loaders/CSVLoader';
@@ -146,16 +146,18 @@ async function mint({
   claim: boolean;
   batchSize: string;
 }) {
-  const config = loadConfig((schema: FreshmintConfigSchema) => {
-    schema.contract.fields.schema.onLoad((metadataSchema: metadata.Schema) => {
-      if (metadataSchema.includesFieldType(metadata.IPFSFile)) {
-        schema.ipfsPinningService.setEnabled(
-          true,
-          'This field is required because your metadata schema specifies an "ipfs-file" field.',
-        );
-      }
-    });
-  });
+  // const config = loadConfig((schema: FreshmintConfigSchema) => {
+  //   schema.contract.fields.schema.onLoad((metadataSchema: metadata.Schema) => {
+  //     if (metadataSchema.includesFieldType(metadata.IPFSFile)) {
+  //       schema.ipfsPinningService.setEnabled(
+  //         true,
+  //         'This field is required because your metadata schema specifies an "ipfs-file" field.',
+  //       );
+  //     }
+  //   });
+  // });
+
+  const config = await loadConfig();
 
   const fresh = new Fresh(config, network);
 
@@ -215,7 +217,7 @@ async function mint({
 }
 
 async function getNFT(tokenId: string, { network }: { network: string }) {
-  const config = loadConfig();
+  const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
   const nft = await fresh.getNFT(tokenId);
@@ -231,7 +233,7 @@ async function getNFT(tokenId: string, { network }: { network: string }) {
 }
 
 async function startDrop(price: string, { network }: { network: string }) {
-  const config = loadConfig();
+  const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
   await fresh.startDrop(price);
@@ -240,7 +242,7 @@ async function startDrop(price: string, { network }: { network: string }) {
 }
 
 async function stopDrop({ network }: { network: string }) {
-  const config = loadConfig();
+  const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
   await fresh.stopDrop();
@@ -271,7 +273,7 @@ function getNFTOutput(nft: models.NFT, contractConfig: ContractConfig) {
 }
 
 async function dumpNFTs(csvPath: string, { network, tail }: { network: string; tail: number }) {
-  const config = loadConfig();
+  const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
   const count = await fresh.dumpNFTs(csvPath, tail);
@@ -280,17 +282,17 @@ async function dumpNFTs(csvPath: string, { network, tail }: { network: string; t
 }
 
 async function generateCadence() {
-  const config = loadConfig();
+  const config = await loadConfig();
 
-  await generateProjectCadence('./', config.contract, [], false);
+  await generateProjectCadence('./', config.contract, false);
 
   spinner.succeed(`Success! Regenerated Cadence files.`);
 }
 
 async function generateWeb() {
-  const config = loadConfig();
+  const config = await loadConfig();
 
-  await generateNextjsApp('./', config.name, config.description);
+  await generateNextjsApp('./', 'TODO', 'TODO');
 
   spinner.succeed(`Success! Regenerated web files.`);
 }

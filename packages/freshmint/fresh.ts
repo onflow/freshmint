@@ -10,6 +10,7 @@ import { MetadataProcessor } from './processors';
 import IPFSFileProcessor from './processors/IPFSFileProcessor';
 import Storage from './storage';
 import * as models from './models';
+import { envsubst } from './envsubst';
 
 export default class Fresh {
   config: FreshmintConfig;
@@ -30,9 +31,12 @@ export default class Fresh {
     const metadataProcessor = new MetadataProcessor(this.config.contract.schema);
 
     if (this.config.contract.schema.includesFieldType(metadata.IPFSFile)) {
+      const endpoint = new URL(envsubst(this.config.ipfsPinningService.endpoint));
+      const token = envsubst(this.config.ipfsPinningService.key);
+
       const ipfsClient = new NFTStorage({
-        endpoint: this.config.ipfsPinningService.endpoint,
-        token: this.config.ipfsPinningService.key,
+        endpoint,
+        token,
       });
 
       const ipfs = new IPFS(ipfsClient);
