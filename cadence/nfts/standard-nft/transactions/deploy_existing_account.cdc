@@ -31,30 +31,14 @@ pub fun prepareRoyalties(
 transaction(
     contractName: String,
     contractCode: String,
-    publicKeyHex: String,
-    signatureAlgorithm: UInt8,
-    hashAlgorithm: UInt8,
-    placeholderImage: String,
     collectionMetadata: MetadataViews.NFTCollectionDisplay,
     royaltyAddresses: [Address],
     royaltyReceiverPaths: [PublicPath],
     royaltyCuts: [UFix64],
-    royaltyDescriptions: [String],
-    saveAdminResourceToContractAccount: Bool,
+    royaltyDescriptions: [String]
 ) {
-    prepare(admin: AuthAccount) {
-        let account = AuthAccount(payer: admin)
-
-        let publicKey = PublicKey(
-            publicKey: publicKeyHex.decodeHex(),
-            signatureAlgorithm: SignatureAlgorithm(rawValue: signatureAlgorithm)!
-        )
-
-        account.keys.add(
-            publicKey: publicKey,
-            hashAlgorithm: HashAlgorithm(rawValue: hashAlgorithm)!,
-            weight: 1000.0
-        )
+    prepare(signer: AuthAccount) {
+        let account = AuthAccount(payer: signer)
 
         let royalties = prepareRoyalties(
             addresses: royaltyAddresses,
@@ -63,23 +47,11 @@ transaction(
             descriptions: royaltyDescriptions
         )
 
-        if saveAdminResourceToContractAccount {
-            account.contracts.add(
-                name: contractName,
-                code: contractCode.decodeHex(),
-                collectionMetadata,
-                royalties,
-                placeholderImage
-            )
-        } else {
-            account.contracts.add(
-                name: contractName,
-                code: contractCode.decodeHex(),
-                collectionMetadata,
-                royalties,
-                placeholderImage,
-                admin
-            )
-        }
+        signer.contracts.add(
+            name: contractName,
+            code: contractCode.decodeHex(),
+            collectionMetadata,
+            royalties
+        )
     }
 }

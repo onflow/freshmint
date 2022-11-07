@@ -16,7 +16,7 @@ contract:
           description: description
           thumbnail: thumbnail
 
-project:
+collection:
   name: {{ name }}
   description: This is the {{ name }} project.
   url: http://localhost:3000

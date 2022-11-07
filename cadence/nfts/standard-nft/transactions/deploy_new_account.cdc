@@ -41,8 +41,8 @@ transaction(
     royaltyDescriptions: [String],
     saveAdminResourceToContractAccount: Bool,
 ) {
-    prepare(admin: AuthAccount) {
-        let account = AuthAccount(payer: admin)
+    prepare(signer: AuthAccount) {
+        let account = AuthAccount(payer: signer)
 
         let publicKey = PublicKey(
             publicKey: publicKeyHex.decodeHex(),
@@ -75,7 +75,7 @@ transaction(
                 code: contractCode.decodeHex(),
                 collectionMetadata,
                 royalties,
-                admin
+                signer
             )
         }
     }
