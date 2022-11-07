@@ -1,4 +1,4 @@
-import { FreshmintError } from '../errors';
+import { FreshmintError } from './errors';
 
 const varNames = '[a-zA-Z_]+[a-zA-Z0-9_]*';
 const placeholders = ['\\$_', '\\${_}', '{{_}}'];
