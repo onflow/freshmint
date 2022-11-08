@@ -140,6 +140,26 @@ export abstract class NFTContract {
     }, Transaction.VoidResult);
   }
 
+  transferNFTsQueue(toBucket: string, count: number): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = CommonNFTGenerator.transferNFTsQueue({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [
+          fcl.arg(toBucket, t.String),
+          fcl.arg(count.toString(), t.Int)
+        ],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    }, Transaction.VoidResult);
+  }
+
   getCollectionMetadata(): Script<CollectionMetadata | null> {
     return new Script(({ imports }: FreshmintConfig) => {
       const script = CommonNFTGenerator.getCollectionMetadata({
