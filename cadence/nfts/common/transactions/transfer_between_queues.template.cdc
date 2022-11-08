@@ -4,13 +4,18 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 
-/// This transaction moves the first `count` NFTs from the default mint queue to a separate queue.
+/// This transaction moves NFTs from one queue to another within the signer's account.
 ///
 /// Parameters:
-/// - toBucketName: the bucket name of the receiving queue.
+/// - fromBucketName: the bucket name to withdraw from. If nil, the default bucket is used.
+/// - toBucketName: the bucket name to deposit to. If nil, the default bucket is used.
 /// - count: the number of NFTs to move.
 ///
-transaction(toBucketName: String, count: Int) {
+transaction(
+    fromBucketName: String?,
+    toBucketName: String?,
+    count: Int
+) {
 
     let fromQueue: &FreshmintQueue.CollectionQueue
     let toQueue: &FreshmintQueue.CollectionQueue
@@ -18,7 +23,7 @@ transaction(toBucketName: String, count: Int) {
     prepare(signer: AuthAccount) {
 
         // Withdraw NFTs from the main mint queue
-        let fromQueueName = {{ contractName }}.makeQueueName(bucketName: nil)
+        let fromQueueName = {{ contractName }}.makeQueueName(bucketName: fromBucketName)
         let fromQueuePrivatePath = {{ contractName }}.getPrivatePath(suffix: fromQueueName)
 
         self.fromQueue = signer
@@ -34,9 +39,8 @@ transaction(toBucketName: String, count: Int) {
     execute {
         var i = 0
 
-        // Withdraw `count` NFTs from one queue and deposit to the other
+        // Withdraw the first `count` NFTs from one queue and deposit them into the other
         while i < count {
-
             let token <- self.fromQueue.getNextNFT()!
 
             self.toQueue.deposit(token: <- token)

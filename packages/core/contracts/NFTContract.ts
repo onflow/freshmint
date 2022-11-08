@@ -140,9 +140,17 @@ export abstract class NFTContract {
     }, Transaction.VoidResult);
   }
 
-  transferNFTsQueue(toBucket: string, count: number): Transaction<void> {
+  transferBetweenQueues({
+    from,
+    to,
+    count,
+  }: {
+    from: string | null;
+    to: string | null;
+    count: number;
+  }): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
-      const script = CommonNFTGenerator.transferNFTsQueue({
+      const script = CommonNFTGenerator.transferBetweenQueues({
         imports,
         contractName: this.name,
         contractAddress: this.getAddress(),
@@ -151,8 +159,9 @@ export abstract class NFTContract {
       return {
         script,
         args: [
-          fcl.arg(toBucket, t.String),
-          fcl.arg(count.toString(), t.Int)
+          fcl.arg(from, t.Optional(t.String)),
+          fcl.arg(to, t.Optional(t.String)),
+          fcl.arg(count.toString(), t.Int),
         ],
         computeLimit: 9999,
         signers: this.getSigners(),
