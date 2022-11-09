@@ -140,7 +140,7 @@ export abstract class NFTContract {
     }, Transaction.VoidResult);
   }
 
-  transferBetweenQueues({
+  transferQueueToQueue({
     from,
     to,
     count,
@@ -150,7 +150,7 @@ export abstract class NFTContract {
     count: number;
   }): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
-      const script = CommonNFTGenerator.transferBetweenQueues({
+      const script = CommonNFTGenerator.transferQueueToQueue({
         imports,
         contractName: this.name,
         contractAddress: this.getAddress(),

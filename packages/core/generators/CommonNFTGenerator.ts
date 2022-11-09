@@ -62,7 +62,7 @@ export class CommonNFTGenerator extends TemplateGenerator {
     });
   }
 
-  static transferBetweenQueues({
+  static transferQueueToQueue({
     imports,
     contractName,
     contractAddress,
@@ -71,7 +71,7 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate(require('../../../cadence/nfts/common/transactions/transfer_between_queues.template.cdc'), {
+    return this.generate(require('../../../cadence/nfts/common/transactions/transfer_queue_to_queue.template.cdc'), {
       imports,
       contractName,
       contractAddress,

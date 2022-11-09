@@ -347,7 +347,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
     await client.send(contract.mintNFTs(getTestNFTs(10)));
 
     // Move 5 NFTs into the sale queue
-    await client.send(contract.transferBetweenQueues({ from: null, to: refillQueue, count: 5 }));
+    await client.send(contract.transferQueueToQueue({ from: null, to: refillQueue, count: 5 }));
 
     await client.send(sale.start({ id: refillSale, price: '10.0', bucket: refillQueue }));
 
@@ -362,7 +362,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
     }).rejects.toThrow();
 
     // Move 5 more NFTs to the sale queue
-    await client.send(contract.transferBetweenQueues({ from: null, to: refillQueue, count: 5 }));
+    await client.send(contract.transferQueueToQueue({ from: null, to: refillQueue, count: 5 }));
 
     // Should now be able to continue claiming
     await client.send(sale.claimNFT(ownerAuthorizer.address, buyer.authorizer, refillSale));
