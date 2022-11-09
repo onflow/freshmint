@@ -141,12 +141,12 @@ export abstract class NFTContract {
   }
 
   transferQueueToQueue({
-    from,
-    to,
+    fromQueue,
+    toQueue,
     count,
   }: {
-    from: string | null;
-    to: string | null;
+    fromQueue: string | null;
+    toQueue: string | null;
     count: number;
   }): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
@@ -159,8 +159,8 @@ export abstract class NFTContract {
       return {
         script,
         args: [
-          fcl.arg(from, t.Optional(t.String)),
-          fcl.arg(to, t.Optional(t.String)),
+          fcl.arg(fromQueue, t.Optional(t.String)),
+          fcl.arg(toQueue, t.Optional(t.String)),
           fcl.arg(count.toString(), t.Int),
         ],
         computeLimit: 9999,
