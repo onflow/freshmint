@@ -12,6 +12,7 @@ import {
   setupEmulator,
   teardownEmulator,
   collectionMetadata,
+  createAccount,
 } from '../testHelpers';
 
 describe('StandardNFTContract', () => {
