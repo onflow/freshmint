@@ -112,6 +112,12 @@ pub contract {{ contractName }}: NonFungibleToken {
             self.size = self.size + (1 as UInt64)
         }
 
+        /// Increment the burn count for this edition.
+        ///
+        access(contract) incrementBurned() {
+            self.burned = self.burned + (1 as UInt64)
+        }
+
         /// Close this edition and prevent further minting.
         ///
         /// Note: an edition is automatically closed when 
@@ -193,6 +199,13 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         destroy() {
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply - (1 as UInt64)
+
+            // Update the burn count for the NFT's edition
+            let edition = self.getEdition()
+
+            edition.incrementBurned()
+
+            {{ contractName }}.editions[edition.id] = edition
 
             emit Burned(id: self.id)
         }
