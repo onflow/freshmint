@@ -54,119 +54,264 @@ describe('EditionNFTContract', () => {
     );
   });
 
-  let edition1: EditionResult;
-  let edition2: EditionResult;
+  describe('Edition with limit and full mint', () => {
+    let edition: EditionResult;
 
-  it('should create edition 1', async () => {
-    const editionMetadata1 = {
-      size: 5,
-      metadata: {
-        name: 'Edition 1',
-        description: 'This is the first edition.',
-        thumbnail: 'edition-1.jpeg',
-      },
-    };
+    it('should create the edition', async () => {
+      const editionInput = {
+        limit: 5,
+        metadata: {
+          name: 'Edition 1',
+          description: 'This is the first edition.',
+          thumbnail: 'edition-1.jpeg',
+        },
+      };
 
-    edition1 = await client.send(contract.createEdition(editionMetadata1));
+      edition = await client.send(contract.createEdition(editionInput));
 
-    const onChainEdition = await client.query(contract.getEdition(edition1.id));
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
 
-    expect(onChainEdition.id).toEqual(edition1.id);
-    expect(onChainEdition.size).toEqual(edition1.size);
-    expect(onChainEdition.count).toEqual(0);
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.size).toEqual(0);
+    });
+
+    it('should mint 3 NFTs into the edition', async () => {
+      const count = 3;
+
+      await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.size).toEqual(count);
+    });
+
+    it('should mint remaining 2 NFTs into the edition', async () => {
+      const count = 2;
+
+      await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.size).toEqual(edition.limit);
+
+      // Edition should now be closed
+      expect(onChainEdition.isClosed).toBe(true);
+    });
+
+    it('should fail to mint more than the edition limit', async () => {
+      await expect(async () => {
+        await client.send(contract.mintNFTs({ editionId: edition.id, count: 5 }));
+      }).rejects.toThrow();
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+
+      // Size should still be the limit
+      expect(onChainEdition.size).toEqual(edition.limit);
+
+      // Edition should still be closed
+      expect(onChainEdition.isClosed).toBe(true);
+    });
   });
 
-  it('should create edition 2', async () => {
-    const editionMetadata2 = {
-      size: 5,
-      metadata: {
-        name: 'Edition 2',
-        description: 'This is the second edition.',
-        thumbnail: 'edition-2.jpeg',
-      },
-    };
+  describe('Edition with limit and partial mint', () => {
+    let edition: EditionResult;
 
-    edition2 = await client.send(contract.createEdition(editionMetadata2));
+    it('should create the edition', async () => {
+      const editionInput = {
+        limit: 5,
+        metadata: {
+          name: 'Edition 2',
+          description: 'This is the second edition.',
+          thumbnail: 'edition-2.jpeg',
+        },
+      };
 
-    const onChainEdition = await client.query(contract.getEdition(edition2.id));
+      edition = await client.send(contract.createEdition(editionInput));
 
-    expect(onChainEdition.id).toEqual(edition2.id);
-    expect(onChainEdition.size).toEqual(edition2.size);
-    expect(onChainEdition.count).toEqual(0);
-  });
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
 
-  it('should mint 3 edition 1 NFTs into default bucket', async () => {
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.size).toEqual(0);
+    });
+
     const count = 3;
 
-    await client.send(contract.mintNFTs({ editionId: edition1.id, count }));
+    it('should mint part of the edition', async () => {
+      await client.send(contract.mintNFTs({ editionId: edition.id, count }));
 
-    const onChainEdition = await client.query(contract.getEdition(edition1.id));
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
 
-    expect(onChainEdition.id).toEqual(edition1.id);
-    expect(onChainEdition.size).toEqual(edition1.size);
-    expect(onChainEdition.count).toEqual(count);
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.size).toEqual(count);
+    });
+
+    it('should close the edition early', async () => {
+      await client.send(contract.closeEdition(edition.id));
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.size).toEqual(count);
+    });
+
+    it('should fail to mint after closing', async () => {
+      await expect(async () => {
+        await client.send(contract.mintNFTs({ editionId: edition.id, count: 5 }));
+      }).rejects.toThrow();
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+
+      // Size should still be the limit
+      expect(onChainEdition.size).toEqual(count);
+
+      // Edition should still be closed
+      expect(onChainEdition.isClosed).toBe(true);
+    });
   });
 
-  it('should mint remaining 2 edition 1 NFTs into default bucket', async () => {
-    const count = 2;
+  describe('Edition with no limit', () => {
+    let edition: EditionResult;
 
-    await client.send(contract.mintNFTs({ editionId: edition1.id, count }));
+    it('should create the edition', async () => {
+      const editionInput = {
+        metadata: {
+          name: 'Edition 3',
+          description: 'This is the third edition.',
+          thumbnail: 'edition-3.jpeg',
+        },
+      };
 
-    const onChainEdition = await client.query(contract.getEdition(edition1.id));
+      edition = await client.send(contract.createEdition(editionInput));
 
-    expect(onChainEdition.id).toEqual(edition1.id);
-    expect(onChainEdition.size).toEqual(edition1.size);
-    expect(onChainEdition.count).toEqual(edition1.size);
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toBeUndefined();
+      expect(onChainEdition.size).toEqual(0);
+    });
+
+    const count = 3;
+
+    it('should mint NFTs into the edition', async () => {
+      await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toBeUndefined();
+      expect(onChainEdition.size).toEqual(count);
+    });
+
+    it('should close the edition', async () => {
+      await client.send(contract.closeEdition(edition.id));
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toBeUndefined();
+      expect(onChainEdition.size).toEqual(count);
+    });
+
+    it('should fail to mint after closing', async () => {
+      await expect(async () => {
+        await client.send(contract.mintNFTs({ editionId: edition.id, count: 5 }));
+      }).rejects.toThrow();
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toBeUndefined();
+
+      // Size should still be the limit
+      expect(onChainEdition.size).toEqual(count);
+
+      // Edition should still be closed
+      expect(onChainEdition.isClosed).toBe(true);
+    });
   });
 
-  it('should fail to mint more than edition size', async () => {
-    await expect(async () => {
+  describe('Edition with a custom bucket', () => {
+    const edition2Bucket = 'edition2';
+
+    let edition1: EditionResult;
+    let edition2: EditionResult;
+
+    it('should create two editions', async () => {
+      const edition1Input = {
+        limit: 5,
+        metadata: {
+          name: 'Edition 1',
+          description: 'This is the first edition.',
+          thumbnail: 'edition-1.jpeg',
+        },
+      };
+
+      const edition2Input = {
+        limit: 5,
+        metadata: {
+          name: 'Edition 2',
+          description: 'This is the second edition.',
+          thumbnail: 'edition-2.jpeg',
+        },
+      };
+
+      edition1 = await client.send(contract.createEdition(edition1Input));
+      edition2 = await client.send(contract.createEdition(edition2Input));
+    });
+
+    it('should mint all edition 1 NFTs into the default bucket', async () => {
       await client.send(contract.mintNFTs({ editionId: edition1.id, count: 5 }));
-    }).rejects.toThrow();
-
-    const onChainEdition = await client.query(contract.getEdition(edition1.id));
-
-    expect(onChainEdition.id).toEqual(edition1.id);
-    expect(onChainEdition.size).toEqual(edition1.size);
-    expect(onChainEdition.count).toEqual(edition1.size);
-  });
-
-  const edition2Bucket = 'edition2';
-
-  it('should mint all edition 2 NFTs into custom bucket', async () => {
-    await client.send(contract.mintNFTs({ editionId: edition2.id, count: edition2.size, bucket: edition2Bucket }));
-  });
-
-  const sale = new FreshmintClaimSaleContract(contract);
-
-  const sale1 = 'sale1';
-  const sale2 = 'sale2';
-
-  describe('sale 1', () => {
-    it('should start a sale from default bucket', async () => {
-      await client.send(sale.start({ id: sale1, price: '10.0' }));
     });
 
-    it('should claim an NFT', async () => {
-      await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, sale1));
+    it('should mint all edition 2 NFTs into a custom bucket', async () => {
+      await client.send(contract.mintNFTs({ editionId: edition2.id, count: 5, bucket: edition2Bucket }));
     });
 
-    it('should stop a sale', async () => {
-      await client.send(sale.stop(sale1));
-    });
-  });
+    const sale = new FreshmintClaimSaleContract(contract);
 
-  describe('sale 2', () => {
-    it('should start a sale from custom bucket', async () => {
-      await client.send(sale.start({ id: sale2, price: '10.0', bucket: edition2Bucket }));
+    const sale1 = 'sale1';
+    const sale2 = 'sale2';
+
+    describe('sale 1', () => {
+      it('should start a sale from default bucket', async () => {
+        await client.send(sale.start({ id: sale1, price: '10.0' }));
+      });
+
+      it('should claim an NFT', async () => {
+        await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, sale1));
+      });
+
+      it('should stop a sale', async () => {
+        await client.send(sale.stop(sale1));
+      });
     });
 
-    it('should claim an NFT', async () => {
-      await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, sale2));
-    });
+    describe('sale 2', () => {
+      it('should start a sale from custom bucket', async () => {
+        await client.send(sale.start({ id: sale2, price: '10.0', bucket: edition2Bucket }));
+      });
 
-    it('should stop a sale', async () => {
-      await client.send(sale.stop(sale2));
+      it('should claim an NFT', async () => {
+        await client.send(sale.claimNFT(ownerAuthorizer.address, ownerAuthorizer, sale2));
+      });
+
+      it('should stop a sale', async () => {
+        await client.send(sale.stop(sale2));
+      });
     });
   });
 });

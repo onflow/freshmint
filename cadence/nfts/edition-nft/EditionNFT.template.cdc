@@ -12,6 +12,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub event Minted(id: UInt64, editionID: UInt64, serialNumber: UInt64)
     pub event Burned(id: UInt64)
     pub event EditionCreated(edition: Edition)
+    pub event EditionClosed(id: UInt64, size: UInt64)
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
@@ -51,15 +52,36 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         pub let id: UInt64
 
-        /// The maximum size of this edition.
+        /// The maximum number of NFTs that can be minted in this edition.
         ///
-        pub let size: UInt64
+        /// If nil, the edition has no size limit.
+        ///
+        pub let limit: UInt64?
 
         /// The number of NFTs minted in this edition.
         ///
-        /// The count cannot exceed the edition size.
+        /// This field is incremented each time a new NFT is minted.
+        /// It cannot exceed the limit defined above.
         ///
-        pub var count: UInt64
+        pub var size: UInt64
+
+        /// The number of NFTs in this edition that have been burned.
+        ///
+        /// This field is incremented each time an NFT is burned.
+        ///
+        pub var burned: UInt64
+
+        /// Return the total supply of NFTs in this edition.
+        ///
+        /// The supply is the number of NFTs minted minus the number burned.
+        ///
+        pub fun supply(): UInt64 {
+            return self.size - self.burned
+        }
+
+        /// A flag indicating whether this edition is closed for minting.
+        ///
+        pub var isClosed: Bool
 
         /// The metadata for this edition.
         ///
@@ -67,27 +89,40 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         init(
             id: UInt64,
-            size: UInt64,
+            limit: UInt64?,
             metadata: Metadata
         ) {
             self.id = id
-            self.size = size
+            self.limit = limit
             self.metadata = metadata
 
-            // An edition starts with a count of zero
-            self.count = 0
+            self.size = 0
+            self.burned = 0
+
+            self.isClosed = false
         }
 
-        /// Increment the NFT count of this edition.
+        /// Increment the size of this edition.
         ///
-        /// The count cannot exceed the edition size.
-        ///
-        access(contract) fun incrementCount() {
+        access(contract) fun incrementSize() {
             post {
-                self.count <= self.size: "edition has already reached its maximum size"
+                self.isClosed == false : "edition is closed for minting"
             }
 
-            self.count = self.count + (1 as UInt64)
+            self.size = self.size + (1 as UInt64)
+        }
+
+        /// Close this edition and prevent further minting.
+        ///
+        /// Note: an edition is automatically closed when 
+        /// it reaches its size limit, if defined.
+        ///
+        access(contract) fun close() {
+            pre {
+                self.isClosed == false : "edition is already closed"
+            }
+
+            self.isClosed = true
         }
     }
 
@@ -271,7 +306,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// edition data that will later be associated with minted NFTs.
         ///
         pub fun createEdition(
-            size: UInt64,
+            limit: UInt64?,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
@@ -284,7 +319,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
             let edition = Edition(
                 id: {{ contractName }}.totalEditions,
-                size: size,
+                limit: limit,
                 metadata: metadata
             )
 
@@ -295,6 +330,23 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{ contractName }}.totalEditions = {{ contractName }}.totalEditions + (1 as UInt64)
 
             return edition.id
+        }
+
+        /// Close an existing edition.
+        ///
+        /// This prevents new NFTs from being minted into the edition.
+        /// An edition cannot be reopened after it is closed.
+        ///
+        pub fun closeEdition(editionID: UInt64) {
+            let edition = {{ contractName }}.editions[editionID]
+                ?? panic("edition does not exist")
+
+            edition.close()
+
+            // Save the updated edition
+            {{ contractName }}.editions[editionID] = edition
+
+            emit EditionClosed(id: edition.id, size: edition.size)
         }
 
         /// Mint a new NFT.
@@ -309,21 +361,30 @@ pub contract {{ contractName }}: NonFungibleToken {
             let edition = {{ contractName }}.editions[editionID]
                 ?? panic("edition does not exist")
 
-            // Increase the edition count by one
-            edition.incrementCount()
+            // Increase the edition size by one
+            edition.incrementSize()
 
-            // The NFT serial number is the new edition count
-            let serialNumber = edition.count
+            // The NFT serial number is the new edition size
+            let serialNumber = edition.size
 
             let nft <- create {{ contractName }}.NFT(
                 editionID: editionID,
                 serialNumber: serialNumber
             )
 
+            emit Minted(id: nft.id, editionID: editionID, serialNumber: serialNumber)
+
+            // Close the edition if it reaches its size limit
+            if let limit = edition.limit {
+                if edition.size == limit {
+                    edition.close()
+
+                    emit EditionClosed(id: edition.id, size: edition.size)
+                }
+            }
+
             // Save the updated edition
             {{ contractName }}.editions[editionID] = edition
-
-            emit Minted(id: nft.id, editionID: editionID, serialNumber: serialNumber)
 
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply + (1 as UInt64)
 
