@@ -35,6 +35,9 @@ const config = EMULATOR;
 
 export const client = FreshmintClient.fromFCL(fcl, config);
 
+// Increase test timeout for longer emulator tests
+jest.setTimeout(10000);
+
 export async function setupEmulator() {
   fcl.config().put('accessNode.api', `http://localhost:${emulatorPort}`);
 
