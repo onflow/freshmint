@@ -17,9 +17,6 @@ import {
   TestAccount,
 } from '../testHelpers';
 
-// Increase test timeout for longer emulator tests
-jest.setTimeout(10000);
-
 describe('FreshmintClaimSaleV2Contract', () => {
   beforeAll(setupEmulator);
   afterAll(teardownEmulator);
