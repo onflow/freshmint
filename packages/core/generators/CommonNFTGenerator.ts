@@ -62,6 +62,57 @@ export class CommonNFTGenerator extends TemplateGenerator {
     });
   }
 
+  static setupCollection({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/transactions/setup_collection.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
+
+  static transferQueueToQueue({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/transactions/transfer_queue_to_queue.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
+
+  static transferQueueToCollection({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(
+      require('../../../cadence/nfts/common/transactions/transfer_queue_to_collection.template.cdc'),
+      {
+        imports,
+        contractName,
+        contractAddress,
+      },
+    );
+  }
+
   static getRoyalties({
     imports,
     contractName,

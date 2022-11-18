@@ -1,6 +1,6 @@
 {
   "name": "@freshmint/core",
-  "version": "0.2.2-alpha",
+  "version": "0.2.3-alpha",
   "description": "The core templates and logic that power Freshmint.",
   "contributors": [
     "Mackenzie Kieran",

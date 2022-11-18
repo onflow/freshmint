@@ -6,7 +6,7 @@ import * as t from '@onflow/types';
 
 import * as metadata from '../metadata';
 import { FreshmintConfig } from '../config';
-import { Transaction, TransactionAuthorizer, TransactionSigners } from '../transactions';
+import { Transaction, TransactionAuthorizer, TransactionResult, TransactionSigners } from '../transactions';
 import { Script } from '../scripts';
 import { Path } from '../cadence/values';
 import { CommonNFTGenerator } from '../generators/CommonNFTGenerator';
@@ -138,6 +138,91 @@ export abstract class NFTContract {
         signers: this.getSigners(),
       };
     }, Transaction.VoidResult);
+  }
+
+  setupCollection(authorizer: TransactionAuthorizer): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = CommonNFTGenerator.setupCollection({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [],
+        computeLimit: 9999,
+        signers: {
+          payer: authorizer,
+          proposer: authorizer,
+          authorizers: [authorizer],
+        },
+      };
+    }, Transaction.VoidResult);
+  }
+
+  transferQueueToQueue({
+    fromQueue,
+    toQueue,
+    count,
+  }: {
+    fromQueue: string | null;
+    toQueue: string | null;
+    count: number;
+  }): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = CommonNFTGenerator.transferQueueToQueue({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [
+          fcl.arg(fromQueue, t.Optional(t.String)),
+          fcl.arg(toQueue, t.Optional(t.String)),
+          fcl.arg(count.toString(), t.Int),
+        ],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    }, Transaction.VoidResult);
+  }
+
+  transferQueueToCollection({
+    fromQueue,
+    toAddress,
+    count,
+  }: {
+    fromQueue: string | null;
+    toAddress: string;
+    count: number;
+  }): Transaction<string[]> {
+    return new Transaction(
+      ({ imports }: FreshmintConfig) => {
+        const script = CommonNFTGenerator.transferQueueToCollection({
+          imports,
+          contractName: this.name,
+          contractAddress: this.getAddress(),
+        });
+
+        return {
+          script,
+          args: [
+            fcl.arg(fromQueue, t.Optional(t.String)),
+            fcl.arg(toAddress, t.Address),
+            fcl.arg(count.toString(), t.Int),
+          ],
+          computeLimit: 9999,
+          signers: this.getSigners(),
+        };
+      },
+      ({ events }: TransactionResult) => {
+        const deposits = events.filter((event) => event.type.includes('.Deposit'));
+        return deposits.map((event) => event.data.id);
+      },
+    );
   }
 
   getCollectionMetadata(): Script<CollectionMetadata | null> {
