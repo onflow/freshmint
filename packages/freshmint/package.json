@@ -40,7 +40,7 @@
     "inquirer": "^8.2.2",
     "js-yaml": "^4.1.0",
     "mime-types": "^2.1.35",
-    "nft.storage": "^3.3.0",
+    "nft.storage": "^7.0.0",
     "node-fetch": "^2.6.7",
     "ora": "^5.4.1",
     "pouchdb": "^7.2.2",

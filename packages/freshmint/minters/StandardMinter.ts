@@ -1,7 +1,7 @@
 import { Field, hashMetadata, MetadataMap, Schema } from '@freshmint/core/metadata';
 
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import FlowGateway from '../flow';
+import { FlowGateway } from '../flow';
 import Storage from '../storage';
 import * as models from '../models';
 import { MetadataLoader, Entry } from '../loaders';

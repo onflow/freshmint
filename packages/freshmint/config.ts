@@ -80,9 +80,9 @@ const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
     // IPFS configuration is required when using an IPFS file field
     .when('contract.schema', {
       is: (schema: metadata.Schema) => {
-        return schema.includesFieldType(metadata.IPFSFile)
+        return schema.includesFieldType(metadata.IPFSFile);
       },
-      then: (schema) => schema.defined()
+      then: (schema) => schema.defined(),
     })
     .shape({
       endpoint: yup.string().defined(),
