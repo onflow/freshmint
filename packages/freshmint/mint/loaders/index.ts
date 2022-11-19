@@ -1,4 +1,4 @@
-export type Entry = { [key: string]: string };
+import { Entry } from '../entries';
 
 export interface MetadataLoader {
   loadEntries(): Promise<Entry[]>;

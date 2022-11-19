@@ -17,6 +17,11 @@ export default class IPFS {
     this.ipfsClient = ipfsClient;
   }
 
+  async getCID(data: Buffer): Promise<string> {
+    const { cid } = await NFTStorage.encodeBlob(new Blob([data]));
+    return cid.toString();
+  }
+
   async pin(data: Buffer): Promise<string> {
     const { cid, car } = await NFTStorage.encodeBlob(new Blob([data]));
 

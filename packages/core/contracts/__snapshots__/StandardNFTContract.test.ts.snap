@@ -57,16 +57,57 @@ pub contract StandardNFT_Test: NonFungibleToken {
             self.thumbnail = thumbnail
             self.serialNumber = serialNumber
         }
+
+        /// Encode this metadata object as a byte array.
+        ///
+        /// This can be used to hash the metadata and verify its integrity.
+        ///
+        pub fun encode(): [UInt8] {
+            return self.name.utf8
+                .concat(self.description.utf8)
+                .concat(self.thumbnail.utf8)
+                .concat(self.serialNumber.toBigEndianBytes())
+        }
+
+        pub fun hash(): [UInt8] {
+            return HashAlgorithm.SHA3_256.hash(self.encode())
+        }
+    }
+
+    /// This dictionary holds the metadata for all NFTs
+    /// minted by this contract.
+    ///
+    access(contract) let metadata: {UInt64: Metadata}
+
+    /// Return the metadata for an NFT.
+    ///
+    pub fun getMetadata(nftID: UInt64): Metadata? {
+        return StandardNFT_Test.metadata[nftID]
+    }
+
+    /// This dictionary stores all NFT IDs minted by this contract
+    /// indexed by their metadata hash.
+    ///
+    /// It is populated at mint time and used to prevent duplicate mints.
+    ///
+    access(contract) let nftsByHash: {String: UInt64}
+
+    pub fun getNFTIDByHash(hash: String): UInt64? {
+        return StandardNFT_Test.nftsByHash[hash]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
-        pub let metadata: Metadata
 
-        init(metadata: Metadata) {
+        init() {
             self.id = self.uuid
-            self.metadata = metadata
+        }
+
+        /// Return the metadata for this NFT.
+        ///
+        pub fun getMetadata(): Metadata {
+            return StandardNFT_Test.metadata[self.id]!
         }
 
         pub fun getViews(): [Type] {
@@ -82,11 +123,13 @@ pub contract StandardNFT_Test: NonFungibleToken {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
+            let metadata = self.getMetadata()
+
             switch view {
                 case Type<MetadataViews.NFTView>():
-                    return self.resolveNFTView(self.metadata)
+                    return self.resolveNFTView(metadata)
                 case Type<MetadataViews.Display>():
-                    return self.resolveDisplay(self.metadata)
+                    return self.resolveDisplay(metadata)
                 case Type<MetadataViews.ExternalURL>():
                     return self.resolveExternalURL()
                 case Type<MetadataViews.NFTCollectionDisplay>():
@@ -96,7 +139,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
                 case Type<MetadataViews.Royalties>():
                     return self.resolveRoyalties()
                 case Type<MetadataViews.Serial>():
-                    return self.resolveSerial(self.metadata)
+                    return self.resolveSerial(metadata)
             }
 
             return nil
@@ -174,49 +217,78 @@ pub contract StandardNFT_Test: NonFungibleToken {
             }
         }
     }
-
+    
+    /// Collection is a container for StandardNFT_Test NFTs.
+    ///
+    /// A StandardNFT_Test collection preserves the insertion order of its contents.
+    ///
     pub resource Collection: StandardNFT_TestCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         
+        /// An array of all NFT IDs in this collection in insertion order.
+        ///
+        pub let ids: [UInt64]
+    
         /// A dictionary of all NFTs in this collection indexed by ID.
         ///
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
-
+    
         init () {
+            self.ids = []
             self.ownedNFTs <- {}
         }
-
-        /// Remove an NFT from the collection and move it to the caller.
+    
+        /// Remove an NFT from this collection and move it to the caller.
         ///
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) 
                 ?? panic(\\"Requested NFT to withdraw does not exist in this collection\\")
-
+    
+            // Remove the NFT ID from the IDs list
+            let index = self.ids.firstIndex(of: token.id)!
+            self.ids.remove(at: index)
+    
             emit Withdraw(id: token.id, from: self.owner?.address)
-
+    
             return <- token
         }
-
+    
         /// Deposit an NFT into this collection.
         ///
         pub fun deposit(token: @NonFungibleToken.NFT) {
             let token <- token as! @StandardNFT_Test.NFT
-
+    
             let id: UInt64 = token.id
-
-            // add the new token to the dictionary which removes the old one
+    
+            // Add the new NFT to the dictionary.
+            //
+            // Because ownedNFTs is an array of resources,
+            // it is technically possible for it to contain an existing resource
+            // for any given key. Resources cannot be silenty overwritten
+            // so we must explicity destory it.
+            //
+            // However, the existing token should always be nil.
+            //
             let oldToken <- self.ownedNFTs[id] <- token
-
-            emit Deposit(id: id, to: self.owner?.address)
-
+            if (oldToken != nil) {
+                panic(\\"Collection already contains an NFT with that ID\\")
+            }
+    
             destroy oldToken
+    
+            // Add the NFT ID to the end of the IDs list
+            self.ids.append(id)
+    
+            emit Deposit(id: id, to: self.owner?.address)
         }
-
+    
         /// Return an array of the NFT IDs in this collection.
         ///
+        /// The array will be in insertion order.
+        ///
         pub fun getIDs(): [UInt64] {
-            return self.ownedNFTs.keys
+            return self.ids
         }
-
+    
         /// Return a reference to an NFT in this collection.
         ///
         /// This function panics if the NFT does not exist in this collection.
@@ -224,7 +296,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
-
+    
         /// Return a reference to an NFT in this collection
         /// typed as StandardNFT_Test.NFT.
         ///
@@ -235,10 +307,10 @@ pub contract StandardNFT_Test: NonFungibleToken {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &StandardNFT_Test.NFT
             }
-
+    
             return nil
         }
-
+    
         /// Return a reference to an NFT in this collection
         /// typed as MetadataViews.Resolver.
         ///
@@ -249,12 +321,12 @@ pub contract StandardNFT_Test: NonFungibleToken {
             let nftRef = nft as! &StandardNFT_Test.NFT
             return nftRef as &AnyResource{MetadataViews.Resolver}
         }
-
+    
         destroy() {
             destroy self.ownedNFTs
         }
     }
-
+    
     /// Return a new empty collection.
     ///
     pub fun createEmptyCollection(): @NonFungibleToken.Collection {
@@ -283,7 +355,21 @@ pub contract StandardNFT_Test: NonFungibleToken {
                 serialNumber: serialNumber,
             )
 
-            let nft <- create StandardNFT_Test.NFT(metadata: metadata)
+            let hexHash = String.encodeHex(metadata.hash())
+
+            // Prevent multiple NFTs from being minted with the same metadata hash
+            assert(
+                StandardNFT_Test.nftsByHash[hexHash] == nil,
+                message: \\"an NFT has already been minted with hash=\\".concat(hexHash)
+            )
+
+            let nft <- create StandardNFT_Test.NFT()
+
+            // Save the metadata
+            StandardNFT_Test.metadata[nft.id] = metadata
+
+            // Save the metadata hash
+            StandardNFT_Test.nftsByHash[hexHash] = nft.id
 
             emit Minted(id: nft.id)
 
@@ -361,6 +447,9 @@ pub contract StandardNFT_Test: NonFungibleToken {
         self.collectionMetadata = collectionMetadata
 
         self.totalSupply = 0
+
+        self.metadata = {}
+        self.nftsByHash = {}
 
         self.initAdmin(admin: admin)
 

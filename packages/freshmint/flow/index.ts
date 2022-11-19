@@ -1,3 +1,5 @@
+import { Field } from '@freshmint/core/metadata';
+
 // @ts-ignore
 import * as t from '@onflow/types';
 
@@ -13,6 +15,16 @@ import {
 } from '@freshmint/core';
 
 import FlowCliWrapper from './cli';
+
+export interface BatchField {
+  field: Field;
+  values: any[];
+}
+
+export interface MintResult {
+  id: string;
+  transactionId: string;
+}
 
 // Use the maximum compute limit for minting transactions.
 //
@@ -35,12 +47,10 @@ export class FlowGateway {
       case 'emulator':
         return FreshmintConfig.EMULATOR.imports;
       case 'testnet':
-        return FreshmintConfig.EMULATOR.imports;
+        return FreshmintConfig.TESTNET.imports;
       case 'mainnet':
-        return FreshmintConfig.EMULATOR.imports;
+        return FreshmintConfig.MAINNET.imports;
     }
-
-    throw new Error(`Invalid network "${this.network}". Expected one of "emulator", "testnet" or "mainnet".`);
   }
 
   async deploy(name: string, code: string, collectionMetadata: CollectionMetadata, royalties: Royalty[]) {
@@ -74,38 +84,43 @@ export class FlowGateway {
     return await this.flow.transaction('./cadence/transactions/deploy.cdc', `${this.network}-account`, args);
   }
 
-  async mint(fields: any[]) {
+  async mint(primaryKeys: string[], fields: any[]) {
     const args = [
       { type: t.Optional(t.String), value: null }, // Bucket name
-      ...fields.map((field) => ({
+      { type: t.Array(t.String), value: primaryKeys },
+      ...fields.map(({ field, values }) => ({
         type: t.Array(field.typeInstance.cadenceType),
-        value: field.values,
+        value: values,
       })),
     ];
 
-    return await this.flow.transaction(
+    const result = await this.flow.transaction(
       './cadence/transactions/mint.cdc',
       `${this.network}-account`,
       args,
       mintComputeLimit,
     );
+
+    return parseMintResults(result);
   }
 
-  async mintWithClaimKey(publicKeys: string[], fields: any[]) {
+  async mintWithClaimKey(publicKeys: string[], fields: BatchField[]) {
     const args = [
       { type: t.Array(t.String), value: publicKeys },
-      ...fields.map((field) => ({
+      ...fields.map(({ field, values }) => ({
         type: t.Array(field.typeInstance.cadenceType),
-        value: field.values,
+        value: values,
       })),
     ];
 
-    return await this.flow.transaction(
+    const result = await this.flow.transaction(
       './cadence/transactions/mint_with_claim_key.cdc',
       `${this.network}-account`,
       args,
       mintComputeLimit,
     );
+
+    return parseMintResults(result);
   }
 
   async getNFTDetails(address: string, nftId: string) {
@@ -124,37 +139,47 @@ export class FlowGateway {
       })),
     ];
 
-    return await this.flow.transaction(
+    const result = await this.flow.transaction(
       './cadence/transactions/create_editions.cdc',
       `${this.network}-account`,
       args,
       mintComputeLimit,
     );
+
+    return parseEditionResults(result);
   }
 
   async mintEdition(editionId: string, count: number) {
-    return await this.flow.transaction(
+    const args = [
+      { type: t.UInt64, value: editionId },
+      { type: t.Int, value: count.toString(10) },
+      { type: t.Optional(t.String), value: null },
+    ];
+
+    const result = await this.flow.transaction(
       './cadence/transactions/mint.cdc',
       `${this.network}-account`,
-      [
-        { type: t.UInt64, value: editionId },
-        { type: t.Int, value: count.toString(10) },
-        { type: t.Optional(t.String), value: null },
-      ],
+      args,
       mintComputeLimit,
     );
+
+    return parseEditionMintResults(result);
   }
 
   async mintEditionWithClaimKey(editionId: string, publicKeys: string[]) {
-    return await this.flow.transaction(
+    const args = [
+      { type: t.UInt64, value: editionId },
+      { type: t.Array(t.String), value: publicKeys },
+    ];
+
+    const result = await this.flow.transaction(
       './cadence/transactions/mint_with_claim_key.cdc',
       `${this.network}-account`,
-      [
-        { type: t.UInt64, value: editionId },
-        { type: t.Array(t.String), value: publicKeys },
-      ],
+      args,
       mintComputeLimit,
     );
+
+    return parseEditionMintResults(result);
   }
 
   async startDrop(saleId: string, price: string) {
@@ -169,7 +194,7 @@ export class FlowGateway {
   }
 
   async getDrop() {
-    return await this.flow.script('./cadence/transactions/get_drop.cdc', []);
+    return await this.flow.script('./cadence/scripts/get_drop.cdc', []);
   }
 
   async stopDrop(saleId: string) {
@@ -177,4 +202,67 @@ export class FlowGateway {
       { type: t.String, value: saleId },
     ]);
   }
+
+  async getDuplicateNFTs(hashes: string[]): Promise<boolean[]> {
+    return await this.flow.script('./cadence/scripts/get_duplicate_nfts.cdc', [
+      { type: t.Array(t.String), value: hashes },
+    ]);
+  }
+
+  async getEditionsByHash(hashes: string[]) {
+    return await this.flow.script('./cadence/scripts/get_editions_by_hash.cdc', [
+      { type: t.Array(t.String), value: hashes },
+    ]);
+  }
+}
+
+function parseMintResults(txOutput: any): MintResult[] {
+  const deposits = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
+
+  return deposits.map((deposit: any) => {
+    const id = deposit.values.value.fields.find((f: any) => f.name === 'id').value;
+
+    return {
+      id: id.value,
+      transactionId: txOutput.id,
+    };
+  });
+}
+
+function parseEditionResults(txOutput: any): { id: string; size: number; count: number }[] {
+  const editions = txOutput.events.filter((event: any) => event.type.includes('.EditionCreated'));
+
+  return editions.map((edition: any) => {
+    // TODO: improve event parsing. Use FCL?
+
+    const editionStruct = edition.values.value.fields.find((f: any) => f.name === 'edition').value;
+
+    const editionId = editionStruct.value.fields.find((f: any) => f.name === 'id').value.value;
+    const editionCount = editionStruct.value.fields.find((f: any) => f.name === 'count').value.value;
+    const editionSize = editionStruct.value.fields.find((f: any) => f.name === 'size').value.value;
+
+    return {
+      id: editionId,
+      size: editionSize,
+      count: editionCount,
+      transactionId: txOutput.id,
+    };
+  });
+}
+
+function parseEditionMintResults(txOutput: any) {
+  const mints = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
+
+  return mints.map((mint: any) => {
+    // TODO: improve event parsing. Use FCL?
+
+    const tokenId = mint.values.value.fields.find((f: any) => f.name === 'id').value;
+    const serialNumber = mint.values.value.fields.find((f: any) => f.name === 'serialNumber').value;
+
+    return {
+      id: tokenId.value,
+      serialNumber: serialNumber.value,
+      transactionId: txOutput.id,
+    };
+  });
 }

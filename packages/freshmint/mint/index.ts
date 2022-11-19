@@ -2,15 +2,14 @@ import { ContractConfig, ContractType } from '../config';
 import { FlowGateway } from '../flow';
 import { EditionMinter } from './EditionMinter';
 import { StandardMinter } from './StandardMinter';
-import Storage from '../storage';
-import { MetadataLoader } from '../loaders';
-import { MetadataProcessor } from '../processors';
+import { MetadataProcessor } from './processors';
+import { MetadataLoader } from './loaders';
 
 export interface Minter {
   mint(
     loader: MetadataLoader,
     withClaimKey: boolean,
-    onStart: (total: number, skipped: number, batchCount: number, batchSize: number) => void,
+    onStart: (total: number, batchCount: number, batchSize: number, message?: string) => void,
     onBatchComplete: (batchSize: number) => void,
     onError: (error: Error) => void,
     batchSize: number,
@@ -21,12 +20,11 @@ export function createMinter(
   contract: ContractConfig,
   metadataProcessor: MetadataProcessor,
   flowGateway: FlowGateway,
-  storage: Storage,
 ): Minter {
   switch (contract.type) {
     case ContractType.Standard:
-      return new StandardMinter(contract.schema, metadataProcessor, flowGateway, storage);
+      return new StandardMinter(contract.schema, metadataProcessor, flowGateway);
     case ContractType.Edition:
-      return new EditionMinter(contract.schema, metadataProcessor, flowGateway, storage);
+      return new EditionMinter(contract.schema, metadataProcessor, flowGateway);
   }
 }

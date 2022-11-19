@@ -92,4 +92,17 @@ export class EditionNFTGenerator extends TemplateGenerator {
       contractAddress,
     });
   }
+
+  static getEditionsByHash({
+    contractName,
+    contractAddress,
+  }: {
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/edition-nft/scripts/get_editions_by_hash.template.cdc'), {
+      contractName,
+      contractAddress,
+    });
+  }
 }
