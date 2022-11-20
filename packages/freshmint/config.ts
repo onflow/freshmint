@@ -99,7 +99,7 @@ const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
 export async function loadConfig(): Promise<FreshmintConfig> {
   const rawConfig = loadRawConfig(defaultConfigPath);
 
-  return (await schema.validate(rawConfig)) as FreshmintConfig;
+  return await schema.validate(rawConfig);
 }
 
 function loadRawConfig(filename: string, basePath?: string): any {
