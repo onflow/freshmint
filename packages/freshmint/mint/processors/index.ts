@@ -1,11 +1,15 @@
 import * as metadata from '@freshmint/core/metadata';
 
-import { Entry, PreparedMetadata, PreparedMetadataValue } from '../entries';
+export interface PreparedEntry {
+  rawMetadata: metadata.MetadataMap;
+  preparedMetadata: metadata.MetadataMap;
+  hash: string;
+}
 
 export interface FieldProcessor {
   fieldType: metadata.FieldType;
   prepare(value: any): Promise<any>;
-  process(raw: any, prepared: any): Promise<void>;
+  process(rawValues: string[], preparedValues: string[]): Promise<void>;
 }
 
 export class MetadataProcessor {
@@ -21,22 +25,34 @@ export class MetadataProcessor {
     this.#fieldProcessors.push(fieldProcessor);
   }
 
-  async prepare(entry: Entry): Promise<PreparedMetadata> {
-    const metadata: PreparedMetadata = {};
+  async prepare(entries: metadata.MetadataMap[]): Promise<PreparedEntry[]> {
+    return Promise.all(
+      entries.map(async (rawMetadata: metadata.MetadataMap) => {
+        const preparedMetadata = await this.#prepareMetadata(rawMetadata);
+        const hash = metadata.hashMetadata(this.#schema, preparedMetadata).toString('hex');
+
+        return {
+          rawMetadata,
+          preparedMetadata,
+          hash,
+        };
+      }),
+    );
+  }
+
+  async #prepareMetadata(entry: metadata.MetadataMap): Promise<metadata.MetadataMap> {
+    const metadata: metadata.MetadataMap = {};
 
     for (const field of this.#schema.fields) {
-      const value = field.getValue(entry);
+      const rawValue = entry[field.name];
 
-      metadata[field.name] = {
-        raw: value,
-        prepared: await this.prepareField(field, value),
-      };
+      metadata[field.name] = await this.#prepareField(field, rawValue);
     }
 
     return metadata;
   }
 
-  async prepareField(field: metadata.Field, value: any) {
+  async #prepareField(field: metadata.Field, value: any) {
     for (const fieldProcessor of this.#fieldProcessors) {
       if (field.type === fieldProcessor.fieldType) {
         return fieldProcessor.prepare(value);
@@ -46,17 +62,15 @@ export class MetadataProcessor {
     return value;
   }
 
-  async process(metadata: PreparedMetadata): Promise<void> {
+  async process(entries: PreparedEntry[]): Promise<void> {
     for (const field of this.#schema.fields) {
-      const value = metadata[field.name];
-      await this.processField(field, value);
-    }
-  }
+      const rawValues = entries.map((entry) => entry.rawMetadata[field.name]);
+      const preparedValues = entries.map((entry) => entry.preparedMetadata[field.name]);
 
-  async processField(field: metadata.Field, value: PreparedMetadataValue) {
-    for (const fieldProcessor of this.#fieldProcessors) {
-      if (field.type === fieldProcessor.fieldType) {
-        await fieldProcessor.process(value.raw, value.prepared);
+      for (const fieldProcessor of this.#fieldProcessors) {
+        if (field.type === fieldProcessor.fieldType) {
+          await fieldProcessor.process(rawValues, preparedValues);
+        }
       }
     }
   }

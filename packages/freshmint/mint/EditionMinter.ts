@@ -1,32 +1,33 @@
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
-import { hashMetadata, Schema } from '@freshmint/core/metadata';
+import { MetadataMap, Schema } from '@freshmint/core/metadata';
 
 import { MetadataLoader } from './loaders';
+import { MetadataProcessor } from './processors';
 import { FlowGateway } from '../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import { MetadataProcessor } from './processors';
 import { Minter } from '.';
-import { Entry, PreparedMetadata, preparedValues } from './entries';
 import { writeCSV } from './csv';
 
 type Edition = {
   id: string;
   size: number;
   count: number;
-  metadata: PreparedMetadata;
+  rawMetadata: MetadataMap;
+  preparedMetadata: MetadataMap;
+};
+
+type PreparedEditionEntry = {
+  rawMetadata: MetadataMap;
+  preparedMetadata: MetadataMap;
+  hash: string;
+  size: number;
 };
 
 type EditionBatch = {
   edition: Edition;
   size: number;
   newCount: number;
-};
-
-type PreparedEditionEntry = {
-  metadata: PreparedMetadata;
-  hash: string;
-  size: number;
 };
 
 export class EditionMinter implements Minter {
@@ -108,7 +109,8 @@ export class EditionMinter implements Minter {
           // TODO: the on-chain ID needs to be converted to a string in order to be
           // used as an FCL argument. Find a better way to sanitize this.
           id: existingEdition.id.toString(),
-          metadata: entry.metadata,
+          rawMetadata: entry.rawMetadata,
+          preparedMetadata: entry.preparedMetadata,
         };
       } else {
         newEditions.push(entry);
@@ -122,7 +124,7 @@ export class EditionMinter implements Minter {
 
     const values = this.schema.fields.map((field) => ({
       cadenceType: field.asCadenceTypeObject(),
-      values: newEditions.map((edition) => edition.metadata[field.name].prepared),
+      values: newEditions.map((edition) => edition.preparedMetadata[field.name]),
     }));
 
     const results = await this.flowGateway.createEditions(sizes, values);
@@ -134,7 +136,8 @@ export class EditionMinter implements Minter {
         id: result.id,
         count: result.count,
         size: result.size,
-        metadata: newEdition.metadata,
+        rawMetadata: newEdition.rawMetadata,
+        preparedMetadata: newEdition.preparedMetadata,
       };
 
       editions[newEdition.hash] = edition;
@@ -143,27 +146,19 @@ export class EditionMinter implements Minter {
     return entries.map((entry) => editions[entry.hash]);
   }
 
-  async prepareMetadata(entries: Entry[]): Promise<PreparedEditionEntry[]> {
-    return Promise.all(
-      entries.map(async (entry: Entry) => {
-        const metadata = await this.metadataProcessor.prepare(entry);
-        const hash = hashMetadata(this.schema, preparedValues(metadata)).toString('hex');
+  async prepareMetadata(entries: MetadataMap[]): Promise<PreparedEditionEntry[]> {
+    const preparedEntries = await this.metadataProcessor.prepare(entries);
 
-        const size = parseInt(entry.edition_size, 10);
-
-        return {
-          metadata,
-          hash,
-          size,
-        };
-      }),
-    );
+    return preparedEntries.map((entry, i) => {
+      return {
+        ...entry,
+        size: entries[i]['edition_size'],
+      };
+    });
   }
 
-  async processMetadata(entries: PreparedEditionEntry[]): Promise<void> {
-    await Promise.all(
-      entries.map(async (entry: PreparedEditionEntry) => this.metadataProcessor.process(entry.metadata)),
-    );
+  async processMetadata(entries: PreparedEditionEntry[]) {
+    await this.metadataProcessor.process(entries);
   }
 
   async mintBatch(
@@ -199,7 +194,7 @@ export class EditionMinter implements Minter {
         _edition_id: batch.edition.id,
         _serial_number: serialNumber,
         _transaction_id: transactionId,
-        ...preparedValues(batch.edition.metadata),
+        ...batch.edition.preparedMetadata,
       };
     });
 
@@ -235,7 +230,7 @@ export class EditionMinter implements Minter {
         _serial_number: serialNumber,
         _transaction_id: transactionId,
         _claim_key: formatClaimKey(id, privateKeys[i]),
-        ...preparedValues(batch.edition.metadata),
+        ...batch.edition.preparedMetadata,
       };
     });
 
@@ -265,7 +260,7 @@ function createEditionBatches(edition: Edition, batchSize: number): EditionBatch
   return batches;
 }
 
-async function savePrivateKeysToFile(filename: string, batch: EditionBatch, privateKeys: string[]): Promise<void> {
+async function savePrivateKeysToFile(filename: string, batch: EditionBatch, privateKeys: string[]) {
   const rows = privateKeys.map((privateKey) => ({
     _edition_id: batch.edition.id,
     _partial_claim_key: privateKey,

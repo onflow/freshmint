@@ -1,19 +1,13 @@
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
-import { hashMetadata, Field, Schema } from '@freshmint/core/metadata';
+import { MetadataMap, Field, Schema } from '@freshmint/core/metadata';
 
 import { MetadataLoader } from './loaders';
 import { BatchField, FlowGateway } from '../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import { MetadataProcessor } from './processors';
+import { MetadataProcessor, PreparedEntry } from './processors';
 import { Minter } from '.';
-import { Entry, PreparedMetadata, preparedValues } from './entries';
 import { writeCSV } from './csv';
-
-type PreparedNFTEntry = {
-  metadata: PreparedMetadata;
-  hash: string;
-};
 
 export class StandardMinter implements Minter {
   schema: Schema;
@@ -73,31 +67,24 @@ export class StandardMinter implements Minter {
     }
   }
 
-  async prepareMetadata(entries: Entry[]): Promise<PreparedNFTEntry[]> {
-    return Promise.all(
-      entries.map(async (entry: Entry) => {
-        const metadata = await this.metadataProcessor.prepare(entry);
-        const hash = hashMetadata(this.schema, preparedValues(metadata)).toString('hex');
-
-        return {
-          metadata,
-          hash,
-        };
-      }),
-    );
+  async prepareMetadata(entries: MetadataMap[]): Promise<PreparedEntry[]> {
+    return await this.metadataProcessor.prepare(entries);
   }
 
-  async processMetadata(entries: PreparedNFTEntry[]): Promise<void> {
-    await Promise.all(entries.map(async (entry: PreparedNFTEntry) => this.metadataProcessor.process(entry.metadata)));
+  async processMetadata(entries: PreparedEntry[]) {
+    await this.metadataProcessor.process(entries);
   }
 
-  async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedNFTEntry[], onError: (error: Error) => void) {
+  async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedEntry[], onError: (error: Error) => void) {
     const metadataFields = groupMetadataByField(this.schema.fields, nfts);
 
     let results;
 
+    // Use metadata hash as primary key
+    const primaryKeys = nfts.map((nft) => nft.hash);
+
     try {
-      results = await this.flowGateway.mint(metadataFields);
+      results = await this.flowGateway.mint(primaryKeys, metadataFields);
     } catch (error: any) {
       onError(error);
       return;
@@ -111,7 +98,7 @@ export class StandardMinter implements Minter {
       return {
         _id: id,
         _transaction_id: transactionId,
-        ...preparedValues(nft.metadata),
+        ...nft.preparedMetadata,
       };
     });
 
@@ -122,7 +109,7 @@ export class StandardMinter implements Minter {
     batchIndex: number,
     outFile: string,
     tempFile: string,
-    nfts: PreparedNFTEntry[],
+    nfts: PreparedEntry[],
     onError: (error: Error) => void,
   ) {
     const { privateKeys, publicKeys } = generateClaimKeyPairs(nfts.length);
@@ -131,10 +118,13 @@ export class StandardMinter implements Minter {
 
     const metadataFields = groupMetadataByField(this.schema.fields, nfts);
 
+    // Use metadata hash as primary key
+    const primaryKeys = nfts.map((nft) => nft.hash);
+
     let results;
 
     try {
-      results = await this.flowGateway.mintWithClaimKey(publicKeys, metadataFields);
+      results = await this.flowGateway.mintWithClaimKey(publicKeys, primaryKeys, metadataFields);
     } catch (error: any) {
       onError(error);
       return;
@@ -149,7 +139,7 @@ export class StandardMinter implements Minter {
         _id: id,
         _transaction_id: transactionId,
         _claim_key: formatClaimKey(id, privateKeys[i]),
-        ...preparedValues(nft.metadata),
+        ...nft.preparedMetadata,
       };
     });
 
@@ -157,10 +147,11 @@ export class StandardMinter implements Minter {
   }
 
   // filterDuplicates returns only the NFTs that have not yet been minted.
-  async filterDuplicates(nfts: PreparedNFTEntry[], batchSize: number): Promise<PreparedNFTEntry[]> {
-    const hashes = nfts.map((nft) => nft.hash);
+  async filterDuplicates(nfts: PreparedEntry[], batchSize: number): Promise<PreparedEntry[]> {
+    // Use metadata hash as primary key
+    const primaryKeys = nfts.map((nft) => nft.hash);
 
-    const batches = createBatches(hashes, batchSize);
+    const batches = createBatches(primaryKeys, batchSize);
 
     const duplicates = (await Promise.all(batches.map((batch) => this.flowGateway.getDuplicateNFTs(batch)))).flat();
 
@@ -177,18 +168,18 @@ function createBatches<T>(items: T[], batchSize: number): T[][] {
   return batches;
 }
 
-function groupMetadataByField(fields: Field[], nfts: PreparedNFTEntry[]): BatchField[] {
+function groupMetadataByField(fields: Field[], nfts: PreparedEntry[]): BatchField[] {
   return fields.map((field) => ({
     field,
-    values: nfts.map((nft) => nft.metadata[field.name].prepared),
+    values: nfts.map((nft) => nft.preparedMetadata[field.name]),
   }));
 }
 
-async function savePrivateKeysToFile(filename: string, nfts: PreparedNFTEntry[], privateKeys: string[]): Promise<void> {
-  const rows = nfts.map((nft: PreparedNFTEntry, i) => {
+async function savePrivateKeysToFile(filename: string, nfts: PreparedEntry[], privateKeys: string[]): Promise<void> {
+  const rows = nfts.map((nft: PreparedEntry, i) => {
     return {
       _partial_claim_key: privateKeys[i],
-      ...preparedValues(nft.metadata),
+      ...nft.preparedMetadata,
     };
   });
 

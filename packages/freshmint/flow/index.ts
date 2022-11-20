@@ -84,7 +84,7 @@ export class FlowGateway {
     return await this.flow.transaction('./cadence/transactions/deploy.cdc', `${this.network}-account`, args);
   }
 
-  async mint(primaryKeys: string[], fields: any[]) {
+  async mint(primaryKeys: string[], fields: BatchField[]) {
     const args = [
       { type: t.Optional(t.String), value: null }, // Bucket name
       { type: t.Array(t.String), value: primaryKeys },
@@ -104,9 +104,10 @@ export class FlowGateway {
     return parseMintResults(result);
   }
 
-  async mintWithClaimKey(publicKeys: string[], fields: BatchField[]) {
+  async mintWithClaimKey(publicKeys: string[], primaryKeys: string[], fields: BatchField[]) {
     const args = [
       { type: t.Array(t.String), value: publicKeys },
+      { type: t.Array(t.String), value: primaryKeys },
       ...fields.map(({ field, values }) => ({
         type: t.Array(field.typeInstance.cadenceType),
         value: values,

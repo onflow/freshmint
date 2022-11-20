@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
 import * as metadata from '@freshmint/core/metadata';
 
-import IPFS from '../ipfs';
+import IPFS from '../../ipfs';
 import { FieldProcessor } from '.';
 
 export default class IPFSFileProcessor implements FieldProcessor {
@@ -19,17 +19,20 @@ export default class IPFSFileProcessor implements FieldProcessor {
 
   async prepare(value: any): Promise<any> {
     const data = await this.#readFile(value as string);
-    return this.#ipfs.getCID(data);
+    return this.#ipfs.computeCID(data);
   }
 
-  async process(raw: any, prepared: any): Promise<void> {
-    const data = await this.#readFile(raw as string);
+  async process(rawValues: any[], preparedValues: any[]): Promise<void> {
+    const files = [];
 
-    const cid = await this.#ipfs.pin(data);
-
-    if (cid !== prepared) {
-      throw new MismatchedCIDError(prepared, cid);
+    for (const raw of rawValues) {
+      const data = await this.#readFile(raw);
+      files.push(data);
     }
+
+    const expectedCids = preparedValues as string[];
+
+    return await this.#ipfs.uploadFiles(files, expectedCids);
   }
 
   async #readFile(value: string): Promise<Buffer> {
@@ -63,16 +66,5 @@ function isURL(value: string): boolean {
     return true;
   } catch {
     return false;
-  }
-}
-
-export class MismatchedCIDError extends Error {
-  expected: string;
-  actual: string;
-
-  constructor(expected: string, actual: string) {
-    super(`Expected file to have IPFS CID of ${expected} but got ${actual}`);
-    this.expected = expected;
-    this.actual = actual;
   }
 }

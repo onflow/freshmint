@@ -4,7 +4,7 @@
 // See fresh.js for the core functionality.
 
 import * as path from 'path';
-import { Command, InvalidArgumentError, InvalidOptionArgumentError } from 'commander';
+import { Command, InvalidArgumentError } from 'commander';
 import ora from 'ora';
 import ProgressBar from 'progress';
 import inquirer from 'inquirer';
@@ -13,7 +13,7 @@ import Fresh from './fresh';
 import carlton from './carlton';
 import startCommand from './start';
 import { runDevServer } from './devServer';
-import { loadConfig, ContractType, ContractConfig } from './config';
+import { loadConfig } from './config';
 import { generateNextjsApp, generateProjectCadence } from './generateProject';
 import { FreshmintError } from './errors';
 import CSVLoader from './mint/loaders/CSVLoader';

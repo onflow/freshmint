@@ -1,4 +1,4 @@
-import { createWriteStream } from 'fs';
+import { createWriteStream, createReadStream } from 'fs';
 import * as csv from 'fast-csv';
 
 export async function writeCSV(filename: string, rows: any[], { append = false } = {}) {
@@ -13,5 +13,17 @@ export async function writeCSV(filename: string, rows: any[], { append = false }
     }
 
     csvStream.end();
+  });
+}
+
+export async function readCSV(filename: string): Promise<{ [key: string]: string }[]> {
+  return new Promise((resolve, reject) => {
+    const rows: { [key: string]: string }[] = [];
+
+    createReadStream(filename)
+      .pipe(csv.parse({ headers: true }))
+      .on('error', (error) => reject(error))
+      .on('data', (row) => rows.push(row))
+      .on('end', () => resolve(rows));
   });
 }

@@ -1,5 +1,5 @@
-import { Entry } from '../entries';
+import * as metadata from '@freshmint/core/metadata';
 
 export interface MetadataLoader {
-  loadEntries(): Promise<Entry[]>;
+  loadEntries(): Promise<metadata.MetadataMap[]>;
 }

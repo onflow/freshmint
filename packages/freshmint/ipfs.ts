@@ -1,4 +1,7 @@
 import { Blob, NFTStorage } from 'nft.storage';
+import { pack } from 'ipfs-car/pack';
+import { CarReader } from '@ipld/car';
+import { CID } from 'multiformats';
 
 export default class IPFS {
   ipfsClient: NFTStorage;
@@ -17,16 +20,39 @@ export default class IPFS {
     this.ipfsClient = ipfsClient;
   }
 
-  async getCID(data: Buffer): Promise<string> {
-    const { cid } = await NFTStorage.encodeBlob(new Blob([data]));
+  async computeCID(file: Buffer): Promise<string> {
+    const { cid } = await NFTStorage.encodeBlob(new Blob([file]));
     return cid.toString();
   }
 
-  async pin(data: Buffer): Promise<string> {
-    const { cid, car } = await NFTStorage.encodeBlob(new Blob([data]));
+  async uploadFiles(files: Buffer[], expectedCIDs: string[]) {
+    const blobs = files.map((data) => new Blob([data]));
 
-    await this.ipfsClient.storeCar(car, { maxRetries: this.maxRetries });
+    const { out } = await pack({ input: blobs, wrapWithDirectory: false });
 
-    return cid.toString();
+    const carReader = await CarReader.fromIterable(out);
+
+    // Assert that packed CIDs match expected CIDs of individual files
+    for (const rawCid of expectedCIDs) {
+      const cid = CID.parse(rawCid);
+
+      const hasCid = carReader.has(cid);
+
+      if (!hasCid) {
+        throw new MissingCIDError(cid);
+      }
+    }
+
+    // @ts-ignore
+    await this.ipfsClient.storeCar(carReader, { maxRetries: this.maxRetries });
+  }
+}
+
+export class MissingCIDError extends Error {
+  cid: CID;
+
+  constructor(cid: CID) {
+    super(`Expected CAR file to contain CID ${cid.toString()}`);
+    this.cid = cid;
   }
 }

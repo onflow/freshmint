@@ -1,10 +1,10 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-pub fun main(hashes: [String]): [Bool] {
+pub fun main(primaryKeys: [String]): [Bool] {
     let nfts: [Bool] = []
 
-    for hash in hashes {
-        let exists = {{ contractName }}.getNFTIDByHash(hash: hash) != nil
+    for primaryKey in primaryKeys {
+        let exists = {{ contractName }}.getNFTByPrimaryKey(primaryKey: primaryKey) != nil
         nfts.append(exists)
     }
 
