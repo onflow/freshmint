@@ -6,7 +6,7 @@ import { MetadataLoader } from './loaders';
 import { BatchField, FlowGateway } from '../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { MetadataProcessor, PreparedEntry } from './processors';
-import { Minter } from '.';
+import { Minter, MinterHooks } from '.';
 import { writeCSV } from './csv';
 
 export class StandardMinter implements Minter {
@@ -20,26 +20,23 @@ export class StandardMinter implements Minter {
     this.flowGateway = flowGateway;
   }
 
-  async mint(
-    loader: MetadataLoader,
-    withClaimKeys: boolean,
-    onStart: (total: number, batchCount: number, batchSize: number, message?: string) => void,
-    onBatchComplete: (batchSize: number) => void,
-    onError: (error: Error) => void,
-    batchSize = 10,
-  ) {
+  async mint(loader: MetadataLoader, withClaimKeys: boolean, batchSize: number, hooks: MinterHooks) {
     const entries = await loader.loadEntries();
 
     const preparedEntries = await this.prepareMetadata(entries);
+
+    hooks.onStartDuplicateCheck();
 
     const newEntries = await this.filterDuplicates(preparedEntries, batchSize);
 
     const total = newEntries.length;
     const skipped = entries.length - newEntries.length;
 
+    hooks.onCompleteDuplicateCheck(makeSkippedMessage(skipped));
+
     const batches = createBatches(newEntries, batchSize);
 
-    onStart(total, batches.length, batchSize, makeSkippedMessage(skipped));
+    hooks.onStartMinting(total, batches.length, batchSize);
 
     const timestamp = Date.now();
 
@@ -51,14 +48,14 @@ export class StandardMinter implements Minter {
       await this.processMetadata(nfts);
 
       if (withClaimKeys) {
-        await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, nfts, onError);
+        await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, nfts, hooks.onMintingError);
       } else {
-        await this.mintNFTs(batchIndex, outFile, nfts, onError);
+        await this.mintNFTs(batchIndex, outFile, nfts, hooks.onMintingError);
       }
 
       const batchSize = nfts.length;
 
-      onBatchComplete(batchSize);
+      hooks.onCompleteBatch(batchSize);
     }
 
     // Remove the temporary file used to store claim keys
@@ -188,10 +185,10 @@ async function savePrivateKeysToFile(filename: string, nfts: PreparedEntry[], pr
 
 function makeSkippedMessage(skippedNFTCount: number): string {
   if (!skippedNFTCount) {
-    return '';
+    return 'Completed duplicate check.';
   }
 
   return skippedNFTCount > 1
-    ? `Skipped ${skippedNFTCount} NFTs because they have already been minted.`
-    : `Skipped 1 NFT because it has already been minted.`;
+    ? `Skipped ${skippedNFTCount} NFTs because they already exist.`
+    : `Skipped 1 NFT because it already exists.`;
 }

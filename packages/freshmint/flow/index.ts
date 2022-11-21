@@ -204,7 +204,7 @@ export class FlowGateway {
     ]);
   }
 
-  async getEditionsByPrimaryKey(primaryKeys: string[]) {
+  async getEditionsByPrimaryKey(primaryKeys: string[]): Promise<{ id: string; size: number; count: number }[]> {
     return await this.flow.script('./cadence/scripts/get_editions_by_primary_key.cdc', [
       { type: t.Array(t.String), value: primaryKeys },
     ]);

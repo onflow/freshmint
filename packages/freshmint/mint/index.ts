@@ -5,15 +5,18 @@ import { StandardMinter } from './StandardMinter';
 import { MetadataProcessor } from './processors';
 import { MetadataLoader } from './loaders';
 
+export type MinterHooks = {
+  onStartDuplicateCheck: () => void;
+  onCompleteDuplicateCheck: (message: string) => void;
+  onStartPinning: (files: number) => void;
+  onCompletePinning: () => void;
+  onStartMinting: (total: number, batchCount: number, batchSize: number) => void;
+  onCompleteBatch: (batchSize: number) => void;
+  onMintingError: (error: Error) => void;
+};
+
 export interface Minter {
-  mint(
-    loader: MetadataLoader,
-    withClaimKey: boolean,
-    onStart: (total: number, batchCount: number, batchSize: number, message?: string) => void,
-    onBatchComplete: (batchSize: number) => void,
-    onError: (error: Error) => void,
-    batchSize: number,
-  ): Promise<void>;
+  mint(loader: MetadataLoader, withClaimKey: boolean, batchSize: number, hooks: MinterHooks): Promise<void>;
 }
 
 export function createMinter(

@@ -1,12 +1,12 @@
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
-import { MetadataMap, Schema } from '@freshmint/core/metadata';
+import { IPFSFile, MetadataMap, Schema } from '@freshmint/core/metadata';
 
 import { MetadataLoader } from './loaders';
 import { MetadataProcessor } from './processors';
 import { FlowGateway } from '../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import { Minter } from '.';
+import { Minter, MinterHooks } from '.';
 import { writeCSV } from './csv';
 
 type Edition = {
@@ -41,31 +41,20 @@ export class EditionMinter implements Minter {
     this.flowGateway = flowGateway;
   }
 
-  async mint(
-    loader: MetadataLoader,
-    withClaimKey: boolean,
-    onStart: (total: number, batchCount: number, batchSize: number, message?: string) => void,
-    onBatchComplete: (batchSize: number) => void,
-    onError: (error: Error) => void,
-    batchSize = 10,
-  ) {
+  async mint(loader: MetadataLoader, withClaimKey: boolean, batchSize: number, hooks: MinterHooks) {
     const entries = await loader.loadEntries();
 
     const preparedEntries = await this.prepareMetadata(entries);
 
-    const editions = await this.getOrCreateEditions(preparedEntries);
+    const editions = await this.getOrCreateEditions(preparedEntries, hooks);
 
     const editionsToMint = editions.filter((edition) => edition.count < edition.size);
-
-    const totalNFTCount = editions.reduce((size, edition) => size + edition.size, 0);
 
     const batches = createBatches(editionsToMint, batchSize);
 
     const newNFTCount = batches.reduce((count, batch) => count + batch.size, 0);
-    const skippedEditionCount = editions.length - editionsToMint.length;
-    const skippedNFTCount = totalNFTCount - newNFTCount;
 
-    onStart(newNFTCount, batches.length, batchSize, makeSkippedMessage(skippedEditionCount, skippedNFTCount));
+    hooks.onStartMinting(newNFTCount, batches.length, batchSize);
 
     const timestamp = Date.now();
 
@@ -74,13 +63,13 @@ export class EditionMinter implements Minter {
 
     for (const [batchIndex, batch] of batches.entries()) {
       try {
-        await this.mintBatch(batchIndex, outFile, tempFile, batch, withClaimKey, onError);
+        await this.mintBatch(batchIndex, outFile, tempFile, batch, withClaimKey, hooks.onMintingError);
       } catch (error: any) {
-        onError(error);
+        hooks.onMintingError(error);
         return;
       }
 
-      onBatchComplete(batch.size);
+      hooks.onCompleteBatch(batch.size);
     }
 
     // Remove the temporary file used to store claim keys
@@ -89,10 +78,12 @@ export class EditionMinter implements Minter {
     }
   }
 
-  async getOrCreateEditions(entries: PreparedEditionEntry[]): Promise<Edition[]> {
+  async getOrCreateEditions(entries: PreparedEditionEntry[], hooks: MinterHooks): Promise<Edition[]> {
     // TODO: improve this function
 
     const primaryKeys = entries.map((edition) => edition.hash);
+
+    hooks.onStartDuplicateCheck();
 
     const existingEditions = await this.flowGateway.getEditionsByPrimaryKey(primaryKeys);
 
@@ -100,10 +91,16 @@ export class EditionMinter implements Minter {
 
     const newEditions: PreparedEditionEntry[] = [];
 
+    let existingEditionCount = 0;
+    let existingNFTCount = 0;
+
     for (const [i, entry] of entries.entries()) {
       const existingEdition = existingEditions[i];
 
       if (existingEdition) {
+        existingEditionCount += 1;
+        existingNFTCount += existingEdition.count;
+
         editions[entry.hash] = {
           ...existingEdition,
           // TODO: the on-chain ID needs to be converted to a string in order to be
@@ -117,8 +114,14 @@ export class EditionMinter implements Minter {
       }
     }
 
+    hooks.onCompleteDuplicateCheck(makeSkippedMessage(existingEditionCount, existingNFTCount));
+
+    if (newEditions.length === 0) {
+      return entries.map((entry) => editions[entry.hash]);
+    }
+
     // Process the edition metadata fields (i.e. perform actions such as pinning files to IPFS)
-    await this.processMetadata(newEditions);
+    await this.processMetadata(newEditions, hooks);
 
     const sizes = newEditions.map((edition) => edition.size);
 
@@ -163,8 +166,19 @@ export class EditionMinter implements Minter {
     });
   }
 
-  async processMetadata(entries: PreparedEditionEntry[]) {
+  async processMetadata(entries: PreparedEditionEntry[], hooks: MinterHooks) {
+    const ipfsFields = this.schema.fields.filter((field) => field.type == IPFSFile);
+    const ipfsFileCount = entries.length * ipfsFields.length;
+
+    if (ipfsFileCount > 0) {
+      hooks.onStartPinning(ipfsFileCount);
+    }
+
     await this.metadataProcessor.process(entries);
+
+    if (ipfsFileCount > 0) {
+      hooks.onCompletePinning();
+    }
   }
 
   async mintBatch(
@@ -277,16 +291,16 @@ async function savePrivateKeysToFile(filename: string, batch: EditionBatch, priv
 
 function makeSkippedMessage(skippedEditionCount: number, skippedNFTCount: number): string {
   if (!skippedEditionCount && !skippedNFTCount) {
-    return '';
+    return 'Completed duplicate check.';
   }
 
   if (skippedNFTCount && !skippedEditionCount) {
-    return `Skipped ${skippedNFTCount} NFTs because they have already been minted.`;
+    return `Skipped ${skippedNFTCount} NFTs because they already exist.`;
   }
 
   const nftMessage = skippedNFTCount > 1 ? `${skippedNFTCount} NFTs` : '1 NFT';
 
   return skippedEditionCount > 1
-    ? `Skipped ${skippedEditionCount} editions (${nftMessage}) because they have already been minted.`
-    : `Skipped 1 edition (${nftMessage}) because it has already been minted.`;
+    ? `Skipped ${skippedEditionCount} editions (${nftMessage}) because they already exist.`
+    : `Skipped 1 edition (${nftMessage}) because it already exists.`;
 }

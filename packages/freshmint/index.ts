@@ -20,7 +20,6 @@ import CSVLoader from './mint/loaders/CSVLoader';
 import { FlowNetwork } from './flow';
 
 const program = new Command();
-const spinner = ora();
 
 function validateInteger(value: string, error: InvalidArgumentError) {
   const integer = parseInt(value, 10);
@@ -110,6 +109,7 @@ async function main() {
 }
 
 async function start(projectPath: string) {
+  const spinner = ora();
   await startCommand(spinner, projectPath);
 }
 
@@ -120,6 +120,8 @@ async function dev() {
 async function deploy({ network }: { network: FlowNetwork }) {
   const config = await loadConfig();
   const fresh = new Fresh(config, network);
+
+  const spinner = ora();
 
   spinner.start(`Deploying ${config.contract.name} to ${network}...`);
 
@@ -164,20 +166,25 @@ async function mint({
 
   console.log();
 
+  const duplicatesSpinner = ora();
+  const pinningSpinner = ora();
+
   let bar: ProgressBar;
 
-  spinner.start(`Checking for duplicate NFTs ...\n`);
-
-  await minter.mint(
-    loader,
-    claim,
-    (total: number, batchCount: number, batchSize: number, message?: string) => {
-      if (message) {
-        spinner.info(`${message}\n`);
-      } else {
-        spinner.succeed();
-      }
-
+  await minter.mint(loader, claim, Number(batchSize), {
+    onStartDuplicateCheck: function (): void {
+      duplicatesSpinner.start('Checking for duplicates...\n');
+    },
+    onCompleteDuplicateCheck: function (message: string): void {
+      duplicatesSpinner.succeed(message + '\n');
+    },
+    onStartPinning: function (files: number): void {
+      pinningSpinner.start(`Pinning ${files} files to IPFS...\n`);
+    },
+    onCompletePinning: function (): void {
+      pinningSpinner.succeed();
+    },
+    onStartMinting: function (total: number, batchCount: number, batchSize: number): void {
       if (total === 0) {
         return;
       }
@@ -188,14 +195,13 @@ async function mint({
 
       bar.tick(0);
     },
-    (batchSize: number) => {
+    onCompleteBatch: function (batchSize: number): void {
       bar.tick(batchSize);
     },
-    (error: Error) => {
+    onMintingError: function (error: Error): void {
       bar.interrupt(error.message);
     },
-    Number(batchSize),
-  );
+  });
 }
 
 async function startDrop(price: string, { network }: { network: FlowNetwork }) {
@@ -203,6 +209,8 @@ async function startDrop(price: string, { network }: { network: FlowNetwork }) {
   const fresh = new Fresh(config, network);
 
   await fresh.startDrop(price);
+
+  const spinner = ora();
 
   spinner.succeed(`Success! Your drop is live.`);
 }
@@ -215,6 +223,8 @@ async function stopDrop({ network }: { network: FlowNetwork }) {
 
   // TODO: return error if no drop is active
 
+  const spinner = ora();
+
   spinner.succeed(`Your drop has been stopped.`);
 }
 
@@ -223,6 +233,8 @@ async function generateCadence() {
 
   await generateProjectCadence('./', config.contract, false);
 
+  const spinner = ora();
+
   spinner.succeed(`Success! Regenerated Cadence files.`);
 }
 
@@ -230,6 +242,8 @@ async function generateWeb() {
   const config = await loadConfig();
 
   await generateNextjsApp('./', config.collection.name, config.collection.description);
+
+  const spinner = ora();
 
   spinner.succeed(`Success! Regenerated web files.`);
 }
