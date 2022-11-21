@@ -26,17 +26,21 @@ export default class IPFS {
   }
 
   async uploadFiles(files: Buffer[], expectedCIDs: string[]) {
+    if (files.length === 0) {
+      throw new EmptyFilesError();
+    }
+
     const blobs = files.map((data) => new Blob([data]));
 
     const { out } = await pack({ input: blobs, wrapWithDirectory: false });
 
-    const carReader = await CarReader.fromIterable(out);
+    const car = await CarReader.fromIterable(out);
 
-    // Assert that packed CIDs match expected CIDs of individual files
+    // Assert that packed CAR includes each expected CID
     for (const rawCid of expectedCIDs) {
       const cid = CID.parse(rawCid);
 
-      const hasCid = carReader.has(cid);
+      const hasCid = await car.has(cid);
 
       if (!hasCid) {
         throw new MissingCIDError(cid);
@@ -44,7 +48,13 @@ export default class IPFS {
     }
 
     // @ts-ignore
-    await this.ipfsClient.storeCar(carReader, { maxRetries: this.maxRetries });
+    await this.ipfsClient.storeCar(car, { maxRetries: this.maxRetries });
+  }
+}
+
+export class EmptyFilesError extends Error {
+  constructor() {
+    super('Cannot pass empty file list to IPFS.uploadFiles');
   }
 }
 

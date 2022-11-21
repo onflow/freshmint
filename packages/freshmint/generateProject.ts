@@ -77,6 +77,10 @@ async function generateStandardProject(dir: string, contract: ContractConfig, in
 
   await writeFile(path.resolve(dir, `cadence/contracts/${contract.name}.cdc`), contractSource);
 
+  const deployTransaction = StandardNFTGenerator.deployToExistingAccount({ imports: shiftedImports });
+
+  await writeFile(path.resolve(dir, 'cadence/transactions/deploy.cdc'), deployTransaction);
+
   const mintTransaction = StandardNFTGenerator.mint({
     imports: shiftedImports,
     contractName: contract.name,
@@ -85,10 +89,6 @@ async function generateStandardProject(dir: string, contract: ContractConfig, in
   });
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint.cdc'), mintTransaction);
-
-  const deployTransaction = StandardNFTGenerator.deployToExistingAccount({ imports: shiftedImports });
-
-  await writeFile(path.resolve(dir, 'cadence/transactions/deploy.cdc'), deployTransaction);
 
   const mintWithClaimKeyTransaction = StandardNFTGenerator.mintWithClaimKey({
     imports: shiftedImports,
@@ -131,6 +131,10 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
 
   await writeFile(path.resolve(dir, `cadence/contracts/${contract.name}.cdc`), contractSource);
 
+  const deployTransaction = EditionNFTGenerator.deployToExistingAccount({ imports: shiftedImports });
+
+  await writeFile(path.resolve(dir, 'cadence/transactions/deploy.cdc'), deployTransaction);
+
   const createEditionsTransaction = EditionNFTGenerator.createEditions({
     imports: shiftedImports,
     contractName: contract.name,
@@ -161,8 +165,8 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   }
 
   await writeFile(
-    path.resolve(dir, `cadence/scripts/get_editions_by_hash.cdc`),
-    EditionNFTGenerator.getEditionsByHash({ contractName: contract.name, contractAddress }),
+    path.resolve(dir, `cadence/scripts/get_editions_by_primary_key.cdc`),
+    EditionNFTGenerator.getEditionsByPrimaryKey({ contractName: contract.name, contractAddress }),
   );
 
   await writeFile(

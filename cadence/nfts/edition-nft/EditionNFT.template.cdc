@@ -45,25 +45,6 @@ pub contract {{ contractName }}: NonFungibleToken {
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
         }
-
-        /// Encode this metadata object as a byte array.
-        ///
-        /// This can be used to hash the metadata and verify its integrity.
-        ///
-        pub fun encode(): [UInt8] {
-            {{#with fields.[0]}}
-            return self.{{ name }}.{{ getCadenceByteTemplate }}
-            {{/with}}
-            {{#each fields}}
-            {{#unless @first}}
-                .concat(self.{{ this.name }}.{{ this.getCadenceByteTemplate }})
-            {{/unless}}
-            {{/each}}
-        }
-
-        pub fun hash(): [UInt8] {
-            return HashAlgorithm.SHA3_256.hash(self.encode())
-        }
     }
 
     pub struct Edition {
@@ -116,10 +97,16 @@ pub contract {{ contractName }}: NonFungibleToken {
         return {{ contractName }}.editions[id]
     }
 
-    access(self) let editionsByHash: {String: UInt64}
+    /// This dictionary indexes editions by their primary key.
+    ///
+    /// It is populated at mint time and used to prevent duplicate mints.
+    /// The primary key can be any unique string value,
+    /// for example the hash of the edition metadata.
+    ///
+    access(self) let editionsByPrimaryKey: {String: UInt64}
 
-    pub fun getEditionIDByHash(hash: String): UInt64? {
-        return {{ contractName }}.editionsByHash[hash]
+    pub fun getEditionByPrimaryKey(primaryKey: String): UInt64? {
+        return {{ contractName }}.editionsByPrimaryKey[primaryKey]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
@@ -200,6 +187,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// edition data that will later be associated with minted NFTs.
         ///
         pub fun createEdition(
+            primaryKey: String,
             size: UInt64,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
@@ -211,12 +199,10 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{/each}}
             )
 
-            let hexHash = String.encodeHex(metadata.hash())
-
-            // Prevent multiple editions from being minted with the same metadata hash
+            // Prevent multiple editions from being minted with the same primary key
             assert(
-                {{ contractName }}.editionsByHash[hexHash] == nil,
-                message: "an edition has already been created with hash=".concat(hexHash)
+                {{ contractName }}.editionsByPrimaryKey[primaryKey] == nil,
+                message: "an edition has already been created with primaryKey=".concat(primaryKey)
             )
 
             let edition = Edition(
@@ -228,8 +214,8 @@ pub contract {{ contractName }}: NonFungibleToken {
             // Save the edition
             {{ contractName }}.editions[edition.id] = edition
 
-            // Save the edition hash
-            {{ contractName }}.editionsByHash[hexHash] = edition.id
+            // Update the primary key index
+            {{ contractName }}.editionsByPrimaryKey[primaryKey] = edition.id
 
             emit EditionCreated(edition: edition)
 
@@ -343,7 +329,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.totalEditions = 0
 
         self.editions = {}
-        self.editionsByHash = {}
+        self.editionsByPrimaryKey = {}
         
         self.initAdmin(admin: {{#if saveAdminResourceToContractAccount }}self.account{{ else }}admin{{/if}})
 

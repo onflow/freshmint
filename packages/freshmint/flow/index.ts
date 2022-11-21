@@ -124,15 +124,9 @@ export class FlowGateway {
     return parseMintResults(result);
   }
 
-  async getNFTDetails(address: string, nftId: string) {
-    return await this.flow.script('./cadence/scripts/get_nft.cdc', [
-      { type: t.Address, value: address },
-      { type: t.UInt64, value: nftId },
-    ]);
-  }
-
-  async createEditions(sizes: number[], fields: any[]) {
+  async createEditions(primaryKeys: string[], sizes: number[], fields: any[]) {
     const args = [
+      { type: t.Array(t.String), value: primaryKeys },
       { type: t.Array(t.UInt64), value: sizes.map((size) => size.toString(10)) },
       ...fields.map((field) => ({
         type: t.Array(field.cadenceType),
@@ -210,9 +204,9 @@ export class FlowGateway {
     ]);
   }
 
-  async getEditionsByHash(hashes: string[]) {
-    return await this.flow.script('./cadence/scripts/get_editions_by_hash.cdc', [
-      { type: t.Array(t.String), value: hashes },
+  async getEditionsByPrimaryKey(primaryKeys: string[]) {
+    return await this.flow.script('./cadence/scripts/get_editions_by_primary_key.cdc', [
+      { type: t.Array(t.String), value: primaryKeys },
     ]);
   }
 }
@@ -244,8 +238,8 @@ function parseEditionResults(txOutput: any): { id: string; size: number; count: 
 
     return {
       id: editionId,
-      size: editionSize,
-      count: editionCount,
+      size: parseInt(editionSize, 10),
+      count: parseInt(editionCount, 10),
       transactionId: txOutput.id,
     };
   });

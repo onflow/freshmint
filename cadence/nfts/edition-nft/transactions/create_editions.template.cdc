@@ -1,6 +1,7 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(
+    primaryKeys: [String],
     sizes: [UInt64],
     {{#each fields}}
     {{ this.name }}: [{{ this.asCadenceTypeString }}],
@@ -15,9 +16,10 @@ transaction(
     }
 
     execute {        
-        for i, size in sizes {
+        for i, primaryKey in primaryKeys {
             self.admin.createEdition(
-                size: size,
+                primaryKey: primaryKey,
+                size: sizes[i],
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}

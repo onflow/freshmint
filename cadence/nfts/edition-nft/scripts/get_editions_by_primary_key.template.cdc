@@ -1,10 +1,10 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-pub fun main(hashes: [String]): [{{ contractName }}.Edition?] {
+pub fun main(primaryKeys: [String]): [{{ contractName }}.Edition?] {
     let editions: [{{ contractName }}.Edition?] = []
 
-    for hash in hashes {
-        if let editionID = {{ contractName }}.getEditionIDByHash(hash: hash) {
+    for primaryKey in primaryKeys {
+        if let editionID = {{ contractName }}.getEditionByPrimaryKey(primaryKey: primaryKey) {
             let edition = {{ contractName }}.getEdition(id: editionID)!
             editions.append(edition)
         } else {

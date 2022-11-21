@@ -63,6 +63,10 @@ export class MetadataProcessor {
   }
 
   async process(entries: PreparedEntry[]): Promise<void> {
+    if (entries.length === 0) {
+      return;
+    }
+
     for (const field of this.#schema.fields) {
       const rawValues = entries.map((entry) => entry.rawMetadata[field.name]);
       const preparedValues = entries.map((entry) => entry.preparedMetadata[field.name]);

@@ -92,9 +92,9 @@ export class EditionMinter implements Minter {
   async getOrCreateEditions(entries: PreparedEditionEntry[]): Promise<Edition[]> {
     // TODO: improve this function
 
-    const hashes = entries.map((edition) => edition.hash);
+    const primaryKeys = entries.map((edition) => edition.hash);
 
-    const existingEditions = await this.flowGateway.getEditionsByHash(hashes);
+    const existingEditions = await this.flowGateway.getEditionsByPrimaryKey(primaryKeys);
 
     const editions: { [hash: string]: Edition } = {};
 
@@ -127,7 +127,10 @@ export class EditionMinter implements Minter {
       values: newEditions.map((edition) => edition.preparedMetadata[field.name]),
     }));
 
-    const results = await this.flowGateway.createEditions(sizes, values);
+    // Use metadata hash as primary key
+    const newPrimaryKeys = newEditions.map((edition) => edition.hash);
+
+    const results = await this.flowGateway.createEditions(newPrimaryKeys, sizes, values);
 
     results.forEach((result, i) => {
       const newEdition = newEditions[i];
@@ -150,9 +153,12 @@ export class EditionMinter implements Minter {
     const preparedEntries = await this.metadataProcessor.prepare(entries);
 
     return preparedEntries.map((entry, i) => {
+      // Attach the edition size parsed from the input
+      const size = parseInt(entries[i]['edition_size'], 10);
+
       return {
         ...entry,
-        size: entries[i]['edition_size'],
+        size,
       };
     });
   }
