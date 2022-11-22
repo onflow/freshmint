@@ -6,9 +6,9 @@ import inquirer from 'inquirer';
 import { NFTStorage } from 'nft.storage';
 import * as metadata from '@freshmint/core/metadata';
 
-import { IPFS } from '../ipfs';
+import { IPFS } from '../mint/ipfs';
 import { envsubst } from '../envsubst';
-import { Minter, createMinter } from '../mint';
+import { Minter, createMinter } from '../mint/minters';
 import { MetadataProcessor } from '../mint/processors';
 import { IPFSFileProcessor } from '../mint/processors/IPFSFileProcessor';
 

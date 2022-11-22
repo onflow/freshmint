@@ -2,12 +2,12 @@ import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { IPFSFile, MetadataMap, Schema } from '@freshmint/core/metadata';
 
-import { MetadataLoader } from './loaders';
-import { MetadataProcessor } from './processors';
-import { FlowGateway } from '../flow';
+import { MetadataLoader } from '../loaders';
+import { MetadataProcessor } from '../processors';
+import { FlowGateway } from '../../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { Minter, MinterHooks } from '.';
-import { writeCSV } from './csv';
+import { writeCSV } from '../csv';
 
 type Edition = {
   id: string;

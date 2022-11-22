@@ -2,12 +2,12 @@ import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { MetadataMap, Field, Schema } from '@freshmint/core/metadata';
 
-import { MetadataLoader } from './loaders';
-import { BatchField, FlowGateway } from '../flow';
+import { MetadataLoader } from '../loaders';
+import { BatchField, FlowGateway } from '../../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import { MetadataProcessor, PreparedEntry } from './processors';
+import { MetadataProcessor, PreparedEntry } from '../processors';
 import { Minter, MinterHooks } from '.';
-import { writeCSV } from './csv';
+import { writeCSV } from '../csv';
 
 export class StandardMinter implements Minter {
   schema: Schema;

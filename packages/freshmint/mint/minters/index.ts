@@ -1,9 +1,9 @@
-import { ContractConfig, ContractType } from '../config';
-import { FlowGateway } from '../flow';
+import { ContractConfig, ContractType } from '../../config';
+import { FlowGateway } from '../../flow';
+import { MetadataProcessor } from '../processors';
+import { MetadataLoader } from '../loaders';
 import { EditionMinter } from './EditionMinter';
 import { StandardMinter } from './StandardMinter';
-import { MetadataProcessor } from './processors';
-import { MetadataLoader } from './loaders';
 
 export type MinterHooks = {
   onStartDuplicateCheck: () => void;

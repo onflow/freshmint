@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "tsup index.ts --clean --minify --format esm,cjs",
-    "postbuild": "cpx --include-empty-dirs \"templates/**\" dist/templates",
+    "postbuild": "cpx --include-empty-dirs \"generate/templates/**\" dist/templates",
     "dev": "npm run build -- --watch --onSuccess \"npm run postbuild\"",
     "lint": "eslint . --ext .ts"
   },

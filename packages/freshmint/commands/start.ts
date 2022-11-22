@@ -7,9 +7,9 @@ import inquirer from 'inquirer';
 import * as metadata from '@freshmint/core/metadata';
 
 import { ContractConfig, ContractType, getDefaultDataPath } from '../config';
-import { generateProject } from '../generateProject';
+import { generateProject } from '../generate';
 
-export default new Command('start <project-path>').description('create a new project').action(start);
+export default new Command('start').argument('<project-path>').description('create a new project').action(start);
 
 const questions = [
   {

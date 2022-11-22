@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
 import * as metadata from '@freshmint/core/metadata';
 
-import { IPFS } from '../../ipfs';
+import { IPFS } from '../ipfs';
 import { FieldProcessor } from '.';
 
 export class IPFSFileProcessor implements FieldProcessor {

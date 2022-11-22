@@ -1,7 +1,7 @@
 import { Command, Argument } from 'commander';
 
 import { loadConfig } from '../config';
-import { generateNextjsApp, generateProjectCadence } from '../generateProject';
+import { generateNextjsApp, generateProjectCadence } from '../generate';
 
 const allRegenTargets = ['cadence', 'web'];
 

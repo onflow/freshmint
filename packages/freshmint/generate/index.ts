@@ -12,7 +12,7 @@ import {
   LockBoxGenerator,
 } from '@freshmint/core';
 
-import { ContractConfig, ContractType } from './config';
+import { ContractConfig, ContractType } from '../config';
 
 export async function generateProject(
   dir: string,
