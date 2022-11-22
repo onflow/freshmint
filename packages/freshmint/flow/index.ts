@@ -38,7 +38,7 @@ export class FlowGateway {
   flow: FlowCliWrapper;
 
   constructor(network: FlowNetwork) {
-    this.network = network || 'emulator';
+    this.network = network;
     this.flow = new FlowCliWrapper(this.network);
   }
 
