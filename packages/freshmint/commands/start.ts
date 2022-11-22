@@ -2,14 +2,13 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { Command } from 'commander';
 import chalk from 'chalk';
-import ora from 'ora';
 import inquirer from 'inquirer';
 import * as metadata from '@freshmint/core/metadata';
 
 import { ContractConfig, ContractType, getDefaultDataPath } from '../config';
 import { generateProject } from '../generate';
 
-export default new Command('start').argument('<project-path>').description('create a new project').action(start);
+export default new Command('start').argument('[project-path]').description('create a new project').action(start);
 
 const questions = [
   {
@@ -58,7 +57,7 @@ const questions = [
   },
 ];
 
-async function start(projectPath: string) {
+async function start(projectPath = '.') {
   const isCurrentDirectory = projectPath === '.';
 
   const projectExists = await fs.pathExists(path.resolve(projectPath, 'freshmint.yaml'));
@@ -66,12 +65,11 @@ async function start(projectPath: string) {
     throw `A project already exists in ${isCurrentDirectory ? 'the current directory' : 'that directory'}.`;
   }
 
-  const ui = new inquirer.ui.BottomBar();
-
-  ui.log.write(
-    `${chalk.greenBright('Initializing a new project in')} ${
-      isCurrentDirectory ? chalk.greenBright('the current directory.') : chalk.white(projectPath)
-    } 🍃\n\n`,
+  console.log();
+  console.log(
+    `Creating a new project in ${chalk.cyanBright(
+      isCurrentDirectory ? 'the current directory' : projectPath,
+    )}. Press ^C at any time to quit.\n`,
   );
 
   const answers = await inquirer.prompt(questions);
@@ -84,23 +82,17 @@ async function start(projectPath: string) {
     schema,
   };
 
-  const spinner = ora();
-
-  spinner.start('Generating project files...');
+  console.log();
 
   const description = `This is the ${answers.name} project.`;
 
   await generateProject(projectPath, answers.name, description, contract, getDefaultDataPath(contract.type));
 
-  spinner.succeed(
-    `✨ Project initialized in ${chalk.white(`${isCurrentDirectory ? 'the current directory.' : projectPath}\n`)}`,
-  );
-
   if (!isCurrentDirectory) {
-    ui.log.write(`Use: ${chalk.magentaBright(`cd ${projectPath}`)} to view your new project's files.\n`);
+    console.log(`Use ${chalk.cyanBright(`\`cd ${projectPath}\``)} to view your project files.`);
   }
 
-  ui.log.write(`Open ${chalk.blueBright(`${projectPath}/README.md`)} to learn how to use your new project!`);
+  console.log(`Open ${chalk.cyanBright(`${projectPath}/README.md`)} to learn how to get started!`);
 }
 
 function isValidContractName(name: string): boolean {
