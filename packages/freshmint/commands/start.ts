@@ -1,12 +1,15 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import { Command } from 'commander';
 import chalk from 'chalk';
-import { Ora } from 'ora';
+import ora from 'ora';
 import inquirer from 'inquirer';
 import * as metadata from '@freshmint/core/metadata';
 
-import { ContractConfig, ContractType, getDefaultDataPath } from './config';
-import { generateProject } from './generateProject';
+import { ContractConfig, ContractType, getDefaultDataPath } from '../config';
+import { generateProject } from '../generateProject';
+
+export default new Command('start <project-path>').description('create a new project').action(start);
 
 const questions = [
   {
@@ -55,7 +58,7 @@ const questions = [
   },
 ];
 
-export default async function start(spinner: Ora, projectPath: string) {
+async function start(projectPath: string) {
   const isCurrentDirectory = projectPath === '.';
 
   const projectExists = await fs.pathExists(path.resolve(projectPath, 'freshmint.yaml'));
@@ -80,6 +83,8 @@ export default async function start(spinner: Ora, projectPath: string) {
     type: answers.contractType,
     schema,
   };
+
+  const spinner = ora();
 
   spinner.start('Generating project files...');
 
