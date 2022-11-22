@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { Command } from 'commander';
 import ora from 'ora';
+import chalk from 'chalk';
 import ProgressBar from 'progress';
 import inquirer from 'inquirer';
 import { NFTStorage } from 'nft.storage';
@@ -57,38 +58,46 @@ async function mint({
 
   const duplicatesSpinner = ora();
   const pinningSpinner = ora();
+  const editionSpinner = ora();
 
   let bar: ProgressBar;
 
   await minter.mint(loader, claim, Number(batchSize), {
-    onStartDuplicateCheck: function (): void {
+    onStartDuplicateCheck: () => {
       duplicatesSpinner.start('Checking for duplicates...\n');
     },
-    onCompleteDuplicateCheck: function (message: string): void {
+    onCompleteDuplicateCheck: (message: string) => {
       duplicatesSpinner.succeed(message + '\n');
     },
-    onStartPinning: function (files: number): void {
-      pinningSpinner.start(`Pinning ${files} files to IPFS...\n`);
+    onStartPinning: (count: number) => {
+      const message = count === 1 ? `Pinning 1 file to IPFS...\n` : `Pinning ${count} files to IPFS...\n`;
+
+      pinningSpinner.start(message);
     },
-    onCompletePinning: function (): void {
+    onCompletePinning: () => {
       pinningSpinner.succeed();
     },
-    onStartMinting: function (total: number, batchCount: number, batchSize: number): void {
+    onStartEditionCreation: (count: number) => {
+      const message = count === 1 ? `Adding 1 new edition template...\n` : `Adding ${count} new edition templates...\n`;
+
+      editionSpinner.start(message);
+    },
+    onCompleteEditionCreation: () => {
+      editionSpinner.succeed();
+    },
+    onStartMinting: (total: number, batchCount: number, batchSize: number, outFile: string) => {
       if (total === 0) {
         return;
       }
 
-      console.log(`Minting ${total} NFTs in ${batchCount} batches (batchSize = ${batchSize})...\n`);
+      console.log(chalk.greenBright(`Minting ${total} NFTs in ${batchCount} batches (batchSize = ${batchSize})...\n`));
+      console.log(`Saving results to ${chalk.cyanBright(outFile)}\n`);
 
       bar = new ProgressBar('[:bar] :current/:total :percent :etas', { width: 40, total });
-
       bar.tick(0);
     },
-    onCompleteBatch: function (batchSize: number): void {
+    onCompleteBatch: (batchSize: number) => {
       bar.tick(batchSize);
-    },
-    onMintingError: function (error: Error): void {
-      bar.interrupt(error.message);
     },
   });
 }

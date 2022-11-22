@@ -8,6 +8,7 @@ import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { MetadataProcessor, PreparedEntry } from '../processors';
 import { Minter, MinterHooks } from '.';
 import { writeCSV } from '../csv';
+import { generateOutfileNames } from '../outfile';
 
 export class StandardMinter implements Minter {
   schema: Schema;
@@ -36,21 +37,18 @@ export class StandardMinter implements Minter {
 
     const batches = createBatches(newEntries, batchSize);
 
-    hooks.onStartMinting(total, batches.length, batchSize);
+    const { outFile, tempFile } = generateOutfileNames(this.flowGateway.network);
 
-    const timestamp = Date.now();
-
-    const outFile = `mint-${timestamp}.csv`;
-    const tempFile = `mint-${timestamp}.tmp.csv`;
+    hooks.onStartMinting(total, batches.length, batchSize, outFile);
 
     for (const [batchIndex, nfts] of batches.entries()) {
       // Process the NFT metadata fields (i.e. perform actions such as pinning files to IPFS)
       await this.processMetadata(nfts);
 
       if (withClaimKeys) {
-        await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, nfts, hooks.onMintingError);
+        await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, nfts);
       } else {
-        await this.mintNFTs(batchIndex, outFile, nfts, hooks.onMintingError);
+        await this.mintNFTs(batchIndex, outFile, nfts);
       }
 
       const batchSize = nfts.length;
@@ -72,20 +70,13 @@ export class StandardMinter implements Minter {
     await this.metadataProcessor.process(entries);
   }
 
-  async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedEntry[], onError: (error: Error) => void) {
+  async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedEntry[]) {
     const metadataFields = groupMetadataByField(this.schema.fields, nfts);
-
-    let results;
 
     // Use metadata hash as primary key
     const primaryKeys = nfts.map((nft) => nft.hash);
 
-    try {
-      results = await this.flowGateway.mint(primaryKeys, metadataFields);
-    } catch (error: any) {
-      onError(error);
-      return;
-    }
+    const results = await this.flowGateway.mint(primaryKeys, metadataFields);
 
     const rows = results.map((result: any, i: number) => {
       const { id, transactionId } = result;
@@ -102,13 +93,7 @@ export class StandardMinter implements Minter {
     await writeCSV(outFile, rows, { append: batchIndex > 0 });
   }
 
-  async mintNFTsWithClaimKeys(
-    batchIndex: number,
-    outFile: string,
-    tempFile: string,
-    nfts: PreparedEntry[],
-    onError: (error: Error) => void,
-  ) {
+  async mintNFTsWithClaimKeys(batchIndex: number, outFile: string, tempFile: string, nfts: PreparedEntry[]) {
     const { privateKeys, publicKeys } = generateClaimKeyPairs(nfts.length);
 
     await savePrivateKeysToFile(tempFile, nfts, privateKeys);
@@ -118,14 +103,7 @@ export class StandardMinter implements Minter {
     // Use metadata hash as primary key
     const primaryKeys = nfts.map((nft) => nft.hash);
 
-    let results;
-
-    try {
-      results = await this.flowGateway.mintWithClaimKey(publicKeys, primaryKeys, metadataFields);
-    } catch (error: any) {
-      onError(error);
-      return;
-    }
+    const results = await this.flowGateway.mintWithClaimKey(publicKeys, primaryKeys, metadataFields);
 
     const rows = results.map((result: any, i: number) => {
       const { id, transactionId } = result;
@@ -185,7 +163,7 @@ async function savePrivateKeysToFile(filename: string, nfts: PreparedEntry[], pr
 
 function makeSkippedMessage(skippedNFTCount: number): string {
   if (!skippedNFTCount) {
-    return 'Completed duplicate check.';
+    return 'No duplicate NFTs found.';
   }
 
   return skippedNFTCount > 1

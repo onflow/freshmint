@@ -8,15 +8,16 @@ import { StandardMinter } from './StandardMinter';
 export type MinterHooks = {
   onStartDuplicateCheck: () => void;
   onCompleteDuplicateCheck: (message: string) => void;
-  onStartPinning: (files: number) => void;
+  onStartEditionCreation: (count: number) => void;
+  onCompleteEditionCreation: () => void;
+  onStartPinning: (count: number) => void;
   onCompletePinning: () => void;
-  onStartMinting: (total: number, batchCount: number, batchSize: number) => void;
+  onStartMinting: (total: number, batchCount: number, batchSize: number, outFile: string) => void;
   onCompleteBatch: (batchSize: number) => void;
-  onMintingError: (error: Error) => void;
 };
 
 export interface Minter {
-  mint(loader: MetadataLoader, withClaimKey: boolean, batchSize: number, hooks: MinterHooks): Promise<void>;
+  mint(loader: MetadataLoader, withClaimKeys: boolean, batchSize: number, hooks: MinterHooks): Promise<void>;
 }
 
 export function createMinter(
