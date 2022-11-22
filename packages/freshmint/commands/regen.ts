@@ -1,4 +1,5 @@
 import { Command, Argument } from 'commander';
+import chalk from 'chalk';
 
 import { loadConfig } from '../config';
 import { generateNextjsApp, generateProjectCadence } from '../generate';
@@ -17,11 +18,11 @@ async function regen(targets: string[]) {
     switch (target) {
       case 'cadence':
         await generateProjectCadence('./', config.contract, false);
-        console.log('Regenerated files in "./cadence"');
+        console.log(`Regenerated files in ${chalk.cyanBright('./cadence')}`);
         break;
       case 'web':
         await generateNextjsApp('./', config.collection.name, config.collection.description);
-        console.log('Regenerated files in "./web"');
+        console.log(`Regenerated files in ${chalk.cyanBright('./web')}`);
         break;
     }
   }
