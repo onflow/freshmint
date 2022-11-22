@@ -3,10 +3,10 @@ import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
 import * as metadata from '@freshmint/core/metadata';
 
-import IPFS from '../../ipfs';
+import { IPFS } from '../../ipfs';
 import { FieldProcessor } from '.';
 
-export default class IPFSFileProcessor implements FieldProcessor {
+export class IPFSFileProcessor implements FieldProcessor {
   fieldType: metadata.FieldType = metadata.IPFSFile;
 
   #nftAssetPath: string;

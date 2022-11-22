@@ -3,7 +3,7 @@ import { pack } from 'ipfs-car/pack';
 import { CarReader } from '@ipld/car';
 import { CID } from 'multiformats';
 
-export default class IPFS {
+export class IPFS {
   ipfsClient: NFTStorage;
 
   // The NFTStorage client has a built-in rate limiter that attempts to keep

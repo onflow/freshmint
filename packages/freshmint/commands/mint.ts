@@ -6,15 +6,15 @@ import inquirer from 'inquirer';
 import { NFTStorage } from 'nft.storage';
 import * as metadata from '@freshmint/core/metadata';
 
-import IPFS from '../ipfs';
+import { IPFS } from '../ipfs';
 import { envsubst } from '../envsubst';
 import { Minter, createMinter } from '../mint';
 import { MetadataProcessor } from '../mint/processors';
-import IPFSFileProcessor from '../mint/processors/IPFSFileProcessor';
+import { IPFSFileProcessor } from '../mint/processors/IPFSFileProcessor';
 
 import { FlowGateway, FlowNetwork } from '../flow';
 import { FreshmintConfig, loadConfig } from '../config';
-import CSVLoader from '../mint/loaders/CSVLoader';
+import { CSVLoader } from '../mint/loaders/CSVLoader';
 
 export default new Command('mint')
   .description('mint NFTs using data from a CSV file')

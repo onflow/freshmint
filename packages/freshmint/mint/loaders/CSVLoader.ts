@@ -4,7 +4,7 @@ import * as metadata from '@freshmint/core/metadata';
 import { MetadataLoader } from '.';
 import { readCSV } from '../csv';
 
-export default class CSVLoader implements MetadataLoader {
+export class CSVLoader implements MetadataLoader {
   csvPath: string;
 
   constructor(csvPath: string) {
