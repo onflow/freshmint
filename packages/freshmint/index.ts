@@ -4,7 +4,7 @@
 // See fresh.js for the core functionality.
 
 import * as path from 'path';
-import { Command, InvalidArgumentError } from 'commander';
+import { Command, Argument, InvalidArgumentError } from 'commander';
 import ora from 'ora';
 import ProgressBar from 'progress';
 import inquirer from 'inquirer';
@@ -59,7 +59,7 @@ function parseUFix64(value: string): string {
 }
 
 async function main() {
-  program.command('start <project-path>').description('initialize a new project').action(start);
+  program.command('start <project-path>').description('create a new project').action(start);
 
   program.command('dev').description('start the Freshmint development server').action(dev);
 
@@ -93,10 +93,15 @@ async function main() {
 
   // TODO: add get-drop command
 
-  const generate = program.command('generate').description('regenerate project files from config');
+  const allRegenTargets = ['cadence', 'web'];
 
-  generate.command('cadence').description('regenerate project Cadence files').action(generateCadence);
-  generate.command('web').description('regenerate project web app files').action(generateWeb);
+  program
+    .command('regen')
+    .addArgument(
+      new Argument('[targets...]', 'targets to regenerate').choices(allRegenTargets).default(allRegenTargets),
+    )
+    .description('regenerate project files from config')
+    .action(generate);
 
   program
     .command('prince')
@@ -208,44 +213,45 @@ async function startDrop(price: string, { network }: { network: FlowNetwork }) {
   const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
-  await fresh.startDrop(price);
-
   const spinner = ora();
 
-  spinner.succeed(`Success! Your drop is live.`);
+  spinner.start('Creating drop...');
+
+  await fresh.startDrop(price);
+
+  spinner.succeed('Success! Your drop is live.');
 }
 
 async function stopDrop({ network }: { network: FlowNetwork }) {
   const config = await loadConfig();
   const fresh = new Fresh(config, network);
 
+  const spinner = ora();
+
+  spinner.start('Stopping drop...');
+
   await fresh.stopDrop();
 
   // TODO: return error if no drop is active
 
-  const spinner = ora();
-
-  spinner.succeed(`Your drop has been stopped.`);
+  spinner.succeed('Your drop has been stopped.');
 }
 
-async function generateCadence() {
+async function generate(targets: string[]) {
   const config = await loadConfig();
 
-  await generateProjectCadence('./', config.contract, false);
-
-  const spinner = ora();
-
-  spinner.succeed(`Success! Regenerated Cadence files.`);
-}
-
-async function generateWeb() {
-  const config = await loadConfig();
-
-  await generateNextjsApp('./', config.collection.name, config.collection.description);
-
-  const spinner = ora();
-
-  spinner.succeed(`Success! Regenerated web files.`);
+  for (const target of targets) {
+    switch (target) {
+      case 'cadence':
+        await generateProjectCadence('./', config.contract, false);
+        console.log('Regenerated files in "./cadence"');
+        break;
+      case 'web':
+        await generateNextjsApp('./', config.collection.name, config.collection.description);
+        console.log('Regenerated files in "./web"');
+        break;
+    }
+  }
 }
 
 main()
