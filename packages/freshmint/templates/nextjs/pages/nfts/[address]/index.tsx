@@ -22,10 +22,10 @@ const NFT: NextPage = () => {
       <Container maxW={800} py={8} textAlign="center">
         <Box mb={8}>
           <Heading as="h1" size="lg" my={2}>
-            {process.env.projectName}
+            {process.env.NAME}
           </Heading>
           <Text fontSize="md" mb={4}>
-            {process.env.projectDescription}
+            {process.env.DESCRIPTION}
           </Text>
           <Text fontSize="md" color="gray">{`Account ${address} owns ${ids.length} NFTs from this collection.`}</Text>
         </Box>

@@ -10,15 +10,15 @@ const Home: NextPage = () => {
   return (
     <Container maxWidth={800} my={16} textAlign="center">
       <Box display="inline-block" width={270} mb={5}>
-        <Image src={coverImage} alt={process.env.projectDescription} layout="responsive" />
+        <Image src={coverImage} alt={process.env.DESCRIPTION} layout="responsive" />
       </Box>
       <Heading as="h1" size="lg" mb={3}>
-        {process.env.projectName}
+        {process.env.NAME}
       </Heading>
       <Text fontSize="lg" mb={3}>
-        {process.env.projectDescription}
+        {process.env.DESCRIPTION}
       </Text>
-      <NFTDrop address="0xf8d6e0586b0a20c7" />
+      <NFTDrop address={process.env.MINTER_ADDRESS!} />
       <UserInfo />
     </Container>
   );
