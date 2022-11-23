@@ -100,12 +100,9 @@ export class EditionNFTGenerator extends TemplateGenerator {
     contractName: string;
     contractAddress: string;
   }): string {
-    return this.generate(
-      require('../../../cadence/nfts/edition-nft/scripts/get_editions_by_mint_id.template.cdc'),
-      {
-        contractName,
-        contractAddress,
-      },
-    );
+    return this.generate(require('../../../cadence/nfts/edition-nft/scripts/get_editions_by_mint_id.template.cdc'), {
+      contractName,
+      contractAddress,
+    });
   }
 }
