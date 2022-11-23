@@ -6,7 +6,7 @@ import {
   contractHashAlgorithm,
   contractPublicKey,
   createAccount,
-  getTestNFTs,
+  NFTGenerator,
   getTestSchema,
   ownerAuthorizer,
   setupEmulator,
@@ -34,13 +34,15 @@ describe('Transfer NFTs', () => {
 
   afterAll(teardownEmulator);
 
+  const nfts = new NFTGenerator();
+
   it('should transfer NFTs from the default queue to another account', async () => {
     // Create a new account and set up an NFT collection
     const account = await createAccount();
     await client.send(contract.setupCollection(account.authorizer));
 
     // Mint 5 new NFTs
-    const mintedNFTs = await client.send(contract.mintNFTs(getTestNFTs(5)));
+    const mintedNFTs = await client.send(contract.mintNFTs(nfts.generate(5)));
     const mintedIDs = mintedNFTs.map((nft) => nft.id);
 
     const transferredIDs = await client.send(

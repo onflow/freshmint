@@ -4,7 +4,7 @@ import * as fcl from '@onflow/fcl';
 import * as t from '@onflow/types';
 
 import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
-import { MetadataMap } from '../metadata';
+import { hashMetadata, MetadataMap } from '../metadata';
 import { EditionNFTGenerator } from '../generators/EditionNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult, TransactionEvent } from '../transactions';
@@ -133,11 +133,15 @@ export class EditionNFTContract extends NFTContract {
         schema: this.schema,
       });
 
+      // Use metadata hash as primary key
+      const primaryKeys = editions.map((edition) => hashMetadata(this.schema, edition.metadata).toString('hex'));
+
       const sizes = editions.map((edition) => edition.size.toString(10));
 
       return {
         script,
         args: [
+          fcl.arg(primaryKeys, t.Array(t.String)),
           fcl.arg(sizes, t.Array(t.UInt64)),
           ...this.schema.fields.map((field) => {
             return fcl.arg(

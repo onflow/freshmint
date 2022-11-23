@@ -10,34 +10,21 @@ pub resource interface {{ contractName }}CollectionPublic {
     }
 }
 
-/// Collection is a container for {{ contractName}} NFTs.
-///
-/// A {{ contractName}} collection preserves the insertion order of its contents.
-///
 pub resource Collection: {{ contractName }}CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
     
-    /// An array of all NFT IDs in this collection in insertion order.
-    ///
-    pub let ids: [UInt64]
-
     /// A dictionary of all NFTs in this collection indexed by ID.
     ///
     pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
 
     init () {
-        self.ids = []
         self.ownedNFTs <- {}
     }
 
-    /// Remove an NFT from this collection and move it to the caller.
+    /// Remove an NFT from the collection and move it to the caller.
     ///
     pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
         let token <- self.ownedNFTs.remove(key: withdrawID) 
             ?? panic("Requested NFT to withdraw does not exist in this collection")
-
-        // Remove the NFT ID from the IDs list
-        let index = self.ids.firstIndex(of: token.id)!
-        self.ids.remove(at: index)
 
         emit Withdraw(id: token.id, from: self.owner?.address)
 
@@ -51,34 +38,18 @@ pub resource Collection: {{ contractName }}CollectionPublic, NonFungibleToken.Pr
 
         let id: UInt64 = token.id
 
-        // Add the new NFT to the dictionary.
-        //
-        // Because ownedNFTs is an array of resources,
-        // it is technically possible for it to contain an existing resource
-        // for any given key. Resources cannot be silenty overwritten
-        // so we must explicity destory it.
-        //
-        // However, the existing token should always be nil.
-        //
+        // add the new token to the dictionary which removes the old one
         let oldToken <- self.ownedNFTs[id] <- token
-        if (oldToken != nil) {
-            panic("Collection already contains an NFT with that ID")
-        }
-
-        destroy oldToken
-
-        // Add the NFT ID to the end of the IDs list
-        self.ids.append(id)
 
         emit Deposit(id: id, to: self.owner?.address)
+
+        destroy oldToken
     }
 
     /// Return an array of the NFT IDs in this collection.
     ///
-    /// The array will be in insertion order.
-    ///
     pub fun getIDs(): [UInt64] {
-        return self.ids
+        return self.ownedNFTs.keys
     }
 
     /// Return a reference to an NFT in this collection.

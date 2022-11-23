@@ -8,7 +8,7 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  getTestNFTs,
+  NFTGenerator,
   setupEmulator,
   teardownEmulator,
   collectionMetadata,
@@ -28,7 +28,7 @@ describe('StandardNFTContract', () => {
     expect(contract.getSource(client.config.imports)).toMatchSnapshot();
   });
 
-  const nfts = getTestNFTs(3);
+  const nfts = new NFTGenerator().generate(3);
 
   it('should fail to mint NFTs before contract is deployed', async () => {
     await expect(async () => await client.send(contract.mintNFTs(nfts))).rejects.toThrow(MissingContractAddressError);
