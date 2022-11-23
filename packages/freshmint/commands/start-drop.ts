@@ -1,7 +1,9 @@
 import { Command, InvalidArgumentError } from 'commander';
 import ora from 'ora';
+import chalk from 'chalk';
 
 import { FlowGateway, FlowNetwork } from '../flow';
+import { FreshmintError } from '../errors';
 
 export default new Command('start-drop')
   .argument('<price>', 'The amount of FLOW to charge for each NFT (e.g. 42.123).', parseUFix64)
@@ -14,9 +16,16 @@ async function startDrop(price: string, { network }: { network: FlowNetwork }) {
 
   const spinner = ora();
 
-  spinner.start('Creating drop...');
+  console.log(chalk.gray('\n> flow transactions send ./cadence/transactions/start_drop.cdc <...>\n'));
 
-  await flow.startDrop('default', price);
+  spinner.start(`Starting a drop...`);
+
+  try {
+    await flow.startDrop('default', price);
+  } catch (error: any) {
+    spinner.fail('Failed to start drop:\n');
+    throw new FreshmintError(error);
+  }
 
   spinner.succeed('Success! Your drop is live.');
 }

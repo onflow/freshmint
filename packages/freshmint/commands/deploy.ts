@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import { Command } from 'commander';
 import ora from 'ora';
+import chalk from 'chalk';
 import { CollectionMetadata } from '@freshmint/core';
 
 // @ts-ignore
@@ -51,9 +52,16 @@ async function deploy({ network }: { network: FlowNetwork }) {
 
   const spinner = ora();
 
+  console.log(chalk.gray('\n> flow transactions send ./cadence/transactions/deploy.cdc <...>\n'));
+
   spinner.start(`Deploying ${config.contract.name} to ${network}...`);
 
-  await flow.deploy(contractName, contract, collectionMetadata, []);
+  try {
+    await flow.deploy(contractName, contract, collectionMetadata, []);
+  } catch (error: any) {
+    spinner.fail('Failed to deploy:\n');
+    throw new FreshmintError(error);
+  }
 
-  spinner.succeed();
+  spinner.succeed(`Success! Deployed ${chalk.cyan(config.contract.name)} to ${network}.`);
 }

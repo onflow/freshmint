@@ -10,7 +10,7 @@ This project requires the Flow CLI.
 
 ## Quick start
 
-This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) and [FCL Dev Wallet](https://github.com/onflow/fcl-dev-wallet) for rapid local development.
+This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) and [FCL dev wallet](https://github.com/onflow/fcl-dev-wallet) for rapid local development.
 
 ### Start the development server
 

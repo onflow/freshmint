@@ -91,7 +91,9 @@ async function mint({
       }
 
       console.log(chalk.greenBright(`Minting ${total} NFTs in ${batchCount} batches (batchSize = ${batchSize})...\n`));
-      console.log(`Saving results to ${chalk.cyanBright(outFile)}\n`);
+      console.log(`Piping results to ${chalk.cyan(outFile)}\n`);
+
+      console.log(chalk.gray('> flow transactions send ./cadence/transactions/mint.cdc <...>\n'));
 
       bar = new ProgressBar('[:bar] :current/:total :percent :etas', { width: 40, total });
       bar.tick(0);

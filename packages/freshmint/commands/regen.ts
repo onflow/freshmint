@@ -4,10 +4,10 @@ import chalk from 'chalk';
 import { loadConfig } from '../config';
 import { generateNextjsApp, generateProjectCadence } from '../generate';
 
-const allRegenTargets = ['cadence', 'web'];
+const targets = ['cadence', 'web'];
 
 export default new Command('regen')
-  .addArgument(new Argument('[targets...]', 'targets to regenerate').choices(allRegenTargets).default(allRegenTargets))
+  .addArgument(new Argument('<targets...>', 'targets to regenerate').choices(targets))
   .description('regenerate project files from config')
   .action(regen);
 
@@ -18,11 +18,11 @@ async function regen(targets: string[]) {
     switch (target) {
       case 'cadence':
         await generateProjectCadence('./', config.contract, false);
-        console.log(`Regenerated files in ${chalk.cyanBright('./cadence')}`);
+        console.log(`Regenerated files in ${chalk.cyan('./cadence')}`);
         break;
       case 'web':
         await generateNextjsApp('./', config.collection.name, config.collection.description);
-        console.log(`Regenerated files in ${chalk.cyanBright('./web')}`);
+        console.log(`Regenerated files in ${chalk.cyan('./web')}`);
         break;
     }
   }

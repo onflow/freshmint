@@ -1,5 +1,7 @@
 import { Command } from 'commander';
 import ora from 'ora';
+import chalk from 'chalk';
+import { FreshmintError } from '../errors';
 
 import { FlowGateway, FlowNetwork } from '../flow';
 
@@ -13,9 +15,16 @@ async function stopDrop({ network }: { network: FlowNetwork }) {
 
   const spinner = ora();
 
+  console.log(chalk.gray('\n> flow transactions send ./cadence/transactions/stop_drop.cdc <...>\n'));
+
   spinner.start('Stopping drop...');
 
-  await flow.stopDrop('default');
+  try {
+    await flow.stopDrop('default');
+  } catch (error: any) {
+    spinner.fail('Failed to stop drop:\n');
+    throw new FreshmintError(error);
+  }
 
   // TODO: return error if no drop is active
 

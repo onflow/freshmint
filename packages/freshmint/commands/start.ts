@@ -67,7 +67,7 @@ async function start(projectPath = '.') {
 
   console.log();
   console.log(
-    `Creating a new project in ${chalk.cyanBright(
+    `Creating a new project in ${chalk.cyan(
       isCurrentDirectory ? 'the current directory' : projectPath,
     )}. Press ^C at any time to quit.\n`,
   );
@@ -89,10 +89,10 @@ async function start(projectPath = '.') {
   await generateProject(projectPath, answers.name, description, contract, getDefaultDataPath(contract.type));
 
   if (!isCurrentDirectory) {
-    console.log(`Use ${chalk.cyanBright(`\`cd ${projectPath}\``)} to view your project files.`);
+    console.log(`Use ${chalk.cyan(`\`cd ${projectPath}\``)} to view your project files.`);
   }
 
-  console.log(`Open ${chalk.cyanBright(`${projectPath}/README.md`)} to learn how to get started!`);
+  console.log(`Open ${chalk.cyan(`${projectPath}/README.md`)} to learn how to get started!`);
 }
 
 function isValidContractName(name: string): boolean {
