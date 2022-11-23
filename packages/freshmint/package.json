@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@freshmint/core": "^0.2.3-alpha",
-    "@ipld/car": "^5.0.1",
+    "@ipld/car": "^4.1.6",
     "@onflow/decode": "0.0.11",
     "@onflow/flow-cadut": "^0.2.0-alpha.9",
     "@onflow/types": "^1.0.3",
@@ -41,7 +41,7 @@
     "ipfs-car": "^0.9.1",
     "js-yaml": "^4.1.0",
     "mime-types": "^2.1.35",
-    "multiformats": "^10.0.2",
+    "multiformats": "^9.9.0",
     "nft.storage": "^7.0.0",
     "node-fetch": "^2.6.7",
     "ora": "^5.4.1",
