@@ -6,7 +6,7 @@ This project was generated with [freshmint](https://github.com/packagelabs/fresh
 
 This project requires the Flow CLI.
 
-- [Install Flow CLI](https://developers.flow.com/tools/flow-cli/install)
+- [Install the Flow CLI](https://developers.flow.com/tools/flow-cli/install)
 
 ## Quick start
 
@@ -14,38 +14,65 @@ This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) a
 
 ### Start the development server
 
+This command launches the emulator, dev wallet and deploys all contract dependencies.
+
+Keep it running while you build!
+
 ```sh
 fresh dev
 ```
 
-### Configure your pinning service
+### Deploy your contract
 
-Freshmint is compatible with [NFT.Storage](https://nft.storage), [Pinata](https://www.pinata.cloud/) and any other pinning service that implements the [IPFS Remote Pinning API](https://ipfs.github.io/pinning-services-api-spec).
+```sh
+fresh deploy
+```
 
-First configure your pinning service by editing `.env`:
+### Configure NFT.Storage for IPFS
 
-#### NFT.Storage
+Freshmint uses [NFT.Storage](https://nft.storage) to upload and pin files to IPFS.
 
-[Create a free NFT.Storage account to get an API key](https://nft.storage/).
+1. [Sign up for a free NFT.Storage account](https://nft.storage/).
+2. [Create a new API key](https://nft.storage/manage/) in the dashboard.
+3. Add the API key to the `.env` file:
 
 ```sh
 # .env
 PINNING_SERVICE_ENDPOINT="https://nft.storage/api"
-PINNING_SERVICE_KEY="Paste your nft.storage JWT token here!"
+PINNING_SERVICE_KEY="Paste your NFT.Storage key here!"
 ```
 
 ### Mint your NFTs
 
-This command mints the NFTs listed in `{{ nftDataPath }}`. Edit that file to add your own NFTs!
+This command mints the NFTs listed in `{{ nftDataPath }}`.
+
+Edit that file to add your own NFTs!
 
 ```sh
 fresh mint
 ```
 
-### View the mint results
+### Launch the web app
+
+Install and run the prebuilt Next.js web app:
 
 ```sh
-fresh dump minted.csv
+# Switch to the web app directory
+cd web
+
+npm install
+npm run dev
+```
+
+### Start a drop
+
+The `start-drop` command creates a new drop that lists all of your minted NFTs for the same price.
+
+Users can claim NFTs one-by-one in the same order they were minted.
+
+```sh
+# Start a drop with a price of 42 FLOW
+fresh start-drop 42.0
 ```
 
 ## Deploy on testnet
@@ -74,10 +101,10 @@ FLOW_TESTNET_ADDRESS=xxxx
 
 ### Deploy your contract
 
-You can now run the project commands with the testnet flag:
+Use the `--network` flag to deploy your contract to testnet.
 
 ```sh
-flow project deploy --network testnet
+fresh deploy --network testnet
 ```
 
 ### Mint your NFTs and manage drops
