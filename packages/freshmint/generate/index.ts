@@ -165,8 +165,8 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   }
 
   await writeFile(
-    path.resolve(dir, `cadence/scripts/get_editions_by_primary_key.cdc`),
-    EditionNFTGenerator.getEditionsByPrimaryKey({ contractName: contract.name, contractAddress }),
+    path.resolve(dir, `cadence/scripts/get_editions_by_mint_id.cdc`),
+    EditionNFTGenerator.getEditionsByMintId({ contractName: contract.name, contractAddress }),
   );
 
   await writeFile(

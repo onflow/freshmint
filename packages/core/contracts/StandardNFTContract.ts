@@ -94,14 +94,14 @@ export class StandardNFTContract extends NFTContract {
           schema: this.schema,
         });
 
-        // Use metadata hash as primary key
-        const primaryKeys = metadata.map((data) => hashMetadata(this.schema, data).toString('hex'));
+        // Use metadata hash as mint ID
+        const mintIds = metadata.map((data) => hashMetadata(this.schema, data).toString('hex'));
 
         return {
           script,
           args: [
             fcl.arg(bucket, t.Optional(t.String)),
-            fcl.arg(primaryKeys, t.Array(t.String)),
+            fcl.arg(mintIds, t.Array(t.String)),
             ...this.schema.fields.map((field) => {
               return fcl.arg(
                 metadata.map((values) => field.getValue(values)),

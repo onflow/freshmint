@@ -89,9 +89,9 @@ export class EditionMinter implements Minter {
   async filterDuplicateEditions(
     entries: PreparedEditionEntry[],
   ): Promise<{ existingEditions: Edition[]; newEditionEntries: PreparedEditionEntry[] }> {
-    const primaryKeys = entries.map((edition) => edition.hash);
+    const mintIds = entries.map((edition) => edition.hash);
 
-    const results = await this.flowGateway.getEditionsByPrimaryKey(primaryKeys);
+    const results = await this.flowGateway.getEditionsByMintId(mintIds);
 
     const existingEditions: Edition[] = [];
     const newEditionEntries: PreparedEditionEntry[] = [];
@@ -134,12 +134,12 @@ export class EditionMinter implements Minter {
       values: entries.map((edition) => edition.preparedMetadata[field.name]),
     }));
 
-    // Use metadata hash as primary key
-    const newPrimaryKeys = entries.map((edition) => edition.hash);
+    // Use metadata hash as mint ID
+    const mintIds = entries.map((edition) => edition.hash);
 
     hooks.onStartEditionCreation(entries.length);
 
-    const results = await this.flowGateway.createEditions(newPrimaryKeys, sizes, values);
+    const results = await this.flowGateway.createEditions(mintIds, sizes, values);
 
     hooks.onCompleteEditionCreation();
 
@@ -154,80 +154,6 @@ export class EditionMinter implements Minter {
         preparedMetadata: edition.preparedMetadata,
       };
     });
-  }
-
-  async getOrCreateEditions(entries: PreparedEditionEntry[], hooks: MinterHooks): Promise<Edition[]> {
-    // TODO: improve this function
-
-    const primaryKeys = entries.map((edition) => edition.hash);
-
-    hooks.onStartDuplicateCheck();
-
-    const existingEditions = await this.flowGateway.getEditionsByPrimaryKey(primaryKeys);
-
-    const editions: { [hash: string]: Edition } = {};
-
-    const newEditions: PreparedEditionEntry[] = [];
-
-    let existingEditionCount = 0;
-    let existingNFTCount = 0;
-
-    for (const [i, entry] of entries.entries()) {
-      const existingEdition = existingEditions[i];
-
-      if (existingEdition) {
-        existingEditionCount += 1;
-        existingNFTCount += existingEdition.count;
-
-        editions[entry.hash] = {
-          ...existingEdition,
-          // TODO: the on-chain ID needs to be converted to a string in order to be
-          // used as an FCL argument. Find a better way to sanitize this.
-          id: existingEdition.id.toString(),
-          rawMetadata: entry.rawMetadata,
-          preparedMetadata: entry.preparedMetadata,
-        };
-      } else {
-        newEditions.push(entry);
-      }
-    }
-
-    hooks.onCompleteDuplicateCheck(makeSkippedMessage(existingEditionCount, existingNFTCount));
-
-    if (newEditions.length === 0) {
-      return entries.map((entry) => editions[entry.hash]);
-    }
-
-    // Process the edition metadata fields (i.e. perform actions such as pinning files to IPFS)
-    await this.processMetadata(newEditions, hooks);
-
-    const sizes = newEditions.map((edition) => edition.size);
-
-    const values = this.schema.fields.map((field) => ({
-      cadenceType: field.asCadenceTypeObject(),
-      values: newEditions.map((edition) => edition.preparedMetadata[field.name]),
-    }));
-
-    // Use metadata hash as primary key
-    const newPrimaryKeys = newEditions.map((edition) => edition.hash);
-
-    const results = await this.flowGateway.createEditions(newPrimaryKeys, sizes, values);
-
-    results.forEach((result, i) => {
-      const newEdition = newEditions[i];
-
-      const edition = {
-        id: result.id,
-        count: result.count,
-        size: result.size,
-        rawMetadata: newEdition.rawMetadata,
-        preparedMetadata: newEdition.preparedMetadata,
-      };
-
-      editions[newEdition.hash] = edition;
-    });
-
-    return entries.map((entry) => editions[entry.hash]);
   }
 
   async prepareMetadata(entries: MetadataMap[]): Promise<PreparedEditionEntry[]> {

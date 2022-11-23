@@ -35,7 +35,7 @@ pub fun getOrCreateLockBox(
 
 transaction(
     publicKeys: [String],
-    primaryKeys: [String],
+    mintIDs: [String],
     {{#each fields}}
     {{ this.name }}: [{{ this.asCadenceTypeString }}],
     {{/each}}
@@ -61,7 +61,7 @@ transaction(
         for i, publicKey in publicKeys {
 
             let token <- self.admin.mintNFT(
-                primaryKey: primaryKeys[i],
+                mintID: mintIDs[i],
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}

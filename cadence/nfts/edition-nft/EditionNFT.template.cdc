@@ -97,16 +97,16 @@ pub contract {{ contractName }}: NonFungibleToken {
         return {{ contractName }}.editions[id]
     }
 
-    /// This dictionary indexes editions by their primary key.
+    /// This dictionary indexes editions by their mint ID.
     ///
     /// It is populated at mint time and used to prevent duplicate mints.
-    /// The primary key can be any unique string value,
+    /// The mint ID can be any unique string value,
     /// for example the hash of the edition metadata.
     ///
-    access(self) let editionsByPrimaryKey: {String: UInt64}
+    access(self) let editionsByMintID: {String: UInt64}
 
-    pub fun getEditionByPrimaryKey(primaryKey: String): UInt64? {
-        return {{ contractName }}.editionsByPrimaryKey[primaryKey]
+    pub fun getEditionByMintID(mintID: String): UInt64? {
+        return {{ contractName }}.editionsByMintID[mintID]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
@@ -187,7 +187,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// edition data that will later be associated with minted NFTs.
         ///
         pub fun createEdition(
-            primaryKey: String,
+            mintID: String,
             size: UInt64,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
@@ -199,10 +199,10 @@ pub contract {{ contractName }}: NonFungibleToken {
                 {{/each}}
             )
 
-            // Prevent multiple editions from being minted with the same primary key
+            // Prevent multiple editions from being minted with the same mint ID
             assert(
-                {{ contractName }}.editionsByPrimaryKey[primaryKey] == nil,
-                message: "an edition has already been created with primaryKey=".concat(primaryKey)
+                {{ contractName }}.editionsByMintID[mintID] == nil,
+                message: "an edition has already been created with mintID=".concat(mintID)
             )
 
             let edition = Edition(
@@ -214,8 +214,8 @@ pub contract {{ contractName }}: NonFungibleToken {
             // Save the edition
             {{ contractName }}.editions[edition.id] = edition
 
-            // Update the primary key index
-            {{ contractName }}.editionsByPrimaryKey[primaryKey] = edition.id
+            // Update the mint ID index
+            {{ contractName }}.editionsByMintID[mintID] = edition.id
 
             emit EditionCreated(edition: edition)
 
@@ -329,7 +329,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.totalEditions = 0
 
         self.editions = {}
-        self.editionsByPrimaryKey = {}
+        self.editionsByMintID = {}
         
         self.initAdmin(admin: {{#if saveAdminResourceToContractAccount }}self.account{{ else }}admin{{/if}})
 

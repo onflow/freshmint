@@ -73,10 +73,10 @@ export class StandardMinter implements Minter {
   async mintNFTs(batchIndex: number, outFile: string, nfts: PreparedEntry[]) {
     const metadataFields = groupMetadataByField(this.schema.fields, nfts);
 
-    // Use metadata hash as primary key
-    const primaryKeys = nfts.map((nft) => nft.hash);
+    // Use metadata hash as mint ID
+    const mintIds = nfts.map((nft) => nft.hash);
 
-    const results = await this.flowGateway.mint(primaryKeys, metadataFields);
+    const results = await this.flowGateway.mint(mintIds, metadataFields);
 
     const rows = results.map((result: any, i: number) => {
       const { id, transactionId } = result;
@@ -100,10 +100,10 @@ export class StandardMinter implements Minter {
 
     const metadataFields = groupMetadataByField(this.schema.fields, nfts);
 
-    // Use metadata hash as primary key
-    const primaryKeys = nfts.map((nft) => nft.hash);
+    // Use metadata hash as mint ID
+    const mintIds = nfts.map((nft) => nft.hash);
 
-    const results = await this.flowGateway.mintWithClaimKey(publicKeys, primaryKeys, metadataFields);
+    const results = await this.flowGateway.mintWithClaimKey(publicKeys, mintIds, metadataFields);
 
     const rows = results.map((result: any, i: number) => {
       const { id, transactionId } = result;
@@ -123,10 +123,10 @@ export class StandardMinter implements Minter {
 
   // filterDuplicates returns only the NFTs that have not yet been minted.
   async filterDuplicates(nfts: PreparedEntry[], batchSize: number): Promise<PreparedEntry[]> {
-    // Use metadata hash as primary key
-    const primaryKeys = nfts.map((nft) => nft.hash);
+    // Use metadata hash as mint ID
+    const mintIds = nfts.map((nft) => nft.hash);
 
-    const batches = createBatches(primaryKeys, batchSize);
+    const batches = createBatches(mintIds, batchSize);
 
     const duplicates = (await Promise.all(batches.map((batch) => this.flowGateway.getDuplicateNFTs(batch)))).flat();
 

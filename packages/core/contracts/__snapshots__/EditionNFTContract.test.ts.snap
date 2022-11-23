@@ -111,16 +111,16 @@ pub contract EditionNFT_Test: NonFungibleToken {
         return EditionNFT_Test.editions[id]
     }
 
-    /// This dictionary indexes editions by their primary key.
+    /// This dictionary indexes editions by their mint ID.
     ///
     /// It is populated at mint time and used to prevent duplicate mints.
-    /// The primary key can be any unique string value,
+    /// The mint ID can be any unique string value,
     /// for example the hash of the edition metadata.
     ///
-    access(self) let editionsByPrimaryKey: {String: UInt64}
+    access(self) let editionsByMintID: {String: UInt64}
 
-    pub fun getEditionByPrimaryKey(primaryKey: String): UInt64? {
-        return EditionNFT_Test.editionsByPrimaryKey[primaryKey]
+    pub fun getEditionByMintID(mintID: String): UInt64? {
+        return EditionNFT_Test.editionsByMintID[mintID]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
@@ -353,7 +353,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         /// edition data that will later be associated with minted NFTs.
         ///
         pub fun createEdition(
-            primaryKey: String,
+            mintID: String,
             size: UInt64,
             name: String,
             description: String,
@@ -365,10 +365,10 @@ pub contract EditionNFT_Test: NonFungibleToken {
                 thumbnail: thumbnail,
             )
 
-            // Prevent multiple editions from being minted with the same primary key
+            // Prevent multiple editions from being minted with the same mint ID
             assert(
-                EditionNFT_Test.editionsByPrimaryKey[primaryKey] == nil,
-                message: \\"an edition has already been created with primaryKey=\\".concat(primaryKey)
+                EditionNFT_Test.editionsByMintID[mintID] == nil,
+                message: \\"an edition has already been created with mintID=\\".concat(mintID)
             )
 
             let edition = Edition(
@@ -380,8 +380,8 @@ pub contract EditionNFT_Test: NonFungibleToken {
             // Save the edition
             EditionNFT_Test.editions[edition.id] = edition
 
-            // Update the primary key index
-            EditionNFT_Test.editionsByPrimaryKey[primaryKey] = edition.id
+            // Update the mint ID index
+            EditionNFT_Test.editionsByMintID[mintID] = edition.id
 
             emit EditionCreated(edition: edition)
 
@@ -495,7 +495,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         self.totalEditions = 0
 
         self.editions = {}
-        self.editionsByPrimaryKey = {}
+        self.editionsByMintID = {}
         
         self.initAdmin(admin: admin)
 

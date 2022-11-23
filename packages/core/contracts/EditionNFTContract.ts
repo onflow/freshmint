@@ -133,15 +133,15 @@ export class EditionNFTContract extends NFTContract {
         schema: this.schema,
       });
 
-      // Use metadata hash as primary key
-      const primaryKeys = editions.map((edition) => hashMetadata(this.schema, edition.metadata).toString('hex'));
+      // Use metadata hash as mint ID
+      const mintIds = editions.map((edition) => hashMetadata(this.schema, edition.metadata).toString('hex'));
 
       const sizes = editions.map((edition) => edition.size.toString(10));
 
       return {
         script,
         args: [
-          fcl.arg(primaryKeys, t.Array(t.String)),
+          fcl.arg(mintIds, t.Array(t.String)),
           fcl.arg(sizes, t.Array(t.UInt64)),
           ...this.schema.fields.map((field) => {
             return fcl.arg(

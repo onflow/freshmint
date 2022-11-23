@@ -84,10 +84,10 @@ export class FlowGateway {
     return await this.flow.transaction('./cadence/transactions/deploy.cdc', `${this.network}-account`, args);
   }
 
-  async mint(primaryKeys: string[], fields: BatchField[]) {
+  async mint(mintIds: string[], fields: BatchField[]) {
     const args = [
       { type: t.Optional(t.String), value: null }, // Bucket name
-      { type: t.Array(t.String), value: primaryKeys },
+      { type: t.Array(t.String), value: mintIds },
       ...fields.map(({ field, values }) => ({
         type: t.Array(field.typeInstance.cadenceType),
         value: values,
@@ -104,10 +104,10 @@ export class FlowGateway {
     return parseMintResults(result);
   }
 
-  async mintWithClaimKey(publicKeys: string[], primaryKeys: string[], fields: BatchField[]) {
+  async mintWithClaimKey(publicKeys: string[], mintIds: string[], fields: BatchField[]) {
     const args = [
       { type: t.Array(t.String), value: publicKeys },
-      { type: t.Array(t.String), value: primaryKeys },
+      { type: t.Array(t.String), value: mintIds },
       ...fields.map(({ field, values }) => ({
         type: t.Array(field.typeInstance.cadenceType),
         value: values,
@@ -124,9 +124,9 @@ export class FlowGateway {
     return parseMintResults(result);
   }
 
-  async createEditions(primaryKeys: string[], sizes: number[], fields: any[]) {
+  async createEditions(mintIds: string[], sizes: number[], fields: any[]) {
     const args = [
-      { type: t.Array(t.String), value: primaryKeys },
+      { type: t.Array(t.String), value: mintIds },
       { type: t.Array(t.UInt64), value: sizes.map((size) => size.toString(10)) },
       ...fields.map((field) => ({
         type: t.Array(field.cadenceType),
@@ -204,9 +204,9 @@ export class FlowGateway {
     ]);
   }
 
-  async getEditionsByPrimaryKey(primaryKeys: string[]): Promise<{ id: string; size: number; count: number }[]> {
+  async getEditionsByPrimaryKey(mintIds: string[]): Promise<{ id: string; size: number; count: number }[]> {
     return await this.flow.script('./cadence/scripts/get_editions_by_primary_key.cdc', [
-      { type: t.Array(t.String), value: primaryKeys },
+      { type: t.Array(t.String), value: mintIds },
     ]);
   }
 }

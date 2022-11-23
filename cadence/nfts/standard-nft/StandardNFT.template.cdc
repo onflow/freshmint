@@ -83,16 +83,16 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    /// This dictionary indexes NFTs by their primary key.
+    /// This dictionary indexes NFTs by their mint ID.
     ///
     /// It is populated at mint time and used to prevent duplicate mints.
-    /// The primary key can be any unique string value,
+    /// The mint ID can be any unique string value,
     /// for example the hash of the NFT metadata.
     ///
-    access(contract) var nftsByPrimaryKey: {String: UInt64}
+    access(contract) var nftsByMintID: {String: UInt64}
 
-    pub fun getNFTByPrimaryKey(primaryKey: String): UInt64? {
-        return {{ contractName }}.nftsByPrimaryKey[primaryKey]
+    pub fun getNFTByMintID(mintID: String): UInt64? {
+        return {{ contractName }}.nftsByMintID[mintID]
     }
 
     {{> collection contractName=contractName }}
@@ -106,16 +106,16 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// To mint an NFT, specify a value for each of its metadata fields.
         ///
         pub fun mintNFT(
-            primaryKey: String,
+            mintID: String,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
         ): @{{ contractName }}.NFT {
 
-            // Prevent multiple NFTs from being minted with the same primary key
+            // Prevent multiple NFTs from being minted with the same mint ID
             assert(
-                {{ contractName }}.nftsByPrimaryKey[primaryKey] == nil,
-                message: "an NFT has already been minted with primaryKey=".concat(primaryKey)
+                {{ contractName }}.nftsByMintID[mintID] == nil,
+                message: "an NFT has already been minted with mintID=".concat(mintID)
             )
 
             let metadata = Metadata(
@@ -126,8 +126,8 @@ pub contract {{ contractName }}: NonFungibleToken {
 
             let nft <- create {{ contractName }}.NFT(metadata: metadata)
    
-            // Update the primary key index
-            {{ contractName }}.nftsByPrimaryKey[primaryKey] = nft.id
+            // Update the mint ID index
+            {{ contractName }}.nftsByMintID[mintID] = nft.id
 
             emit Minted(id: nft.id)
 
@@ -206,7 +206,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.totalSupply = 0
 
-        self.nftsByPrimaryKey = {}
+        self.nftsByMintID = {}
 
         self.initAdmin(admin: {{#if saveAdminResourceToContractAccount }}self.account{{ else }}admin{{/if}})
 
