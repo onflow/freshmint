@@ -93,7 +93,7 @@ export class EditionNFTGenerator extends TemplateGenerator {
     });
   }
 
-  static getEditionsByPrimaryKey({
+  static getEditionsByMintId({
     contractName,
     contractAddress,
   }: {
@@ -101,7 +101,7 @@ export class EditionNFTGenerator extends TemplateGenerator {
     contractAddress: string;
   }): string {
     return this.generate(
-      require('../../../cadence/nfts/edition-nft/scripts/get_editions_by_primary_key.template.cdc'),
+      require('../../../cadence/nfts/edition-nft/scripts/get_editions_by_mint_id.template.cdc'),
       {
         contractName,
         contractAddress,
