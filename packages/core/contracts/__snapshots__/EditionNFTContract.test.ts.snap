@@ -111,6 +111,18 @@ pub contract EditionNFT_Test: NonFungibleToken {
         return EditionNFT_Test.editions[id]
     }
 
+    /// This dictionary indexes editions by their mint ID.
+    ///
+    /// It is populated at mint time and used to prevent duplicate mints.
+    /// The mint ID can be any unique string value,
+    /// for example the hash of the edition metadata.
+    ///
+    access(self) let editionsByMintID: {String: UInt64}
+
+    pub fun getEditionByMintID(mintID: String): UInt64? {
+        return EditionNFT_Test.editionsByMintID[mintID]
+    }
+
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
@@ -244,49 +256,49 @@ pub contract EditionNFT_Test: NonFungibleToken {
             }
         }
     }
-
+    
     pub resource Collection: EditionNFT_TestCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         
         /// A dictionary of all NFTs in this collection indexed by ID.
         ///
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
-
+    
         init () {
             self.ownedNFTs <- {}
         }
-
+    
         /// Remove an NFT from the collection and move it to the caller.
         ///
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) 
                 ?? panic(\\"Requested NFT to withdraw does not exist in this collection\\")
-
+    
             emit Withdraw(id: token.id, from: self.owner?.address)
-
+    
             return <- token
         }
-
+    
         /// Deposit an NFT into this collection.
         ///
         pub fun deposit(token: @NonFungibleToken.NFT) {
             let token <- token as! @EditionNFT_Test.NFT
-
+    
             let id: UInt64 = token.id
-
+    
             // add the new token to the dictionary which removes the old one
             let oldToken <- self.ownedNFTs[id] <- token
-
+    
             emit Deposit(id: id, to: self.owner?.address)
-
+    
             destroy oldToken
         }
-
+    
         /// Return an array of the NFT IDs in this collection.
         ///
         pub fun getIDs(): [UInt64] {
             return self.ownedNFTs.keys
         }
-
+    
         /// Return a reference to an NFT in this collection.
         ///
         /// This function panics if the NFT does not exist in this collection.
@@ -294,7 +306,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
-
+    
         /// Return a reference to an NFT in this collection
         /// typed as EditionNFT_Test.NFT.
         ///
@@ -305,10 +317,10 @@ pub contract EditionNFT_Test: NonFungibleToken {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &EditionNFT_Test.NFT
             }
-
+    
             return nil
         }
-
+    
         /// Return a reference to an NFT in this collection
         /// typed as MetadataViews.Resolver.
         ///
@@ -319,12 +331,12 @@ pub contract EditionNFT_Test: NonFungibleToken {
             let nftRef = nft as! &EditionNFT_Test.NFT
             return nftRef as &AnyResource{MetadataViews.Resolver}
         }
-
+    
         destroy() {
             destroy self.ownedNFTs
         }
     }
-
+    
     /// Return a new empty collection.
     ///
     pub fun createEmptyCollection(): @NonFungibleToken.Collection {
@@ -341,6 +353,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         /// edition data that will later be associated with minted NFTs.
         ///
         pub fun createEdition(
+            mintID: String,
             size: UInt64,
             name: String,
             description: String,
@@ -352,13 +365,23 @@ pub contract EditionNFT_Test: NonFungibleToken {
                 thumbnail: thumbnail,
             )
 
+            // Prevent multiple editions from being minted with the same mint ID
+            assert(
+                EditionNFT_Test.editionsByMintID[mintID] == nil,
+                message: \\"an edition has already been created with mintID=\\".concat(mintID)
+            )
+
             let edition = Edition(
                 id: EditionNFT_Test.totalEditions,
                 size: size,
                 metadata: metadata
             )
 
+            // Save the edition
             EditionNFT_Test.editions[edition.id] = edition
+
+            // Update the mint ID index
+            EditionNFT_Test.editionsByMintID[mintID] = edition.id
 
             emit EditionCreated(edition: edition)
 
@@ -472,6 +495,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
         self.totalEditions = 0
 
         self.editions = {}
+        self.editionsByMintID = {}
         
         self.initAdmin(admin: admin)
 

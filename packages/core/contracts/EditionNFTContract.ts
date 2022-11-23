@@ -4,7 +4,7 @@ import * as fcl from '@onflow/fcl';
 import * as t from '@onflow/types';
 
 import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
-import { MetadataMap } from '../metadata';
+import { hashMetadata, MetadataMap } from '../metadata';
 import { EditionNFTGenerator } from '../generators/EditionNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult, TransactionEvent } from '../transactions';
@@ -66,7 +66,7 @@ export class EditionNFTContract extends NFTContract {
   }): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = EditionNFTGenerator.deploy({ imports });
+        const script = EditionNFTGenerator.deployToNewAccount({ imports });
 
         const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
@@ -133,11 +133,15 @@ export class EditionNFTContract extends NFTContract {
         schema: this.schema,
       });
 
+      // Use metadata hash as mint ID
+      const mintIds = editions.map((edition) => hashMetadata(this.schema, edition.metadata).toString('hex'));
+
       const sizes = editions.map((edition) => edition.size.toString(10));
 
       return {
         script,
         args: [
+          fcl.arg(mintIds, t.Array(t.String)),
           fcl.arg(sizes, t.Array(t.UInt64)),
           ...this.schema.fields.map((field) => {
             return fcl.arg(

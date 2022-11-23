@@ -7,7 +7,7 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  getTestNFTs,
+  NFTGenerator,
   setupEmulator,
   teardownEmulator,
   collectionMetadata,
@@ -57,7 +57,7 @@ describe('BlindNFTContract', () => {
     );
   });
 
-  const nfts = getTestNFTs(3);
+  const nfts = new NFTGenerator().generate(3);
 
   let mintedNFTs: NFTMintResult[];
 

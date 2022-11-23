@@ -7,7 +7,7 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  getTestNFTs,
+  NFTGenerator,
   setupEmulator,
   teardownEmulator,
   collectionMetadata,
@@ -26,6 +26,8 @@ describe('FreshmintClaimSaleV2Contract', () => {
     schema: getTestSchema(),
     owner: ownerAuthorizer,
   });
+
+  const nfts = new NFTGenerator();
 
   it('should deploy the NFT contract', async () => {
     await client.send(
@@ -52,7 +54,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
     expect(balanceBefore).toBeCloseTo(5.0);
 
     // Mint 1 NFT
-    await client.send(contract.mintNFTs(getTestNFTs(1)));
+    await client.send(contract.mintNFTs(nfts.generate(1)));
 
     // Start sale for 10 FLOW
     await client.send(sale.start({ id: saleID, price: '10.0' }));
@@ -103,7 +105,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
 
     await mintFLOW(buyer.address, '1000.0');
 
-    const mintedNFTs = await client.send(contract.mintNFTs(getTestNFTs(10)));
+    const mintedNFTs = await client.send(contract.mintNFTs(nfts.generate(10)));
 
     await client.send(sale.start({ id: saleID, price: '10.0' }));
 
@@ -155,7 +157,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
 
     await mintFLOW(buyer.address, '1000.0');
 
-    const [nftA, nftB, nftC, nftD, nftE] = await client.send(contract.mintNFTs(getTestNFTs(5)));
+    const [nftA, nftB, nftC, nftD, nftE] = await client.send(contract.mintNFTs(nfts.generate(5)));
 
     await client.send(sale.start({ id: saleID, price: '10.0' }));
 
@@ -178,7 +180,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
 
     await mintFLOW(buyer.address, '1000.0');
 
-    const [nftA, nftB, nftC, nftD, nftE] = await client.send(contract.mintNFTs(getTestNFTs(5)));
+    const [nftA, nftB, nftC, nftD, nftE] = await client.send(contract.mintNFTs(nfts.generate(5)));
 
     await client.send(sale.start({ id: saleID, price: '10.0' }));
 
@@ -208,7 +210,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
       buyer = await createAccount();
       await mintFLOW(buyer.address, '1000.0');
 
-      await client.send(contract.mintNFTs(getTestNFTs(5)));
+      await client.send(contract.mintNFTs(nfts.generate(5)));
     });
 
     it('should sell to an address below the claim limit', async () => {
@@ -298,7 +300,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
     });
 
     it('should start a sale with an allowlist', async () => {
-      await client.send(contract.mintNFTs(getTestNFTs(3)));
+      await client.send(contract.mintNFTs(nfts.generate(3)));
       await client.send(sale.start({ id: allowlistSaleId, price: '10.0', allowlist: allowlistName }));
     });
 
@@ -341,7 +343,7 @@ describe('FreshmintClaimSaleV2Contract', () => {
     const refillQueue = 'refill_queue';
 
     // Mint 10 NFTs into the default queue
-    await client.send(contract.mintNFTs(getTestNFTs(10)));
+    await client.send(contract.mintNFTs(nfts.generate(10)));
 
     // Move 5 NFTs into the sale queue
     await client.send(contract.transferQueueToQueue({ fromQueue: null, toQueue: refillQueue, count: 5 }));

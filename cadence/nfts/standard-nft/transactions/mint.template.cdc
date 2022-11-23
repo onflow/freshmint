@@ -67,6 +67,7 @@ pub fun getOrCreateMintQueue(
 
 transaction(
     bucketName: String?,
+    mintIDs: [String],
     {{#each fields}}
     {{ this.name }}: [{{ this.asCadenceTypeString }}],
     {{/each}}
@@ -86,11 +87,11 @@ transaction(
     }
 
     execute {
-        var i = 0
-        
-        while i < {{ fields.[0].name }}.length {
+
+        for i, mintID in mintIDs {
 
             let token <- self.admin.mintNFT(
+                mintID: mintID,
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
@@ -101,8 +102,6 @@ transaction(
             // the queue are deposited into the underlying collection.
             //
             self.mintQueue.deposit(token: <- token)
-
-            i = i +1
         }
     }
 }

@@ -63,7 +63,7 @@ export class BlindNFTContract extends NFTContract {
   }): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = BlindNFTGenerator.deploy({ imports });
+        const script = BlindNFTGenerator.deployToNewAccount({ imports });
 
         const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
