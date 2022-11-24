@@ -269,16 +269,16 @@ async function createScaffold(dir: string) {
   await fs.copy(path.resolve(__dirname, 'templates/gitignore'), path.resolve(dir, '.gitignore'));
 }
 
-const createNextjsConfig = template('templates/nextjs/next.config.js', 'next.config.js');
+const createNextConfig = template('templates/web/next.config.js', 'next.config.js');
 
 export async function generateWeb(dir: string, name: string, description: string) {
   const webDir = path.resolve(dir, 'web');
 
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs'), webDir);
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs/eslintrc.json'), path.resolve(webDir, '.eslintrc.json'));
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs/gitignore'), path.resolve(webDir, '.gitignore'));
+  await fs.copy(path.resolve(__dirname, 'templates/web'), webDir);
+  await fs.copy(path.resolve(__dirname, 'templates/web/eslintrc.json'), path.resolve(webDir, '.eslintrc.json'));
+  await fs.copy(path.resolve(__dirname, 'templates/web/gitignore'), path.resolve(webDir, '.gitignore'));
 
-  await createNextjsConfig(webDir, { name, description });
+  await createNextConfig(webDir, { name, description });
 }
 
 const createNFTsCSVFile = template('templates/nfts.csv', 'nfts.csv');
