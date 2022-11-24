@@ -132,9 +132,18 @@ function generateOutputFilename(network: string): string {
   return `mint-${network}-${timestamp}.csv`;
 }
 
+const padDigits = (time: number, digits: number) => String(time).padStart(digits, '0');
+
+const year = (date: Date) => date.getFullYear();
+const month = (date: Date) => padDigits(date.getMonth() + 1, 2);
+const day = (date: Date) => padDigits(date.getDate(), 2);
+
+const hours = (date: Date) => padDigits(date.getHours(), 2);
+const minutes = (date: Date) => padDigits(date.getMinutes(), 2);
+const seconds = (date: Date) => padDigits(date.getSeconds(), 2);
+
 function generateTimestamp(): string {
   const date = new Date();
-  return `${date.getFullYear()}-${
-    date.getMonth() + 1
-  }-${date.getDate()}-${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
+
+  return `${year(date)}-${month(date)}-${day(date)}-${hours(date)}${minutes(date)}${seconds(date)}`;
 }
