@@ -62,8 +62,10 @@ mint and distribute NFTs on Flow from a Node.js application.
 
 # Installation
 
+This guide uses the `@freshmint/core` package (instead of `freshmint`, which is the CLI version).
+
 ```sh
-npm i freshmint@alpha
+npm i @freshmint/core
 ```
 
 # Create & deploy an NFT contract
@@ -86,7 +88,7 @@ of an NFT and the data it contains. You'll then use the schema to generate
 your custom contract.
 
 ```js
-import { metadata } from 'freshmint';
+import { metadata } from '@freshmint/core';
 
 // Create a schema with two fields:
 // - "foo" is a string field
@@ -129,7 +131,7 @@ You can use the default schema as a base and
 extend it with additional fields:
 
 ```js
-import { metadata } from 'freshmint';
+import { metadata } from '@freshmint/core';
 
 const schema = metadata.defaultSchema.extend({
   foo: metadata.String(),
@@ -174,7 +176,7 @@ const rawSchema = {
 Use the `parseSchema` function to convert a raw schema into a `metadata.Schema` object:
 
 ```js
-import { metadata } from 'freshmint';
+import { metadata } from '@freshmint/core';
 
 const schema = metadata.parseSchema(rawSchema);
 ```
@@ -182,7 +184,7 @@ const schema = metadata.parseSchema(rawSchema);
 ## Create a contract
 
 ```js
-import { StandardNFTContract, metadata } from 'freshmint';
+import { StandardNFTContract, metadata } from '@freshmint/core';
 
 const contract = new StandardNFTContract({
   name: 'MyNFTContract',
@@ -223,7 +225,7 @@ The owner is defined as a `TransactionAuthorizer`, an object that can authorize 
 The snippet below shows how to define an authorizer from an ECDSA private key.
 
 ```js
-import { TransactionAuthorizer } from 'freshmint';
+import { TransactionAuthorizer } from '@freshmint/core';
 import { 
   InMemoryECPrivateKey, 
   InMemoryECSigner, 
@@ -297,7 +299,7 @@ First create a `FreshmintClient` instance using FCL as a base.
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FreshmintClient, FreshmintConfig } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from '@freshmint/core';
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 ```
@@ -327,7 +329,7 @@ const contractAddress = await client.send(deployTransaction);
 The `StandardNFTContract` allows you to mint simple one-of-a-kind NFTs.
 
 ```js
-import { StandardNFTContract, TransactionAuthorizer, metadata } from 'freshmint';
+import { StandardNFTContract, TransactionAuthorizer, metadata } from '@freshmint/core';
 
 // Intialize your owner authorizer.
 const owner = new TransactionAuthorizer(...);
@@ -343,7 +345,7 @@ const contract = new StandardNFTContract({
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FreshmintClient, FreshmintConfig } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from '@freshmint/core';
 import { HashAlgorithm } from 'freshmint/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -416,7 +418,7 @@ All NFTs in an edition share the same metadata;
 only their serial numbers are different.
 
 ```js
-import { EditionNFTContract, TransactionAuthorizer, metadata } from 'freshmint';
+import { EditionNFTContract, TransactionAuthorizer, metadata } from '@freshmint/core';
 
 // Intialize your owner authorizer.
 const owner = new TransactionAuthorizer(...);
@@ -432,7 +434,7 @@ const contract = new EditionNFTContract({
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FreshmintClient, FreshmintConfig } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from '@freshmint/core';
 import { HashAlgorithm } from 'freshmint/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -597,7 +599,7 @@ The hidden NFT is converted into a full NFT containing a complete
 on-chain metadata record.
 
 ```js
-import { BlindNFTContract, TransactionAuthorizer, metadata } from 'freshmint';
+import { BlindNFTContract, TransactionAuthorizer, metadata } from '@freshmint/core';
 
 // Intialize your owner authorizer.
 const owner = new TransactionAuthorizer(...);
@@ -613,7 +615,7 @@ const contract = new BlindNFTContract({
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FreshmintClient, FreshmintConfig } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from '@freshmint/core';
 import { HashAlgorithm } from 'freshmint/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -745,7 +747,7 @@ All NFTs in an edition share the same metadata;
 only their serial numbers are different.
 
 ```js
-import { BlindEditionNFTContract, TransactionAuthorizer, metadata } from 'freshmint';
+import { BlindEditionNFTContract, TransactionAuthorizer, metadata } from '@freshmint/core';
 
 // Intialize your owner authorizer.
 const owner = new TransactionAuthorizer(...);
@@ -761,7 +763,7 @@ const contract = new BlindEditionNFTContract({
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FreshmintClient, FreshmintConfig } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from '@freshmint/core';
 import { HashAlgorithm } from 'freshmint/crypto';
 
 // Specify a public key (with hash algorithm)
@@ -960,7 +962,7 @@ import {
   FreshmintConfig,
   ClaimSaleContract,
   StandardNFTContract
-} from 'freshmint';
+} from '@freshmint/core';
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
@@ -991,7 +993,7 @@ import {
   FreshmintConfig,
   ClaimSaleContract,
   EditionNFTContract
-} from 'freshmint';
+} from '@freshmint/core';
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
@@ -1025,7 +1027,7 @@ This strategy assumes you are using the [claim sale](#claim-sale) distribution m
 
 ```js
 import * as fcl from '@onflow/fcl';
-import { FreshmintClient, FreshmintConfig } from 'freshmint';
+import { FreshmintClient, FreshmintConfig } from '@freshmint/core';
 
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
@@ -1118,7 +1120,7 @@ It will then generate the necessary Cadence code to attach the views to your con
 ## Add views to a schema
 
 ```js
-import { metadata } from 'freshmint';
+import { metadata } from '@freshmint/core';
 
 const defaultSchema = metadata.createSchema({
   fields: {
@@ -1148,7 +1150,7 @@ The `NFTCollectionDisplay` view returns a basic representation of the collection
 that an NFT belongs to.
 
 ```js
-import { metadata } from 'freshmint';
+import { metadata } from '@freshmint/core';
 
 const view = metadata.NFTCollectionDisplayView({
   name: 'My NFT Collection',
@@ -1221,7 +1223,7 @@ Without it your royalties will not be applied.
 Note: `metadata.defaultSchema` already contains the royalties view.
 
 ```js
-import { metadata } from 'freshmint';
+import { metadata } from '@freshmint/core';
 
 const schema = metadata.createSchema({
   // ...
