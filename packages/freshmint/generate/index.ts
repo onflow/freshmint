@@ -23,13 +23,13 @@ export async function generateProject(
 ) {
   await createScaffold(dir);
 
-  await generateProjectCadence(dir, contract);
+  await generateCadence(dir, contract);
 
   await createFlowConfig(dir, { contractName: contract.name });
   await createFlowTestnetConfig(dir, { contractName: contract.name });
   await createFlowMainnetConfig(dir, { contractName: contract.name });
 
-  await generateNextjsApp(dir, name, description);
+  await generateWeb(dir, name, description);
 
   await createFreshmintYaml(dir, { name, contract });
   await createReadme(dir, { name, nftDataPath });
@@ -49,7 +49,7 @@ const contracts = {
 const imports = prepareImports(contracts);
 const shiftedImports = prepareImports(contracts, '../contracts');
 
-export async function generateProjectCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
+export async function generateCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
   switch (contract.type) {
     case ContractType.Standard:
       await generateStandardProject(dir, contract, includeCSVFile);
@@ -271,7 +271,7 @@ async function createScaffold(dir: string) {
 
 const createNextjsConfig = template('templates/nextjs/next.config.js', 'next.config.js');
 
-export async function generateNextjsApp(dir: string, name: string, description: string) {
+export async function generateWeb(dir: string, name: string, description: string) {
   const webDir = path.resolve(dir, 'web');
 
   await fs.copy(path.resolve(__dirname, 'templates/nextjs'), webDir);
