@@ -1,14 +1,13 @@
+import * as path from 'path';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 import { IPFSFile, MetadataMap, Schema } from '@freshmint/core/metadata';
 
-import { MetadataLoader } from '../loaders';
 import { MetadataProcessor } from '../processors';
 import { FlowGateway } from '../../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { Minter, MinterHooks } from '.';
-import { writeCSV } from '../csv';
-import { generateOutfileNames } from '../outfile';
+import { readCSV, writeCSV } from '../csv';
 
 type Edition = {
   id: string;
@@ -42,8 +41,14 @@ export class EditionMinter implements Minter {
     this.flowGateway = flowGateway;
   }
 
-  async mint(loader: MetadataLoader, withClaimKeys: boolean, batchSize: number, hooks: MinterHooks) {
-    const entries = await loader.loadEntries();
+  async mint(
+    csvInputFile: string,
+    csvOutputFile: string,
+    withClaimKeys: boolean,
+    batchSize: number,
+    hooks: MinterHooks,
+  ) {
+    const entries = await readCSV(path.resolve(process.cwd(), csvInputFile));
 
     const preparedEntries = await this.prepareMetadata(entries);
 
@@ -66,23 +71,23 @@ export class EditionMinter implements Minter {
 
     const batches = createBatches(editionsToMint, batchSize);
 
-    const { outFile, tempFile } = generateOutfileNames(this.flowGateway.network);
+    const csvTempFile = `${csvOutputFile}.tmp`;
 
-    hooks.onStartMinting(newNFTCount, batches.length, batchSize, outFile);
+    hooks.onStartMinting(newNFTCount, batches.length, batchSize);
 
     for (const [batchIndex, batch] of batches.entries()) {
       if (withClaimKeys) {
-        await this.mintNFTsWithClaimKeys(batchIndex, outFile, tempFile, batch);
+        await this.mintNFTsWithClaimKeys(batchIndex, csvOutputFile, csvTempFile, batch);
       } else {
-        await this.mintNFTs(batchIndex, outFile, batch);
+        await this.mintNFTs(batchIndex, csvOutputFile, batch);
       }
 
       hooks.onCompleteBatch(batch.size);
     }
 
     // Remove the temporary file used to store claim keys
-    if (existsSync(tempFile)) {
-      await unlink(tempFile);
+    if (existsSync(csvTempFile)) {
+      await unlink(csvTempFile);
     }
   }
 
@@ -185,7 +190,7 @@ export class EditionMinter implements Minter {
     }
   }
 
-  async mintNFTs(batchIndex: number, outFile: string, batch: EditionBatch) {
+  async mintNFTs(batchIndex: number, csvOutputFile: string, batch: EditionBatch) {
     const results = await this.flowGateway.mintEdition(batch.edition.id, batch.size);
 
     const rows = results.map((result: any) => {
@@ -200,13 +205,13 @@ export class EditionMinter implements Minter {
       };
     });
 
-    await writeCSV(outFile, rows, { append: batchIndex > 0 });
+    await writeCSV(csvOutputFile, rows, { append: batchIndex > 0 });
   }
 
-  async mintNFTsWithClaimKeys(batchIndex: number, outFile: string, tempFile: string, batch: EditionBatch) {
+  async mintNFTsWithClaimKeys(batchIndex: number, csvOutputFile: string, csvTempFile: string, batch: EditionBatch) {
     const { privateKeys, publicKeys } = generateClaimKeyPairs(batch.size);
 
-    await savePrivateKeysToFile(tempFile, batch, privateKeys);
+    await savePrivateKeysToFile(csvTempFile, batch, privateKeys);
 
     const results = await this.flowGateway.mintEditionWithClaimKey(batch.edition.id, publicKeys);
 
@@ -223,7 +228,7 @@ export class EditionMinter implements Minter {
       };
     });
 
-    await writeCSV(outFile, rows, { append: batchIndex > 0 });
+    await writeCSV(csvOutputFile, rows, { append: batchIndex > 0 });
   }
 }
 
