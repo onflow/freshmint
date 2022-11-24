@@ -90,11 +90,15 @@ transaction(
 
         for i, mintID in mintIDs {
 
+            let metadata = {
+                {{#each fields}}
+                "{{ this.name }}": {{ this.name }}[i]{{#unless @last}},{{/unless}}
+                {{/each}}
+            }
+
             let token <- self.admin.mintNFT(
                 mintID: mintID,
-                {{#each fields}}
-                {{ this.name }}: {{ this.name }}[i],
-                {{/each}}
+                metadata: metadata
             )
         
             // NFTs are minted into a queue to preserve the mint order.

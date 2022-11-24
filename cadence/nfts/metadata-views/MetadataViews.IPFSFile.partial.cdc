@@ -1,1 +1,1 @@
-MetadataViews.IPFSFile(cid: {{ metadata }}.{{ field.name }}, path: nil)
+MetadataViews.IPFSFile(cid: {{ metadata }}["{{ field.name }}"]! as! String, path: nil)

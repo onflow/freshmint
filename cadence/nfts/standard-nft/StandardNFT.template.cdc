@@ -25,29 +25,12 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     {{> collection-metadata-field }}
 
-    pub struct Metadata {
-
-        {{#each fields}}
-        pub let {{ this.name }}: {{ this.asCadenceTypeString }}
-        {{/each}}
-
-        init(
-            {{#each fields}}
-            {{ this.name }}: {{ this.asCadenceTypeString }},
-            {{/each}}
-        ) {
-            {{#each fields}}
-            self.{{ this.name }} = {{ this.name }}
-            {{/each}}
-        }
-    }
-
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
-        pub let metadata: Metadata
+        pub let metadata: {String: AnyStruct}
 
-        init(metadata: Metadata) {
+        init(metadata: {String: AnyStruct}) {
             self.id = self.uuid
             self.metadata = metadata
         }
@@ -107,21 +90,13 @@ pub contract {{ contractName }}: NonFungibleToken {
         ///
         pub fun mintNFT(
             mintID: String,
-            {{#each fields}}
-            {{ this.name }}: {{ this.asCadenceTypeString }},
-            {{/each}}
+            metadata: {String: AnyStruct}
         ): @{{ contractName }}.NFT {
 
             // Prevent multiple NFTs from being minted with the same mint ID
             assert(
                 {{ contractName }}.nftsByMintID[mintID] == nil,
                 message: "an NFT has already been minted with mintID=".concat(mintID)
-            )
-
-            let metadata = Metadata(
-                {{#each fields}}
-                {{ this.name }}: {{ this.name }},
-                {{/each}}
             )
 
             let nft <- create {{ contractName }}.NFT(metadata: metadata)
