@@ -13,7 +13,7 @@ import { FlowJSONConfig } from '../flow/config';
 import { FreshmintError } from '../errors';
 
 export default new Command('deploy')
-  .description('fetch the information for an NFT')
+  .description('deploy your NFT contract')
   .option('-n, --network <network>', "Network to deploy to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
   .action(deploy);
 
