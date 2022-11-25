@@ -61,9 +61,10 @@ describe.each(suites)('Royalties - $contractClass.name', ({ contractClass }) => 
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
-        placeholderImage: 'foo.jpeg',
         collectionMetadata,
         royalties,
+        // @ts-ignore
+        placeholderImage: 'foo.jpeg',
       }),
     );
 
