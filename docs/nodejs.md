@@ -671,7 +671,7 @@ This will print:
       thumbnail: "bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam"
     },
     metadataHash: "ed94560233ee34cf059e846560b43b462d0337e21d563f668404ee4cee407c97",
-    metadataSalt: "727ca86ae4a338f21e83ec330f490bcf",
+    metadataSalt: "78e9bd055a2dda58dbf0327157e7abcc7c0412e4d07808cc369f0e1f7f1afb4d",
     transactionId: "20d0c77028d9a23347330956e8cd253fbe96a225e5cb42a4450fdc2e5cefa8c1"
   },
   {
@@ -682,7 +682,7 @@ This will print:
       thumbnail: "bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam"
     },
     metadataHash: "504b154e868692932e2ef77900459915d3ab97be6150b2eac03c65b233cfbb8c",
-    metadataSalt: "18087aeaa388597b81cafdf4d2f6d81f",
+    metadataSalt: "a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531",
     transactionId: "20d0c77028d9a23347330956e8cd253fbe96a225e5cb42a4450fdc2e5cefa8c1"
   }
 ]
@@ -717,7 +717,7 @@ const nft0 = {
     description: 'NFT 1 is awesome.',
     thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
   },
-  metadataSalt: '727ca86ae4a338f21e83ec330f490bcf',
+  metadataSalt: '78e9bd055a2dda58dbf0327157e7abcc7c0412e4d07808cc369f0e1f7f1afb4d',
 }
 
 const nft1 = {
@@ -727,7 +727,7 @@ const nft1 = {
     description: 'NFT 2 is awesome.',
     thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
   },
-  metadataSalt: '18087aeaa388597b81cafdf4d2f6d81f',
+  metadataSalt: 'a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531',
 }
 
 // Reveal a single NFT
@@ -881,7 +881,7 @@ This will print:
     editionId: '0',
     serialNumber: '3',
     hash: 'ab17379badad7bcf91885104f449a679b4cc68d1e3ccd527c6c7b922d0ae2655',
-    salt: '6d8f193cab051793a1864bb8d082cf32',
+    salt: '78e9bd055a2dda58dbf0327157e7abcc7c0412e4d07808cc369f0e1f7f1afb4d',
     transactionId: 'e648c662c3eb8550030c95c0dcc01d6d179925b9fc33fbaabe90715555d78ead'
   },
   {
@@ -889,7 +889,7 @@ This will print:
     editionId: '0',
     serialNumber: '1',
     hash: '10a315ec07b64935cebe82f14cdc5d7320ad941db3a14ad998305851d75c2119',
-    salt: '8c658bba126995b1f99b8c9af374716f',
+    salt: 'a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531',
     transactionId: 'e648c662c3eb8550030c95c0dcc01d6d179925b9fc33fbaabe90715555d78ead'
   },
   ...
@@ -904,13 +904,13 @@ Reveal NFTs by publishing their serial number and unique salt.
 const nft0 = {
   id: '0',
   serialNumber: '3',
-  salt: '6d8f193cab051793a1864bb8d082cf32',
+  salt: '78e9bd055a2dda58dbf0327157e7abcc7c0412e4d07808cc369f0e1f7f1afb4d',
 };
 
 const nft1 = {
   id: '1',
   serialNumber: '3',
-  salt: '8c658bba126995b1f99b8c9af374716f',
+  salt: 'a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531',
 };
 
 // Reveal a single NFT
