@@ -31,7 +31,6 @@ describe('BlindEditionNFTContract', () => {
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
-        placeholderImage: 'sample-image.jpeg',
         collectionMetadata,
       }),
     );
@@ -49,7 +48,6 @@ describe('BlindEditionNFTContract', () => {
       contractWithAdmin.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
-        placeholderImage: 'sample-image.jpeg',
         collectionMetadata,
         saveAdminResourceToContractAccount: true,
       }),
@@ -89,13 +87,17 @@ describe('BlindEditionNFTContract', () => {
   let edition2mintedNFTs: NFTMintResult[];
 
   it('should mint Edition 1 NFTs into default bucket', async () => {
-    edition1mintedNFTs = await client.send(contract.mintNFTs(edition1.nfts));
+    edition1mintedNFTs = await client.send(
+      contract.mintNFTs({ editionId: edition1.id, serialNumbers: edition1.serialNumbers }),
+    );
   });
 
   const edition2Bucket = 'edition2';
 
   it('should mint Edition 2 NFTs into custom bucket', async () => {
-    edition2mintedNFTs = await client.send(contract.mintNFTs(edition2.nfts, { bucket: edition2Bucket }));
+    edition2mintedNFTs = await client.send(
+      contract.mintNFTs({ editionId: edition2.id, serialNumbers: edition2.serialNumbers, bucket: edition2Bucket }),
+    );
   });
 
   const sale = new FreshmintClaimSaleContract(contract);
@@ -131,11 +133,59 @@ describe('BlindEditionNFTContract', () => {
     });
   });
 
-  it('should reveal edition 1 NFTs', async () => {
-    await client.send(contract.revealNFTs(edition1mintedNFTs));
+  it('should fail to reveal an NFT with a serial number from another NFT', async () => {
+    const [nftA, nftB] = edition1mintedNFTs;
+
+    const nft = {
+      id: nftA.id,
+      serialNumber: nftB.serialNumber, // Use serial number from NFT B
+      salt: nftB.salt,
+    };
+
+    await expect(client.send(contract.revealNFTs([nft]))).rejects.toThrow(
+      `the provided serial number hash matches NFT with ID=${nftB.id}, but expected ID=${nftA.id}`,
+    );
   });
 
-  it('should reveal edition 2 NFTs', async () => {
-    await client.send(contract.revealNFTs(edition2mintedNFTs));
+  it('should fail to reveal an NFT with the wrong salt', async () => {
+    const [nftA, nftB] = edition1mintedNFTs;
+
+    const nft = {
+      id: nftA.id,
+      serialNumber: nftA.serialNumber,
+      salt: nftB.salt, // Use salt from NFT B
+    };
+
+    await expect(client.send(contract.revealNFTs([nft]))).rejects.toThrow(
+      'the provided serial number hash does not match any minted NFTs',
+    );
+  });
+
+  it('should fail to reveal an NFT with a serial number never minted', async () => {
+    const [nftA, nftB] = edition1mintedNFTs;
+
+    const nft = {
+      id: nftA.id,
+      serialNumber: 500, // This serial number was never minted
+      salt: nftB.salt,
+    };
+
+    await expect(client.send(contract.revealNFTs([nft]))).rejects.toThrow(
+      'the provided serial number hash does not match any minted NFTs',
+    );
+  });
+
+  it('should reveal edition 1 NFTs', async () => {
+    // Reveal both editions in the same transaction
+    const mintedNFTs = [...edition1mintedNFTs, ...edition2mintedNFTs];
+
+    await client.send(contract.revealNFTs(mintedNFTs));
+
+    // After NFTs are revealed, ensure that each
+    // on-chain computed hash matches our off-chain copy.
+    for (const nft of mintedNFTs) {
+      const onChainHash = await client.query(contract.getRevealedNFTHash(nft.id));
+      expect(onChainHash).toEqual(nft.hash);
+    }
   });
 });

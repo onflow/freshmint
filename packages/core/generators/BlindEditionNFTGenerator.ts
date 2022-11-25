@@ -81,4 +81,20 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
       contractAddress,
     });
   }
+
+  static getRevealedNFTHash({
+    contractName,
+    contractAddress,
+  }: {
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(
+      require('../../../cadence/nfts/blind-edition-nft/scripts/get_revealed_nft_hash.template.cdc'),
+      {
+        contractName,
+        contractAddress,
+      },
+    );
+  }
 }

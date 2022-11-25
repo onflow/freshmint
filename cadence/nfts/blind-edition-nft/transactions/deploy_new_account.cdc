@@ -34,7 +34,6 @@ transaction(
     publicKeyHex: String,
     signatureAlgorithm: UInt8,
     hashAlgorithm: UInt8,
-    placeholderImage: String,
     collectionMetadata: MetadataViews.NFTCollectionDisplay,
     royaltyAddresses: [Address],
     royaltyReceiverPaths: [PublicPath],
@@ -68,8 +67,7 @@ transaction(
                 name: contractName,
                 code: contractCode.decodeHex(),
                 collectionMetadata,
-                royalties,
-                placeholderImage
+                royalties
             )
         } else {
             account.contracts.add(
@@ -77,7 +75,6 @@ transaction(
                 code: contractCode.decodeHex(),
                 collectionMetadata,
                 royalties,
-                placeholderImage,
                 signer
             )
         }
