@@ -84,7 +84,7 @@ export class StandardNFTContract extends NFTContract {
     );
   }
 
-  mintNFTs(metadata: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
+  mintNFTs(nfts: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
         const script = StandardNFTGenerator.mint({
@@ -95,7 +95,7 @@ export class StandardNFTContract extends NFTContract {
         });
 
         // Use metadata hash as mint ID
-        const mintIds = metadata.map((data) => hashMetadata(this.schema, data).toString('hex'));
+        const mintIds = nfts.map((metadata) => hashMetadata(this.schema, metadata).toString('hex'));
 
         return {
           script,
@@ -104,7 +104,7 @@ export class StandardNFTContract extends NFTContract {
             fcl.arg(mintIds, t.Array(t.String)),
             ...this.schema.fields.map((field) => {
               return fcl.arg(
-                metadata.map((values) => field.getValue(values)),
+                nfts.map((metadata) => field.getValue(metadata)),
                 t.Array(field.asCadenceTypeObject()),
               );
             }),
@@ -113,19 +113,19 @@ export class StandardNFTContract extends NFTContract {
           signers: this.getSigners(),
         };
       },
-      (result) => this.formatMintResults(result, metadata),
+      (result) => formatMintResults(result, nfts),
     );
   }
+}
 
-  private formatMintResults({ events, transactionId }: TransactionResult, metadata: MetadataMap[]): NFTMintResult[] {
-    const deposits = events.filter((event) => event.type.includes('.Minted'));
+function formatMintResults({ events, transactionId }: TransactionResult, nfts: MetadataMap[]): NFTMintResult[] {
+  const deposits = events.filter((event) => event.type.includes('.Minted'));
 
-    return deposits.map((deposit, i) => {
-      return {
-        id: deposit.data.id,
-        metadata: metadata[i],
-        transactionId,
-      };
-    });
-  }
+  return deposits.map((deposit, i) => {
+    return {
+      id: deposit.data.id,
+      metadata: nfts[i],
+      transactionId,
+    };
+  });
 }

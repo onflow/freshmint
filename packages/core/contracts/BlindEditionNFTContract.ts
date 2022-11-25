@@ -170,41 +170,44 @@ export class BlindEditionNFTContract extends NFTContract {
     };
   }
 
-  mintNFT(nft: EditionNFT, { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult> {
-    const nfts = [nft];
-    const hashedNFTs = hashNFTs(nfts);
-
-    return new Transaction(
-      this.makeMintNFTsTransaction(hashedNFTs, { bucket }),
-      (result: TransactionResult) => formatMintResults(result, hashedNFTs)[0],
-    );
-  }
-
   mintNFTs(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult[]> {
-    const hashedNFTs = hashNFTs(nfts);
+    const hashedNFTs = this.hashNFTs(nfts);
+    return this.mintHashedNFTs(hashedNFTs, { bucket });
+  }
 
-    return new Transaction(this.makeMintNFTsTransaction(hashedNFTs, { bucket }), (result: TransactionResult) =>
-      formatMintResults(result, hashedNFTs),
+  mintHashedNFTs(hashedNFTs: HashedEditionNFT[], { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult[]> {
+    return new Transaction(
+      ({ imports }: FreshmintConfig) => {
+        const script = BlindEditionNFTGenerator.mint({
+          imports,
+          contractName: this.name,
+          contractAddress: this.getAddress(),
+        });
+
+        const hashes = hashedNFTs.map((nft) => nft.editionHash);
+
+        return {
+          script,
+          args: [fcl.arg(hashes, t.Array(t.String)), fcl.arg(bucket, t.Optional(t.String))],
+          computeLimit: 9999,
+          signers: this.getSigners(),
+        };
+      },
+      (result) => formatMintResults(result, hashedNFTs),
     );
   }
 
-  private makeMintNFTsTransaction(hashedNFTs: HashedEditionNFT[], { bucket }: { bucket?: string } = {}) {
-    return ({ imports }: FreshmintConfig) => {
-      const script = BlindEditionNFTGenerator.mint({
-        imports,
-        contractName: this.name,
-        contractAddress: this.getAddress(),
-      });
-
-      const hashes = hashedNFTs.map((nft) => nft.editionHash);
+  hashNFTs(nfts: EditionNFT[]): HashedEditionNFT[] {
+    return nfts.map((nft) => {
+      const { hash, salt } = hashEdition(nft.editionId, nft.editionSerial);
 
       return {
-        script,
-        args: [fcl.arg(hashes, t.Array(t.String)), fcl.arg(bucket, t.Optional(t.String))],
-        computeLimit: 9999,
-        signers: this.getSigners(),
+        editionId: nft.editionId,
+        editionSerial: nft.editionSerial,
+        editionHash: hash.toString('hex'),
+        editionSalt: salt.toString('hex'),
       };
-    };
+    });
   }
 
   revealNFT(nft: NFTRevealInput): Transaction<NFTRevealResult> {
@@ -306,19 +309,6 @@ function getEditionNFTs(id: string, size: number): EditionNFT[] {
   }
 
   return nfts;
-}
-
-function hashNFTs(nfts: EditionNFT[]): HashedEditionNFT[] {
-  return nfts.map((nft) => {
-    const { hash, salt } = hashEdition(nft.editionId, nft.editionSerial);
-
-    return {
-      editionId: nft.editionId,
-      editionSerial: nft.editionSerial,
-      editionHash: hash.toString('hex'),
-      editionSalt: salt.toString('hex'),
-    };
-  });
 }
 
 function hashEdition(editionId: string, editionSerial: string) {
