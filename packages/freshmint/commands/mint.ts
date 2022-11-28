@@ -7,19 +7,19 @@ import inquirer from 'inquirer';
 import { NFTStorage } from 'nft.storage';
 import * as metadata from '@freshmint/core/metadata';
 
-import { IPFS } from '../mint/ipfs';
-import { envsubst } from '../envsubst';
+import { IPFSClient } from '../mint/ipfs';
 import { Minter, createMinter } from '../mint/minters';
 import { MetadataProcessor } from '../mint/processors';
 import { IPFSFileProcessor } from '../mint/processors/IPFSFileProcessor';
 
+import { envsubst } from '../envsubst';
 import { FlowGateway, FlowNetwork } from '../flow';
 import { FreshmintConfig, loadConfig } from '../config';
-import { CSVLoader } from '../mint/loaders/CSVLoader';
 
 export default new Command('mint')
   .description('mint NFTs using data from a CSV file')
-  .option('-d, --data <csv-path>', 'The location of the csv file to use for minting')
+  .option('-i, --input <csv-path>', 'The location of the input CSV file')
+  .option('-o, --output <csv-path>', 'The location of the output CSV file')
   .option('-b, --batch-size <number>', 'The number of NFTs to mint per batch', '10')
   .option('-c, --claim', 'Generate a claim key for each NFT')
   .option('-n, --network <network>', "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
@@ -27,12 +27,14 @@ export default new Command('mint')
 
 async function mint({
   network,
-  data,
+  input,
+  output,
   claim,
   batchSize,
 }: {
   network: FlowNetwork;
-  data: string | undefined;
+  input: string | undefined;
+  output: string | undefined;
   claim: boolean;
   batchSize: string;
 }) {
@@ -42,14 +44,13 @@ async function mint({
 
   const minter = getMinter(config, flow);
 
-  const csvPath = data ?? config.nftDataPath;
-
-  const loader = new CSVLoader(csvPath);
+  const csvInputFile = input ?? config.nftDataPath;
+  const csvOutputFile = output ?? generateOutputFilename(network);
 
   const answer = await inquirer.prompt({
     type: 'confirm',
     name: 'confirm',
-    message: `Create NFTs using data from ${path.basename(csvPath)}?`,
+    message: `Create NFTs using data from ${path.basename(csvInputFile)}?`,
   });
 
   if (!answer.confirm) return;
@@ -62,7 +63,7 @@ async function mint({
 
   let bar: ProgressBar;
 
-  await minter.mint(loader, claim, Number(batchSize), {
+  await minter.mint(csvInputFile, csvOutputFile, claim, Number(batchSize), {
     onStartDuplicateCheck: () => {
       duplicatesSpinner.start('Checking for duplicates...\n');
     },
@@ -85,13 +86,13 @@ async function mint({
     onCompleteEditionCreation: () => {
       editionSpinner.succeed();
     },
-    onStartMinting: (total: number, batchCount: number, batchSize: number, outFile: string) => {
+    onStartMinting: (total: number, batchCount: number, batchSize: number) => {
       if (total === 0) {
         return;
       }
 
       console.log(chalk.greenBright(`Minting ${total} NFTs in ${batchCount} batches (batchSize = ${batchSize})...\n`));
-      console.log(`Piping results to ${chalk.cyan(outFile)}\n`);
+      console.log(`Saving results to ${chalk.cyan(csvOutputFile)}\n`);
 
       console.log(chalk.gray('> flow transactions send ./cadence/transactions/mint.cdc <...>\n'));
 
@@ -111,12 +112,12 @@ function getMinter(config: FreshmintConfig, flowGateway: FlowGateway): Minter {
     const endpoint = new URL(envsubst(config.ipfsPinningService.endpoint));
     const token = envsubst(config.ipfsPinningService.key);
 
-    const ipfsClient = new NFTStorage({
+    const nftStorage = new NFTStorage({
       endpoint,
       token,
     });
 
-    const ipfs = new IPFS(ipfsClient);
+    const ipfs = new IPFSClient(nftStorage);
 
     const ipfsFileProcessor = new IPFSFileProcessor(config.nftAssetPath, ipfs);
 
@@ -124,4 +125,25 @@ function getMinter(config: FreshmintConfig, flowGateway: FlowGateway): Minter {
   }
 
   return createMinter(config.contract, metadataProcessor, flowGateway);
+}
+
+function generateOutputFilename(network: string): string {
+  const timestamp = generateTimestamp();
+  return `mint-${network}-${timestamp}.csv`;
+}
+
+const padDigits = (num: number, digits: number) => String(num).padStart(digits, '0');
+
+const year = (date: Date) => date.getFullYear();
+const month = (date: Date) => padDigits(date.getMonth() + 1, 2);
+const day = (date: Date) => padDigits(date.getDate(), 2);
+
+const hours = (date: Date) => padDigits(date.getHours(), 2);
+const minutes = (date: Date) => padDigits(date.getMinutes(), 2);
+const seconds = (date: Date) => padDigits(date.getSeconds(), 2);
+
+function generateTimestamp(): string {
+  const date = new Date();
+
+  return `${year(date)}-${month(date)}-${day(date)}-${hours(date)}${minutes(date)}${seconds(date)}`;
 }
