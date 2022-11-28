@@ -38,7 +38,7 @@ async function mint({
 }) {
   const config = await loadConfig();
 
-  const flow = new FlowGateway(network);
+  const flow = new FlowGateway(network, config.getContractAccount(network));
 
   const minter = getMinter(config, flow);
 

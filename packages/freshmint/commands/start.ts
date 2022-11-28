@@ -80,6 +80,11 @@ async function start(projectPath = '.') {
     name: answers.contractName,
     type: answers.contractType,
     schema,
+    account: {
+      emulator: 'emulator-account',
+      testnet: 'testnet-account',
+      mainnet: 'mainnet-account',
+    },
   };
 
   console.log();

@@ -22,7 +22,7 @@ const flowJSONConfigPath = 'flow.json';
 async function deploy({ network }: { network: FlowNetwork }) {
   const config = await loadConfig();
 
-  const flow = new FlowGateway(network);
+  const flow = new FlowGateway(network, config.getContractAccount(network));
 
   const contractName = config.contract.name;
   const flowConfig = await FlowJSONConfig.load(flowJSONConfigPath);
