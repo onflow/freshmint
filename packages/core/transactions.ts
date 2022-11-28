@@ -31,7 +31,7 @@ export class TransactionAuthorizer {
 
   // Convert this authorizer to an authorization function that can be passed to FCL-JS.
   //
-  // FCL will invoke this function when resolving signatures for a transaction.
+  // FCL will invoke the authorization function when resolving signatures for a transaction.
   //
   // Ref: https://github.com/onflow/fcl-js/blob/3355cb148f2e6a447d8076b3ae62c40747c338ce/packages/fcl/src/wallet-provider-spec/authorization-function.md#how-to-create-an-authorization-function
   //
