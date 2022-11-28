@@ -4,7 +4,7 @@ import * as fcl from '@onflow/fcl';
 import * as t from '@onflow/types';
 
 import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
-import { MetadataMap } from '../metadata';
+import { hashMetadata, MetadataMap } from '../metadata';
 import { EditionNFTGenerator } from '../generators/EditionNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult, TransactionEvent } from '../transactions';
@@ -67,7 +67,7 @@ export class EditionNFTContract extends NFTContract {
   }): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = EditionNFTGenerator.deploy({ imports });
+        const script = EditionNFTGenerator.deployToNewAccount({ imports });
 
         const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
@@ -115,12 +115,12 @@ export class EditionNFTContract extends NFTContract {
 
     return new Transaction(
       this.makeCreateEditionsTransaction(editions),
-      (result: TransactionResult) => formatEditionResults(result, editions)[0],
+      (result) => formatEditionResults(result, editions)[0],
     );
   }
 
   createEditions(editions: EditionInput[]): Transaction<EditionResult[]> {
-    return new Transaction(this.makeCreateEditionsTransaction(editions), (result: TransactionResult) =>
+    return new Transaction(this.makeCreateEditionsTransaction(editions), (result) =>
       formatEditionResults(result, editions),
     );
   }
@@ -134,11 +134,15 @@ export class EditionNFTContract extends NFTContract {
         schema: this.schema,
       });
 
+      // Use metadata hash as mint ID
+      const mintIds = editions.map((edition) => hashMetadata(this.schema, edition.metadata).toString('hex'));
+
       const limits = editions.map((edition) => (edition.limit ? edition.limit.toString(10) : undefined));
 
       return {
         script,
         args: [
+          fcl.arg(mintIds, t.Array(t.String)),
           fcl.arg(limits, t.Array(t.Optional(t.UInt64))),
           ...this.schema.fields.map((field) => {
             return fcl.arg(
@@ -170,21 +174,6 @@ export class EditionNFTContract extends NFTContract {
     }, Transaction.VoidResult);
   }
 
-  mintNFT({
-    editionId,
-    count,
-    bucket,
-  }: {
-    editionId: string;
-    count: number;
-    bucket?: string;
-  }): Transaction<NFTMintResult> {
-    return new Transaction(
-      this.makeMintNFTsTransaction({ editionId, count, bucket }),
-      (result: TransactionResult) => formatMintResults(result, editionId)[0],
-    );
-  }
-
   mintNFTs({
     editionId,
     count,
@@ -194,26 +183,27 @@ export class EditionNFTContract extends NFTContract {
     count: number;
     bucket?: string;
   }): Transaction<NFTMintResult[]> {
-    return new Transaction(this.makeMintNFTsTransaction({ editionId, count, bucket }), (result: TransactionResult) =>
-      formatMintResults(result, editionId),
+    return new Transaction(
+      ({ imports }: FreshmintConfig) => {
+        const script = EditionNFTGenerator.mint({
+          imports,
+          contractName: this.name,
+          contractAddress: this.getAddress(),
+        });
+
+        return {
+          script,
+          args: [
+            fcl.arg(editionId, t.UInt64),
+            fcl.arg(count.toString(10), t.Int),
+            fcl.arg(bucket, t.Optional(t.String)),
+          ],
+          computeLimit: 9999,
+          signers: this.getSigners(),
+        };
+      },
+      (result) => formatMintResults(result, editionId),
     );
-  }
-
-  private makeMintNFTsTransaction({ editionId, count, bucket }: { editionId: string; count: number; bucket?: string }) {
-    return ({ imports }: FreshmintConfig) => {
-      const script = EditionNFTGenerator.mint({
-        imports,
-        contractName: this.name,
-        contractAddress: this.getAddress(),
-      });
-
-      return {
-        script,
-        args: [fcl.arg(editionId, t.UInt64), fcl.arg(count.toString(10), t.Int), fcl.arg(bucket, t.Optional(t.String))],
-        computeLimit: 9999,
-        signers: this.getSigners(),
-      };
-    };
   }
 
   getEdition(editionId: string): Script<OnChainEdition> {

@@ -35,6 +35,9 @@ const config = EMULATOR;
 
 export const client = FreshmintClient.fromFCL(fcl, config);
 
+// Increase test timeout for longer emulator tests
+jest.setTimeout(10000);
+
 export async function setupEmulator() {
   fcl.config().put('accessNode.api', `http://localhost:${emulatorPort}`);
 
@@ -183,25 +186,33 @@ export function getTestSchema(includeSerialNumber = true): metadata.Schema {
   return schema;
 }
 
-export function getTestNFTs(count: number, includeSerialNumber = true): metadata.MetadataMap[] {
-  const nfts: metadata.MetadataMap[] = [];
+export class NFTGenerator {
+  minted = 0;
 
-  for (let i = 1; i <= count; i++) {
-    const nft: metadata.MetadataMap = {
-      name: `NFT ${i}`,
-      description: `This is NFT #${i}.`,
-      thumbnail: `nft-${i}.jpeg`,
-    };
+  generate(count: number, includeSerialNumber = true): metadata.MetadataMap[] {
+    const nfts: metadata.MetadataMap[] = [];
 
-    if (includeSerialNumber) {
-      // Cadence UInt64 values must be passed as strings
-      nft.serialNumber = i.toString();
+    while (count--) {
+      const i = this.minted + 1;
+
+      const nft: metadata.MetadataMap = {
+        name: `NFT ${i}`,
+        description: `This is NFT #${i}.`,
+        thumbnail: `nft-${i}.jpeg`,
+      };
+
+      if (includeSerialNumber) {
+        // Cadence UInt64 values must be passed as strings
+        nft.serialNumber = i.toString();
+      }
+
+      nfts.push(nft);
+
+      this.minted++;
     }
 
-    nfts.push(nft);
+    return nfts;
   }
-
-  return nfts;
 }
 
 export const collectionMetadata: CollectionMetadata = {

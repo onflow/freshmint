@@ -13,6 +13,9 @@ registerPartial(
   require('../../../cadence/nfts/common/partials/collection-metadata-field.partial.cdc'),
 );
 
+// Register the collection partial
+registerPartial('collection', require('../../../cadence/nfts/common/partials/collection.partial.cdc'));
+
 export class CommonNFTGenerator extends TemplateGenerator {
   static getNFT({
     imports,
@@ -46,6 +49,19 @@ export class CommonNFTGenerator extends TemplateGenerator {
     });
   }
 
+  static getDuplicateNFTs({
+    contractName,
+    contractAddress,
+  }: {
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/scripts/get_duplicate_nfts.template.cdc'), {
+      contractName,
+      contractAddress,
+    });
+  }
+
   static destroyNFT({
     imports,
     contractName,
@@ -56,6 +72,22 @@ export class CommonNFTGenerator extends TemplateGenerator {
     contractAddress: string;
   }): string {
     return this.generate(require('../../../cadence/nfts/common/transactions/destroy_nft.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
+
+  static setupCollection({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/transactions/setup_collection.template.cdc'), {
       imports,
       contractName,
       contractAddress,
@@ -76,6 +108,25 @@ export class CommonNFTGenerator extends TemplateGenerator {
       contractName,
       contractAddress,
     });
+  }
+
+  static transferQueueToCollection({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(
+      require('../../../cadence/nfts/common/transactions/transfer_queue_to_collection.template.cdc'),
+      {
+        imports,
+        contractName,
+        contractAddress,
+      },
+    );
   }
 
   static getRoyalties({

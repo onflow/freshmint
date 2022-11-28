@@ -1,0 +1,35 @@
+contract:
+  name: {{ contract.name }}
+  type: {{ contract.type }}
+  schema:
+    fields:
+      - name: name
+        type: string
+      - name: description
+        type: string
+      - name: thumbnail
+        type: ipfs-file
+    views:
+      - type: display
+        options:
+          name: name
+          description: description
+          thumbnail: thumbnail
+  account:
+    emulator: emulator-account
+    testnet: testnet-account
+    mainnet: mainnet-account
+
+collection:
+  name: {{ name }}
+  description: This is the {{ name }} project.
+  url: http://localhost:3000
+  images:
+    square: http://localhost:3000/square.png
+    banner: http://localhost:3000/banner.png
+  socials:
+    twitter: https://twitter.com/{{ name }}
+
+ipfsPinningService:
+  endpoint: ${PINNING_SERVICE_ENDPOINT}
+  key: ${PINNING_SERVICE_KEY}

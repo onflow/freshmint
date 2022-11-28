@@ -292,49 +292,49 @@ pub contract BlindNFT_Test: NonFungibleToken {
             }
         }
     }
-
+    
     pub resource Collection: BlindNFT_TestCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         
         /// A dictionary of all NFTs in this collection indexed by ID.
         ///
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
-
+    
         init () {
             self.ownedNFTs <- {}
         }
-
+    
         /// Remove an NFT from the collection and move it to the caller.
         ///
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) 
                 ?? panic(\\"Requested NFT to withdraw does not exist in this collection\\")
-
+    
             emit Withdraw(id: token.id, from: self.owner?.address)
-
+    
             return <- token
         }
-
+    
         /// Deposit an NFT into this collection.
         ///
         pub fun deposit(token: @NonFungibleToken.NFT) {
             let token <- token as! @BlindNFT_Test.NFT
-
+    
             let id: UInt64 = token.id
-
+    
             // add the new token to the dictionary which removes the old one
             let oldToken <- self.ownedNFTs[id] <- token
-
+    
             emit Deposit(id: id, to: self.owner?.address)
-
+    
             destroy oldToken
         }
-
+    
         /// Return an array of the NFT IDs in this collection.
         ///
         pub fun getIDs(): [UInt64] {
             return self.ownedNFTs.keys
         }
-
+    
         /// Return a reference to an NFT in this collection.
         ///
         /// This function panics if the NFT does not exist in this collection.
@@ -342,7 +342,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
-
+    
         /// Return a reference to an NFT in this collection
         /// typed as BlindNFT_Test.NFT.
         ///
@@ -353,10 +353,10 @@ pub contract BlindNFT_Test: NonFungibleToken {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &BlindNFT_Test.NFT
             }
-
+    
             return nil
         }
-
+    
         /// Return a reference to an NFT in this collection
         /// typed as MetadataViews.Resolver.
         ///
@@ -367,12 +367,12 @@ pub contract BlindNFT_Test: NonFungibleToken {
             let nftRef = nft as! &BlindNFT_Test.NFT
             return nftRef as &AnyResource{MetadataViews.Resolver}
         }
-
+    
         destroy() {
             destroy self.ownedNFTs
         }
     }
-
+    
     /// Return a new empty collection.
     ///
     pub fun createEmptyCollection(): @NonFungibleToken.Collection {
@@ -497,7 +497,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
 
     init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], placeholderImage: String, admin: AuthAccount) {
 
-        self.version = \\"0.2.2\\"
+        self.version = \\"0.3.0\\"
 
         self.CollectionPublicPath = BlindNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = BlindNFT_Test.getStoragePath(suffix: \\"Collection\\")

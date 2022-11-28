@@ -63,7 +63,7 @@ export class BlindNFTContract extends NFTContract {
   }): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = BlindNFTGenerator.deploy({ imports });
+        const script = BlindNFTGenerator.deployToNewAccount({ imports });
 
         const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
@@ -107,8 +107,8 @@ export class BlindNFTContract extends NFTContract {
     );
   }
 
-  mintNFTs(metadata: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
-    const hashedNFTs = this.hashNFTs(metadata);
+  mintNFTs(nfts: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
+    const hashedNFTs = this.hashNFTs(nfts);
     return this.mintHashedNFTs(hashedNFTs, bucket);
   }
 
@@ -134,8 +134,8 @@ export class BlindNFTContract extends NFTContract {
     );
   }
 
-  private hashNFTs(metadata: MetadataMap[]): HashedNFT[] {
-    return metadata.map((metadata) => {
+  hashNFTs(nfts: MetadataMap[]): HashedNFT[] {
+    return nfts.map((metadata) => {
       const { hash, salt } = hashMetadataWithSalt(this.schema, metadata);
 
       return {

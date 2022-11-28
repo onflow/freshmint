@@ -57,16 +57,16 @@ describe('EditionNFTContract', () => {
   describe('Edition with limit and full mint', () => {
     let edition: EditionResult;
 
-    it('should create the edition', async () => {
-      const editionInput = {
-        limit: 5,
-        metadata: {
-          name: 'Edition 1',
-          description: 'This is the first edition.',
-          thumbnail: 'edition-1.jpeg',
-        },
-      };
+    const editionInput = {
+      limit: 5,
+      metadata: {
+        name: 'Edition 1',
+        description: 'This is the first edition.',
+        thumbnail: 'edition-1.jpeg',
+      },
+    };
 
+    it('should create the edition', async () => {
       edition = await client.send(contract.createEdition(editionInput));
 
       const onChainEdition = await client.query(contract.getEdition(edition.id));
@@ -74,6 +74,12 @@ describe('EditionNFTContract', () => {
       expect(onChainEdition.id).toEqual(edition.id);
       expect(onChainEdition.limit).toEqual(edition.limit);
       expect(onChainEdition.size).toEqual(0);
+    });
+
+    it('should fail to create an edition that already exists', async () => {
+      await expect(async () => {
+        await client.send(contract.createEdition(editionInput));
+      }).rejects.toThrow();
     });
 
     it('should mint 3 NFTs into the edition', async () => {
@@ -245,40 +251,40 @@ describe('EditionNFTContract', () => {
   });
 
   describe('Edition with a custom bucket', () => {
-    const edition2Bucket = 'edition2';
+    const customBucketName = 'custom_bucket';
 
-    let edition1: EditionResult;
-    let edition2: EditionResult;
+    let editionA: EditionResult;
+    let editionB: EditionResult;
 
     it('should create two editions', async () => {
-      const edition1Input = {
+      const editionAInput = {
         limit: 5,
         metadata: {
-          name: 'Edition 1',
-          description: 'This is the first edition.',
-          thumbnail: 'edition-1.jpeg',
+          name: 'Edition 4',
+          description: 'This is the fourth edition.',
+          thumbnail: 'edition-4.jpeg',
         },
       };
 
-      const edition2Input = {
+      const editionBInput = {
         limit: 5,
         metadata: {
-          name: 'Edition 2',
-          description: 'This is the second edition.',
-          thumbnail: 'edition-2.jpeg',
+          name: 'Edition 5',
+          description: 'This is the fifth edition.',
+          thumbnail: 'edition-5.jpeg',
         },
       };
 
-      edition1 = await client.send(contract.createEdition(edition1Input));
-      edition2 = await client.send(contract.createEdition(edition2Input));
+      editionA = await client.send(contract.createEdition(editionAInput));
+      editionB = await client.send(contract.createEdition(editionBInput));
     });
 
-    it('should mint all edition 1 NFTs into the default bucket', async () => {
-      await client.send(contract.mintNFTs({ editionId: edition1.id, count: 5 }));
+    it('should mint all edition A NFTs into the default bucket', async () => {
+      await client.send(contract.mintNFTs({ editionId: editionA.id, count: 5 }));
     });
 
-    it('should mint all edition 2 NFTs into a custom bucket', async () => {
-      await client.send(contract.mintNFTs({ editionId: edition2.id, count: 5, bucket: edition2Bucket }));
+    it('should mint all edition B NFTs into a custom bucket', async () => {
+      await client.send(contract.mintNFTs({ editionId: editionB.id, count: 5, bucket: customBucketName }));
     });
 
     const sale = new FreshmintClaimSaleContract(contract);
@@ -302,7 +308,7 @@ describe('EditionNFTContract', () => {
 
     describe('sale 2', () => {
       it('should start a sale from custom bucket', async () => {
-        await client.send(sale.start({ id: sale2, price: '10.0', bucket: edition2Bucket }));
+        await client.send(sale.start({ id: sale2, price: '10.0', bucket: customBucketName }));
       });
 
       it('should claim an NFT', async () => {

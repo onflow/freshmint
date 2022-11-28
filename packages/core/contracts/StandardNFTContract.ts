@@ -4,7 +4,7 @@ import * as fcl from '@onflow/fcl';
 import * as t from '@onflow/types';
 
 import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
-import { MetadataMap } from '../metadata';
+import { hashMetadata, MetadataMap } from '../metadata';
 import { StandardNFTGenerator } from '../generators/StandardNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
@@ -41,7 +41,7 @@ export class StandardNFTContract extends NFTContract {
   }): Transaction<string> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
-        const script = StandardNFTGenerator.deploy({ imports });
+        const script = StandardNFTGenerator.deployToNewAccount({ imports });
 
         const contractCode = this.getSource(imports, { saveAdminResourceToContractAccount });
         const contractCodeHex = Buffer.from(contractCode, 'utf-8').toString('hex');
@@ -84,7 +84,7 @@ export class StandardNFTContract extends NFTContract {
     );
   }
 
-  mintNFTs(metadata: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
+  mintNFTs(nfts: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
         const script = StandardNFTGenerator.mint({
@@ -94,13 +94,17 @@ export class StandardNFTContract extends NFTContract {
           schema: this.schema,
         });
 
+        // Use metadata hash as mint ID
+        const mintIds = nfts.map((metadata) => hashMetadata(this.schema, metadata).toString('hex'));
+
         return {
           script,
           args: [
             fcl.arg(bucket, t.Optional(t.String)),
+            fcl.arg(mintIds, t.Array(t.String)),
             ...this.schema.fields.map((field) => {
               return fcl.arg(
-                metadata.map((values) => field.getValue(values)),
+                nfts.map((metadata) => field.getValue(metadata)),
                 t.Array(field.asCadenceTypeObject()),
               );
             }),
@@ -109,19 +113,19 @@ export class StandardNFTContract extends NFTContract {
           signers: this.getSigners(),
         };
       },
-      (result) => this.formatMintResults(result, metadata),
+      (result) => formatMintResults(result, nfts),
     );
   }
+}
 
-  private formatMintResults({ events, transactionId }: TransactionResult, metadata: MetadataMap[]): NFTMintResult[] {
-    const deposits = events.filter((event) => event.type.includes('.Minted'));
+function formatMintResults({ events, transactionId }: TransactionResult, nfts: MetadataMap[]): NFTMintResult[] {
+  const deposits = events.filter((event) => event.type.includes('.Minted'));
 
-    return deposits.map((deposit, i) => {
-      return {
-        id: deposit.data.id,
-        metadata: metadata[i],
-        transactionId,
-      };
-    });
-  }
+  return deposits.map((deposit, i) => {
+    return {
+      id: deposit.data.id,
+      metadata: nfts[i],
+      transactionId,
+    };
+  });
 }

@@ -1,0 +1,16 @@
+{
+  "contracts": {
+    "{{ contractName }}": {
+      "source": "cadence/contracts/{{ contractName }}.cdc",
+      "aliases": {
+        "mainnet": "${FLOW_MAINNET_ADDRESS}"
+      }
+    }
+  },
+  "accounts": {
+    "mainnet-account": {
+      "address": "${FLOW_MAINNET_ADDRESS}",
+      "key": "${FLOW_MAINNET_PRIVATE_KEY}"
+    }
+  }
+}
