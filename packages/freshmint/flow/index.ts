@@ -65,8 +65,7 @@ export class FlowGateway {
     // we are using a custom deployment transaction.
     //
     // We can ditch the custom transaction and use `add-contract` if it
-    // adds support for struct arguments. This is something I'd like to help
-    // implement in the CLI.
+    // adds support for struct arguments.
     //
     const preparedCode = replaceImportAddresses(code, contractImports);
     const preparedCodeAsHex = Buffer.from(preparedCode, 'utf-8').toString('hex');
@@ -204,7 +203,7 @@ export class FlowGateway {
     ]);
   }
 
-  async getEditionsByPrimaryKey(mintIds: string[]): Promise<{ id: string; size: number; count: number }[]> {
+  async getEditionsByMintId(mintIds: string[]): Promise<{ id: string; size: number; count: number }[]> {
     return await this.flow.script('./cadence/scripts/get_editions_by_primary_key.cdc', [
       { type: t.Array(t.String), value: mintIds },
     ]);
