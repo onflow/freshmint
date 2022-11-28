@@ -57,16 +57,25 @@ describe('EditionNFTContract', () => {
   let edition1: EditionResult;
   let edition2: EditionResult;
 
-  it('should create edition 1', async () => {
-    const editionMetadata1 = {
-      size: 5,
-      metadata: {
-        name: 'Edition 1',
-        description: 'This is the first edition.',
-        thumbnail: 'edition-1.jpeg',
-      },
-    };
+  const editionMetadata1 = {
+    size: 5,
+    metadata: {
+      name: 'Edition 1',
+      description: 'This is the first edition.',
+      thumbnail: 'edition-1.jpeg',
+    },
+  };
 
+  const editionMetadata2 = {
+    size: 5,
+    metadata: {
+      name: 'Edition 2',
+      description: 'This is the second edition.',
+      thumbnail: 'edition-2.jpeg',
+    },
+  };
+
+  it('should create edition 1', async () => {
     edition1 = await client.send(contract.createEdition(editionMetadata1));
 
     const onChainEdition = await client.query(contract.getEdition(edition1.id));
@@ -77,15 +86,6 @@ describe('EditionNFTContract', () => {
   });
 
   it('should create edition 2', async () => {
-    const editionMetadata2 = {
-      size: 5,
-      metadata: {
-        name: 'Edition 2',
-        description: 'This is the second edition.',
-        thumbnail: 'edition-2.jpeg',
-      },
-    };
-
     edition2 = await client.send(contract.createEdition(editionMetadata2));
 
     const onChainEdition = await client.query(contract.getEdition(edition2.id));
@@ -93,6 +93,12 @@ describe('EditionNFTContract', () => {
     expect(onChainEdition.id).toEqual(edition2.id);
     expect(onChainEdition.size).toEqual(edition2.size);
     expect(onChainEdition.count).toEqual(0);
+  });
+
+  it('should fail to create a duplicate edition', async () => {
+    await expect(async () => {
+      await client.send(contract.createEdition(editionMetadata1));
+    }).rejects.toThrow();
   });
 
   it('should mint 3 edition 1 NFTs into default bucket', async () => {
