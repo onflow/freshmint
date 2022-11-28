@@ -1,4 +1,4 @@
-import { EditionNFTContract, EditionResult } from './EditionNFTContract';
+import { EditionNFTContract, EditionResult, NFTMintResult } from './EditionNFTContract';
 import { FreshmintClaimSaleContract } from './FreshmintClaimSaleContract';
 
 import {
@@ -56,6 +56,7 @@ describe('EditionNFTContract', () => {
 
   describe('Edition with limit and full mint', () => {
     let edition: EditionResult;
+    const allMintedNFTs: NFTMintResult[] = [];
 
     const editionInput = {
       limit: 5,
@@ -74,6 +75,7 @@ describe('EditionNFTContract', () => {
       expect(onChainEdition.id).toEqual(edition.id);
       expect(onChainEdition.limit).toEqual(edition.limit);
       expect(onChainEdition.size).toEqual(0);
+      expect(onChainEdition.burned).toEqual(0);
     });
 
     it('should fail to create an edition that already exists', async () => {
@@ -85,25 +87,39 @@ describe('EditionNFTContract', () => {
     it('should mint 3 NFTs into the edition', async () => {
       const count = 3;
 
-      await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+      const mintedNFTs = await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+
+      for (const nft of mintedNFTs) {
+        expect(nft.editionId).toEqual(edition.id);
+      }
+
+      allMintedNFTs.push(...mintedNFTs);
 
       const onChainEdition = await client.query(contract.getEdition(edition.id));
 
       expect(onChainEdition.id).toEqual(edition.id);
       expect(onChainEdition.limit).toEqual(edition.limit);
       expect(onChainEdition.size).toEqual(count);
+      expect(onChainEdition.burned).toEqual(0);
     });
 
     it('should mint remaining 2 NFTs into the edition', async () => {
       const count = 2;
 
-      await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+      const mintedNFTs = await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+
+      for (const nft of mintedNFTs) {
+        expect(nft.editionId).toEqual(edition.id);
+      }
+
+      allMintedNFTs.push(...mintedNFTs);
 
       const onChainEdition = await client.query(contract.getEdition(edition.id));
 
       expect(onChainEdition.id).toEqual(edition.id);
       expect(onChainEdition.limit).toEqual(edition.limit);
       expect(onChainEdition.size).toEqual(edition.limit);
+      expect(onChainEdition.burned).toEqual(0);
 
       // Edition should now be closed
       expect(onChainEdition.isClosed).toBe(true);
@@ -116,13 +132,33 @@ describe('EditionNFTContract', () => {
 
       const onChainEdition = await client.query(contract.getEdition(edition.id));
 
-      expect(onChainEdition.id).toEqual(edition.id);
-      expect(onChainEdition.limit).toEqual(edition.limit);
-
       // Size should still be the limit
       expect(onChainEdition.size).toEqual(edition.limit);
 
       // Edition should still be closed
+      expect(onChainEdition.isClosed).toBe(true);
+
+      // All other edition properties should be unchanged
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.burned).toEqual(0);
+    });
+
+    it('should burn an NFT and increment the edition burn count', async () => {
+      const nft = allMintedNFTs[0];
+
+      // Destroy one NFT from the edition
+      await client.send(contract.destroyNFT(nft.id));
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      // Burn count should increase to 1
+      expect(onChainEdition.burned).toEqual(1);
+
+      // All other edition properties should be unchanged
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.size).toEqual(edition.limit);
       expect(onChainEdition.isClosed).toBe(true);
     });
   });
@@ -152,7 +188,11 @@ describe('EditionNFTContract', () => {
     const count = 3;
 
     it('should mint part of the edition', async () => {
-      await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+      const mintedNFTs = await client.send(contract.mintNFTs({ editionId: edition.id, count }));
+
+      for (const nft of mintedNFTs) {
+        expect(nft.editionId).toEqual(edition.id);
+      }
 
       const onChainEdition = await client.query(contract.getEdition(edition.id));
 

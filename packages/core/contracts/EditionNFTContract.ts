@@ -31,6 +31,7 @@ export type OnChainEdition = {
   id: string;
   size: number;
   limit?: number;
+  burned: number;
   isClosed: boolean;
   metadata: { [key: string]: any };
 };
@@ -222,6 +223,7 @@ export class EditionNFTContract extends NFTContract {
         id: result.id,
         size: parseInt(result.size, 10),
         limit: result.limit ? parseInt(result.limit, 10) : undefined,
+        burned: parseInt(result.burned, 10),
         isClosed: result.isClosed,
         metadata: result.metadata,
       }),
