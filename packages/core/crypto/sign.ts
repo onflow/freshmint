@@ -16,5 +16,5 @@ export namespace SignatureAlgorithm {
 }
 
 export interface Signer {
-  sign(message: Buffer): Buffer;
+  sign(message: Buffer): Buffer | Promise<Buffer>;
 }
