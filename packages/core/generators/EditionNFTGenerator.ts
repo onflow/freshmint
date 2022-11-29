@@ -54,6 +54,22 @@ export class EditionNFTGenerator extends TemplateGenerator {
     });
   }
 
+  static closeEdition({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/edition-nft/transactions/close_edition.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
+
   static mint({
     imports,
     contractName,
