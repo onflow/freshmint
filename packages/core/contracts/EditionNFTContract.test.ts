@@ -235,7 +235,7 @@ describe('EditionNFTContract', () => {
       expect(onChainEdition.id).toEqual(edition.id);
       expect(onChainEdition.limit).toEqual(edition.limit);
 
-      // Size should still be the limit
+      // Size should still be the count
       expect(onChainEdition.size).toEqual(count);
 
       // Edition should still be closed
@@ -296,7 +296,7 @@ describe('EditionNFTContract', () => {
       expect(onChainEdition.id).toEqual(edition.id);
       expect(onChainEdition.limit).toBeUndefined();
 
-      // Size should still be the limit
+      // Size should still be the count
       expect(onChainEdition.size).toEqual(count);
 
       // Edition should still be closed
