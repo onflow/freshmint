@@ -18,8 +18,11 @@ pub contract FreshmintMetadataViews {
 
     /// Create an instance of MetadataViews.IPFSFile from the provided string.
     ///
-    /// If the string is in IPFS directory format, this function splits it
-    /// into the its CID and path.
+    /// This function accepts either a file CID string or 
+    /// a directory CID followed by a file path.
+    ///
+    /// - Plain file: "QmXnnyufdzAWL5CqZ2RnSNgPbvCc1ALT73s6epPrRnZ1Xy"
+    /// - Directory file: "QmdbaSQbGU6Wo9i5LyWWVLuU8g6WrYpWh2K4Li4QuuE8Fr/example.txt"
     ///
     pub fun ipfsFile(file: String): MetadataViews.IPFSFile {
         // Find the first "/" character if one exists
