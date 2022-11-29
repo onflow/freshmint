@@ -828,7 +828,7 @@ This will print:
       description: 'This is the first edition',
       thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
     },
-    serialNumbers: [ 1, 2, 3, 4, 5 ]
+    serialNumbers: [ '1', '2', '3', '4', '5' ]
   },
   {
     id: '1',
@@ -838,7 +838,7 @@ This will print:
       description: 'This is the second edition',
       thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
     },
-    serialNumbers: [ 1, 2, 3, 4, 5 ]
+    serialNumbers: [ '1', '2', '3', '4', '5' ]
   }
 ]
 ```

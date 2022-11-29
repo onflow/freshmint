@@ -22,11 +22,11 @@ export type EditionResult = {
   id: string;
   metadata: MetadataMap;
   size: number;
-  serialNumbers: number[];
+  serialNumbers: string[];
 };
 
 export type HashedSerialNumber = {
-  serialNumber: number;
+  serialNumber: string;
   hash: string;
   salt: string;
 };
@@ -34,7 +34,7 @@ export type HashedSerialNumber = {
 export type NFTMintResult = {
   id: string;
   editionId: string;
-  serialNumber: number;
+  serialNumber: string;
   hash: string;
   salt: string;
   transactionId: string;
@@ -42,7 +42,7 @@ export type NFTMintResult = {
 
 export interface NFTRevealInput {
   id: string;
-  serialNumber: number;
+  serialNumber: string;
   salt: string;
 }
 
@@ -168,7 +168,7 @@ export class BlindEditionNFTContract extends NFTContract {
     bucket,
   }: {
     editionId: string;
-    serialNumbers: number[];
+    serialNumbers: string[];
     bucket?: string;
   }): Transaction<NFTMintResult[]> {
     const hashedSerialNumbers = this.hashSerialNumbers(serialNumbers);
@@ -209,9 +209,9 @@ export class BlindEditionNFTContract extends NFTContract {
     );
   }
 
-  hashSerialNumbers(serialNumbers: number[]): HashedSerialNumber[] {
+  hashSerialNumbers(serialNumbers: string[]): HashedSerialNumber[] {
     return serialNumbers.map((serialNumber) => {
-      const serialNumberBytes = new UInt64Value(serialNumber.toString()).toBytes();
+      const serialNumberBytes = new UInt64Value(serialNumber).toBytes();
 
       const { hash, salt } = hashValuesWithSalt([serialNumberBytes]);
 
@@ -328,11 +328,12 @@ function formatRevealResults({ transactionId, events }: TransactionResult): NFTR
   });
 }
 
-function getEditionSerialNumbers(id: string, size: number): number[] {
+function getEditionSerialNumbers(id: string, size: number): string[] {
   const serialNumbers = Array(size);
 
   for (let i = 0; i < size; i++) {
-    serialNumbers[i] = i + 1;
+    const serialNumber = i + 1;
+    serialNumbers[i] = serialNumber.toString();
   }
 
   return serialNumbers;

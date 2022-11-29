@@ -166,7 +166,7 @@ describe('BlindEditionNFTContract', () => {
 
     const nft = {
       id: nftA.id,
-      serialNumber: 500, // This serial number was never minted
+      serialNumber: '500', // This serial number was never minted
       salt: nftB.salt,
     };
 
