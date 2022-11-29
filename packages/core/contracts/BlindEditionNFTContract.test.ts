@@ -10,6 +10,7 @@ import {
   setupEmulator,
   teardownEmulator,
   collectionMetadata,
+  placeholderImage,
 } from '../testHelpers';
 
 describe('BlindEditionNFTContract', () => {

@@ -15,6 +15,10 @@ contract:
           name: name
           description: description
           thumbnail: thumbnail
+  account:
+    emulator: emulator-account
+    testnet: testnet-account
+    mainnet: mainnet-account
 
 collection:
   name: {{ name }}

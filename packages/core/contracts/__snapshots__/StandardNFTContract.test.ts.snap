@@ -4,6 +4,7 @@ exports[`StandardNFTContract should generate a contract 1`] = `
 "import NonFungibleToken from 0xf8d6e0586b0a20c7
 import MetadataViews from 0xf8d6e0586b0a20c7
 import FungibleToken from 0xee82856bf20e2aa6
+import FreshmintMetadataViews from 0xf8d6e0586b0a20c7
 
 pub contract StandardNFT_Test: NonFungibleToken {
 
@@ -119,7 +120,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
             return MetadataViews.Display(
                 name: metadata.name,
                 description: metadata.description,
-                thumbnail: MetadataViews.IPFSFile(cid: metadata.thumbnail, path: nil)
+                thumbnail: FreshmintMetadataViews.ipfsFile(file: metadata.thumbnail)
             )
         }
         

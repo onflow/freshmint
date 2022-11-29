@@ -3,8 +3,8 @@ import { pack } from 'ipfs-car/pack';
 import { CarReader } from '@ipld/car';
 import { CID } from 'multiformats';
 
-export class IPFS {
-  ipfsClient: NFTStorage;
+export class IPFSClient {
+  nftStorage: NFTStorage;
 
   // The NFTStorage client has a built-in rate limiter that attempts to keep
   // requests below the 30 req / 10s limit enforced by the API.
@@ -16,8 +16,8 @@ export class IPFS {
   //
   maxRetries = 10;
 
-  constructor(ipfsClient: NFTStorage) {
-    this.ipfsClient = ipfsClient;
+  constructor(nftStorage: NFTStorage) {
+    this.nftStorage = nftStorage;
   }
 
   async computeCID(file: Buffer): Promise<string> {
@@ -47,8 +47,7 @@ export class IPFS {
       }
     }
 
-    // @ts-ignore
-    await this.ipfsClient.storeCar(car, { maxRetries: this.maxRetries });
+    await this.nftStorage.storeCar(car, { maxRetries: this.maxRetries });
   }
 }
 

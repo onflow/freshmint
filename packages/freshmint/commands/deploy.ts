@@ -13,7 +13,7 @@ import { FlowJSONConfig } from '../flow/config';
 import { FreshmintError } from '../errors';
 
 export default new Command('deploy')
-  .description('fetch the information for an NFT')
+  .description('deploy your NFT contract')
   .option('-n, --network <network>', "Network to deploy to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
   .action(deploy);
 
@@ -22,7 +22,7 @@ const flowJSONConfigPath = 'flow.json';
 async function deploy({ network }: { network: FlowNetwork }) {
   const config = await loadConfig();
 
-  const flow = new FlowGateway(network);
+  const flow = new FlowGateway(network, config.getContractAccount(network));
 
   const contractName = config.contract.name;
   const flowConfig = await FlowJSONConfig.load(flowJSONConfigPath);

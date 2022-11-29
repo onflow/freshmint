@@ -14,7 +14,7 @@ import {
   Royalty,
 } from '@freshmint/core';
 
-import FlowCliWrapper from './cli';
+import FlowCLIWrapper from './cli';
 
 export interface BatchField {
   field: Field;
@@ -34,12 +34,24 @@ const mintComputeLimit = 9999;
 export type FlowNetwork = 'emulator' | 'testnet' | 'mainnet';
 
 export class FlowGateway {
+  // The Flow network to use when executing transactions and scripts.
+  //
   network: FlowNetwork;
-  flow: FlowCliWrapper;
 
-  constructor(network: FlowNetwork) {
+  // The Flow account to use when signing transactions.
+  // The account with this name must be defined in flow.json.
+  //
+  signer: string;
+
+  // A wrapper around the Flow CLI that can be used to execute
+  // transactions and scripts in a child process.
+  //
+  cli: FlowCLIWrapper;
+
+  constructor(network: FlowNetwork, signer: string) {
     this.network = network;
-    this.flow = new FlowCliWrapper(this.network);
+    this.signer = signer;
+    this.cli = new FlowCLIWrapper(this.network);
   }
 
   getContractImports(): FreshmintConfig.ContractImports {
@@ -65,8 +77,7 @@ export class FlowGateway {
     // we are using a custom deployment transaction.
     //
     // We can ditch the custom transaction and use `add-contract` if it
-    // adds support for struct arguments. This is something I'd like to help
-    // implement in the CLI.
+    // adds support for struct arguments.
     //
     const preparedCode = replaceImportAddresses(code, contractImports);
     const preparedCodeAsHex = Buffer.from(preparedCode, 'utf-8').toString('hex');
@@ -81,7 +92,7 @@ export class FlowGateway {
       { type: t.Array(t.String), value: royaltyDescriptions },
     ];
 
-    return await this.flow.transaction('./cadence/transactions/deploy.cdc', `${this.network}-account`, args);
+    return await this.cli.transaction('./cadence/transactions/deploy.cdc', this.signer, args);
   }
 
   async mint(mintIds: string[], fields: BatchField[]) {
@@ -94,12 +105,7 @@ export class FlowGateway {
       })),
     ];
 
-    const result = await this.flow.transaction(
-      './cadence/transactions/mint.cdc',
-      `${this.network}-account`,
-      args,
-      mintComputeLimit,
-    );
+    const result = await this.cli.transaction('./cadence/transactions/mint.cdc', this.signer, args, mintComputeLimit);
 
     return parseMintResults(result);
   }
@@ -114,9 +120,9 @@ export class FlowGateway {
       })),
     ];
 
-    const result = await this.flow.transaction(
+    const result = await this.cli.transaction(
       './cadence/transactions/mint_with_claim_key.cdc',
-      `${this.network}-account`,
+      this.signer,
       args,
       mintComputeLimit,
     );
@@ -134,9 +140,9 @@ export class FlowGateway {
       })),
     ];
 
-    const result = await this.flow.transaction(
+    const result = await this.cli.transaction(
       './cadence/transactions/create_editions.cdc',
-      `${this.network}-account`,
+      this.signer,
       args,
       mintComputeLimit,
     );
@@ -151,12 +157,7 @@ export class FlowGateway {
       { type: t.Optional(t.String), value: null },
     ];
 
-    const result = await this.flow.transaction(
-      './cadence/transactions/mint.cdc',
-      `${this.network}-account`,
-      args,
-      mintComputeLimit,
-    );
+    const result = await this.cli.transaction('./cadence/transactions/mint.cdc', this.signer, args, mintComputeLimit);
 
     return parseEditionMintResults(result);
   }
@@ -167,9 +168,9 @@ export class FlowGateway {
       { type: t.Array(t.String), value: publicKeys },
     ];
 
-    const result = await this.flow.transaction(
+    const result = await this.cli.transaction(
       './cadence/transactions/mint_with_claim_key.cdc',
-      `${this.network}-account`,
+      this.signer,
       args,
       mintComputeLimit,
     );
@@ -178,7 +179,7 @@ export class FlowGateway {
   }
 
   async startDrop(saleId: string, price: string) {
-    return await this.flow.transaction('./cadence/transactions/start_drop.cdc', `${this.network}-account`, [
+    return await this.cli.transaction('./cadence/transactions/start_drop.cdc', this.signer, [
       { type: t.String, value: saleId },
       { type: t.UFix64, value: price },
       { type: t.Optional(t.Address), value: null },
@@ -189,23 +190,23 @@ export class FlowGateway {
   }
 
   async getDrop() {
-    return await this.flow.script('./cadence/scripts/get_drop.cdc', []);
+    return await this.cli.script('./cadence/scripts/get_drop.cdc', []);
   }
 
   async stopDrop(saleId: string) {
-    return await this.flow.transaction('./cadence/transactions/stop_drop.cdc', `${this.network}-account`, [
+    return await this.cli.transaction('./cadence/transactions/stop_drop.cdc', this.signer, [
       { type: t.String, value: saleId },
     ]);
   }
 
   async getDuplicateNFTs(hashes: string[]): Promise<boolean[]> {
-    return await this.flow.script('./cadence/scripts/get_duplicate_nfts.cdc', [
+    return await this.cli.script('./cadence/scripts/get_duplicate_nfts.cdc', [
       { type: t.Array(t.String), value: hashes },
     ]);
   }
 
-  async getEditionsByPrimaryKey(mintIds: string[]): Promise<{ id: string; size: number; count: number }[]> {
-    return await this.flow.script('./cadence/scripts/get_editions_by_primary_key.cdc', [
+  async getEditionsByMintId(mintIds: string[]): Promise<{ id: string; size: number; count: number }[]> {
+    return await this.cli.script('./cadence/scripts/get_editions_by_primary_key.cdc', [
       { type: t.Array(t.String), value: mintIds },
     ]);
   }

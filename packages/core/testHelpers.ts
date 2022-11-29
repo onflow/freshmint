@@ -69,7 +69,7 @@ export async function setupEmulator() {
   });
 
   await deployContract({
-    code: FreshmintMetadataViewsGenerator.contract(),
+    code: FreshmintMetadataViewsGenerator.contract({ imports: config.imports }),
     to: emulatorServiceAccount,
     name: 'FreshmintMetadataViews',
   });
@@ -149,6 +149,8 @@ export async function getFLOWBalance(address: string): Promise<number> {
 }
 
 export { mintFlow as mintFLOW };
+
+export const placeholderImage = 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre/foo.jpeg';
 
 export function getTestSchema(includeSerialNumber = true): metadata.Schema {
   const schema = metadata.createSchema({

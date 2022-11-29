@@ -66,6 +66,12 @@ describe('StandardNFTContract', () => {
     await client.send(contract.mintNFTs(nfts));
   });
 
+  it('should fail to mint duplicate NFTs', async () => {
+    await expect(async () => {
+      await client.send(contract.mintNFTs(nfts));
+    }).rejects.toThrow();
+  });
+
   const sale = new FreshmintClaimSaleContract(contract);
 
   const allowlistName = 'default';
