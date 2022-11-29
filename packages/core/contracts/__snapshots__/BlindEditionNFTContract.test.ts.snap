@@ -205,10 +205,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
                     return MetadataViews.Display(
                         name: \\"BlindEditionNFT_Test\\",
                         description: \\"This NFT is not yet revealed.\\",
-                        thumbnail: MetadataViews.IPFSFile(
-                            cid: BlindEditionNFT_Test.placeholderImage, 
-                            path: nil
-                        )
+                        thumbnail: FreshmintMetadataViews.ipfsFile(file: BlindEditionNFT_Test.placeholderImage)
                     )
                 case Type<FreshmintMetadataViews.BlindNFT>():
                     return FreshmintMetadataViews.BlindNFT(hash: self.hash)
@@ -242,7 +239,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             return MetadataViews.Display(
                 name: metadata.name,
                 description: metadata.description,
-                thumbnail: MetadataViews.IPFSFile(cid: metadata.thumbnail, path: nil)
+                thumbnail: FreshmintMetadataViews.ipfsFile(file: metadata.thumbnail)
             )
         }
         

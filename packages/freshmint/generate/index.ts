@@ -59,7 +59,7 @@ export async function generateCadence(dir: string, contract: ContractConfig, inc
       break;
   }
 
-  await generateFreshmintMetadataViews(dir);
+  await generateFreshmintMetadataViews(dir, imports);
   await generateFreshmintLockBox(dir);
   await generateFreshmintQueue(dir);
   await generateFreshmintClaimSale(dir, contract);
@@ -180,10 +180,10 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   );
 }
 
-async function generateFreshmintMetadataViews(dir: string) {
+async function generateFreshmintMetadataViews(dir: string, imports: ContractImports) {
   await writeFile(
     path.resolve(dir, `cadence/contracts/FreshmintMetadataViews.cdc`),
-    FreshmintMetadataViewsGenerator.contract(),
+    FreshmintMetadataViewsGenerator.contract({ imports }),
   );
 }
 
