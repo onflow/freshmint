@@ -11,6 +11,7 @@ import {
   setupEmulator,
   teardownEmulator,
   collectionMetadata,
+  placeholderImage,
 } from '../testHelpers';
 
 describe('BlindNFTContract', () => {
@@ -32,7 +33,7 @@ describe('BlindNFTContract', () => {
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
-        placeholderImage: 'sample-image.jpeg',
+        placeholderImage,
         collectionMetadata,
       }),
     );

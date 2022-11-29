@@ -186,10 +186,7 @@ pub contract {{ contractName }}: NonFungibleToken {
                     return MetadataViews.Display(
                         name: "{{ contractName }}",
                         description: "This NFT is not yet revealed.",
-                        thumbnail: MetadataViews.IPFSFile(
-                            cid: {{ contractName }}.placeholderImage, 
-                            path: nil
-                        )
+                        thumbnail: FreshmintMetadataViews.ipfsFile(file: {{ contractName }}.placeholderImage)
                     )
                 case Type<FreshmintMetadataViews.BlindNFT>():
                     return FreshmintMetadataViews.BlindNFT(hash: self.hash)

@@ -1,6 +1,7 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
+import FreshmintMetadataViews from {{{ imports.FreshmintMetadataViews }}}
 
 pub contract {{ contractName }}: NonFungibleToken {
 
