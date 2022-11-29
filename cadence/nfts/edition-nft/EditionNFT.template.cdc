@@ -105,10 +105,6 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// Increment the size of this edition.
         ///
         access(contract) fun incrementSize() {
-            post {
-                self.isClosed == false : "edition is closed for minting"
-            }
-
             self.size = self.size + (1 as UInt64)
         }
 
@@ -124,10 +120,6 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// it reaches its size limit, if defined.
         ///
         access(contract) fun close() {
-            pre {
-                self.isClosed == false : "edition is already closed"
-            }
-
             self.isClosed = true
         }
     }
@@ -281,6 +273,9 @@ pub contract {{ contractName }}: NonFungibleToken {
             let edition = {{ contractName }}.editions[editionID]
                 ?? panic("edition does not exist")
 
+            // Prevent the edition from being closed more than once
+            assert(edition.isClosed == false, message: "edition is already closed")
+
             edition.close()
 
             // Save the updated edition
@@ -300,6 +295,9 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun mintNFT(editionID: UInt64): @{{ contractName }}.NFT {
             let edition = {{ contractName }}.editions[editionID]
                 ?? panic("edition does not exist")
+
+            // Do not mint into a closed edition
+            assert(edition.isClosed == false, message: "edition is closed for minting")
 
             // Increase the edition size by one
             edition.incrementSize()

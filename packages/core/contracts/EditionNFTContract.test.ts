@@ -81,11 +81,11 @@ describe('EditionNFTContract', () => {
     it('should fail to create an edition that already exists', async () => {
       await expect(async () => {
         await client.send(contract.createEdition(editionInput));
-      }).rejects.toThrow();
+      }).rejects.toThrow('an edition has already been created with mintID');
     });
 
-    it('should mint 3 NFTs into the edition', async () => {
-      const count = 3;
+    it('should mint 4 NFTs into the edition', async () => {
+      const count = 4;
 
       const mintedNFTs = await client.send(contract.mintNFTs({ editionId: edition.id, count }));
 
@@ -103,8 +103,23 @@ describe('EditionNFTContract', () => {
       expect(onChainEdition.burned).toEqual(0);
     });
 
-    it('should mint remaining 2 NFTs into the edition', async () => {
-      const count = 2;
+    it('should fail to mint more than the edition limit', async () => {
+      await expect(async () => {
+        await client.send(contract.mintNFTs({ editionId: edition.id, count: 2 }));
+      }).rejects.toThrow('edition is closed for minting');
+
+      const onChainEdition = await client.query(contract.getEdition(edition.id));
+
+      // Size should be unchanged
+      expect(onChainEdition.size).toEqual(4);
+
+      expect(onChainEdition.id).toEqual(edition.id);
+      expect(onChainEdition.limit).toEqual(edition.limit);
+      expect(onChainEdition.burned).toEqual(0);
+    });
+
+    it('should mint 1 remaining NFT into the edition', async () => {
+      const count = 1;
 
       const mintedNFTs = await client.send(contract.mintNFTs({ editionId: edition.id, count }));
 
@@ -125,20 +140,19 @@ describe('EditionNFTContract', () => {
       expect(onChainEdition.isClosed).toBe(true);
     });
 
-    it('should fail to mint more than the edition limit', async () => {
+    it('should fail to mint into a closed edition', async () => {
       await expect(async () => {
-        await client.send(contract.mintNFTs({ editionId: edition.id, count: 5 }));
-      }).rejects.toThrow();
+        await client.send(contract.mintNFTs({ editionId: edition.id, count: 1 }));
+      }).rejects.toThrow('edition is closed for minting');
 
       const onChainEdition = await client.query(contract.getEdition(edition.id));
-
-      // Size should still be the limit
-      expect(onChainEdition.size).toEqual(edition.limit);
 
       // Edition should still be closed
       expect(onChainEdition.isClosed).toBe(true);
 
-      // All other edition properties should be unchanged
+      // Edition size should be unchanged
+      expect(onChainEdition.size).toEqual(edition.limit);
+
       expect(onChainEdition.id).toEqual(edition.id);
       expect(onChainEdition.limit).toEqual(edition.limit);
       expect(onChainEdition.burned).toEqual(0);
@@ -213,8 +227,8 @@ describe('EditionNFTContract', () => {
 
     it('should fail to mint after closing', async () => {
       await expect(async () => {
-        await client.send(contract.mintNFTs({ editionId: edition.id, count: 5 }));
-      }).rejects.toThrow();
+        await client.send(contract.mintNFTs({ editionId: edition.id, count: 1 }));
+      }).rejects.toThrow('edition is closed for minting');
 
       const onChainEdition = await client.query(contract.getEdition(edition.id));
 
@@ -274,8 +288,8 @@ describe('EditionNFTContract', () => {
 
     it('should fail to mint after closing', async () => {
       await expect(async () => {
-        await client.send(contract.mintNFTs({ editionId: edition.id, count: 5 }));
-      }).rejects.toThrow();
+        await client.send(contract.mintNFTs({ editionId: edition.id, count: 1 }));
+      }).rejects.toThrow('edition is closed for minting');
 
       const onChainEdition = await client.query(contract.getEdition(edition.id));
 
@@ -287,6 +301,12 @@ describe('EditionNFTContract', () => {
 
       // Edition should still be closed
       expect(onChainEdition.isClosed).toBe(true);
+    });
+
+    it('should fail close the edition twice', async () => {
+      await expect(async () => {
+        await client.send(contract.closeEdition(edition.id));
+      }).rejects.toThrow('edition is already closed');
     });
   });
 
