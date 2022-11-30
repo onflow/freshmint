@@ -2,6 +2,7 @@ import { parseFixedPointValue } from './fixedPoint';
 
 export interface CadenceType {
   label: string;
+  asArgument: (value: any) => any;
 }
 
 export interface CadenceValue {

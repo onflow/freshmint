@@ -1,1 +1,1 @@
-FreshmintMetadataViews.ipfsFile(file: {{ metadata }}["{{ field.name }}"]! as! String)
+FreshmintMetadataViews.ipfsFile(file: self.{{ field.name }}())

@@ -68,9 +68,7 @@ pub fun getOrCreateMintQueue(
 transaction(
     bucketName: String?,
     mintIDs: [String],
-    {{#each fields}}
-    {{ this.name }}: [{{ this.asCadenceTypeString }}],
-    {{/each}}
+    metadata: [{String: AnyStruct}]
 ) {
     
     let admin: &{{ contractName }}.Admin
@@ -89,16 +87,10 @@ transaction(
     execute {
 
         for i, mintID in mintIDs {
-
-            let metadata = {
-                {{#each fields}}
-                "{{ this.name }}": {{ this.name }}[i]{{#unless @last}},{{/unless}}
-                {{/each}}
-            }
-
+        
             let token <- self.admin.mintNFT(
                 mintID: mintID,
-                metadata: metadata
+                metadata: metadata[i]
             )
         
             // NFTs are minted into a queue to preserve the mint order.

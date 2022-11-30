@@ -1,1 +1,1 @@
-MetadataViews.HTTPFile(url: {{ metadata }}["{{ field.name }}"]! as! String)
+MetadataViews.HTTPFile(url: self.{{ field.name }}())

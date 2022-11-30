@@ -3,8 +3,15 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
-import { hashMetadata, MetadataMap } from '../metadata';
+import {
+  NFTContract,
+  CollectionMetadata,
+  prepareCollectionMetadata,
+  Royalty,
+  prepareRoyalties,
+  prepareMetadataBatch,
+} from './NFTContract';
+import { hashMetadata, MetadataMap, validateMetadata } from '../metadata';
 import { StandardNFTGenerator } from '../generators/StandardNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
@@ -94,20 +101,21 @@ export class StandardNFTContract extends NFTContract {
           schema: this.schema,
         });
 
+        // Validate all NFT metadata
+        nfts.forEach((metadata) => validateMetadata(this.schema, metadata));
+
         // Use metadata hash as mint ID
         const mintIds = nfts.map((metadata) => hashMetadata(this.schema, metadata).toString('hex'));
+
+        // Prepare the metadata batch argument
+        const metadataBatch = prepareMetadataBatch(this.schema, nfts);
 
         return {
           script,
           args: [
             fcl.arg(bucket, t.Optional(t.String)),
             fcl.arg(mintIds, t.Array(t.String)),
-            ...this.schema.fields.map((field) => {
-              return fcl.arg(
-                nfts.map((metadata) => field.getValue(metadata)),
-                t.Array(field.asCadenceTypeObject()),
-              );
-            }),
+            fcl.arg(metadataBatch, t.Identity),
           ],
           computeLimit: 9999,
           signers: this.getSigners(),

@@ -32,10 +32,20 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub let metadata: {String: AnyStruct}
 
         init(metadata: {String: AnyStruct}) {
+            {{#each fields}}
+            {{ ../contractName }}.checkMetadataField(metadata: metadata, name: "{{ this.name }}", expectedType: Type<{{ this.asCadenceTypeString }}>())
+            {{/each}}
+
             self.id = self.uuid
             self.metadata = metadata
         }
 
+        {{#each fields}}
+        pub fun {{ this.name }}(): {{ this.asCadenceTypeString }} {
+            return self.metadata["{{ this.name}}"]! as! {{ this.asCadenceTypeString }}
+        }
+
+        {{/each}}
         pub fun getViews(): [Type] {
             return [
                 {{#each views}}
@@ -47,7 +57,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun resolveView(_ view: Type): AnyStruct? {
             switch view {
                 {{#each views }}
-                {{> viewCase view=this metadata="self.metadata" }}
+                {{> viewCase view=this }}
                 {{/each}}
             }
 
@@ -110,6 +120,21 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply + (1 as UInt64)
 
             return <- nft
+        }
+    }
+
+    /// Check that a provided metadata field exists and is the correct type.
+    ///
+    /// This function is used to validate inputs during minting.
+    ///
+    pub fun checkMetadataField(metadata: {String: AnyStruct}, name: String, expectedType: Type) {
+        if let value = metadata[name] {
+            assert(
+                value.isInstance(expectedType),
+                message: "\"".concat(name).concat("\" metadata field should be of type ").concat(expectedType.identifier)
+            )
+        } else {
+            panic("\"".concat(name).concat("\" metadata field is required"))
         }
     }
 

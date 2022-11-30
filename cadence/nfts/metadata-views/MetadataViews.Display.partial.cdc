@@ -1,7 +1,7 @@
-pub fun resolveDisplay(_ metadata: {String: AnyStruct}): MetadataViews.Display {
+pub fun resolveDisplay(): MetadataViews.Display {
     return MetadataViews.Display(
-        name: metadata["{{ view.options.name.name }}"]! as! String,
-        description: metadata["{{ view.options.description.name }}"]! as! String,
-        thumbnail: {{> (whichFilePartial view.options.thumbnail) metadata="metadata" field=view.options.thumbnail }}
+        name: self.{{ view.options.name.name }}(),
+        description: self.{{ view.options.description.name }}(),
+        thumbnail: {{> (whichFilePartial view.options.thumbnail) field=view.options.thumbnail }}
     )
 }

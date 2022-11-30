@@ -1,8 +1,8 @@
-pub fun resolveNFTView(_ metadata: Metadata): MetadataViews.NFTView {
+pub fun resolveNFTView(): MetadataViews.NFTView {
     return MetadataViews.NFTView(
         id: self.id,
         uuid: self.uuid,
-        display: self.resolveDisplay(metadata),
+        display: self.resolveDisplay(),
         externalURL: self.resolveExternalURL(),
         collectionData: self.resolveNFTCollectionData(),
         collectionDisplay: self.resolveNFTCollectionDisplay(),

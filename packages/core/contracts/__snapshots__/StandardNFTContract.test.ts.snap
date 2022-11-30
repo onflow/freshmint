@@ -40,34 +40,35 @@ pub contract StandardNFT_Test: NonFungibleToken {
     ///
     pub let collectionMetadata: MetadataViews.NFTCollectionDisplay
 
-    pub struct Metadata {
-
-        pub let name: String
-        pub let description: String
-        pub let thumbnail: String
-        pub let serialNumber: UInt64
-
-        init(
-            name: String,
-            description: String,
-            thumbnail: String,
-            serialNumber: UInt64,
-        ) {
-            self.name = name
-            self.description = description
-            self.thumbnail = thumbnail
-            self.serialNumber = serialNumber
-        }
-    }
-
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
-        pub let metadata: Metadata
+        pub let metadata: {String: AnyStruct}
 
-        init(metadata: Metadata) {
+        init(metadata: {String: AnyStruct}) {
+            StandardNFT_Test.checkMetadataField(metadata: metadata, name: \\"name\\", expectedType: Type<String>())
+            StandardNFT_Test.checkMetadataField(metadata: metadata, name: \\"description\\", expectedType: Type<String>())
+            StandardNFT_Test.checkMetadataField(metadata: metadata, name: \\"thumbnail\\", expectedType: Type<String>())
+            StandardNFT_Test.checkMetadataField(metadata: metadata, name: \\"serialNumber\\", expectedType: Type<UInt64>())
+
             self.id = self.uuid
             self.metadata = metadata
+        }
+
+        pub fun name(): String {
+            return self.metadata[\\"name\\"]! as! String
+        }
+
+        pub fun description(): String {
+            return self.metadata[\\"description\\"]! as! String
+        }
+
+        pub fun thumbnail(): String {
+            return self.metadata[\\"thumbnail\\"]! as! String
+        }
+
+        pub fun serialNumber(): UInt64 {
+            return self.metadata[\\"serialNumber\\"]! as! UInt64
         }
 
         pub fun getViews(): [Type] {
@@ -85,9 +86,9 @@ pub contract StandardNFT_Test: NonFungibleToken {
         pub fun resolveView(_ view: Type): AnyStruct? {
             switch view {
                 case Type<MetadataViews.NFTView>():
-                    return self.resolveNFTView(self.metadata)
+                    return self.resolveNFTView()
                 case Type<MetadataViews.Display>():
-                    return self.resolveDisplay(self.metadata)
+                    return self.resolveDisplay()
                 case Type<MetadataViews.ExternalURL>():
                     return self.resolveExternalURL()
                 case Type<MetadataViews.NFTCollectionDisplay>():
@@ -97,17 +98,17 @@ pub contract StandardNFT_Test: NonFungibleToken {
                 case Type<MetadataViews.Royalties>():
                     return self.resolveRoyalties()
                 case Type<MetadataViews.Serial>():
-                    return self.resolveSerial(self.metadata)
+                    return self.resolveSerial()
             }
 
             return nil
         }
 
-        pub fun resolveNFTView(_ metadata: Metadata): MetadataViews.NFTView {
+        pub fun resolveNFTView(): MetadataViews.NFTView {
             return MetadataViews.NFTView(
                 id: self.id,
                 uuid: self.uuid,
-                display: self.resolveDisplay(metadata),
+                display: self.resolveDisplay(),
                 externalURL: self.resolveExternalURL(),
                 collectionData: self.resolveNFTCollectionData(),
                 collectionDisplay: self.resolveNFTCollectionDisplay(),
@@ -116,11 +117,11 @@ pub contract StandardNFT_Test: NonFungibleToken {
             )
         }
         
-        pub fun resolveDisplay(_ metadata: Metadata): MetadataViews.Display {
+        pub fun resolveDisplay(): MetadataViews.Display {
             return MetadataViews.Display(
-                name: metadata.name,
-                description: metadata.description,
-                thumbnail: FreshmintMetadataViews.ipfsFile(file: metadata.thumbnail)
+                name: self.name(),
+                description: self.description(),
+                thumbnail: FreshmintMetadataViews.ipfsFile(file: self.thumbnail())
             )
         }
         
@@ -153,8 +154,8 @@ pub contract StandardNFT_Test: NonFungibleToken {
             return MetadataViews.Royalties(StandardNFT_Test.getRoyalties())
         }
         
-        pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
-            return MetadataViews.Serial(metadata.serialNumber)
+        pub fun resolveSerial(): MetadataViews.Serial {
+            return MetadataViews.Serial(self.serialNumber())
         }
         
         destroy() {
@@ -284,23 +285,13 @@ pub contract StandardNFT_Test: NonFungibleToken {
         ///
         pub fun mintNFT(
             mintID: String,
-            name: String,
-            description: String,
-            thumbnail: String,
-            serialNumber: UInt64,
+            metadata: {String: AnyStruct}
         ): @StandardNFT_Test.NFT {
 
             // Prevent multiple NFTs from being minted with the same mint ID
             assert(
                 StandardNFT_Test.nftsByMintID[mintID] == nil,
                 message: \\"an NFT has already been minted with mintID=\\".concat(mintID)
-            )
-
-            let metadata = Metadata(
-                name: name,
-                description: description,
-                thumbnail: thumbnail,
-                serialNumber: serialNumber,
             )
 
             let nft <- create StandardNFT_Test.NFT(metadata: metadata)
@@ -313,6 +304,21 @@ pub contract StandardNFT_Test: NonFungibleToken {
             StandardNFT_Test.totalSupply = StandardNFT_Test.totalSupply + (1 as UInt64)
 
             return <- nft
+        }
+    }
+
+    /// Check that a provided metadata field exists and is the correct type.
+    ///
+    /// This function is used to validate inputs during minting.
+    ///
+    pub fun checkMetadataField(metadata: {String: AnyStruct}, name: String, expectedType: Type) {
+        if let value = metadata[name] {
+            assert(
+                value.isInstance(expectedType),
+                message: \\"\\\\\\"\\".concat(name).concat(\\"\\\\\\" metadata field should be of type \\").concat(expectedType.identifier)
+            )
+        } else {
+            panic(\\"\\\\\\"\\".concat(name).concat(\\"\\\\\\" metadata field is required\\"))
         }
     }
 

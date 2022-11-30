@@ -1,3 +1,3 @@
-pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
-    return MetadataViews.Serial(metadata.{{ view.options.serialNumber.name }})
+pub fun resolveSerial(): MetadataViews.Serial {
+    return MetadataViews.Serial(self.{{ view.options.serialNumber.name }}())
 }

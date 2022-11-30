@@ -281,6 +281,50 @@ export class MissingContractAddressError extends Error {
   }
 }
 
+// Prepare a metadata batch as a JSON-Cadence argument that can be used in an Flow transaction.
+//
+// Batch minting transactions accept a list of metadata dictionaries
+// with a Cadence type of `[{String: AnyStruct}]`.
+//
+// Example return value:
+//
+// {
+//   type: 'Array',
+//   value: [
+//     {
+//       type: 'Dictionary',
+//       value: [
+//         {
+//           key: { type: 'String', value: 'name' },
+//           value: { type: 'String', value: 'My NFT' }
+//         }
+//         ...
+//       ]
+//     },
+//     ...
+//   ]
+// }
+//
+export function prepareMetadataBatch(schema: metadata.Schema, entries: metadata.MetadataMap[]) {
+  const dictionaries = entries.map((values) => {
+    const pairs = schema.fields.map((field) => {
+      const keyType = t.String;
+      const valueType = field.asCadenceTypeObject();
+
+      const value = field.getValue(values);
+
+      return {
+        key: keyType.asArgument(field.name),
+        value: valueType.asArgument(value),
+      };
+    });
+
+    return prepareDictionary(pairs);
+  });
+
+  return t.Array(t.Identity).asArgument(dictionaries);
+}
+
 export function prepareRoyalties(royalties: Royalty[]): {
   royaltyAddresses: string[];
   royaltyReceiverPaths: Path[];

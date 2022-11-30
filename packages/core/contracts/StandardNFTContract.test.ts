@@ -1,6 +1,7 @@
 import { StandardNFTContract } from './StandardNFTContract';
 import { MissingContractAddressError } from './NFTContract';
 import { FreshmintClaimSaleContract } from './FreshmintClaimSaleContract';
+import * as metadata from '../metadata';
 
 import {
   client,
@@ -70,6 +71,60 @@ describe('StandardNFTContract', () => {
     await expect(async () => {
       await client.send(contract.mintNFTs(nfts));
     }).rejects.toThrow();
+  });
+
+  it('should reject input that does not contain all fields in schema', async () => {
+    const nft = {
+      name: 'Foo',
+      description: 'Foo',
+    };
+
+    await expect(async () => {
+      await client.send(contract.mintNFTs([nft]));
+    }).rejects.toThrow('The provided metadata is missing one or more fields defined in your schema');
+  });
+
+  it('should fail to mint without all required fields', async () => {
+    const tempContract = new StandardNFTContract({
+      name: contract.name,
+      // Remove the "thumbnail" field from the schema
+      schema: metadata.createSchema({ name: metadata.String(), description: metadata.String() }),
+      address: contract.address,
+      owner: contract.owner,
+    });
+
+    const nft = {
+      name: 'Foo',
+      description: 'Foo',
+    };
+
+    await expect(async () => {
+      await client.send(tempContract.mintNFTs([nft]));
+    }).rejects.toThrow('"thumbnail" metadata field is required');
+  });
+
+  it('should fail to mint a field with an incorrect type', async () => {
+    const tempContract = new StandardNFTContract({
+      name: contract.name,
+      // Change the "thumbnail" field to UInt64
+      schema: metadata.createSchema({
+        name: metadata.String(),
+        description: metadata.String(),
+        thumbnail: metadata.UInt64(),
+      }),
+      address: contract.address,
+      owner: contract.owner,
+    });
+
+    const nft = {
+      name: 'Foo',
+      description: 'Foo',
+      thumbnail: '10',
+    };
+
+    await expect(async () => {
+      await client.send(tempContract.mintNFTs([nft]));
+    }).rejects.toThrow('"thumbnail" metadata field should be of type String');
   });
 
   const sale = new FreshmintClaimSaleContract(contract);
