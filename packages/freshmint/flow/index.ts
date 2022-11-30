@@ -1,4 +1,4 @@
-import { Field } from '@freshmint/core/metadata';
+import { Field, MetadataMap, Schema } from '@freshmint/core/metadata';
 
 // @ts-ignore
 import * as t from '@onflow/types';
@@ -10,6 +10,7 @@ import {
   CollectionMetadata,
   FreshmintConfig,
   prepareCollectionMetadata,
+  prepareMetadataBatch,
   prepareRoyalties,
   Royalty,
 } from '@freshmint/core';
@@ -92,17 +93,16 @@ export class FlowGateway {
       { type: t.Array(t.String), value: royaltyDescriptions },
     ];
 
+    console.log(args);
+
     return await this.cli.transaction('./cadence/transactions/deploy.cdc', this.signer, args);
   }
 
-  async mint(mintIds: string[], fields: BatchField[]) {
+  async mint(mintIds: string[], schema: Schema, entries: MetadataMap[]) {
     const args = [
       { type: t.Optional(t.String), value: null }, // Bucket name
       { type: t.Array(t.String), value: mintIds },
-      ...fields.map(({ field, values }) => ({
-        type: t.Array(field.typeInstance.cadenceType),
-        value: values,
-      })),
+      { type: t.Identity, value: prepareMetadataBatch(schema, entries)}
     ];
 
     const result = await this.cli.transaction('./cadence/transactions/mint.cdc', this.signer, args, mintComputeLimit);
