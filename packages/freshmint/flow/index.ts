@@ -93,8 +93,6 @@ export class FlowGateway {
       { type: t.Array(t.String), value: royaltyDescriptions },
     ];
 
-    console.log(args);
-
     return await this.cli.transaction('./cadence/transactions/deploy.cdc', this.signer, args);
   }
 
