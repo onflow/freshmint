@@ -4,6 +4,7 @@ import chalk from 'chalk';
 
 import { FlowGateway, FlowNetwork } from '../flow';
 import { FreshmintError } from '../errors';
+import { loadConfig } from '../config';
 
 export default new Command('start-drop')
   .argument('<price>', 'The amount of FLOW to charge for each NFT (e.g. 42.123).', parseUFix64)
@@ -12,7 +13,9 @@ export default new Command('start-drop')
   .action(startDrop);
 
 async function startDrop(price: string, { network }: { network: FlowNetwork }) {
-  const flow = new FlowGateway(network);
+  const config = await loadConfig();
+
+  const flow = new FlowGateway(network, config.getContractAccount(network));
 
   const spinner = ora();
 

@@ -4,16 +4,18 @@
 
 import { Command } from 'commander';
 
-import { FreshmintError } from './errors';
-
+// All commands are implemented in the /commands directory.
+//
 import start from './commands/start';
 import dev from './commands/dev';
 import deploy from './commands/deploy';
 import mint from './commands/mint';
 import startDrop from './commands/start-drop';
 import stopDrop from './commands/stop-drop';
-import regen from './commands/regen';
+import gen from './commands/gen';
 import prince from './commands/prince';
+
+import { FreshmintError } from './errors';
 
 async function main() {
   const program = new Command();
@@ -24,7 +26,7 @@ async function main() {
   program.addCommand(mint);
   program.addCommand(startDrop);
   program.addCommand(stopDrop);
-  program.addCommand(regen);
+  program.addCommand(gen);
   program.addCommand(prince);
 
   await program.parseAsync(process.argv);
@@ -40,6 +42,8 @@ main()
       // to be displayed using only the message field.
       console.error(err.message);
     } else {
+      // Other errors are unexpected fatal errors and should be
+      // logged in their entirety.
       console.error(err);
     }
 

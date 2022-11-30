@@ -1,7 +1,6 @@
 import { ContractConfig, ContractType } from '../../config';
 import { FlowGateway } from '../../flow';
 import { MetadataProcessor } from '../processors';
-import { MetadataLoader } from '../loaders';
 import { EditionMinter } from './EditionMinter';
 import { StandardMinter } from './StandardMinter';
 
@@ -12,12 +11,18 @@ export type MinterHooks = {
   onCompleteEditionCreation: () => void;
   onStartPinning: (count: number) => void;
   onCompletePinning: () => void;
-  onStartMinting: (total: number, batchCount: number, batchSize: number, outFile: string) => void;
+  onStartMinting: (total: number, batchCount: number, batchSize: number) => void;
   onCompleteBatch: (batchSize: number) => void;
 };
 
 export interface Minter {
-  mint(loader: MetadataLoader, withClaimKeys: boolean, batchSize: number, hooks: MinterHooks): Promise<void>;
+  mint(
+    csvInputFile: string,
+    csvOutputFile: string,
+    withClaimKeys: boolean,
+    batchSize: number,
+    hooks: MinterHooks,
+  ): Promise<void>;
 }
 
 export function createMinter(

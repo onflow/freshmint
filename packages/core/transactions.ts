@@ -29,18 +29,32 @@ export class TransactionAuthorizer {
     this.signer = signer;
   }
 
+  // Convert this authorizer to an authorization function that can be passed to FCL-JS.
+  //
+  // FCL will invoke the authorization function when resolving signatures for a transaction.
+  //
+  // Ref: https://github.com/onflow/fcl-js/blob/3355cb148f2e6a447d8076b3ae62c40747c338ce/packages/fcl/src/wallet-provider-spec/authorization-function.md#how-to-create-an-authorization-function
+  //
   toFCLAuthorizationFunction() {
     return async (account = {}) => {
+      const keyIndex = Number(this.keyIndex);
+
       return {
         ...account,
-        tempId: 'SIGNER',
+        tempId: `${withPrefix(this.address)}-${keyIndex}`,
         addr: sansPrefix(this.address),
-        keyId: this.keyIndex,
-        signingFunction: (data: { message: string }) => ({
-          addr: withPrefix(this.address),
-          keyId: this.keyIndex,
-          signature: toHex(this.signer.sign(fromHex(data.message))),
-        }),
+        keyId: keyIndex,
+        signingFunction: async (data: { message: string }) => {
+          const message = fromHex(data.message);
+
+          const signature = await this.signer.sign(message);
+
+          return {
+            addr: withPrefix(this.address),
+            keyId: keyIndex,
+            signature: toHex(signature),
+          };
+        },
       };
     };
   }

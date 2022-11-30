@@ -1,9 +1,10 @@
 import { Command } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
-import { FreshmintError } from '../errors';
 
 import { FlowGateway, FlowNetwork } from '../flow';
+import { FreshmintError } from '../errors';
+import { loadConfig } from '../config';
 
 export default new Command('stop-drop')
   .description('stop the current drop')
@@ -11,7 +12,9 @@ export default new Command('stop-drop')
   .action(stopDrop);
 
 async function stopDrop({ network }: { network: FlowNetwork }) {
-  const flow = new FlowGateway(network);
+  const config = await loadConfig();
+
+  const flow = new FlowGateway(network, config.getContractAccount(network));
 
   const spinner = ora();
 

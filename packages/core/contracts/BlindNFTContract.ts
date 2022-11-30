@@ -107,8 +107,8 @@ export class BlindNFTContract extends NFTContract {
     );
   }
 
-  mintNFTs(metadata: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
-    const hashedNFTs = this.hashNFTs(metadata);
+  mintNFTs(nfts: MetadataMap[], bucket?: string): Transaction<NFTMintResult[]> {
+    const hashedNFTs = this.hashNFTs(nfts);
     return this.mintHashedNFTs(hashedNFTs, bucket);
   }
 
@@ -130,34 +130,18 @@ export class BlindNFTContract extends NFTContract {
           signers: this.getSigners(),
         };
       },
-      (result: TransactionResult) => this.formatMintResults(result, hashedNFTs),
+      (result) => formatMintResults(result, hashedNFTs),
     );
   }
 
-  private hashNFTs(metadata: MetadataMap[]): HashedNFT[] {
-    return metadata.map((metadata) => {
+  hashNFTs(nfts: MetadataMap[]): HashedNFT[] {
+    return nfts.map((metadata) => {
       const { hash, salt } = hashMetadataWithSalt(this.schema, metadata);
 
       return {
         metadata,
         metadataHash: hash.toString('hex'),
         metadataSalt: salt.toString('hex'),
-      };
-    });
-  }
-
-  private formatMintResults({ transactionId, events }: TransactionResult, nfts: HashedNFT[]): NFTMintResult[] {
-    const deposits = events.filter((event) => event.type.includes('.Minted'));
-
-    return deposits.map((deposit, i) => {
-      const { metadata, metadataHash, metadataSalt } = nfts[i];
-
-      return {
-        id: deposit.data.id,
-        metadata,
-        metadataHash,
-        metadataSalt,
-        transactionId,
       };
     });
   }
@@ -191,26 +175,14 @@ export class BlindNFTContract extends NFTContract {
           signers: this.getSigners(),
         };
       },
-      (result: TransactionResult) => this.formatRevealtResults(result),
+      (result) => formatRevealtResults(result),
     );
-  }
-
-  private formatRevealtResults({ transactionId, events }: TransactionResult): NFTRevealResult[] {
-    const deposits = events.filter((event) => event.type.includes('.Revealed'));
-
-    return deposits.map((deposit) => {
-      return {
-        id: deposit.data.id,
-        transactionId,
-      };
-    });
   }
 
   getRevealedNFTHash(nftId: string): Script<string> {
     const script = BlindNFTGenerator.getRevealedNFTHash({
       contractName: this.name,
-      // TODO: return error if contract address is not set
-      contractAddress: this.address ?? '',
+      contractAddress: this.getAddress(),
     });
 
     return new Script(
@@ -222,4 +194,31 @@ export class BlindNFTContract extends NFTContract {
       (result) => result,
     );
   }
+}
+
+function formatMintResults({ transactionId, events }: TransactionResult, nfts: HashedNFT[]): NFTMintResult[] {
+  const deposits = events.filter((event) => event.type.includes('.Minted'));
+
+  return deposits.map((deposit, i) => {
+    const { metadata, metadataHash, metadataSalt } = nfts[i];
+
+    return {
+      id: deposit.data.id,
+      metadata,
+      metadataHash,
+      metadataSalt,
+      transactionId,
+    };
+  });
+}
+
+function formatRevealtResults({ transactionId, events }: TransactionResult): NFTRevealResult[] {
+  const deposits = events.filter((event) => event.type.includes('.Revealed'));
+
+  return deposits.map((deposit) => {
+    return {
+      id: deposit.data.id,
+      transactionId,
+    };
+  });
 }

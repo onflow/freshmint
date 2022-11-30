@@ -3,14 +3,55 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
+import chalk from 'chalk';
 import * as metadata from '@freshmint/core/metadata';
+
+import { FreshmintError } from './errors';
 
 const defaultConfigPath = 'freshmint.yaml';
 const defaultDataPathStandard = 'nfts.csv';
 const defaultDataPathEdition = 'editions.csv';
 const defaultAssetPath = 'assets';
 
-export interface FreshmintConfig {
+export class FreshmintConfig {
+  contract: ContractConfig;
+  collection: CollectionConfig;
+  ipfsPinningService: IPFSPinningServiceConfig;
+  nftDataPath: string;
+  nftAssetPath: string;
+
+  constructor(config: FreshmintConfigInput) {
+    this.contract = config.contract;
+    this.collection = config.collection;
+    this.ipfsPinningService = config.ipfsPinningService;
+    this.nftDataPath = config.nftDataPath;
+    this.nftAssetPath = config.nftAssetPath;
+  }
+
+  getContractAccount(network: string): string {
+    const account = this.contract.account[network];
+    if (!account) {
+      throw new MissingContractAccountForNetworkError(network);
+    }
+
+    return account;
+  }
+}
+
+export class MissingContractAccountForNetworkError extends FreshmintError {
+  network: string;
+
+  constructor(network: string) {
+    super(
+      `Please specify a contract account for the "${network}" network.\n\nExample in ${chalk.green(
+        'freshmint.yaml',
+      )}:${chalk.cyan(`\n\ncontract:\n  account:\n    ${network}: your-account-name (as defined in flow.json)`)}`,
+    );
+    this.network = network;
+  }
+}
+
+export interface FreshmintConfigInput {
   contract: ContractConfig;
   collection: CollectionConfig;
   ipfsPinningService: IPFSPinningServiceConfig;
@@ -18,10 +59,13 @@ export interface FreshmintConfig {
   nftAssetPath: string;
 }
 
+export type AccountsByNetwork = { [network: string]: string };
+
 export interface ContractConfig {
   name: string;
   type: ContractType;
   schema: metadata.Schema;
+  account: AccountsByNetwork;
 }
 
 export enum ContractType {
@@ -45,7 +89,20 @@ export interface IPFSPinningServiceConfig {
   key: string;
 }
 
-const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
+// Yup does not have built-in support for a map schema so we construct one lazily.
+// Ref: https://github.com/jquense/yup/issues/1275
+//
+function stringMap() {
+  return yup.lazy((value) => {
+    const keys = Object.keys(value ?? {});
+    const entries = keys.map((key) => [key, yup.string().defined()]);
+    const shape = Object.fromEntries(entries);
+
+    return yup.object().defined().shape(shape);
+  });
+}
+
+const schema: yup.ObjectSchema<FreshmintConfigInput> = yup.object().shape({
   contract: yup
     .object()
     .defined()
@@ -56,6 +113,7 @@ const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
         .mixed((input): input is metadata.Schema => input instanceof metadata.Schema)
         .transform((value) => metadata.parseSchema(value))
         .defined(),
+      account: stringMap(),
     }),
   collection: yup
     .object()
@@ -68,12 +126,7 @@ const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
         square: yup.string().defined(),
         banner: yup.string().defined(),
       }),
-      socials: yup.lazy((value) => {
-        return yup
-          .object()
-          .defined()
-          .shape(Object.fromEntries(Object.keys(value).map((key) => [key, yup.string().defined()])));
-      }),
+      socials: stringMap(),
     }),
   ipfsPinningService: yup
     .object()
@@ -98,8 +151,9 @@ const schema: yup.ObjectSchema<FreshmintConfig> = yup.object().shape({
 
 export async function loadConfig(): Promise<FreshmintConfig> {
   const rawConfig = loadRawConfig(defaultConfigPath);
+  const config = await schema.validate(rawConfig);
 
-  return await schema.validate(rawConfig);
+  return new FreshmintConfig(config);
 }
 
 function loadRawConfig(filename: string, basePath?: string): any {

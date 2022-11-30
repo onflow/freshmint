@@ -23,13 +23,13 @@ export async function generateProject(
 ) {
   await createScaffold(dir);
 
-  await generateProjectCadence(dir, contract);
+  await generateCadence(dir, contract);
 
   await createFlowConfig(dir, { contractName: contract.name });
   await createFlowTestnetConfig(dir, { contractName: contract.name });
   await createFlowMainnetConfig(dir, { contractName: contract.name });
 
-  await generateNextjsApp(dir, name, description);
+  await generateWeb(dir, name, description);
 
   await createFreshmintYaml(dir, { name, contract });
   await createReadme(dir, { name, nftDataPath });
@@ -49,7 +49,7 @@ const contracts = {
 const imports = prepareImports(contracts);
 const shiftedImports = prepareImports(contracts, '../contracts');
 
-export async function generateProjectCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
+export async function generateCadence(dir: string, contract: ContractConfig, includeCSVFile = true) {
   switch (contract.type) {
     case ContractType.Standard:
       await generateStandardProject(dir, contract, includeCSVFile);
@@ -59,7 +59,7 @@ export async function generateProjectCadence(dir: string, contract: ContractConf
       break;
   }
 
-  await generateFreshmintMetadataViews(dir);
+  await generateFreshmintMetadataViews(dir, imports);
   await generateFreshmintLockBox(dir);
   await generateFreshmintQueue(dir);
   await generateFreshmintClaimSale(dir, contract);
@@ -180,10 +180,10 @@ async function generateEditionProject(dir: string, contract: ContractConfig, inc
   );
 }
 
-async function generateFreshmintMetadataViews(dir: string) {
+async function generateFreshmintMetadataViews(dir: string, imports: ContractImports) {
   await writeFile(
     path.resolve(dir, `cadence/contracts/FreshmintMetadataViews.cdc`),
-    FreshmintMetadataViewsGenerator.contract(),
+    FreshmintMetadataViewsGenerator.contract({ imports }),
   );
 }
 
@@ -269,16 +269,16 @@ async function createScaffold(dir: string) {
   await fs.copy(path.resolve(__dirname, 'templates/gitignore'), path.resolve(dir, '.gitignore'));
 }
 
-const createNextjsConfig = template('templates/nextjs/next.config.js', 'next.config.js');
+const createNextConfig = template('templates/web/next.config.js', 'next.config.js');
 
-export async function generateNextjsApp(dir: string, name: string, description: string) {
+export async function generateWeb(dir: string, name: string, description: string) {
   const webDir = path.resolve(dir, 'web');
 
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs'), webDir);
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs/eslintrc.json'), path.resolve(webDir, '.eslintrc.json'));
-  await fs.copy(path.resolve(__dirname, 'templates/nextjs/gitignore'), path.resolve(webDir, '.gitignore'));
+  await fs.copy(path.resolve(__dirname, 'templates/web'), webDir);
+  await fs.copy(path.resolve(__dirname, 'templates/web/eslintrc.json'), path.resolve(webDir, '.eslintrc.json'));
+  await fs.copy(path.resolve(__dirname, 'templates/web/gitignore'), path.resolve(webDir, '.gitignore'));
 
-  await createNextjsConfig(webDir, { name, description });
+  await createNextConfig(webDir, { name, description });
 }
 
 const createNFTsCSVFile = template('templates/nfts.csv', 'nfts.csv');
