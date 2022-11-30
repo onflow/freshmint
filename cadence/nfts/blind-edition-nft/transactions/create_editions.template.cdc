@@ -1,7 +1,14 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
+/// This transaction creates a batch of new editions.
+///
+/// Parameters:
+/// - mintIDs: a list containing the mint ID for each edition.
+/// - limits: a list containing an optional size limit for each edition.
+///
 transaction(
-    sizes: [UInt64],
+    mintIDs: [String],
+    limits: [UInt64?],
     {{#each fields}}
     {{ this.name }}: [{{ this.asCadenceTypeString }}],
     {{/each}}
@@ -15,9 +22,10 @@ transaction(
     }
 
     execute {        
-        for i, size in sizes {
+        for i, mintID in mintIDs {
             self.admin.createEdition(
-                size: size,
+                mintID: mintID,
+                limit: limits[i],
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
