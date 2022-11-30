@@ -131,7 +131,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         if let value = metadata[name] {
             assert(
                 value.isInstance(expectedType),
-                message: "\"".concat(name).concat("\" metadata field should be of type ").concat(expectedType.identifier)
+                message: "\"".concat(name).concat("\" metadata field must be of type ").concat(expectedType.identifier)
             )
         } else {
             panic("\"".concat(name).concat("\" metadata field is required"))

@@ -124,7 +124,7 @@ describe('StandardNFTContract', () => {
 
     await expect(async () => {
       await client.send(tempContract.mintNFTs([nft]));
-    }).rejects.toThrow('"thumbnail" metadata field should be of type String');
+    }).rejects.toThrow('"thumbnail" metadata field must be of type String');
   });
 
   const sale = new FreshmintClaimSaleContract(contract);
