@@ -10,8 +10,8 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
-    pub event Minted(id: UInt64, hash: [UInt8])
-    pub event Revealed(id: UInt64, editionID: UInt64, serialNumber: UInt64, salt: [UInt8])
+    pub event Minted(id: UInt64, editionID: UInt64, hash: [UInt8])
+    pub event Revealed(id: UInt64, serialNumber: UInt64, salt: [UInt8])
     pub event Burned(id: UInt64)
     pub event EditionCreated(edition: Edition)
 
@@ -27,9 +27,6 @@ pub contract {{ contractName }}: NonFungibleToken {
     /// The total number of {{ contractName }} editions that have been created.
     ///
     pub var totalEditions: UInt64
-
-    /// A placeholder image used to display NFTs that have not yet been revealed.
-    pub let placeholderImage: String
 
     {{> royalties-field contractName=contractName }}
 
@@ -55,17 +52,44 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub struct Edition {
 
         pub let id: UInt64
-        pub let size: UInt
+
+        /// The maximum size of this edition.
+        ///
+        pub let size: UInt64
+
+        /// The number of NFTs minted in this edition.
+        ///
+        /// The count cannot exceed the edition size.
+        ///
+        pub var count: UInt64
+
+        /// The metadata for this edition.
+        ///
         pub let metadata: Metadata
 
         init(
             id: UInt64,
-            size: UInt,
+            size: UInt64,
             metadata: Metadata
         ) {
             self.id = id
             self.size = size
             self.metadata = metadata
+
+            // An edition starts with a count of zero
+            self.count = 0
+        }
+
+        /// Increment the NFT count of this edition.
+        ///
+        /// The count cannot exceed the edition size.
+        ///
+        access(contract) fun incrementCount() {
+            post {
+                self.count <= self.size: "edition has already reached its maximum size"
+            }
+
+            self.count = self.count + (1 as UInt64)
         }
     }
 
@@ -75,33 +99,38 @@ pub contract {{ contractName }}: NonFungibleToken {
         return {{ contractName }}.editions[id]
     }
 
-    pub struct EditionMember {
+    /// RevealedSerialNumber contains the revealed serial number for a single NFT.
+    ///
+    /// This data is published when an NFT's serial number is revealed.
+    /// It contains both the serial number and the salt that was used
+    /// to generate the mint hash. These values can be used to verify
+    /// that the serial number did not change after mint.
+    ///
+    pub struct RevealedSerialNumber {
     
-        pub let editionID: UInt64
         pub let serialNumber: UInt64
+
+        /// The salt that is published when this serial number is revealed.
+        ///
+        /// The salt is a byte array that is prepended to the 
+        /// encoded serial number before generating the hash.
+        ///
         pub let salt: [UInt8]
 
         init(
-            editionID: UInt64,
             serialNumber: UInt64,
             salt: [UInt8],
         ) {
-            self.editionID = editionID
             self.serialNumber = serialNumber
             self.salt = salt
         }
 
-        pub fun getData(): Edition {
-            return {{ contractName }}.getEdition(id: self.editionID)!
-        }
-
-        /// Encode this edition object as a byte array.
+        /// Encode this serial number object as a byte array.
         ///
         /// This can be used to hash the edition membership and verify its integrity.
         ///
         pub fun encode(): [UInt8] {
             return self.salt
-                .concat(self.editionID.toBigEndianBytes())
                 .concat(self.serialNumber.toBigEndianBytes())
         }
 
@@ -110,91 +139,105 @@ pub contract {{ contractName }}: NonFungibleToken {
         }
     }
 
-    access(self) let editionMembers: {UInt64: EditionMember}
+    access(self) let serialNumbers: {UInt64: RevealedSerialNumber}
 
-    pub fun getEditionMember(id: UInt64): EditionMember? {
-        return {{ contractName }}.editionMembers[id]
+    pub fun getSerialNumber(nftID: UInt64): RevealedSerialNumber? {
+        return {{ contractName }}.serialNumbers[nftID]
+    }
+
+    /// This dictionary stores all NFT IDs minted by this contract,
+    /// indexed by their serial number hash.
+    ///
+    /// It is populated at mint time and later used to validate
+    /// serial number hashes at reveal time.
+    ///
+    /// This dictionary is indexed by hash rather than by ID so that
+    /// the contract (and client software) can prevent duplicate mints.
+    ///
+    access(contract) let nftsByHash: {String: UInt64}
+
+    pub fun getNFTIDByHash(hash: String): UInt64? {
+        return {{ contractName }}.nftsByHash[hash]
     }
 
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
 
         pub let id: UInt64
 
-        /// A hash of the NFT's edition membership.
+        /// The ID of the edition this NFT belongs to.
         ///
-        /// The edition hash is known at mint time and 
-        /// is generated by hashing the edition ID and
-        /// serial number for this NFT.
+        pub let editionID: UInt64
+
+        /// A hash of the NFT's serial number combined
+        /// with a secret salt value.
+        ///
+        /// The hash can later be used to verify
+        /// the revealed serial number.
         ///
         pub let hash: [UInt8]
 
-        init(hash: [UInt8]) {
+        init(editionID: UInt64, hash: [UInt8]) {
             self.id = self.uuid
+            self.editionID = editionID
             self.hash = hash
         }
 
         /// Return the edition that this NFT belongs to.
         ///
-        /// This function returns nil if the edition membership has
-        /// not yet been revealed.
+        pub fun getEdition(): Edition {
+            return {{ contractName }}.getEdition(id: self.editionID)!
+        }
+
+        /// Return this NFT's serial number.
         ///
-        pub fun getEdition(): EditionMember? {
-            return {{ contractName }}.editionMembers[self.id]
+        /// This function returns nil if the serial number is not yet revealed.
+        ///
+        pub fun getSerialNumber(): UInt64? {
+            if let revealedSerialNumber = {{ contractName }}.serialNumbers[self.id] {
+                return revealedSerialNumber.serialNumber
+            }
+
+            return nil
         }
 
         pub fun getViews(): [Type] {
-            if self.getEdition() != nil {
-                return [
-                    {{#each views}}
-                    {{{ this.cadenceTypeString }}}{{#unless @last }},{{/unless}}
-                    {{/each}}
-                ]
+            let views = [
+                {{#each views}}
+                {{{ this.cadenceTypeString }}}{{#unless @last }},{{/unless}}
+                {{/each}}
+            ]
+
+            if self.getSerialNumber() != nil {
+                views.append(Type<MetadataViews.Edition>())
+                views.append(Type<MetadataViews.Serial>())
+            } else {
+                views.append(Type<FreshmintMetadataViews.BlindNFT>())
             }
 
-            return [
-                {{#each views}}
-                {{#unless this.requiresMetadata }}
-                {{{ this.cadenceTypeString }}},
-                {{/unless}}
-                {{/each}}
-                Type<MetadataViews.Display>(),
-                Type<FreshmintMetadataViews.BlindNFT>()
-            ]
+            return views
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            {{#if views }}
-            if let editionMember = self.getEdition() {
-                let edition = editionMember.getData()
-
-                switch view {
-                    {{#each views}}
-                    {{> viewCase view=this metadata="edition.metadata" }}
-                    {{/each}}
-                }
-
-                return nil
-            }
-            {{ else }}
-            if self.getEdition() != nil {
-                return nil
-            }
-            {{/if}}
-
+            let edition = self.getEdition()
+            
             switch view {
-                case Type<MetadataViews.Display>():
-                    return MetadataViews.Display(
-                        name: "{{ contractName }}",
-                        description: "This NFT is not yet revealed.",
-                        thumbnail: FreshmintMetadataViews.ipfsFile(file: {{ contractName }}.placeholderImage)
-                    )
-                case Type<FreshmintMetadataViews.BlindNFT>():
-                    return FreshmintMetadataViews.BlindNFT(hash: self.hash)
                 {{#each views}}
-                {{#unless this.requiresMetadata }}
-                {{> viewCase view=this }}
-                {{/unless}}
+                {{> viewCase view=this metadata="edition.metadata" }}
                 {{/each}}
+            }
+
+            if let serialNumber = self.getSerialNumber() {
+                switch view {
+                    case Type<MetadataViews.Edition>():
+                        return self.resolveEditionView(serialNumber: serialNumber, size: edition.size)
+                    case Type<MetadataViews.Serial>():
+                        return self.resolveSerialView(serialNumber: serialNumber)
+                }
+            } else {
+                switch view {
+                    case Type<FreshmintMetadataViews.BlindNFT>():
+                        return FreshmintMetadataViews.BlindNFT(hash: self.hash)
+                }
             }
 
             return nil
@@ -206,6 +249,18 @@ pub contract {{ contractName }}: NonFungibleToken {
         
         {{/if}}
         {{/each}}
+        pub fun resolveEditionView(serialNumber: UInt64, size: UInt64): MetadataViews.Edition {
+            return MetadataViews.Edition(
+                name: "Edition",
+                number: serialNumber,
+                max: size
+            )
+        }
+
+        pub fun resolveSerialView(serialNumber: UInt64): MetadataViews.Serial {
+            return MetadataViews.Serial(serialNumber)
+        }
+
         destroy() {
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply - (1 as UInt64)
 
@@ -226,7 +281,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// edition data that will later be associated with minted NFTs.
         ///
         pub fun createEdition(
-            size: UInt,
+            size: UInt64,
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
@@ -258,10 +313,30 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// that can later be used to verify the revealed NFT's 
         /// edition ID and serial number.
         ///
-        pub fun mintNFT(hash: [UInt8]): @{{ contractName }}.NFT {
-            let nft <- create {{ contractName }}.NFT(hash: hash)
+        pub fun mintNFT(editionID: UInt64, hash: [UInt8]): @{{ contractName }}.NFT {
+            let edition = {{ contractName }}.editions[editionID]
+                ?? panic("edition does not exist")
 
-            emit Minted(id: nft.id, hash: hash)
+            let hexHash = String.encodeHex(hash)
+
+            // Prevent multiple NFTs from being minted with the same serial number hash
+            assert(
+                {{ contractName }}.nftsByHash[hexHash] == nil,
+                message: "an NFT has already been minted with hash=".concat(hexHash)
+            )
+
+            // Increase the edition count by one
+            edition.incrementCount()
+
+            let nft <- create {{ contractName }}.NFT(editionID: editionID, hash: hash)
+
+            // Save the updated edition
+            {{ contractName }}.editions[editionID] = edition
+
+            // Save the metadata hash so that it can later be validated on reveal
+            {{ contractName }}.nftsByHash[hexHash] = nft.id
+
+            emit Minted(id: nft.id, editionID: editionID, hash: hash)
 
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply + (1 as UInt64)
 
@@ -273,27 +348,37 @@ pub contract {{ contractName }}: NonFungibleToken {
         /// To reveal an NFT, publish its edition ID, serial number
         /// and unique salt value.
         ///
-        pub fun revealNFT(
-            id: UInt64,
-            editionID: UInt64,
-            serialNumber: UInt64,
-            salt: [UInt8]
-        ) {
+        pub fun revealNFT(id: UInt64, serialNumber: UInt64, salt: [UInt8]) {
             pre {
-                {{ contractName }}.editionMembers[id] == nil : "NFT has already been revealed"
+                {{ contractName }}.serialNumbers[id] == nil : "NFT serial number has already been revealed"
             }
 
-            let editionMember = EditionMember(
-                editionID: editionID,
+            let revealedSerialNumber = RevealedSerialNumber(
                 serialNumber: serialNumber,
                 salt: salt,
             )
 
-            {{ contractName }}.editionMembers[id] = editionMember
+            // An NFT cannot be revealed unless the provided serial number and salt
+            // match the hash that was specified at mint time.
+
+            let hash = String.encodeHex(revealedSerialNumber.hash())
+
+            if let mintedID = {{ contractName }}.getNFTIDByHash(hash: hash) {
+                assert(
+                    id == mintedID,
+                    message: "the provided serial number hash matches NFT with ID="
+                        .concat(mintedID.toString())
+                        .concat(", but expected ID=")
+                        .concat(id.toString())
+                )
+            } else {
+                panic("the provided serial number hash does not match any minted NFTs")
+            }
+
+            {{ contractName }}.serialNumbers[id] = revealedSerialNumber
 
             emit Revealed(
                 id: id,
-                editionID: editionID,
                 serialNumber: serialNumber,
                 salt: salt
             )
@@ -354,7 +439,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         admin.save(<- adminResource, to: self.AdminStoragePath)
     }
 
-    init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], placeholderImage: String{{#unless saveAdminResourceToContractAccount }}, admin: AuthAccount{{/unless}}) {
+    init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty]{{#unless saveAdminResourceToContractAccount }}, admin: AuthAccount{{/unless}}) {
 
         self.version = "{{ freshmintVersion }}"
 
@@ -364,8 +449,6 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         self.AdminStoragePath = {{ contractName }}.getStoragePath(suffix: "Admin")
 
-        self.placeholderImage = placeholderImage
-
         self.royalties = royalties
         self.collectionMetadata = collectionMetadata
 
@@ -373,7 +456,8 @@ pub contract {{ contractName }}: NonFungibleToken {
         self.totalEditions = 0
 
         self.editions = {}
-        self.editionMembers = {}
+        self.serialNumbers = {}
+        self.nftsByHash = {}
         
         self.initAdmin(admin: {{#if saveAdminResourceToContractAccount }}self.account{{ else }}admin{{/if}})
 

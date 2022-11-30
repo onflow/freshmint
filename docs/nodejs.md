@@ -671,7 +671,7 @@ This will print:
       thumbnail: "bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam"
     },
     metadataHash: "ed94560233ee34cf059e846560b43b462d0337e21d563f668404ee4cee407c97",
-    metadataSalt: "727ca86ae4a338f21e83ec330f490bcf",
+    metadataSalt: "78e9bd055a2dda58dbf0327157e7abcc7c0412e4d07808cc369f0e1f7f1afb4d",
     transactionId: "20d0c77028d9a23347330956e8cd253fbe96a225e5cb42a4450fdc2e5cefa8c1"
   },
   {
@@ -682,7 +682,7 @@ This will print:
       thumbnail: "bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam"
     },
     metadataHash: "504b154e868692932e2ef77900459915d3ab97be6150b2eac03c65b233cfbb8c",
-    metadataSalt: "18087aeaa388597b81cafdf4d2f6d81f",
+    metadataSalt: "a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531",
     transactionId: "20d0c77028d9a23347330956e8cd253fbe96a225e5cb42a4450fdc2e5cefa8c1"
   }
 ]
@@ -717,7 +717,7 @@ const nft0 = {
     description: 'NFT 1 is awesome.',
     thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
   },
-  metadataSalt: '727ca86ae4a338f21e83ec330f490bcf',
+  metadataSalt: '78e9bd055a2dda58dbf0327157e7abcc7c0412e4d07808cc369f0e1f7f1afb4d',
 }
 
 const nft1 = {
@@ -727,7 +727,7 @@ const nft1 = {
     description: 'NFT 2 is awesome.',
     thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
   },
-  metadataSalt: '18087aeaa388597b81cafdf4d2f6d81f',
+  metadataSalt: 'a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531',
 }
 
 // Reveal a single NFT
@@ -740,7 +740,8 @@ await client.send(contract.revealNFTs([nft0, nft1]));
 ## Blind Edition NFTs
 
 The `BlindEditionNFTContract` allows you to mint edition-based NFTs
-that are hidden at mint time and revealed at a later date.
+that have their serial numbers hidden at mint time.
+The serial numbers are then revealed at a later date.
 
 In this model, a contract can define multiple editions.
 All NFTs in an edition share the same metadata;
@@ -771,16 +772,11 @@ import { HashAlgorithm } from 'freshmint/crypto';
 const publicKey = privateKey.getPublicKey();
 const hashAlgorithm = HashAlgorithm.SHA3_256;
 
-// Specify the IPFS hash of an image (JPEG, PNG, etc)
-// to be used as a placeholder for hidden NFTs.
-const placeholderImage = 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam';
-
 const client = FreshmintClient.fromFCL(fcl, FreshmintConfig.TESTNET);
 
 const address = await client.send(contract.deploy({ 
   publicKey, 
-  hashAlgorithm,
-  placeholderImage
+  hashAlgorithm
 }));
 ```
 
@@ -832,13 +828,7 @@ This will print:
       description: 'This is the first edition',
       thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
     },
-    nfts: [
-      { editionId: '0', editionSerial: '1' },
-      { editionId: '0', editionSerial: '2' },
-      { editionId: '0', editionSerial: '3' },
-      { editionId: '0', editionSerial: '4' },
-      { editionId: '0', editionSerial: '5' },
-    ]
+    serialNumbers: [ '1', '2', '3', '4', '5' ]
   },
   {
     id: '1',
@@ -848,13 +838,7 @@ This will print:
       description: 'This is the second edition',
       thumbnail: 'bafybeidlkqhddsjrdue7y3dy27pu5d7ydyemcls4z24szlyik3we7vqvam',
     },
-    nfts: [
-      { editionId: '1', editionSerial: '1' },
-      { editionId: '1', editionSerial: '2' },
-      { editionId: '1', editionSerial: '3' },
-      { editionId: '1', editionSerial: '4' },
-      { editionId: '1', editionSerial: '5' },
-    ]
+    serialNumbers: [ '1', '2', '3', '4', '5' ]
   }
 ]
 ```
@@ -864,16 +848,9 @@ This will print:
 You can mint NFTs to any existing edition.
 The input to each NFT is simply its edition ID and serial number.
 
-**However, there are several important steps you need to take to avoid
-leaking edition contents before they are revealed.**
+**IMPORTANT: always randomize the minting order.**
 
-1. Always randomize the minting order.
-
-   This prevents users from being able to guess an NFT's _serial number_ before it is revealed.
-
-2. If you want to mix scramble multiple editions, always mint their NFTs in a mixed batch, rather than by edition.
-
-   This prevents users from being able to guess an NFT's _edition_ before it is revealed.
+This prevents users from being able to guess an NFT's serial number before it is revealed.
 
 ```js
 // This example shows how to mint editions into separate buckets.
@@ -882,13 +859,14 @@ import shuffle from 'your-secure-randomization-lib';
 
 for (const edition of editions) {
   // As mentioned above, ALWAYS randomize the mint order.
-  const randomizedNFTs = shuffle(edition.nfts);
+  const randomizedSerialNumbers = shuffle(edition.serialNumbers);
 
   // Mint each edition into its own bucket.
-  const mintedNFTs = await client.send(contract.mintNFTs(
-    randomizedNFTs,
-    { bucket: edition.id }
-  ));
+  const mintedNFTs = await client.send(contract.mintNFTs({ 
+    editionId: edition.id,
+    serialNumbers: randomizedSerialNumbers,
+    bucket: edition.id
+  }));
 
   console.log(mintedNFTs);
 }
@@ -901,17 +879,17 @@ This will print:
   {
     id: '0',
     editionId: '0',
-    editionSerial: '3',
-    editionHash: 'ab17379badad7bcf91885104f449a679b4cc68d1e3ccd527c6c7b922d0ae2655',
-    editionSalt: '6d8f193cab051793a1864bb8d082cf32',
+    serialNumber: '3',
+    hash: 'ab17379badad7bcf91885104f449a679b4cc68d1e3ccd527c6c7b922d0ae2655',
+    salt: '78e9bd055a2dda58dbf0327157e7abcc7c0412e4d07808cc369f0e1f7f1afb4d',
     transactionId: 'e648c662c3eb8550030c95c0dcc01d6d179925b9fc33fbaabe90715555d78ead'
   },
   {
     id: '1',
     editionId: '0',
-    editionSerial: '1',
-    editionHash: '10a315ec07b64935cebe82f14cdc5d7320ad941db3a14ad998305851d75c2119',
-    editionSalt: '8c658bba126995b1f99b8c9af374716f',
+    serialNumber: '1',
+    hash: '10a315ec07b64935cebe82f14cdc5d7320ad941db3a14ad998305851d75c2119',
+    salt: 'a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531',
     transactionId: 'e648c662c3eb8550030c95c0dcc01d6d179925b9fc33fbaabe90715555d78ead'
   },
   ...
@@ -920,21 +898,19 @@ This will print:
 
 ### Step 3: Reveal NFTs
 
-Reveal edition NFTs by publishing their edition ID, serial number and unique salt.
+Reveal NFTs by publishing their serial number and unique salt.
 
 ```js
 const nft0 = {
   id: '0',
-  editionId: '1',
-  editionSerial: '3',
-  editionSalt: '6d8f193cab051793a1864bb8d082cf32',
+  serialNumber: '3',
+  salt: '78e9bd055a2dda58dbf0327157e7abcc7c0412e4d07808cc369f0e1f7f1afb4d',
 };
 
 const nft1 = {
   id: '1',
-  editionId: '0',
-  editionSerial: '3',
-  editionSalt: '8c658bba126995b1f99b8c9af374716f',
+  serialNumber: '3',
+  salt: 'a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531',
 };
 
 // Reveal a single NFT

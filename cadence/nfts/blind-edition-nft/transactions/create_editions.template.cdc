@@ -1,7 +1,7 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
 transaction(
-    sizes: [UInt],
+    sizes: [UInt64],
     {{#each fields}}
     {{ this.name }}: [{{ this.asCadenceTypeString }}],
     {{/each}}

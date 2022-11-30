@@ -65,7 +65,7 @@ pub fun getOrCreateMintQueue(
     return queueRef
 }
 
-transaction(hashes: [String], bucketName: String?) {
+transaction(editionID: UInt64, hashes: [String], bucketName: String?) {
     
     let admin: &{{ contractName }}.Admin
     let mintQueue: &FreshmintQueue.CollectionQueue
@@ -82,7 +82,7 @@ transaction(hashes: [String], bucketName: String?) {
 
     execute {
         for hash in hashes {
-            let token <- self.admin.mintNFT(hash: hash.decodeHex())
+            let token <- self.admin.mintNFT(editionID: editionID, hash: hash.decodeHex())
 
             self.mintQueue.deposit(token: <- token)
         }

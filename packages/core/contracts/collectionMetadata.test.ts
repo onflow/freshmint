@@ -70,8 +70,9 @@ describe.each(suites)('Collection Metadata - $contractClass.name', ({ contractCl
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
-        placeholderImage: 'foo.jpeg',
         collectionMetadata,
+        // @ts-ignore
+        placeholderImage: 'foo.jpeg',
       }),
     );
 
