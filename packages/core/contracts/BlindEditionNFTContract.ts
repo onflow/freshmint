@@ -27,8 +27,8 @@ export type EditionResult = {
 
 export type OnChainEdition = {
   id: string;
-  size: number;
   limit?: number;
+  size: number;
   burned: number;
   isClosed: boolean;
   metadata: { [key: string]: any };
