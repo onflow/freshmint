@@ -14,7 +14,6 @@ import {
   teardownEmulator,
   collectionMetadata,
 } from '../testHelpers';
-import { MissingMetadataFieldsError } from '../metadata/validate';
 
 describe('StandardNFTContract', () => {
   beforeAll(setupEmulator);
@@ -82,7 +81,7 @@ describe('StandardNFTContract', () => {
 
     await expect(async () => {
       await client.send(contract.mintNFTs([nft]));
-    }).rejects.toThrow(MissingMetadataFieldsError);
+    }).rejects.toThrow(metadata.MissingMetadataFieldsError);
   });
 
   it('should fail to mint without all required fields', async () => {

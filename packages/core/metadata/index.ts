@@ -7,7 +7,7 @@ export { String, Int, UInt, UInt64, Fix64, UFix64, Bool, IPFSImage, HTTPFile, IP
 export { Schema, createSchema, parseSchema, defaultSchema } from './schema';
 export type { SchemaInput } from './schema';
 export { hashMetadata, hashMetadataWithSalt } from './hash';
-export { validateMetadata } from './validate';
+export { validateMetadata, MissingMetadataFieldsError } from './validate';
 
 export {
   View,
