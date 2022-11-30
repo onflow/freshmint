@@ -28,7 +28,7 @@ function parseDropResult(result: any | null): DropInfo | null {
 }
 
 function parseClaimResult(result: TransactionResult): string {
-  const event = result.events.find((e) => e.type.includes('FreshmintClaimSale.NFTClaimed'))!;
+  const event = result.events.find((e) => e.type.includes('FreshmintClaimSaleV2.NFTClaimed'))!;
   return event.data.nftID;
 }
 

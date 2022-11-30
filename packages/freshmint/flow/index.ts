@@ -180,12 +180,13 @@ export class FlowGateway {
 
   async startDrop(saleId: string, price: string) {
     return await this.cli.transaction('./cadence/transactions/start_drop.cdc', this.signer, [
-      { type: t.String, value: saleId },
-      { type: t.UFix64, value: price },
-      { type: t.Optional(t.Address), value: null },
-      { type: t.Optional(t.Path), value: null },
-      { type: t.Optional(t.String), value: null },
-      { type: t.Optional(t.String), value: null },
+      { type: t.String, value: saleId }, // saleID
+      { type: t.UFix64, value: price }, // price
+      { type: t.Optional(t.Address), value: null }, // paymentReceiverAddress (defaults to signer)
+      { type: t.Optional(t.Path), value: null }, // paymentReceiverPath (defaults to /public/flowTokenReceiver)
+      { type: t.Optional(t.String), value: null }, // bucketName
+      { type: t.Optional(t.UInt), value: null }, // claimLimit
+      { type: t.Optional(t.String), value: null }, // allowlistName
     ]);
   }
 

@@ -6,9 +6,9 @@ import {
   StandardNFTGenerator,
   EditionNFTGenerator,
   FreshmintMetadataViewsGenerator,
+  FreshmintClaimSaleV2Generator,
   FreshmintQueueGenerator,
   CommonNFTGenerator,
-  ClaimSaleGenerator,
   LockBoxGenerator,
 } from '@freshmint/core';
 
@@ -42,7 +42,7 @@ const contracts = {
   FlowToken: './FlowToken.cdc',
   FreshmintLockBox: './FreshmintLockBox.cdc',
   FreshmintMetadataViews: './FreshmintMetadataViews.cdc',
-  FreshmintClaimSale: './FreshmintClaimSale.cdc',
+  FreshmintClaimSaleV2: './FreshmintClaimSaleV2.cdc',
   FreshmintQueue: './FreshmintQueue.cdc',
 };
 
@@ -200,15 +200,15 @@ async function generateFreshmintQueue(dir: string) {
 
 async function generateFreshmintClaimSale(dir: string, contract: ContractConfig) {
   await writeFile(
-    path.resolve(dir, `cadence/contracts/FreshmintClaimSale.cdc`),
-    ClaimSaleGenerator.contract({ imports }),
+    path.resolve(dir, `cadence/contracts/FreshmintClaimSaleV2.cdc`),
+    FreshmintClaimSaleV2Generator.contract({ imports }),
   );
 
   const contractAddress = `"../contracts/${contract.name}.cdc"`;
 
   await writeFile(
     path.resolve(dir, `cadence/transactions/start_drop.cdc`),
-    ClaimSaleGenerator.startSale({
+    FreshmintClaimSaleV2Generator.startSale({
       contractName: contract.name,
       contractAddress,
       imports: shiftedImports,
@@ -217,7 +217,7 @@ async function generateFreshmintClaimSale(dir: string, contract: ContractConfig)
 
   await writeFile(
     path.resolve(dir, `cadence/transactions/stop_drop.cdc`),
-    ClaimSaleGenerator.stopSale({
+    FreshmintClaimSaleV2Generator.stopSale({
       contractName: contract.name,
       contractAddress,
       imports: shiftedImports,
@@ -226,7 +226,7 @@ async function generateFreshmintClaimSale(dir: string, contract: ContractConfig)
 
   await writeFile(
     path.resolve(dir, `cadence/transactions/claim_nft.cdc`),
-    ClaimSaleGenerator.claimNFT({
+    FreshmintClaimSaleV2Generator.claimNFT({
       contractName: contract.name,
       contractAddress,
       imports: shiftedImports,
@@ -235,7 +235,7 @@ async function generateFreshmintClaimSale(dir: string, contract: ContractConfig)
 
   await writeFile(
     path.resolve(dir, `cadence/scripts/get_drop.cdc`),
-    ClaimSaleGenerator.getClaimSale({
+    FreshmintClaimSaleV2Generator.getClaimSale({
       imports: shiftedImports,
     }),
   );

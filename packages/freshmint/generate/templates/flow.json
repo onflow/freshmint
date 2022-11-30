@@ -50,10 +50,10 @@
         "testnet": "0x10077395fa5d2436"
       }
     },
-    "FreshmintClaimSale": {
-      "source": "cadence/contracts/FreshmintClaimSale.cdc",
+    "FreshmintClaimSaleV2": {
+      "source": "cadence/contracts/FreshmintClaimSaleV2.cdc",
       "aliases": {
-        "testnet": "0x2d3d6874bc231156"
+        "testnet": "0x3b8959a9823c62b4"
       }
     },
     "FreshmintLockBox": {
@@ -88,7 +88,7 @@
         "MetadataViews",
         "FreshmintMetadataViews",
         "FreshmintQueue",
-        "FreshmintClaimSale",
+        "FreshmintClaimSaleV2",
         "FreshmintLockBox"
       ]
     }
