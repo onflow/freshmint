@@ -41,23 +41,28 @@ pub contract {{ contractName }}: NonFungibleToken {
         ///
         pub let salt: [UInt8]
 
-        {{#each fields}}
-        pub let {{ this.name }}: {{ this.asCadenceTypeString }}
-        {{/each}}
+        /// A dictionary containing the revealed metadata values for this NFT.
+        ///
+        pub let metadata: {String: AnyStruct}
 
         init(
             salt: [UInt8],
-            {{#each fields}}
-            {{ this.name }}: {{ this.asCadenceTypeString }},
-            {{/each}}
+            metadata: {String: AnyStruct}
         ) {
-            self.salt = salt
-
             {{#each fields}}
-            self.{{ this.name }} = {{ this.name }}
+            {{ ../contractName }}.checkMetadataField(metadata: metadata, name: "{{ this.name }}", expectedType: Type<{{ this.asCadenceTypeString }}>())
             {{/each}}
+
+            self.salt = salt
+            self.metadata = metadata
         }
 
+        {{#each fields}}
+        pub fun {{ this.name }}(): {{ this.asCadenceTypeString }} {
+            return self.metadata["{{ this.name}}"]! as! {{ this.asCadenceTypeString }}
+        }
+
+        {{/each}}
         /// Encode this metadata object as a byte array.
         ///
         /// This can be used to hash the metadata and verify its integrity.
@@ -65,7 +70,7 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun encode(): [UInt8] {
             return self.salt
             {{#each fields}}
-                .concat({{ this.getCadenceEncodingTemplate }})
+                .concat(FreshmintEncoding.encode{{ this.asCadenceTypeString }}(self.{{ this.name }}()))
             {{/each}}
         }
 
@@ -123,17 +128,23 @@ pub contract {{ contractName }}: NonFungibleToken {
             self.hash = hash
         }
 
+        /// Return true if the NFT metadata is revealed, false otherwise.
+        ///
+        pub fun isRevealed(): Bool {
+            return {{ contractName }}.metadata.containsKey(self.id)
+        }
+
         /// Return the metadata for this NFT.
         ///
-        /// This function returns nil if the NFT metadata has
+        /// This function panics if the NFT metadata has
         /// not yet been revealed.
         ///
-        pub fun getMetadata(): Metadata? {
-            return {{ contractName }}.metadata[self.id]
+        pub fun getMetadata(): Metadata {
+            return {{ contractName }}.metadata[self.id] ?? panic("this NFT is not yet revealed")
         }
 
         pub fun getViews(): [Type] {
-            if self.getMetadata() != nil {
+            if self.isRevealed() {
                 {{#if views }}
                 return [
                     {{#each views}}
@@ -158,17 +169,17 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         pub fun resolveView(_ view: Type): AnyStruct? {
             {{#if views }}
-            if let metadata = self.getMetadata() {
+            if self.isRevealed() {
                 switch view {
                     {{#each views}}
-                    {{> viewCase view=this metadata="metadata" }}
+                    {{> viewCase view=this }}
                     {{/each}}
                 }
 
                 return nil
             }
             {{ else }}
-            if self.getMetadata() != nil {
+            if self.isRevealed() {
                 return nil
             }
             {{/if}}
@@ -194,7 +205,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         {{#each views}}
         {{#if this.cadenceResolverFunction }}
-        {{> (lookup . "id") view=this contractName=../contractName }}
+        {{> (lookup . "id") view=this metadataInstance="self.getMetadata()" contractName=../contractName }}
         
         {{/if}}
         {{/each}}
@@ -266,6 +277,21 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{ contractName }}.metadata[id] = metadata
 
             emit Revealed(id: id)
+        }
+    }
+
+    /// Check that a provided metadata field exists and is the correct type.
+    ///
+    /// This function is used to validate inputs during minting.
+    ///
+    pub fun checkMetadataField(metadata: {String: AnyStruct}, name: String, expectedType: Type) {
+        if let value = metadata[name] {
+            assert(
+                value.isInstance(expectedType),
+                message: "\"".concat(name).concat("\" metadata field must be of type ").concat(expectedType.identifier)
+            )
+        } else {
+            panic("\"".concat(name).concat("\" metadata field is required"))
         }
     }
 

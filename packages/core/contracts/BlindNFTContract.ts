@@ -3,8 +3,15 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
-import { MetadataMap, hashMetadataWithSalt } from '../metadata';
+import {
+  NFTContract,
+  CollectionMetadata,
+  prepareCollectionMetadata,
+  Royalty,
+  prepareRoyalties,
+  prepareMetadataBatch,
+} from './NFTContract';
+import { MetadataMap, hashMetadataWithSalt, validateMetadata } from '../metadata';
 import { BlindNFTGenerator } from '../generators/BlindNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
@@ -150,6 +157,13 @@ export class BlindNFTContract extends NFTContract {
     const ids = nfts.map((nft) => nft.id);
     const salts = nfts.map((nft) => nft.metadataSalt);
 
+    // Validate all NFT metadata
+    nfts.forEach((nft) => validateMetadata(this.schema, nft.metadata));
+
+    // Prepare the metadata batch argument
+    const metadataValues = nfts.map((nft) => nft.metadata);
+    const metadataValuesArgument = prepareMetadataBatch(this.schema, metadataValues);
+
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
         const script = BlindNFTGenerator.reveal({
@@ -164,12 +178,7 @@ export class BlindNFTContract extends NFTContract {
           args: [
             fcl.arg(ids, t.Array(t.UInt64)),
             fcl.arg(salts, t.Array(t.String)),
-            ...this.schema.fields.map((field) => {
-              return fcl.arg(
-                nfts.map((nft) => field.getValue(nft.metadata)),
-                t.Array(field.asCadenceTypeObject()),
-              );
-            }),
+            fcl.arg(metadataValuesArgument, t.Identity),
           ],
           computeLimit: 9999,
           signers: this.getSigners(),

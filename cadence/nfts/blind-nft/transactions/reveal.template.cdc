@@ -3,9 +3,7 @@ import {{ contractName }} from {{{ contractAddress }}}
 transaction(
     ids: [UInt64],
     metadataSalts: [String],
-    {{#each fields}}
-    {{ this.name }}: [{{ this.asCadenceTypeString }}],
-    {{/each}}
+    metadataValues: [{String: AnyStruct}]
 ) {
     
     let admin: &{{ contractName }}.Admin
@@ -22,9 +20,7 @@ transaction(
 
             let metadata = {{ contractName }}.Metadata(
                 salt: metadataSalt,
-                {{#each fields}}
-                {{ this.name }}: {{ this.name }}[i],
-                {{/each}}
+                metadata: metadataValues[i]
             )
 
             self.admin.revealNFT(

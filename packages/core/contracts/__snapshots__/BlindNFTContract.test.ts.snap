@@ -55,24 +55,37 @@ pub contract BlindNFT_Test: NonFungibleToken {
         ///
         pub let salt: [UInt8]
 
-        pub let name: String
-        pub let description: String
-        pub let thumbnail: String
-        pub let serialNumber: UInt64
+        /// A dictionary containing the revealed metadata values for this NFT.
+        ///
+        pub let metadata: {String: AnyStruct}
 
         init(
             salt: [UInt8],
-            name: String,
-            description: String,
-            thumbnail: String,
-            serialNumber: UInt64,
+            metadata: {String: AnyStruct}
         ) {
-            self.salt = salt
+            BlindNFT_Test.checkMetadataField(metadata: metadata, name: \\"name\\", expectedType: Type<String>())
+            BlindNFT_Test.checkMetadataField(metadata: metadata, name: \\"description\\", expectedType: Type<String>())
+            BlindNFT_Test.checkMetadataField(metadata: metadata, name: \\"thumbnail\\", expectedType: Type<String>())
+            BlindNFT_Test.checkMetadataField(metadata: metadata, name: \\"serialNumber\\", expectedType: Type<UInt64>())
 
-            self.name = name
-            self.description = description
-            self.thumbnail = thumbnail
-            self.serialNumber = serialNumber
+            self.salt = salt
+            self.metadata = metadata
+        }
+
+        pub fun name(): String {
+            return self.metadata[\\"name\\"]! as! String
+        }
+
+        pub fun description(): String {
+            return self.metadata[\\"description\\"]! as! String
+        }
+
+        pub fun thumbnail(): String {
+            return self.metadata[\\"thumbnail\\"]! as! String
+        }
+
+        pub fun serialNumber(): UInt64 {
+            return self.metadata[\\"serialNumber\\"]! as! UInt64
         }
 
         /// Encode this metadata object as a byte array.
@@ -81,10 +94,10 @@ pub contract BlindNFT_Test: NonFungibleToken {
         ///
         pub fun encode(): [UInt8] {
             return self.salt
-                .concat(FreshmintEncoding.encodeString(self.name))
-                .concat(FreshmintEncoding.encodeString(self.description))
-                .concat(FreshmintEncoding.encodeString(self.thumbnail))
-                .concat(FreshmintEncoding.encodeUInt64(self.serialNumber))
+                .concat(FreshmintEncoding.encodeString(self.name()))
+                .concat(FreshmintEncoding.encodeString(self.description()))
+                .concat(FreshmintEncoding.encodeString(self.thumbnail()))
+                .concat(FreshmintEncoding.encodeUInt64(self.serialNumber()))
         }
 
         pub fun hash(): [UInt8] {
@@ -141,17 +154,23 @@ pub contract BlindNFT_Test: NonFungibleToken {
             self.hash = hash
         }
 
+        /// Return true if the NFT metadata is revealed, false otherwise.
+        ///
+        pub fun isRevealed(): Bool {
+            return BlindNFT_Test.metadata.containsKey(self.id)
+        }
+
         /// Return the metadata for this NFT.
         ///
-        /// This function returns nil if the NFT metadata has
+        /// This function panics if the NFT metadata has
         /// not yet been revealed.
         ///
-        pub fun getMetadata(): Metadata? {
-            return BlindNFT_Test.metadata[self.id]
+        pub fun getMetadata(): Metadata {
+            return BlindNFT_Test.metadata[self.id] ?? panic(\\"this NFT is not yet revealed\\")
         }
 
         pub fun getViews(): [Type] {
-            if self.getMetadata() != nil {
+            if self.isRevealed() {
                 return [
                     Type<MetadataViews.NFTView>(),
                     Type<MetadataViews.Display>(),
@@ -174,12 +193,12 @@ pub contract BlindNFT_Test: NonFungibleToken {
         }
 
         pub fun resolveView(_ view: Type): AnyStruct? {
-            if let metadata = self.getMetadata() {
+            if self.isRevealed() {
                 switch view {
                     case Type<MetadataViews.NFTView>():
-                        return self.resolveNFTView(metadata)
+                        return self.resolveNFTView()
                     case Type<MetadataViews.Display>():
-                        return self.resolveDisplay(metadata)
+                        return self.resolveDisplay()
                     case Type<MetadataViews.ExternalURL>():
                         return self.resolveExternalURL()
                     case Type<MetadataViews.NFTCollectionDisplay>():
@@ -189,7 +208,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
                     case Type<MetadataViews.Royalties>():
                         return self.resolveRoyalties()
                     case Type<MetadataViews.Serial>():
-                        return self.resolveSerial(metadata)
+                        return self.resolveSerial()
                 }
 
                 return nil
@@ -217,11 +236,11 @@ pub contract BlindNFT_Test: NonFungibleToken {
             return nil
         }
 
-        pub fun resolveNFTView(_ metadata: Metadata): MetadataViews.NFTView {
+        pub fun resolveNFTView(): MetadataViews.NFTView {
             return MetadataViews.NFTView(
                 id: self.id,
                 uuid: self.uuid,
-                display: self.resolveDisplay(metadata),
+                display: self.resolveDisplay(),
                 externalURL: self.resolveExternalURL(),
                 collectionData: self.resolveNFTCollectionData(),
                 collectionDisplay: self.resolveNFTCollectionDisplay(),
@@ -230,11 +249,11 @@ pub contract BlindNFT_Test: NonFungibleToken {
             )
         }
         
-        pub fun resolveDisplay(_ metadata: Metadata): MetadataViews.Display {
+        pub fun resolveDisplay(): MetadataViews.Display {
             return MetadataViews.Display(
-                name: metadata.name,
-                description: metadata.description,
-                thumbnail: FreshmintMetadataViews.ipfsFile(file: metadata.thumbnail)
+                name: self.getMetadata().name(),
+                description: self.getMetadata().description(),
+                thumbnail: FreshmintMetadataViews.ipfsFile(file: self.getMetadata().thumbnail())
             )
         }
         
@@ -267,8 +286,8 @@ pub contract BlindNFT_Test: NonFungibleToken {
             return MetadataViews.Royalties(BlindNFT_Test.getRoyalties())
         }
         
-        pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
-            return MetadataViews.Serial(metadata.serialNumber)
+        pub fun resolveSerial(): MetadataViews.Serial {
+            return MetadataViews.Serial(self.getMetadata().serialNumber())
         }
         
         destroy() {
@@ -435,6 +454,21 @@ pub contract BlindNFT_Test: NonFungibleToken {
             BlindNFT_Test.metadata[id] = metadata
 
             emit Revealed(id: id)
+        }
+    }
+
+    /// Check that a provided metadata field exists and is the correct type.
+    ///
+    /// This function is used to validate inputs during minting.
+    ///
+    pub fun checkMetadataField(metadata: {String: AnyStruct}, name: String, expectedType: Type) {
+        if let value = metadata[name] {
+            assert(
+                value.isInstance(expectedType),
+                message: \\"\\\\\\"\\".concat(name).concat(\\"\\\\\\" metadata field must be of type \\").concat(expectedType.identifier)
+            )
+        } else {
+            panic(\\"\\\\\\"\\".concat(name).concat(\\"\\\\\\" metadata field is required\\"))
         }
     }
 
