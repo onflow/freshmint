@@ -66,7 +66,7 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         {{#each views}}
         {{#if this.cadenceResolverFunction }}
-        {{> (lookup . "id") view=this contractName=../contractName }}
+        {{> (lookup . "id") view=this metadataInstance="self" contractName=../contractName }}
         
         {{/if}}
         {{/each}}

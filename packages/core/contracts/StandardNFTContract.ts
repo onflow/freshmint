@@ -108,14 +108,14 @@ export class StandardNFTContract extends NFTContract {
         const mintIds = nfts.map((metadata) => hashMetadata(this.schema, metadata).toString('hex'));
 
         // Prepare the metadata batch argument
-        const metadataBatch = prepareMetadataBatch(this.schema, nfts);
+        const metadataValuesArgument = prepareMetadataBatch(this.schema, nfts);
 
         return {
           script,
           args: [
             fcl.arg(bucket, t.Optional(t.String)),
             fcl.arg(mintIds, t.Array(t.String)),
-            fcl.arg(metadataBatch, t.Identity),
+            fcl.arg(metadataValuesArgument, t.Identity),
           ],
           computeLimit: 9999,
           signers: this.getSigners(),
