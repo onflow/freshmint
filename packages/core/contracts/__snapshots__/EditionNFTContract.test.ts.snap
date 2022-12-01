@@ -15,7 +15,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
     pub event Deposit(id: UInt64, to: Address?)
     pub event Minted(id: UInt64, editionID: UInt64, serialNumber: UInt64)
     pub event Burned(id: UInt64)
-    pub event EditionCreated(edition: Edition)
+    pub event EditionCreated(id: UInt64, limit: UInt64?)
     pub event EditionClosed(id: UInt64, size: UInt64)
 
     pub let CollectionStoragePath: StoragePath
@@ -45,23 +45,6 @@ pub contract EditionNFT_Test: NonFungibleToken {
     /// The collection-level metadata for all NFTs minted by this contract.
     ///
     pub let collectionMetadata: MetadataViews.NFTCollectionDisplay
-
-    pub struct Metadata {
-    
-        pub let name: String
-        pub let description: String
-        pub let thumbnail: String
-
-        init(
-            name: String,
-            description: String,
-            thumbnail: String,
-        ) {
-            self.name = name
-            self.description = description
-            self.thumbnail = thumbnail
-        }
-    }
 
     pub struct Edition {
 
@@ -100,12 +83,12 @@ pub contract EditionNFT_Test: NonFungibleToken {
 
         /// The metadata for this edition.
         ///
-        pub let metadata: Metadata
+        pub let metadata: {String: AnyStruct}
 
         init(
             id: UInt64,
             limit: UInt64?,
-            metadata: Metadata
+            metadata: {String: AnyStruct}
         ) {
             self.id = id
             self.limit = limit
@@ -115,6 +98,24 @@ pub contract EditionNFT_Test: NonFungibleToken {
             self.burned = 0
 
             self.isClosed = false
+        }
+
+        /// Return the name value for this edition.
+        ///
+        pub fun name(): String {
+            return self.metadata[\\"name\\"]! as! String
+        }
+
+        /// Return the description value for this edition.
+        ///
+        pub fun description(): String {
+            return self.metadata[\\"description\\"]! as! String
+        }
+
+        /// Return the thumbnail value for this edition.
+        ///
+        pub fun thumbnail(): String {
+            return self.metadata[\\"thumbnail\\"]! as! String
         }
 
         /// Increment the size of this edition.
@@ -196,9 +197,9 @@ pub contract EditionNFT_Test: NonFungibleToken {
 
             switch view {
                 case Type<MetadataViews.NFTView>():
-                    return self.resolveNFTView(edition.metadata)
+                    return self.resolveNFTView()
                 case Type<MetadataViews.Display>():
-                    return self.resolveDisplay(edition.metadata)
+                    return self.resolveDisplay()
                 case Type<MetadataViews.ExternalURL>():
                     return self.resolveExternalURL()
                 case Type<MetadataViews.NFTCollectionDisplay>():
@@ -208,17 +209,17 @@ pub contract EditionNFT_Test: NonFungibleToken {
                 case Type<MetadataViews.Royalties>():
                     return self.resolveRoyalties()
                 case Type<MetadataViews.Edition>():
-                    return self.resolveEditionView(edition)
+                    return self.resolveEditionView()
             }
 
             return nil
         }
 
-        pub fun resolveNFTView(_ metadata: Metadata): MetadataViews.NFTView {
+        pub fun resolveNFTView(): MetadataViews.NFTView {
             return MetadataViews.NFTView(
                 id: self.id,
                 uuid: self.uuid,
-                display: self.resolveDisplay(metadata),
+                display: self.resolveDisplay(),
                 externalURL: self.resolveExternalURL(),
                 collectionData: self.resolveNFTCollectionData(),
                 collectionDisplay: self.resolveNFTCollectionDisplay(),
@@ -227,11 +228,11 @@ pub contract EditionNFT_Test: NonFungibleToken {
             )
         }
         
-        pub fun resolveDisplay(_ metadata: Metadata): MetadataViews.Display {
+        pub fun resolveDisplay(): MetadataViews.Display {
             return MetadataViews.Display(
-                name: metadata.name,
-                description: metadata.description,
-                thumbnail: FreshmintMetadataViews.ipfsFile(file: metadata.thumbnail)
+                name: self.getEdition().name(),
+                description: self.getEdition().description(),
+                thumbnail: FreshmintMetadataViews.ipfsFile(file: self.getEdition().thumbnail())
             )
         }
         
@@ -264,7 +265,9 @@ pub contract EditionNFT_Test: NonFungibleToken {
             return MetadataViews.Royalties(EditionNFT_Test.getRoyalties())
         }
         
-        pub fun resolveEditionView(_ edition: Edition): MetadataViews.Edition {
+        pub fun resolveEditionView(): MetadataViews.Edition {
+            let edition = self.getEdition()
+            
             return MetadataViews.Edition(
                 name: \\"Edition\\",
                 number: self.serialNumber,
@@ -396,16 +399,8 @@ pub contract EditionNFT_Test: NonFungibleToken {
         pub fun createEdition(
             mintID: String,
             limit: UInt64?,
-            name: String,
-            description: String,
-            thumbnail: String,
+            metadata: {String: AnyStruct}
         ): UInt64 {
-            let metadata = Metadata(
-                name: name,
-                description: description,
-                thumbnail: thumbnail,
-            )
-
             // Prevent multiple editions from being minted with the same mint ID
             assert(
                 EditionNFT_Test.editionsByMintID[mintID] == nil,
@@ -424,7 +419,7 @@ pub contract EditionNFT_Test: NonFungibleToken {
             // Update the mint ID index
             EditionNFT_Test.editionsByMintID[mintID] = edition.id
 
-            emit EditionCreated(edition: edition)
+            emit EditionCreated(id: edition.id, limit: edition.limit)
 
             EditionNFT_Test.totalEditions = EditionNFT_Test.totalEditions + (1 as UInt64)
 

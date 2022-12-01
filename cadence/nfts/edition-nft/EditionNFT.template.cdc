@@ -12,7 +12,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub event Deposit(id: UInt64, to: Address?)
     pub event Minted(id: UInt64, editionID: UInt64, serialNumber: UInt64)
     pub event Burned(id: UInt64)
-    pub event EditionCreated(edition: Edition)
+    pub event EditionCreated(id: UInt64, limit: UInt64?)
     pub event EditionClosed(id: UInt64, size: UInt64)
 
     pub let CollectionStoragePath: StoragePath
@@ -31,23 +31,6 @@ pub contract {{ contractName }}: NonFungibleToken {
     {{> royalties-field contractName=contractName }}
 
     {{> collection-metadata-field }}
-
-    pub struct Metadata {
-    
-        {{#each fields}}
-        pub let {{ this.name }}: {{ this.asCadenceTypeString }}
-        {{/each}}
-
-        init(
-            {{#each fields}}
-            {{ this.name }}: {{ this.asCadenceTypeString }},
-            {{/each}}
-        ) {
-            {{#each fields}}
-            self.{{ this.name }} = {{ this.name }}
-            {{/each}}
-        }
-    }
 
     pub struct Edition {
 
@@ -86,12 +69,12 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         /// The metadata for this edition.
         ///
-        pub let metadata: Metadata
+        pub let metadata: {String: AnyStruct}
 
         init(
             id: UInt64,
             limit: UInt64?,
-            metadata: Metadata
+            metadata: {String: AnyStruct}
         ) {
             self.id = id
             self.limit = limit
@@ -103,6 +86,14 @@ pub contract {{ contractName }}: NonFungibleToken {
             self.isClosed = false
         }
 
+        {{#each fields}}
+        /// Return the {{ this.name }} value for this edition.
+        ///
+        pub fun {{ this.name }}(): {{ this.asCadenceTypeString }} {
+            return self.metadata["{{ this.name}}"]! as! {{ this.asCadenceTypeString }}
+        }
+
+        {{/each}}
         /// Increment the size of this edition.
         ///
         access(contract) fun incrementSize() {
@@ -179,10 +170,10 @@ pub contract {{ contractName }}: NonFungibleToken {
 
             switch view {
                 {{#each views}}
-                {{> viewCase view=this metadata="edition.metadata" }}
+                {{> viewCase view=this }}
                 {{/each}}
                 case Type<MetadataViews.Edition>():
-                    return self.resolveEditionView(edition)
+                    return self.resolveEditionView()
             }
 
             return nil
@@ -190,11 +181,13 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         {{#each views}}
         {{#if this.cadenceResolverFunction }}
-        {{> (lookup . "id") view=this contractName=../contractName }}
+        {{> (lookup . "id") view=this contractName=../contractName metadataInstance="self.getEdition()" }}
         
         {{/if}}
         {{/each}}
-        pub fun resolveEditionView(_ edition: Edition): MetadataViews.Edition {
+        pub fun resolveEditionView(): MetadataViews.Edition {
+            let edition = self.getEdition()
+            
             return MetadataViews.Edition(
                 name: "Edition",
                 number: self.serialNumber,
@@ -230,16 +223,8 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun createEdition(
             mintID: String,
             limit: UInt64?,
-            {{#each fields}}
-            {{ this.name }}: {{ this.asCadenceTypeString }},
-            {{/each}}
+            metadata: {String: AnyStruct}
         ): UInt64 {
-            let metadata = Metadata(
-                {{#each fields}}
-                {{ this.name }}: {{ this.name }},
-                {{/each}}
-            )
-
             // Prevent multiple editions from being minted with the same mint ID
             assert(
                 {{ contractName }}.editionsByMintID[mintID] == nil,
@@ -258,7 +243,7 @@ pub contract {{ contractName }}: NonFungibleToken {
             // Update the mint ID index
             {{ contractName }}.editionsByMintID[mintID] = edition.id
 
-            emit EditionCreated(edition: edition)
+            emit EditionCreated(id: edition.id, limit: edition.limit)
 
             {{ contractName }}.totalEditions = {{ contractName }}.totalEditions + (1 as UInt64)
 

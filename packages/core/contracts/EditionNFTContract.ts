@@ -3,8 +3,15 @@ import * as fcl from '@onflow/fcl';
 // @ts-ignore
 import * as t from '@onflow/types';
 
-import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
-import { hashMetadata, MetadataMap } from '../metadata';
+import {
+  NFTContract,
+  CollectionMetadata,
+  prepareCollectionMetadata,
+  Royalty,
+  prepareRoyalties,
+  prepareMetadataBatch,
+} from './NFTContract';
+import { hashMetadata, MetadataMap, validateMetadata } from '../metadata';
 import { EditionNFTGenerator } from '../generators/EditionNFTGenerator';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult, TransactionEvent } from '../transactions';
@@ -135,22 +142,24 @@ export class EditionNFTContract extends NFTContract {
         schema: this.schema,
       });
 
+      // Validate all NFT metadata
+      editions.forEach((edition) => validateMetadata(this.schema, edition.metadata));
+
       // Use metadata hash as mint ID
       const mintIds = editions.map((edition) => hashMetadata(this.schema, edition.metadata).toString('hex'));
 
       const limits = editions.map((edition) => (edition.limit ? edition.limit.toString(10) : undefined));
+
+      // Prepare the metadata batch argument
+      const metadataValues = editions.map((edition) => edition.metadata);
+      const metadataValuesArgument = prepareMetadataBatch(this.schema, metadataValues);
 
       return {
         script,
         args: [
           fcl.arg(mintIds, t.Array(t.String)),
           fcl.arg(limits, t.Array(t.Optional(t.UInt64))),
-          ...this.schema.fields.map((field) => {
-            return fcl.arg(
-              editions.map((edition) => field.getValue(edition.metadata)),
-              t.Array(field.asCadenceTypeObject()),
-            );
-          }),
+          fcl.arg(metadataValuesArgument, t.Identity),
         ],
         computeLimit: 9999,
         signers: this.getSigners(),
@@ -236,7 +245,7 @@ function formatEditionResults({ events }: TransactionResult, editions: EditionIn
 
   return editions.flatMap((edition, i) => {
     const editionEvent: any = editionEvents[i];
-    const editionId = editionEvent.data.edition.id;
+    const editionId = editionEvent.data.id;
 
     return {
       id: editionId,

@@ -1,11 +1,15 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
+/// This transaction creates a batch of new editions.
+///
+/// Parameters:
+/// - mintIDs: a list containing the mint ID for each edition.
+/// - limits: a list containing an optional size limit for each edition.
+///
 transaction(
     mintIDs: [String],
     limits: [UInt64?],
-    {{#each fields}}
-    {{ this.name }}: [{{ this.asCadenceTypeString }}],
-    {{/each}}
+    metadataValues: [{String: AnyStruct}]
 ) {
     
     let admin: &{{ contractName }}.Admin
@@ -20,9 +24,7 @@ transaction(
             self.admin.createEdition(
                 mintID: mintID,
                 limit: limits[i],
-                {{#each fields}}
-                {{ this.name }}: {{ this.name }}[i],
-                {{/each}}
+                metadata: metadataValues[i]
             )        
         }
     }
