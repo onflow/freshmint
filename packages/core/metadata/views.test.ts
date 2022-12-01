@@ -11,7 +11,7 @@ const mediaType = 'image/jpeg';
 const contractName = 'Foo';
 
 function generateView(view: metadata.View): string {
-  return TemplateGenerator.generate(view.type.cadenceTemplate, { contractName, view });
+  return TemplateGenerator.generate(view.type.cadenceTemplate, { view, metadataInstance: 'self', contractName });
 }
 
 describe('NFTCollectionDisplayView', () => {

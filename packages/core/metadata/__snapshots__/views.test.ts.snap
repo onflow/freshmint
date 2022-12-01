@@ -126,8 +126,8 @@ exports[`RoyaltiesView generates a royalties view 1`] = `
 `;
 
 exports[`SerialView generates a Cadence snippet 1`] = `
-"pub fun resolveSerial(_ metadata: Metadata): MetadataViews.Serial {
-    return MetadataViews.Serial(metadata.serialNumber)
+"pub fun resolveSerial(): MetadataViews.Serial {
+    return MetadataViews.Serial(self.serialNumber())
 }
 "
 `;
