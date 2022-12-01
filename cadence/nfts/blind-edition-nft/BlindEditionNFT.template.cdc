@@ -13,7 +13,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub event Minted(id: UInt64, editionID: UInt64, hash: [UInt8])
     pub event Revealed(id: UInt64, serialNumber: UInt64, salt: [UInt8])
     pub event Burned(id: UInt64)
-    pub event EditionCreated(edition: Edition)
+    pub event EditionCreated(id: UInt64, limit: UInt64?)
     pub event EditionClosed(id: UInt64, size: UInt64)
 
     pub let CollectionStoragePath: StoragePath
@@ -87,12 +87,12 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         /// The metadata for this edition.
         ///
-        pub let metadata: Metadata
+        pub let metadata: {String: AnyStruct}
 
         init(
             id: UInt64,
             limit: UInt64?,
-            metadata: Metadata
+            metadata: {String: AnyStruct}
         ) {
             self.id = id
             self.limit = limit
@@ -104,6 +104,12 @@ pub contract {{ contractName }}: NonFungibleToken {
             self.isClosed = false
         }
 
+        {{#each fields}}
+        pub fun {{ this.name }}(): {{ this.asCadenceTypeString }} {
+            return self.metadata["{{ this.name}}"]! as! {{ this.asCadenceTypeString }}
+        }
+
+        {{/each}}
         /// Increment the size of this edition.
         ///
         access(contract) fun incrementSize() {
@@ -233,16 +239,22 @@ pub contract {{ contractName }}: NonFungibleToken {
             return {{ contractName }}.getEdition(id: self.editionID)!
         }
 
+        /// Return true if the NFT metadata is revealed, false otherwise.
+        ///
+        pub fun isRevealed(): Bool {
+            return {{ contractName }}.serialNumbers.containsKey(self.id)
+        }
+
         /// Return this NFT's serial number.
         ///
         /// This function returns nil if the serial number is not yet revealed.
         ///
-        pub fun getSerialNumber(): UInt64? {
+        pub fun getSerialNumber(): UInt64 {
             if let revealedSerialNumber = {{ contractName }}.serialNumbers[self.id] {
                 return revealedSerialNumber.serialNumber
             }
 
-            return nil
+            panic("the serial number for this NFT is not yet revealed")
         }
 
         pub fun getViews(): [Type] {
@@ -267,16 +279,16 @@ pub contract {{ contractName }}: NonFungibleToken {
             
             switch view {
                 {{#each views}}
-                {{> viewCase view=this metadata="edition.metadata" }}
+                {{> viewCase view=this }}
                 {{/each}}
             }
 
-            if let serialNumber = self.getSerialNumber() {
+            if self.isRevealed() {
                 switch view {
                     case Type<MetadataViews.Edition>():
-                        return self.resolveEditionView(serialNumber: serialNumber, size: edition.size)
+                        return self.resolveEditionView()
                     case Type<MetadataViews.Serial>():
-                        return self.resolveSerialView(serialNumber: serialNumber)
+                        return self.resolveSerialView()
                 }
             } else {
                 switch view {
@@ -290,19 +302,24 @@ pub contract {{ contractName }}: NonFungibleToken {
 
         {{#each views}}
         {{#if this.cadenceResolverFunction }}
-        {{> (lookup . "id") view=this contractName=../contractName }}
+        {{> (lookup . "id") view=this metadataInstance="self.getEdition()" contractName=../contractName }}
         
         {{/if}}
         {{/each}}
-        pub fun resolveEditionView(serialNumber: UInt64, size: UInt64): MetadataViews.Edition {
+        pub fun resolveEditionView(): MetadataViews.Edition {
+            let serialNumber = self.getSerialNumber()
+            let edition = self.getEdition()
+
             return MetadataViews.Edition(
                 name: "Edition",
                 number: serialNumber,
-                max: size
+                max: edition.size
             )
         }
 
-        pub fun resolveSerialView(serialNumber: UInt64): MetadataViews.Serial {
+        pub fun resolveSerialView(): MetadataViews.Serial {
+            let serialNumber = self.getSerialNumber()
+
             return MetadataViews.Serial(serialNumber)
         }
 
@@ -335,15 +352,8 @@ pub contract {{ contractName }}: NonFungibleToken {
         pub fun createEdition(
             mintID: String,
             limit: UInt64?,
-            {{#each fields}}
-            {{ this.name }}: {{ this.asCadenceTypeString }},
-            {{/each}}
+            metadata: {String: AnyStruct}
         ): UInt64 {
-            let metadata = Metadata(
-                {{#each fields}}
-                {{ this.name }}: {{ this.name }},
-                {{/each}}
-            )
 
             // Prevent multiple editions from being minted with the same mint ID
             assert(
@@ -363,7 +373,7 @@ pub contract {{ contractName }}: NonFungibleToken {
             // Update the mint ID index
             {{ contractName }}.editionsByMintID[mintID] = edition.id
 
-            emit EditionCreated(edition: edition)
+            emit EditionCreated(id: edition.id, limit: edition.limit)
 
             {{ contractName }}.totalEditions = {{ contractName }}.totalEditions + (1 as UInt64)
 

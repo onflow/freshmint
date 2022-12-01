@@ -16,7 +16,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
     pub event Minted(id: UInt64, editionID: UInt64, hash: [UInt8])
     pub event Revealed(id: UInt64, serialNumber: UInt64, salt: [UInt8])
     pub event Burned(id: UInt64)
-    pub event EditionCreated(edition: Edition)
+    pub event EditionCreated(id: UInt64, limit: UInt64?)
     pub event EditionClosed(id: UInt64, size: UInt64)
 
     pub let CollectionStoragePath: StoragePath
@@ -101,12 +101,12 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
 
         /// The metadata for this edition.
         ///
-        pub let metadata: Metadata
+        pub let metadata: {String: AnyStruct}
 
         init(
             id: UInt64,
             limit: UInt64?,
-            metadata: Metadata
+            metadata: {String: AnyStruct}
         ) {
             self.id = id
             self.limit = limit
@@ -116,6 +116,18 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             self.burned = 0
 
             self.isClosed = false
+        }
+
+        pub fun name(): String {
+            return self.metadata[\\"name\\"]! as! String
+        }
+
+        pub fun description(): String {
+            return self.metadata[\\"description\\"]! as! String
+        }
+
+        pub fun thumbnail(): String {
+            return self.metadata[\\"thumbnail\\"]! as! String
         }
 
         /// Increment the size of this edition.
@@ -247,16 +259,22 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             return BlindEditionNFT_Test.getEdition(id: self.editionID)!
         }
 
+        /// Return true if the NFT metadata is revealed, false otherwise.
+        ///
+        pub fun isRevealed(): Bool {
+            return BlindEditionNFT_Test.serialNumbers.containsKey(self.id)
+        }
+
         /// Return this NFT's serial number.
         ///
         /// This function returns nil if the serial number is not yet revealed.
         ///
-        pub fun getSerialNumber(): UInt64? {
+        pub fun getSerialNumber(): UInt64 {
             if let revealedSerialNumber = BlindEditionNFT_Test.serialNumbers[self.id] {
                 return revealedSerialNumber.serialNumber
             }
 
-            return nil
+            panic(\\"the serial number for this NFT is not yet revealed\\")
         }
 
         pub fun getViews(): [Type] {
@@ -284,9 +302,9 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             
             switch view {
                 case Type<MetadataViews.NFTView>():
-                    return self.resolveNFTView(edition.metadata)
+                    return self.resolveNFTView()
                 case Type<MetadataViews.Display>():
-                    return self.resolveDisplay(edition.metadata)
+                    return self.resolveDisplay()
                 case Type<MetadataViews.ExternalURL>():
                     return self.resolveExternalURL()
                 case Type<MetadataViews.NFTCollectionDisplay>():
@@ -297,12 +315,12 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
                     return self.resolveRoyalties()
             }
 
-            if let serialNumber = self.getSerialNumber() {
+            if self.isRevealed() {
                 switch view {
                     case Type<MetadataViews.Edition>():
-                        return self.resolveEditionView(serialNumber: serialNumber, size: edition.size)
+                        return self.resolveEditionView()
                     case Type<MetadataViews.Serial>():
-                        return self.resolveSerialView(serialNumber: serialNumber)
+                        return self.resolveSerialView()
                 }
             } else {
                 switch view {
@@ -314,11 +332,11 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             return nil
         }
 
-        pub fun resolveNFTView(_ metadata: Metadata): MetadataViews.NFTView {
+        pub fun resolveNFTView(): MetadataViews.NFTView {
             return MetadataViews.NFTView(
                 id: self.id,
                 uuid: self.uuid,
-                display: self.resolveDisplay(metadata),
+                display: self.resolveDisplay(),
                 externalURL: self.resolveExternalURL(),
                 collectionData: self.resolveNFTCollectionData(),
                 collectionDisplay: self.resolveNFTCollectionDisplay(),
@@ -327,11 +345,11 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             )
         }
         
-        pub fun resolveDisplay(_ metadata: Metadata): MetadataViews.Display {
+        pub fun resolveDisplay(): MetadataViews.Display {
             return MetadataViews.Display(
-                name: metadata.name,
-                description: metadata.description,
-                thumbnail: FreshmintMetadataViews.ipfsFile(file: metadata.thumbnail)
+                name: self.getEdition().name(),
+                description: self.getEdition().description(),
+                thumbnail: FreshmintMetadataViews.ipfsFile(file: self.getEdition().thumbnail())
             )
         }
         
@@ -364,15 +382,20 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             return MetadataViews.Royalties(BlindEditionNFT_Test.getRoyalties())
         }
         
-        pub fun resolveEditionView(serialNumber: UInt64, size: UInt64): MetadataViews.Edition {
+        pub fun resolveEditionView(): MetadataViews.Edition {
+            let serialNumber = self.getSerialNumber()
+            let edition = self.getEdition()
+
             return MetadataViews.Edition(
                 name: \\"Edition\\",
                 number: serialNumber,
-                max: size
+                max: edition.size
             )
         }
 
-        pub fun resolveSerialView(serialNumber: UInt64): MetadataViews.Serial {
+        pub fun resolveSerialView(): MetadataViews.Serial {
+            let serialNumber = self.getSerialNumber()
+
             return MetadataViews.Serial(serialNumber)
         }
 
@@ -501,15 +524,8 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
         pub fun createEdition(
             mintID: String,
             limit: UInt64?,
-            name: String,
-            description: String,
-            thumbnail: String,
+            metadata: {String: AnyStruct}
         ): UInt64 {
-            let metadata = Metadata(
-                name: name,
-                description: description,
-                thumbnail: thumbnail,
-            )
 
             // Prevent multiple editions from being minted with the same mint ID
             assert(
@@ -529,7 +545,7 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             // Update the mint ID index
             BlindEditionNFT_Test.editionsByMintID[mintID] = edition.id
 
-            emit EditionCreated(edition: edition)
+            emit EditionCreated(id: edition.id, limit: edition.limit)
 
             BlindEditionNFT_Test.totalEditions = BlindEditionNFT_Test.totalEditions + (1 as UInt64)
 
