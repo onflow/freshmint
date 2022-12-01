@@ -30,7 +30,7 @@ transaction(
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
                 attributes: {}
-            )        
+            )
         }
     }
 }
