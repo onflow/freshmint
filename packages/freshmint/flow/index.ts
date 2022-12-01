@@ -100,7 +100,7 @@ export class FlowGateway {
     const args = [
       { type: t.Optional(t.String), value: null }, // Bucket name
       { type: t.Array(t.String), value: mintIds },
-      { type: t.Identity, value: prepareMetadataBatch(schema, entries)}
+      { type: t.Identity, value: prepareMetadataBatch(schema, entries) },
     ];
 
     const result = await this.cli.transaction('./cadence/transactions/mint.cdc', this.signer, args, mintComputeLimit);

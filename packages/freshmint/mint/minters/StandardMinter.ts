@@ -77,9 +77,9 @@ export class StandardMinter implements Minter {
 
   async mintNFTs(batchIndex: number, csvOutputFile: string, nfts: PreparedEntry[]) {
     // Use metadata hash as mint ID
-    const mintIds = nfts.map(nft => nft.hash);
+    const mintIds = nfts.map((nft) => nft.hash);
 
-    const entries = nfts.map(nft => nft.preparedMetadata);
+    const entries = nfts.map((nft) => nft.preparedMetadata);
 
     const results = await this.flowGateway.mint(mintIds, this.schema, entries);
 
