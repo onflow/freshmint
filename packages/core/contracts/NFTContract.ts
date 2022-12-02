@@ -172,7 +172,7 @@ export abstract class NFTContract {
       return {
         script,
         args: [fcl.arg(toAddress, t.Address), fcl.arg(id, t.UInt64)],
-        computeLimit: 1000,
+        computeLimit: 9999,
         signers: this.getSigners(),
       };
     }, Transaction.VoidResult);
