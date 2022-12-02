@@ -25,8 +25,14 @@ export class EditionNFTGenerator extends TemplateGenerator {
     });
   }
 
-  static deploy({ imports }: { imports: ContractImports }): string {
-    return this.generate(require('../../../cadence/nfts/edition-nft/transactions/deploy.cdc'), { imports });
+  static deployToExistingAccount({ imports }: { imports: ContractImports }): string {
+    return this.generate(require('../../../cadence/nfts/edition-nft/transactions/deploy_existing_account.cdc'), {
+      imports,
+    });
+  }
+
+  static deployToNewAccount({ imports }: { imports: ContractImports }): string {
+    return this.generate(require('../../../cadence/nfts/edition-nft/transactions/deploy_new_account.cdc'), { imports });
   }
 
   static createEditions({
@@ -82,6 +88,19 @@ export class EditionNFTGenerator extends TemplateGenerator {
 
   static getEdition({ contractName, contractAddress }: { contractName: string; contractAddress: string }): string {
     return this.generate(require('../../../cadence/nfts/edition-nft/scripts/get_edition.template.cdc'), {
+      contractName,
+      contractAddress,
+    });
+  }
+
+  static getEditionsByMintId({
+    contractName,
+    contractAddress,
+  }: {
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/edition-nft/scripts/get_editions_by_mint_id.template.cdc'), {
       contractName,
       contractAddress,
     });

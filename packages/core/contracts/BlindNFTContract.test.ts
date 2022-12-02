@@ -7,10 +7,11 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  getTestNFTs,
+  NFTGenerator,
   setupEmulator,
   teardownEmulator,
   collectionMetadata,
+  placeholderImage,
 } from '../testHelpers';
 
 describe('BlindNFTContract', () => {
@@ -32,7 +33,7 @@ describe('BlindNFTContract', () => {
       contract.deploy({
         publicKey: contractPublicKey,
         hashAlgorithm: contractHashAlgorithm,
-        placeholderImage: 'sample-image.jpeg',
+        placeholderImage,
         collectionMetadata,
       }),
     );
@@ -57,7 +58,7 @@ describe('BlindNFTContract', () => {
     );
   });
 
-  const nfts = getTestNFTs(3);
+  const nfts = new NFTGenerator().generate(3);
 
   let mintedNFTs: NFTMintResult[];
 

@@ -69,7 +69,7 @@ export async function setupEmulator() {
   });
 
   await deployContract({
-    code: FreshmintMetadataViewsGenerator.contract(),
+    code: FreshmintMetadataViewsGenerator.contract({ imports: config.imports }),
     to: emulatorServiceAccount,
     name: 'FreshmintMetadataViews',
   });
@@ -150,6 +150,8 @@ export async function getFLOWBalance(address: string): Promise<number> {
 
 export { mintFlow as mintFLOW };
 
+export const placeholderImage = 'bafkreicrfbblmaduqg2kmeqbymdifawex7rxqq2743mitmeia4zdybmmre/foo.jpeg';
+
 export function getTestSchema(includeSerialNumber = true): metadata.Schema {
   const schema = metadata.createSchema({
     fields: {
@@ -186,25 +188,33 @@ export function getTestSchema(includeSerialNumber = true): metadata.Schema {
   return schema;
 }
 
-export function getTestNFTs(count: number, includeSerialNumber = true): metadata.MetadataMap[] {
-  const nfts: metadata.MetadataMap[] = [];
+export class NFTGenerator {
+  minted = 0;
 
-  for (let i = 1; i <= count; i++) {
-    const nft: metadata.MetadataMap = {
-      name: `NFT ${i}`,
-      description: `This is NFT #${i}.`,
-      thumbnail: `nft-${i}.jpeg`,
-    };
+  generate(count: number, includeSerialNumber = true): metadata.MetadataMap[] {
+    const nfts: metadata.MetadataMap[] = [];
 
-    if (includeSerialNumber) {
-      // Cadence UInt64 values must be passed as strings
-      nft.serialNumber = i.toString();
+    while (count--) {
+      const i = this.minted + 1;
+
+      const nft: metadata.MetadataMap = {
+        name: `NFT ${i}`,
+        description: `This is NFT #${i}.`,
+        thumbnail: `nft-${i}.jpeg`,
+      };
+
+      if (includeSerialNumber) {
+        // Cadence UInt64 values must be passed as strings
+        nft.serialNumber = i.toString();
+      }
+
+      nfts.push(nft);
+
+      this.minted++;
     }
 
-    nfts.push(nft);
+    return nfts;
   }
-
-  return nfts;
 }
 
 export const collectionMetadata: CollectionMetadata = {

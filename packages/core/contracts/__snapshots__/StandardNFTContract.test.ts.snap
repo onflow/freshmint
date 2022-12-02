@@ -4,6 +4,7 @@ exports[`StandardNFTContract should generate a contract 1`] = `
 "import NonFungibleToken from 0xf8d6e0586b0a20c7
 import MetadataViews from 0xf8d6e0586b0a20c7
 import FungibleToken from 0xee82856bf20e2aa6
+import FreshmintMetadataViews from 0xf8d6e0586b0a20c7
 
 pub contract StandardNFT_Test: NonFungibleToken {
 
@@ -119,7 +120,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
             return MetadataViews.Display(
                 name: metadata.name,
                 description: metadata.description,
-                thumbnail: MetadataViews.IPFSFile(cid: metadata.thumbnail, path: nil)
+                thumbnail: FreshmintMetadataViews.ipfsFile(file: metadata.thumbnail)
             )
         }
         
@@ -163,6 +164,18 @@ pub contract StandardNFT_Test: NonFungibleToken {
         }
     }
 
+    /// This dictionary indexes NFTs by their mint ID.
+    ///
+    /// It is populated at mint time and used to prevent duplicate mints.
+    /// The mint ID can be any unique string value,
+    /// for example the hash of the NFT metadata.
+    ///
+    access(contract) var nftsByMintID: {String: UInt64}
+
+    pub fun getNFTByMintID(mintID: String): UInt64? {
+        return StandardNFT_Test.nftsByMintID[mintID]
+    }
+
     pub resource interface StandardNFT_TestCollectionPublic {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
@@ -174,49 +187,49 @@ pub contract StandardNFT_Test: NonFungibleToken {
             }
         }
     }
-
+    
     pub resource Collection: StandardNFT_TestCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
         
         /// A dictionary of all NFTs in this collection indexed by ID.
         ///
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
-
+    
         init () {
             self.ownedNFTs <- {}
         }
-
+    
         /// Remove an NFT from the collection and move it to the caller.
         ///
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) 
                 ?? panic(\\"Requested NFT to withdraw does not exist in this collection\\")
-
+    
             emit Withdraw(id: token.id, from: self.owner?.address)
-
+    
             return <- token
         }
-
+    
         /// Deposit an NFT into this collection.
         ///
         pub fun deposit(token: @NonFungibleToken.NFT) {
             let token <- token as! @StandardNFT_Test.NFT
-
+    
             let id: UInt64 = token.id
-
+    
             // add the new token to the dictionary which removes the old one
             let oldToken <- self.ownedNFTs[id] <- token
-
+    
             emit Deposit(id: id, to: self.owner?.address)
-
+    
             destroy oldToken
         }
-
+    
         /// Return an array of the NFT IDs in this collection.
         ///
         pub fun getIDs(): [UInt64] {
             return self.ownedNFTs.keys
         }
-
+    
         /// Return a reference to an NFT in this collection.
         ///
         /// This function panics if the NFT does not exist in this collection.
@@ -224,7 +237,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
-
+    
         /// Return a reference to an NFT in this collection
         /// typed as StandardNFT_Test.NFT.
         ///
@@ -235,10 +248,10 @@ pub contract StandardNFT_Test: NonFungibleToken {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &StandardNFT_Test.NFT
             }
-
+    
             return nil
         }
-
+    
         /// Return a reference to an NFT in this collection
         /// typed as MetadataViews.Resolver.
         ///
@@ -249,12 +262,12 @@ pub contract StandardNFT_Test: NonFungibleToken {
             let nftRef = nft as! &StandardNFT_Test.NFT
             return nftRef as &AnyResource{MetadataViews.Resolver}
         }
-
+    
         destroy() {
             destroy self.ownedNFTs
         }
     }
-
+    
     /// Return a new empty collection.
     ///
     pub fun createEmptyCollection(): @NonFungibleToken.Collection {
@@ -270,11 +283,18 @@ pub contract StandardNFT_Test: NonFungibleToken {
         /// To mint an NFT, specify a value for each of its metadata fields.
         ///
         pub fun mintNFT(
+            mintID: String,
             name: String,
             description: String,
             thumbnail: String,
             serialNumber: UInt64,
         ): @StandardNFT_Test.NFT {
+
+            // Prevent multiple NFTs from being minted with the same mint ID
+            assert(
+                StandardNFT_Test.nftsByMintID[mintID] == nil,
+                message: \\"an NFT has already been minted with mintID=\\".concat(mintID)
+            )
 
             let metadata = Metadata(
                 name: name,
@@ -284,6 +304,9 @@ pub contract StandardNFT_Test: NonFungibleToken {
             )
 
             let nft <- create StandardNFT_Test.NFT(metadata: metadata)
+   
+            // Update the mint ID index
+            StandardNFT_Test.nftsByMintID[mintID] = nft.id
 
             emit Minted(id: nft.id)
 
@@ -349,7 +372,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
     init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], admin: AuthAccount) {
 
-        self.version = \\"0.2.3\\"
+        self.version = \\"0.3.0\\"
 
         self.CollectionPublicPath = StandardNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Collection\\")
@@ -361,6 +384,8 @@ pub contract StandardNFT_Test: NonFungibleToken {
         self.collectionMetadata = collectionMetadata
 
         self.totalSupply = 0
+
+        self.nftsByMintID = {}
 
         self.initAdmin(admin: admin)
 

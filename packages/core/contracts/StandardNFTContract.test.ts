@@ -8,11 +8,10 @@ import {
   contractPublicKey,
   ownerAuthorizer,
   getTestSchema,
-  getTestNFTs,
+  NFTGenerator,
   setupEmulator,
   teardownEmulator,
   collectionMetadata,
-  createAccount,
 } from '../testHelpers';
 
 describe('StandardNFTContract', () => {
@@ -29,7 +28,7 @@ describe('StandardNFTContract', () => {
     expect(contract.getSource(client.config.imports)).toMatchSnapshot();
   });
 
-  const nfts = getTestNFTs(3);
+  const nfts = new NFTGenerator().generate(3);
 
   it('should fail to mint NFTs before contract is deployed', async () => {
     await expect(async () => await client.send(contract.mintNFTs(nfts))).rejects.toThrow(MissingContractAddressError);
@@ -65,6 +64,12 @@ describe('StandardNFTContract', () => {
 
   it('should mint NFTs', async () => {
     await client.send(contract.mintNFTs(nfts));
+  });
+
+  it('should fail to mint duplicate NFTs', async () => {
+    await expect(async () => {
+      await client.send(contract.mintNFTs(nfts));
+    }).rejects.toThrow();
   });
 
   const sale = new FreshmintClaimSaleContract(contract);

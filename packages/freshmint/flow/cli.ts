@@ -17,7 +17,7 @@ function formatConfigString(configs: string[]) {
   return configs.map((c) => `-f ${c}`).join(' ');
 }
 
-export default class FlowCliWrapper {
+export default class FlowCLIWrapper {
   network: string;
   configs: string[];
 

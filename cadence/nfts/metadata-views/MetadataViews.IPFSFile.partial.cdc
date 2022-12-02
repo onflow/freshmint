@@ -1,1 +1,1 @@
-MetadataViews.IPFSFile(cid: {{ metadata }}.{{ field.name }}, path: nil)
+FreshmintMetadataViews.ipfsFile(file: {{ metadata }}.{{ field.name }})
