@@ -59,7 +59,7 @@ describe('Transfer NFTs', () => {
     await client.send(contract.setupCollection(account.authorizer));
 
     // Mint 1 new NFT
-    const [nft] = await client.send(contract.mintNFTs(getTestNFTs(1)));
+    const [nft] = await client.send(contract.mintNFTs(nfts.generate(1)));
 
     // Transfer the NFT to the new account
     await client.send(contract.transferNFT({ toAddress: account.address, id: nft.id }));
