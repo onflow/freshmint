@@ -50,4 +50,19 @@ describe('Transfer NFTs', () => {
     // Transferred IDs should match the minted IDs
     expect(transferredIDs).toEqual(mintedIDs);
   });
+
+  it('should transfer a single NFT to another account', async () => {
+    // Create a new account and set up an NFT collection
+    const account = await createAccount();
+    await client.send(contract.setupCollection(account.authorizer));
+
+    // Mint 1 new NFT
+    const [nft] = await client.send(contract.mintNFTs(getTestNFTs(1)));
+
+    await client.send(contract.transferNFT({ toAddress: account.address, id: nft.id }));
+
+    const onChainNFT = await client.query(contract.getNFT(account.address, nft.id));
+    // The NFT should be in the other account
+    expect(onChainNFT.id).toEqual(nft.id);
+  });
 });
