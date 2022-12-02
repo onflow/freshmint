@@ -63,7 +63,8 @@ describe('Transfer NFTs', () => {
     await client.send(contract.transferNFT({ toAddress: account.address, id: nft.id }));
 
     const onChainNFT = await client.query(contract.getNFT(account.address, nft.id));
-    // The NFT should be in the other account
+
+    // The NFT should now be in the new account
     expect(onChainNFT.id).toEqual(nft.id);
   });
 });
