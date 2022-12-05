@@ -55,10 +55,16 @@ pub contract BlindNFT_Test: NonFungibleToken {
         ///
         pub let salt: [UInt8]
 
+        /// The core metadata fields for a BlindNFT_Test NFT.
+        ///
         pub let name: String
         pub let description: String
         pub let thumbnail: String
         pub let serialNumber: UInt64
+
+        /// Optional attributes for a BlindNFT_Test NFT.
+        ///
+        pub let attributes: {String: String}
 
         init(
             salt: [UInt8],
@@ -66,6 +72,7 @@ pub contract BlindNFT_Test: NonFungibleToken {
             description: String,
             thumbnail: String,
             serialNumber: UInt64,
+            attributes: {String: String}
         ) {
             self.salt = salt
 
@@ -73,6 +80,8 @@ pub contract BlindNFT_Test: NonFungibleToken {
             self.description = description
             self.thumbnail = thumbnail
             self.serialNumber = serialNumber
+
+            self.attributes = attributes
         }
 
         /// Encode this metadata object as a byte array.

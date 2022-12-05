@@ -41,21 +41,30 @@ pub contract {{ contractName }}: NonFungibleToken {
         ///
         pub let salt: [UInt8]
 
+        /// The core metadata fields for a {{ contractName }} NFT.
+        ///
         {{#each fields}}
         pub let {{ this.name }}: {{ this.asCadenceTypeString }}
         {{/each}}
+
+        /// Optional attributes for a {{ contractName }} NFT.
+        ///
+        pub let attributes: {String: String}
 
         init(
             salt: [UInt8],
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
+            attributes: {String: String}
         ) {
             self.salt = salt
 
             {{#each fields}}
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
+
+            self.attributes = attributes
         }
 
         /// Encode this metadata object as a byte array.

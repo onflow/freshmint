@@ -50,6 +50,22 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
     });
   }
 
+  static closeEdition({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/blind-edition-nft/transactions/close_edition.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
+
   static mint({
     imports,
     contractName,
@@ -80,5 +96,44 @@ export class BlindEditionNFTGenerator extends TemplateGenerator {
       contractName,
       contractAddress,
     });
+  }
+
+  static getEdition({ contractName, contractAddress }: { contractName: string; contractAddress: string }): string {
+    return this.generate(require('../../../cadence/nfts/blind-edition-nft/scripts/get_edition.template.cdc'), {
+      contractName,
+      contractAddress,
+    });
+  }
+
+  static getEditionsByMintId({
+    contractName,
+    contractAddress,
+  }: {
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(
+      require('../../../cadence/nfts/blind-edition-nft/scripts/get_editions_by_mint_id.template.cdc'),
+      {
+        contractName,
+        contractAddress,
+      },
+    );
+  }
+
+  static getRevealedNFTHash({
+    contractName,
+    contractAddress,
+  }: {
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(
+      require('../../../cadence/nfts/blind-edition-nft/scripts/get_revealed_nft_hash.template.cdc'),
+      {
+        contractName,
+        contractAddress,
+      },
+    );
   }
 }

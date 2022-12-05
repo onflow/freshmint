@@ -12,7 +12,7 @@ import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
 import { Script } from '../scripts';
 
 export type EditionInput = {
-  size: number;
+  limit?: number;
   metadata: MetadataMap;
 };
 
@@ -24,13 +24,15 @@ export type EditionNFTInput = {
 export type EditionResult = {
   id: string;
   metadata: MetadataMap;
-  size: number;
+  limit?: number;
 };
 
 export type OnChainEdition = {
   id: string;
   size: number;
-  count: number;
+  limit?: number;
+  burned: number;
+  isClosed: boolean;
   metadata: { [key: string]: any };
 };
 
@@ -136,13 +138,13 @@ export class EditionNFTContract extends NFTContract {
       // Use metadata hash as mint ID
       const mintIds = editions.map((edition) => hashMetadata(this.schema, edition.metadata).toString('hex'));
 
-      const sizes = editions.map((edition) => edition.size.toString(10));
+      const limits = editions.map((edition) => (edition.limit ? edition.limit.toString(10) : undefined));
 
       return {
         script,
         args: [
           fcl.arg(mintIds, t.Array(t.String)),
-          fcl.arg(sizes, t.Array(t.UInt64)),
+          fcl.arg(limits, t.Array(t.Optional(t.UInt64))),
           ...this.schema.fields.map((field) => {
             return fcl.arg(
               editions.map((edition) => field.getValue(edition.metadata)),
@@ -154,6 +156,23 @@ export class EditionNFTContract extends NFTContract {
         signers: this.getSigners(),
       };
     };
+  }
+
+  closeEdition(editionId: string): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = EditionNFTGenerator.closeEdition({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [fcl.arg(editionId, t.UInt64)],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    }, Transaction.VoidResult);
   }
 
   mintNFTs({
@@ -203,7 +222,9 @@ export class EditionNFTContract extends NFTContract {
       (result) => ({
         id: result.id,
         size: parseInt(result.size, 10),
-        count: parseInt(result.count, 10),
+        limit: result.limit ? parseInt(result.limit, 10) : undefined,
+        burned: parseInt(result.burned, 10),
+        isClosed: result.isClosed,
         metadata: result.metadata,
       }),
     );
@@ -220,7 +241,7 @@ function formatEditionResults({ events }: TransactionResult, editions: EditionIn
     return {
       id: editionId,
       metadata: edition.metadata,
-      size: edition.size,
+      limit: edition.limit,
     };
   });
 }

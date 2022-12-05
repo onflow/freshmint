@@ -4,51 +4,55 @@ import * as fcl from '@onflow/fcl';
 import * as t from '@onflow/types';
 
 import { NFTContract, CollectionMetadata, prepareCollectionMetadata, Royalty, prepareRoyalties } from './NFTContract';
-import { MetadataMap } from '../metadata';
+import { hashMetadata, MetadataMap } from '../metadata';
 import { BlindEditionNFTGenerator } from '../generators/BlindEditionNFTGenerator';
 import { hashValuesWithSalt } from '../hash';
 import { FreshmintConfig, ContractImports } from '../config';
 import { Transaction, TransactionResult } from '../transactions';
 import { PublicKey, SignatureAlgorithm, HashAlgorithm } from '../crypto';
+import { UInt64Value } from '../cadence/values';
+import { Script } from '../scripts';
 
 export type EditionInput = {
-  size: number;
+  limit?: number;
   metadata: MetadataMap;
-};
-
-export type EditionNFT = {
-  editionId: string;
-  editionSerial: string;
 };
 
 export type EditionResult = {
   id: string;
   metadata: MetadataMap;
-  size: number;
-  nfts: EditionNFT[];
+  limit?: number;
+  serialNumbers: string[];
 };
 
-export type HashedEditionNFT = {
-  editionId: string;
-  editionSerial: string;
-  editionHash: string;
-  editionSalt: string;
+export type OnChainEdition = {
+  id: string;
+  limit?: number;
+  size: number;
+  burned: number;
+  isClosed: boolean;
+  metadata: { [key: string]: any };
+};
+
+export type HashedSerialNumber = {
+  serialNumber: string;
+  hash: string;
+  salt: string;
 };
 
 export type NFTMintResult = {
   id: string;
   editionId: string;
-  editionSerial: string;
-  editionHash: string;
-  editionSalt: string;
+  serialNumber: string;
+  hash: string;
+  salt: string;
   transactionId: string;
 };
 
 export interface NFTRevealInput {
   id: string;
-  editionId: string;
-  editionSerial: string;
-  editionSalt: string;
+  serialNumber: string;
+  salt: string;
 }
 
 export type NFTRevealResult = {
@@ -69,14 +73,12 @@ export class BlindEditionNFTContract extends NFTContract {
   deploy({
     publicKey,
     hashAlgorithm,
-    placeholderImage,
     collectionMetadata,
     royalties,
     saveAdminResourceToContractAccount,
   }: {
     publicKey: PublicKey;
     hashAlgorithm: HashAlgorithm;
-    placeholderImage: string;
     collectionMetadata: CollectionMetadata;
     royalties?: Royalty[];
     saveAdminResourceToContractAccount?: boolean;
@@ -102,7 +104,6 @@ export class BlindEditionNFTContract extends NFTContract {
             fcl.arg(publicKey.toHex(), t.String),
             fcl.arg(SignatureAlgorithm.toCadence(sigAlgo), t.UInt8),
             fcl.arg(HashAlgorithm.toCadence(hashAlgorithm), t.UInt8),
-            fcl.arg(placeholderImage, t.String),
             fcl.arg(prepareCollectionMetadata(imports.MetadataViews, collectionMetadata), t.Identity),
             fcl.arg(royaltyAddresses, t.Array(t.Address)),
             fcl.arg(royaltyReceiverPaths, t.Array(t.Path)),
@@ -151,12 +152,16 @@ export class BlindEditionNFTContract extends NFTContract {
         schema: this.schema,
       });
 
-      const sizes = editions.map((edition) => edition.size.toString(10));
+      // Use metadata hash as mint ID
+      const mintIds = editions.map((edition) => hashMetadata(this.schema, edition.metadata).toString('hex'));
+
+      const limits = editions.map((edition) => (edition.limit ? edition.limit.toString(10) : undefined));
 
       return {
         script,
         args: [
-          fcl.arg(sizes, t.Array(t.UInt)),
+          fcl.arg(mintIds, t.Array(t.String)),
+          fcl.arg(limits, t.Array(t.Optional(t.UInt64))),
           ...this.schema.fields.map((field) => {
             return fcl.arg(
               editions.map((edition) => field.getValue(edition.metadata)),
@@ -170,12 +175,45 @@ export class BlindEditionNFTContract extends NFTContract {
     };
   }
 
-  mintNFTs(nfts: EditionNFT[], { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult[]> {
-    const hashedNFTs = this.hashNFTs(nfts);
-    return this.mintHashedNFTs(hashedNFTs, { bucket });
+  closeEdition(editionId: string): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = BlindEditionNFTGenerator.closeEdition({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [fcl.arg(editionId, t.UInt64)],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    }, Transaction.VoidResult);
   }
 
-  mintHashedNFTs(hashedNFTs: HashedEditionNFT[], { bucket }: { bucket?: string } = {}): Transaction<NFTMintResult[]> {
+  mintNFTs({
+    editionId,
+    serialNumbers,
+    bucket,
+  }: {
+    editionId: string;
+    serialNumbers: string[];
+    bucket?: string;
+  }): Transaction<NFTMintResult[]> {
+    const hashedSerialNumbers = this.hashSerialNumbers(serialNumbers);
+    return this.mintHashedNFTs({ editionId, hashedSerialNumbers, bucket });
+  }
+
+  mintHashedNFTs({
+    editionId,
+    hashedSerialNumbers,
+    bucket,
+  }: {
+    editionId: string;
+    hashedSerialNumbers: HashedSerialNumber[];
+    bucket?: string;
+  }): Transaction<NFTMintResult[]> {
     return new Transaction(
       ({ imports }: FreshmintConfig) => {
         const script = BlindEditionNFTGenerator.mint({
@@ -184,28 +222,33 @@ export class BlindEditionNFTContract extends NFTContract {
           contractAddress: this.getAddress(),
         });
 
-        const hashes = hashedNFTs.map((nft) => nft.editionHash);
+        const hashes = hashedSerialNumbers.map((nft) => nft.hash);
 
         return {
           script,
-          args: [fcl.arg(hashes, t.Array(t.String)), fcl.arg(bucket, t.Optional(t.String))],
+          args: [
+            fcl.arg(editionId, t.UInt64),
+            fcl.arg(hashes, t.Array(t.String)),
+            fcl.arg(bucket, t.Optional(t.String)),
+          ],
           computeLimit: 9999,
           signers: this.getSigners(),
         };
       },
-      (result) => formatMintResults(result, hashedNFTs),
+      (result) => formatMintResults(result, hashedSerialNumbers),
     );
   }
 
-  hashNFTs(nfts: EditionNFT[]): HashedEditionNFT[] {
-    return nfts.map((nft) => {
-      const { hash, salt } = hashEdition(nft.editionId, nft.editionSerial);
+  hashSerialNumbers(serialNumbers: string[]): HashedSerialNumber[] {
+    return serialNumbers.map((serialNumber) => {
+      const serialNumberBytes = new UInt64Value(serialNumber).toBytes();
+
+      const { hash, salt } = hashValuesWithSalt([serialNumberBytes]);
 
       return {
-        editionId: nft.editionId,
-        editionSerial: nft.editionSerial,
-        editionHash: hash.toString('hex'),
-        editionSalt: salt.toString('hex'),
+        serialNumber: serialNumber,
+        hash: hash.toString('hex'),
+        salt: salt.toString('hex'),
       };
     });
   }
@@ -235,15 +278,13 @@ export class BlindEditionNFTContract extends NFTContract {
       });
 
       const nftIds = nfts.map((nft) => nft.id);
-      const editionIds = nfts.map((nft) => nft.editionId);
-      const serialNumbers = nfts.map((nft) => nft.editionSerial);
-      const salts = nfts.map((nft) => nft.editionSalt);
+      const serialNumbers = nfts.map((nft) => nft.serialNumber);
+      const salts = nfts.map((nft) => nft.salt);
 
       return {
         script,
         args: [
           fcl.arg(nftIds, t.Array(t.UInt64)),
-          fcl.arg(editionIds, t.Array(t.UInt64)),
           fcl.arg(serialNumbers, t.Array(t.UInt64)),
           fcl.arg(salts, t.Array(t.String)),
         ],
@@ -252,20 +293,62 @@ export class BlindEditionNFTContract extends NFTContract {
       };
     };
   }
+
+  getEdition(editionId: string): Script<OnChainEdition> {
+    const script = BlindEditionNFTGenerator.getEdition({
+      contractName: this.name,
+      contractAddress: this.getAddress(),
+    });
+
+    return new Script(
+      () => ({
+        script,
+        args: (arg, t) => [arg(editionId, t.UInt64)],
+        computeLimit: 9999,
+      }),
+      (result) => ({
+        id: result.id,
+        size: parseInt(result.size, 10),
+        limit: result.limit ? parseInt(result.limit, 10) : undefined,
+        burned: parseInt(result.burned, 10),
+        isClosed: result.isClosed,
+        metadata: result.metadata,
+      }),
+    );
+  }
+
+  getRevealedNFTHash(nftId: string): Script<string> {
+    const script = BlindEditionNFTGenerator.getRevealedNFTHash({
+      contractName: this.name,
+      contractAddress: this.getAddress(),
+    });
+
+    return new Script(
+      () => ({
+        script,
+        args: (arg, t) => [arg(nftId, t.UInt64)],
+        computeLimit: 9999,
+      }),
+      (result) => result,
+    );
+  }
 }
 
-function formatMintResults({ transactionId, events }: TransactionResult, nfts: HashedEditionNFT[]): NFTMintResult[] {
+function formatMintResults(
+  { transactionId, events }: TransactionResult,
+  serialNumbers: HashedSerialNumber[],
+): NFTMintResult[] {
   const deposits = events.filter((event) => event.type.includes('.Minted'));
 
   return deposits.map((deposit, i) => {
-    const { editionId, editionSerial, editionHash, editionSalt } = nfts[i];
+    const { serialNumber, hash, salt } = serialNumbers[i];
 
     return {
       id: deposit.data.id,
-      editionId,
-      editionSerial,
-      editionHash,
-      editionSalt,
+      editionId: deposit.data.editionID,
+      serialNumber,
+      hash,
+      salt,
       transactionId,
     };
   });
@@ -281,8 +364,8 @@ function formatEditionResults({ events }: TransactionResult, editions: EditionIn
     return {
       id: editionId,
       metadata: edition.metadata,
-      size: edition.size,
-      nfts: getEditionNFTs(editionId, edition.size),
+      limit: edition.limit,
+      serialNumbers: edition.limit ? getEditionSerialNumbers(editionId, edition.limit) : [],
     };
   });
 }
@@ -298,23 +381,13 @@ function formatRevealResults({ transactionId, events }: TransactionResult): NFTR
   });
 }
 
-function getEditionNFTs(id: string, size: number): EditionNFT[] {
-  const nfts = Array(size);
+function getEditionSerialNumbers(id: string, size: number): string[] {
+  const serialNumbers = Array(size);
 
   for (let i = 0; i < size; i++) {
-    nfts[i] = {
-      editionId: id,
-      editionSerial: String(i + 1),
-    };
+    const serialNumber = i + 1;
+    serialNumbers[i] = serialNumber.toString();
   }
 
-  return nfts;
-}
-
-function hashEdition(editionId: string, editionSerial: string) {
-  // TODO: use big-endian bytes
-  const editionIdBuffer = Buffer.from(editionId, 'utf-8');
-  const editionSerialBuffer = Buffer.from(editionSerial, 'utf-8');
-
-  return hashValuesWithSalt([editionIdBuffer, editionSerialBuffer]);
+  return serialNumbers;
 }
