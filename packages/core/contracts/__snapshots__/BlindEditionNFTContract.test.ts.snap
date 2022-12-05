@@ -528,12 +528,6 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
                 message: \\"an edition has already been created with mintID=\\".concat(mintID)
             )
 
-            // Prevent multiple editions from being minted with the same mint ID
-            assert(
-                BlindEditionNFT_Test.editionsByMintID[mintID] == nil,
-                message: \\"an edition has already been created with mintID=\\".concat(mintID)
-            )
-
             let edition = Edition(
                 id: BlindEditionNFT_Test.totalEditions,
                 limit: limit,
