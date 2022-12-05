@@ -161,6 +161,23 @@ export abstract class NFTContract {
     }, Transaction.VoidResult);
   }
 
+  transferNFT({ id, toAddress }: { id: string; toAddress: string }): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = CommonNFTGenerator.transferNFT({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [fcl.arg(toAddress, t.Address), fcl.arg(id, t.UInt64)],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    }, Transaction.VoidResult);
+  }
+
   transferQueueToQueue({
     fromQueue,
     toQueue,
