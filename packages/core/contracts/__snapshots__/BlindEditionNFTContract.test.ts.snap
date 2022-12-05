@@ -49,18 +49,27 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
 
     pub struct Metadata {
     
+        /// The core metadata fields for a BlindEditionNFT_Test NFT edition.
+        ///
         pub let name: String
         pub let description: String
         pub let thumbnail: String
+
+        /// Optional attributes for a BlindEditionNFT_Test NFT edition.
+        ///
+        pub let attributes: {String: String}
 
         init(
             name: String,
             description: String,
             thumbnail: String,
+            attributes: {String: String}
         ) {
             self.name = name
             self.description = description
             self.thumbnail = thumbnail
+
+            self.attributes = attributes
         }
     }
 
@@ -504,11 +513,13 @@ pub contract BlindEditionNFT_Test: NonFungibleToken {
             name: String,
             description: String,
             thumbnail: String,
+            attributes: {String: String}
         ): UInt64 {
             let metadata = Metadata(
                 name: name,
                 description: description,
                 thumbnail: thumbnail,
+                attributes: attributes
             )
 
             // Prevent multiple editions from being minted with the same mint ID

@@ -42,21 +42,30 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
     pub struct Metadata {
 
+        /// The core metadata fields for a StandardNFT_Test NFT.
+        ///
         pub let name: String
         pub let description: String
         pub let thumbnail: String
         pub let serialNumber: UInt64
+
+        /// Optional attributes for a StandardNFT_Test NFT.
+        ///
+        pub let attributes: {String: String}
 
         init(
             name: String,
             description: String,
             thumbnail: String,
             serialNumber: UInt64,
+            attributes: {String: String}
         ) {
             self.name = name
             self.description = description
             self.thumbnail = thumbnail
             self.serialNumber = serialNumber
+
+            self.attributes = attributes
         }
     }
 
@@ -288,6 +297,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
             description: String,
             thumbnail: String,
             serialNumber: UInt64,
+            attributes: {String: String}
         ): @StandardNFT_Test.NFT {
 
             // Prevent multiple NFTs from being minted with the same mint ID
@@ -301,6 +311,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
                 description: description,
                 thumbnail: thumbnail,
                 serialNumber: serialNumber,
+                attributes: attributes
             )
 
             let nft <- create StandardNFT_Test.NFT(metadata: metadata)

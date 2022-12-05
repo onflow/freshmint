@@ -95,6 +95,7 @@ transaction(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
+                attributes: {}
             )
         
             // NFTs are minted into a queue to preserve the mint order.

@@ -34,18 +34,27 @@ pub contract {{ contractName }}: NonFungibleToken {
 
     pub struct Metadata {
     
+        /// The core metadata fields for a {{ contractName }} NFT edition.
+        ///
         {{#each fields}}
         pub let {{ this.name }}: {{ this.asCadenceTypeString }}
         {{/each}}
+
+        /// Optional attributes for a {{ contractName }} NFT edition.
+        ///
+        pub let attributes: {String: String}
 
         init(
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
+            attributes: {String: String}
         ) {
             {{#each fields}}
             self.{{ this.name }} = {{ this.name }}
             {{/each}}
+            
+            self.attributes = attributes
         }
     }
 
@@ -233,11 +242,13 @@ pub contract {{ contractName }}: NonFungibleToken {
             {{#each fields}}
             {{ this.name }}: {{ this.asCadenceTypeString }},
             {{/each}}
+            attributes: {String: String}
         ): UInt64 {
             let metadata = Metadata(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }},
                 {{/each}}
+                attributes: attributes
             )
 
             // Prevent multiple editions from being minted with the same mint ID
