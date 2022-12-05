@@ -21,10 +21,28 @@ export interface BatchField {
   values: any[];
 }
 
-export interface MintResult {
+export type MintResult = {
   id: string;
   transactionId: string;
-}
+};
+
+export type MintEditionResult = {
+  id: string;
+  serialNumber: string;
+  transactionId: string;
+};
+
+export type CreateEditionResult = {
+  id: string;
+  limit: number;
+  size: number;
+};
+
+export type EditionResult = {
+  id: string;
+  limit: number;
+  size: number;
+} | null;
 
 // Use the maximum compute limit for minting transactions.
 //
@@ -130,10 +148,10 @@ export class FlowGateway {
     return parseMintResults(result);
   }
 
-  async createEditions(mintIds: string[], sizes: number[], fields: any[]) {
+  async createEditions(mintIds: string[], limits: number[], fields: any[]) {
     const args = [
       { type: t.Array(t.String), value: mintIds },
-      { type: t.Array(t.UInt64), value: sizes.map((size) => size.toString(10)) },
+      { type: t.Array(t.Optional(t.UInt64)), value: limits.map((limit) => limit.toString(10)) },
       ...fields.map((field) => ({
         type: t.Array(field.cadenceType),
         value: field.values,
@@ -147,7 +165,7 @@ export class FlowGateway {
       mintComputeLimit,
     );
 
-    return parseEditionResults(result);
+    return parseCreateEditionResults(result);
   }
 
   async mintEdition(editionId: string, count: number) {
@@ -159,7 +177,7 @@ export class FlowGateway {
 
     const result = await this.cli.transaction('./cadence/transactions/mint.cdc', this.signer, args, mintComputeLimit);
 
-    return parseEditionMintResults(result);
+    return parseMintEditionResults(result);
   }
 
   async mintEditionWithClaimKey(editionId: string, publicKeys: string[]) {
@@ -175,7 +193,7 @@ export class FlowGateway {
       mintComputeLimit,
     );
 
-    return parseEditionMintResults(result);
+    return parseMintEditionResults(result);
   }
 
   async startDrop(saleId: string, price: string) {
@@ -206,10 +224,12 @@ export class FlowGateway {
     ]);
   }
 
-  async getEditionsByMintId(mintIds: string[]): Promise<{ id: string; size: number; count: number }[]> {
-    return await this.cli.script('./cadence/scripts/get_editions_by_primary_key.cdc', [
+  async getEditionsByMintId(mintIds: string[]): Promise<EditionResult[]> {
+    const results = await this.cli.script('./cadence/scripts/get_editions_by_mint_id.cdc', [
       { type: t.Array(t.String), value: mintIds },
     ]);
+
+    return parseGetEditionResults(results);
   }
 }
 
@@ -226,7 +246,7 @@ function parseMintResults(txOutput: any): MintResult[] {
   });
 }
 
-function parseEditionResults(txOutput: any): { id: string; size: number; count: number }[] {
+function parseCreateEditionResults(txOutput: any): { id: string; limit: number; size: number }[] {
   const editions = txOutput.events.filter((event: any) => event.type.includes('.EditionCreated'));
 
   return editions.map((edition: any) => {
@@ -235,19 +255,36 @@ function parseEditionResults(txOutput: any): { id: string; size: number; count: 
     const editionStruct = edition.values.value.fields.find((f: any) => f.name === 'edition').value;
 
     const editionId = editionStruct.value.fields.find((f: any) => f.name === 'id').value.value;
-    const editionCount = editionStruct.value.fields.find((f: any) => f.name === 'count').value.value;
-    const editionSize = editionStruct.value.fields.find((f: any) => f.name === 'size').value.value;
+    const limit = getEditionLimitFromEvent(editionStruct);
 
     return {
       id: editionId,
-      size: parseInt(editionSize, 10),
-      count: parseInt(editionCount, 10),
+      limit,
+      size: 0,
       transactionId: txOutput.id,
     };
   });
 }
 
-function parseEditionMintResults(txOutput: any) {
+// The legacy edition contract (pre v0.3.0 and earlier) does
+// not contain a limit field. In this case, use the size field instead.
+//
+function getEditionLimitFromEvent(editionStruct: any): number | null {
+  const limit = editionStruct.value.fields.find((f: any) => f.name === 'limit');
+
+  // Only parse the limit field if it exists
+  if (limit !== undefined) {
+    const optionalLimit = limit.value.value;
+    return optionalLimit ? parseInt(optionalLimit.value, 10) : null;
+  }
+
+  // Otherwise, assume legacy format and return size
+  const size = editionStruct.value.fields.find((f: any) => f.name === 'size');
+
+  return parseInt(size.value.value, 10);
+}
+
+function parseMintEditionResults(txOutput: any): MintEditionResult[] {
   const mints = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
 
   return mints.map((mint: any) => {
@@ -260,6 +297,29 @@ function parseEditionMintResults(txOutput: any) {
       id: tokenId.value,
       serialNumber: serialNumber.value,
       transactionId: txOutput.id,
+    };
+  });
+}
+
+function parseGetEditionResults(editions: any[]): EditionResult[] {
+  return editions.map((edition) => {
+    if (edition === null) {
+      return null;
+    }
+
+    // If limit is undefined, assume legacy edition format
+    if (edition.limit === undefined) {
+      return {
+        id: edition.id,
+        limit: edition.size,
+        size: edition.count,
+      };
+    }
+
+    return {
+      id: edition.id,
+      limit: edition.limit,
+      size: edition.size,
     };
   });
 }

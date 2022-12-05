@@ -12,7 +12,7 @@ import { readCSV, writeCSV } from '../csv';
 type Edition = {
   id: string;
   size: number;
-  count: number;
+  limit: number;
   rawMetadata: MetadataMap;
   preparedMetadata: MetadataMap;
 };
@@ -21,13 +21,12 @@ type PreparedEditionEntry = {
   rawMetadata: MetadataMap;
   preparedMetadata: MetadataMap;
   hash: string;
-  size: number;
+  limit: number;
 };
 
 type EditionBatch = {
   edition: Edition;
   size: number;
-  newCount: number;
 };
 
 export class EditionMinter implements Minter {
@@ -57,8 +56,8 @@ export class EditionMinter implements Minter {
     const { existingEditions, newEditionEntries } = await this.filterDuplicateEditions(preparedEntries);
 
     const existingEditionCount = existingEditions.length;
-    const existingNFTCount = existingEditions.reduce((count, edition) => count + edition.count, 0);
-    const totalNFTCount = preparedEntries.reduce((count, edition) => count + edition.size, 0);
+    const existingNFTCount = existingEditions.reduce((totalSize, edition) => totalSize + edition.size, 0);
+    const totalNFTCount = preparedEntries.reduce((totalLimit, edition) => totalLimit + edition.limit, 0);
     const newNFTCount = totalNFTCount - existingNFTCount;
 
     hooks.onCompleteDuplicateCheck(makeSkippedMessage(existingEditionCount, existingNFTCount));
@@ -67,7 +66,7 @@ export class EditionMinter implements Minter {
 
     const editions = [...existingEditions, ...newEditions];
 
-    const editionsToMint = editions.filter((edition) => edition.count < edition.size);
+    const editionsToMint = editions.filter((edition) => edition.size < edition.limit);
 
     const batches = createBatches(editionsToMint, batchSize);
 
@@ -132,7 +131,7 @@ export class EditionMinter implements Minter {
     // Process the edition metadata fields (i.e. perform actions such as pinning files to IPFS)
     await this.processMetadata(entries, hooks);
 
-    const sizes = entries.map((edition) => edition.size);
+    const limits = entries.map((edition) => edition.limit);
 
     const values = this.schema.fields.map((field) => ({
       cadenceType: field.asCadenceTypeObject(),
@@ -144,7 +143,7 @@ export class EditionMinter implements Minter {
 
     hooks.onStartEditionCreation(entries.length);
 
-    const results = await this.flowGateway.createEditions(mintIds, sizes, values);
+    const results = await this.flowGateway.createEditions(mintIds, limits, values);
 
     hooks.onCompleteEditionCreation();
 
@@ -153,7 +152,7 @@ export class EditionMinter implements Minter {
 
       return {
         id: result.id,
-        count: result.count,
+        limit: result.limit,
         size: result.size,
         rawMetadata: edition.rawMetadata,
         preparedMetadata: edition.preparedMetadata,
@@ -166,11 +165,11 @@ export class EditionMinter implements Minter {
 
     return preparedEntries.map((entry, i) => {
       // Attach the edition size parsed from the input
-      const size = parseInt(entries[i]['edition_size'], 10);
+      const limit = parseInt(entries[i]['edition_size'], 10);
 
       return {
         ...entry,
-        size,
+        limit,
       };
     });
   }
@@ -239,8 +238,8 @@ function createBatches(editions: Edition[], batchSize: number): EditionBatch[] {
 function createEditionBatches(edition: Edition, batchSize: number): EditionBatch[] {
   const batches: EditionBatch[] = [];
 
-  let count = edition.count;
-  let remaining = edition.size - edition.count;
+  let count = edition.size;
+  let remaining = edition.limit - edition.size;
 
   while (remaining > 0) {
     const size = Math.min(batchSize, remaining);
@@ -248,7 +247,7 @@ function createEditionBatches(edition: Edition, batchSize: number): EditionBatch
     count = count + size;
     remaining = remaining - size;
 
-    batches.push({ edition: edition, size, newCount: count });
+    batches.push({ edition: edition, size });
   }
 
   return batches;
