@@ -362,6 +362,12 @@ pub contract {{ contractName }}: NonFungibleToken {
                 message: "an edition has already been created with mintID=".concat(mintID)
             )
 
+            // Prevent multiple editions from being minted with the same mint ID
+            assert(
+                {{ contractName }}.editionsByMintID[mintID] == nil,
+                message: "an edition has already been created with mintID=".concat(mintID)
+            )
+
             let edition = Edition(
                 id: {{ contractName }}.totalEditions,
                 limit: limit,
