@@ -454,8 +454,8 @@ const address = await client.send(contract.deploy({
 
 ```js
 const edition1 = {
-  // This edition will contain 100 NFTs.
-  size: 100,
+  // This edition can contain a maximum of 100 NFTs.
+  limit: 100,
   // Note: the metadata fields provided must match those
   // defined in your metadata schema.
   metadata: {
@@ -466,8 +466,8 @@ const edition1 = {
 };
 
 const edition2 = {
-  // This edition will contain 200 NFTs.
-  size: 200,
+  // This edition can contain a maximum of 200 NFTs.
+  limit: 200,
   // Note: the metadata fields provided must match those
   // defined in your metadata schema.
   metadata: {
@@ -492,7 +492,7 @@ This will print:
 [
   {
     id: '0',
-    size: 100,
+    limit: 100,
     metadata: {
       name: 'Edition 1',
       description: 'This is the first edition',
@@ -501,7 +501,7 @@ This will print:
   },
   {
     id: '1',
-    size: 200,
+    limit: 200,
     metadata: {
       name: 'Edition 2',
       description: 'This is the second edition',
@@ -785,7 +785,7 @@ const address = await client.send(contract.deploy({
 ```js
 const edition1 = {
   // This edition will contain 5 NFTs.
-  size: 5,
+  limit: 5,
   // Note: the metadata fields provided must match those
   // defined in your metadata schema.
   metadata: {
@@ -797,7 +797,7 @@ const edition1 = {
 
 const edition2 = {
   // This edition will contain 5 NFTs.
-  size: 5,
+  limit: 5,
   // Note: the metadata fields provided must match those
   // defined in your metadata schema.
   metadata: {
@@ -822,7 +822,7 @@ This will print:
 [
   {
     id: '0',
-    size: 5,
+    limit: 5,
     metadata: {
       name: 'Edition 1',
       description: 'This is the first edition',
@@ -832,7 +832,7 @@ This will print:
   },
   {
     id: '1',
-    size: 5,
+    limit: 5,
     metadata: {
       name: 'Edition 2',
       description: 'This is the second edition',
