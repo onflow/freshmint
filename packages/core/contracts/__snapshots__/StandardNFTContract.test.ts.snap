@@ -383,7 +383,7 @@ pub contract StandardNFT_Test: NonFungibleToken {
 
     init(collectionMetadata: MetadataViews.NFTCollectionDisplay, royalties: [MetadataViews.Royalty], admin: AuthAccount) {
 
-        self.version = \\"0.3.0\\"
+        self.version = \\"[VI]{{inject}}[/VI]\\"
 
         self.CollectionPublicPath = StandardNFT_Test.getPublicPath(suffix: \\"Collection\\")
         self.CollectionStoragePath = StandardNFT_Test.getStoragePath(suffix: \\"Collection\\")

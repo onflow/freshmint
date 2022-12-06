@@ -36,7 +36,7 @@
   },
   "scripts": {
     "test": "jest --runInBand --bail",
-    "build": "tsup index.ts crypto/index.ts metadata/index.ts --clean --loader \".cdc=text\" --dts --sourcemap --format esm,cjs --splitting",
+    "build": "tsup",
     "dev": "npm run build -- --watch",
     "lint": "eslint . --ext .ts"
   },
@@ -52,6 +52,7 @@
     "@onflow/flow-js-testing": "^0.3.0-alpha.16",
     "@types/elliptic": "^6.4.14",
     "@types/jest": "^28.1.6",
+    "esbuild-plugin-version-injector": "^1.0.2",
     "jest": "^28.1.3",
     "ts-jest": "^28.0.7",
     "tsup": "^6.5.0"
