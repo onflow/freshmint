@@ -13,6 +13,7 @@
     "format": "prettier --write \"**/*.{ts,tsx}\""
   },
   "devDependencies": {
+    "@changesets/cli": "^2.25.2",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "eslint": "^8.24.0",
     "prettier": "latest",
