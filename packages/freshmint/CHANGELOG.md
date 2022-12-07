@@ -1,5 +1,11 @@
 # freshmint
 
+## 0.3.0
+
+### Minor Changes
+
+- Hotfix: use field.getValue to load metadata values
+
 ## 0.2.0
 
 ### Minor Changes
