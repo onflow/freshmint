@@ -135,7 +135,10 @@ export class EditionMinter implements Minter {
 
     const values = this.schema.fields.map((field) => ({
       cadenceType: field.asCadenceTypeObject(),
-      values: entries.map((edition) => edition.preparedMetadata[field.name]),
+      // Note: to select a metadata value, use `field.getValue(edition.preparedMetadata)` 
+      // instead of `edition.preparedMetadata[field.name]` so that the value is parsed
+      // to its correct type.
+      values: entries.map((edition) => field.getValue(edition.preparedMetadata)),
     }));
 
     // Use metadata hash as mint ID

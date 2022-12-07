@@ -151,7 +151,10 @@ function createBatches<T>(items: T[], batchSize: number): T[][] {
 function groupMetadataByField(fields: Field[], nfts: PreparedEntry[]): BatchField[] {
   return fields.map((field) => ({
     field,
-    values: nfts.map((nft) => nft.preparedMetadata[field.name]),
+    // Note: to select a metadata value, use `field.getValue(nft.preparedMetadata)` 
+    // instead of `nft.preparedMetadata[field.name]` so that the value is parsed
+    // to its correct type.
+    values: nfts.map((nft) => field.getValue(nft.preparedMetadata)),
   }));
 }
 
