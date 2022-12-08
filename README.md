@@ -66,3 +66,5 @@ This repository contains several TypeScript packages:
 ### Versioning & Releases
 
 All Freshmint packages are published to NPM.
+
+TODO: add documentation for versioning and release process
