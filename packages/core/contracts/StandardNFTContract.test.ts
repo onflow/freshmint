@@ -1,4 +1,4 @@
-import { StandardNFTContract } from './StandardNFTContract';
+import { NFTMintResult, StandardNFTContract } from './StandardNFTContract';
 import { MissingContractAddressError } from './NFTContract';
 import { FreshmintClaimSaleContract } from './FreshmintClaimSaleContract';
 
@@ -28,7 +28,7 @@ describe('StandardNFTContract', () => {
     expect(contract.getSource(client.config.imports)).toMatchSnapshot();
   });
 
-  const nfts = new NFTGenerator().generate(3);
+  const nfts = new NFTGenerator().generate(4);
 
   it('should fail to mint NFTs before contract is deployed', async () => {
     await expect(async () => await client.send(contract.mintNFTs(nfts))).rejects.toThrow(MissingContractAddressError);
@@ -62,14 +62,21 @@ describe('StandardNFTContract', () => {
     );
   });
 
+  let mintedNFTs: NFTMintResult[] = [];
+
   it('should mint NFTs', async () => {
-    await client.send(contract.mintNFTs(nfts));
+    mintedNFTs = await client.send(contract.mintNFTs(nfts));
   });
 
   it('should fail to mint duplicate NFTs', async () => {
     await expect(async () => {
       await client.send(contract.mintNFTs(nfts));
     }).rejects.toThrow();
+  });
+
+  it('should burn an NFT', async () => {
+    const nft = mintedNFTs[0];
+    await client.send(contract.destroyNFT(nft.id));
   });
 
   const sale = new FreshmintClaimSaleContract(contract);
