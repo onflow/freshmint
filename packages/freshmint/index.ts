@@ -54,7 +54,7 @@ main()
       // to be displayed using only the message field.
       console.error(chalk.red(err.message));
     } else {
-      console.log(typeof err)
+      console.log(typeof err);
       // Other errors are unexpected fatal errors and should be
       // logged in their entirety.
       console.error(err);
