@@ -7,7 +7,6 @@ import inquirer from 'inquirer';
 import { NFTStorage } from 'nft.storage';
 import * as metadata from '@freshmint/core/metadata';
 
-import { envsubst } from '../envsubst';
 import { FlowGateway, FlowNetwork } from '../flow';
 import { ContractType, FreshmintConfig, loadConfig } from '../config';
 import { parsePositiveIntegerArgument } from '../arguments';
@@ -55,6 +54,8 @@ async function mint({
     throw new EditionTemplatesOptionError();
   }
 
+  const metadataProcessor = getMetadataProcessor(config);
+
   const answer = await inquirer.prompt({
     type: 'confirm',
     name: 'confirm',
@@ -65,8 +66,6 @@ async function mint({
 
   lineBreak();
   ora().info(`Results will be saved to ${chalk.cyan(csvOutputFile)}.`);
-
-  const metadataProcessor = getMetadataProcessor(config);
 
   switch (config.contract.type) {
     case ContractType.Standard:
@@ -236,8 +235,7 @@ function getMetadataProcessor(config: FreshmintConfig): MetadataProcessor {
   const metadataProcessor = new MetadataProcessor(config.contract.schema);
 
   if (config.contract.schema.includesFieldType(metadata.IPFSFile)) {
-    const endpoint = new URL(envsubst(config.ipfsPinningService.endpoint));
-    const token = envsubst(config.ipfsPinningService.key);
+    const { endpoint, token } = config.parseIPFSPinningServiceConfig();
 
     const nftStorage = new NFTStorage({
       endpoint,
