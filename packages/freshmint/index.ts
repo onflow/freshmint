@@ -21,14 +21,25 @@ import { FreshmintError } from './errors';
 async function main() {
   const program = new Command();
 
-  program.addCommand(start);
-  program.addCommand(dev);
-  program.addCommand(deploy);
-  program.addCommand(mint);
-  program.addCommand(startDrop);
-  program.addCommand(stopDrop);
-  program.addCommand(gen);
-  program.addCommand(prince);
+  // Highlight errors in red
+  program.configureOutput({
+    writeErr: (str) => process.stderr.write(chalk.red(str)),
+  });
+
+  // Copy parent program settings to all sub-commands
+  const addCommand = (command: Command) => {
+    program.addCommand(command);
+    command.copyInheritedSettings(program);
+  };
+
+  addCommand(start);
+  addCommand(dev);
+  addCommand(deploy);
+  addCommand(mint);
+  addCommand(startDrop);
+  addCommand(stopDrop);
+  addCommand(gen);
+  addCommand(prince);
 
   await program.parseAsync(process.argv);
 }
@@ -43,7 +54,7 @@ main()
       // to be displayed using only the message field.
       console.error(chalk.red(err.message));
     } else {
-      console.log(typeof err)
+      console.log(typeof err);
       // Other errors are unexpected fatal errors and should be
       // logged in their entirety.
       console.error(err);

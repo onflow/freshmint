@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import * as metadata from '@freshmint/core/metadata';
 
 import { FreshmintError } from './errors';
+import { envsubst } from './envsubst';
 
 const defaultConfigPath = 'freshmint.yaml';
 const defaultDataPathStandard = 'nfts.csv';
@@ -35,6 +36,40 @@ export class FreshmintConfig {
     }
 
     return account;
+  }
+
+  parseIPFSPinningServiceConfig(): { endpoint: URL; token: string } {
+    const errors: Error[] = [];
+
+    let endpoint: URL;
+    let token: string;
+
+    try {
+      endpoint = new URL(envsubst(this.ipfsPinningService.endpoint));
+    } catch (err: any) {
+      errors.push(err as Error);
+    }
+
+    try {
+      token = envsubst(this.ipfsPinningService.key);
+    } catch (err: any) {
+      errors.push(err as Error);
+    }
+
+    if (errors.length > 0) {
+      throw new ConfigValidationError(errors);
+    }
+
+    // @ts-ignore
+    return { endpoint, token };
+  }
+}
+
+export class ConfigValidationError extends FreshmintError {
+  constructor(errors: Error[]) {
+    const errorMessages = errors.map((error) => error.message);
+    const message = `Your freshmint.yaml file is invalid:\n\n${errorMessages.join('\n')}`;
+    super(message);
   }
 }
 
@@ -151,9 +186,17 @@ const schema: yup.ObjectSchema<FreshmintConfigInput> = yup.object().shape({
 
 export async function loadConfig(): Promise<FreshmintConfig> {
   const rawConfig = loadRawConfig(defaultConfigPath);
-  const config = await schema.validate(rawConfig);
 
-  return new FreshmintConfig(config);
+  try {
+    const config = await schema.validate(rawConfig, { abortEarly: false });
+    return new FreshmintConfig(config);
+  } catch (err: any) {
+    if (err instanceof yup.ValidationError) {
+      throw new ConfigValidationError(err.inner);
+    }
+
+    throw err;
+  }
 }
 
 function loadRawConfig(filename: string, basePath?: string): any {
