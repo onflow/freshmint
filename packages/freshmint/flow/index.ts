@@ -1,5 +1,3 @@
-import { Field } from '@freshmint/core/metadata';
-
 // @ts-ignore
 import * as t from '@onflow/types';
 
@@ -17,7 +15,7 @@ import {
 import FlowCLIWrapper from './cli';
 
 export interface BatchField {
-  field: Field;
+  cadenceType: any;
   values: any[];
 }
 
@@ -34,8 +32,9 @@ export type MintEditionResult = {
 
 export type CreateEditionResult = {
   id: string;
-  limit: number;
+  limit: number | null;
   size: number;
+  transactionId: string;
 };
 
 export type EditionResult = {
@@ -117,9 +116,9 @@ export class FlowGateway {
     const args = [
       { type: t.Optional(t.String), value: null }, // Bucket name
       { type: t.Array(t.String), value: mintIds },
-      ...fields.map(({ field, values }) => ({
-        type: t.Array(field.typeInstance.cadenceType),
-        value: values,
+      ...fields.map((field) => ({
+        type: t.Array(field.cadenceType),
+        value: field.values,
       })),
     ];
 
@@ -132,9 +131,9 @@ export class FlowGateway {
     const args = [
       { type: t.Array(t.String), value: publicKeys },
       { type: t.Array(t.String), value: mintIds },
-      ...fields.map(({ field, values }) => ({
-        type: t.Array(field.typeInstance.cadenceType),
-        value: values,
+      ...fields.map((field) => ({
+        type: t.Array(field.cadenceType),
+        value: field.values,
       })),
     ];
 
@@ -148,10 +147,10 @@ export class FlowGateway {
     return parseMintResults(result);
   }
 
-  async createEditions(mintIds: string[], limits: number[], fields: any[]) {
+  async createEditions(mintIds: string[], limits: (string | null)[], fields: BatchField[]) {
     const args = [
       { type: t.Array(t.String), value: mintIds },
-      { type: t.Array(t.Optional(t.UInt64)), value: limits.map((limit) => limit.toString(10)) },
+      { type: t.Array(t.Optional(t.UInt64)), value: limits },
       ...fields.map((field) => ({
         type: t.Array(field.cadenceType),
         value: field.values,
@@ -246,8 +245,8 @@ function parseMintResults(txOutput: any): MintResult[] {
   });
 }
 
-function parseCreateEditionResults(txOutput: any): { id: string; limit: number; size: number }[] {
-  const editions = txOutput.events.filter((event: any) => event.type.includes('.EditionCreated'));
+function parseCreateEditionResults(txOutput: any): CreateEditionResult[] {
+  const editions: any[] = txOutput.events.filter((event: any) => event.type.includes('.EditionCreated'));
 
   return editions.map((edition: any) => {
     // TODO: improve event parsing. Use FCL?
@@ -285,7 +284,7 @@ function getEditionLimitFromEvent(editionStruct: any): number | null {
 }
 
 function parseMintEditionResults(txOutput: any): MintEditionResult[] {
-  const mints = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
+  const mints: any[] = txOutput.events.filter((event: any) => event.type.includes('.Minted'));
 
   return mints.map((mint: any) => {
     // TODO: improve event parsing. Use FCL?

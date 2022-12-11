@@ -3,6 +3,7 @@
 // This file contains the main entry point for the `fresh` command line app.
 
 import { Command } from 'commander';
+import chalk from 'chalk';
 
 // All commands are implemented in the /commands directory.
 //
@@ -40,8 +41,9 @@ main()
     if (err instanceof FreshmintError) {
       // Freshmint application errors are designed
       // to be displayed using only the message field.
-      console.error(err.message);
+      console.error(chalk.red(err.message));
     } else {
+      console.log(typeof err)
       // Other errors are unexpected fatal errors and should be
       // logged in their entirety.
       console.error(err);

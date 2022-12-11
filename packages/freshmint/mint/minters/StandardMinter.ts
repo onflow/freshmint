@@ -6,10 +6,17 @@ import { MetadataMap, Field, Schema } from '@freshmint/core/metadata';
 import { BatchField, FlowGateway } from '../../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
 import { MetadataProcessor, PreparedEntry } from '../processors';
-import { Minter, MinterHooks } from '.';
 import { readCSV, writeCSV } from '../csv';
 
-export class StandardMinter implements Minter {
+export type StandardHooks = {
+  onStartDuplicateCheck: () => void;
+  onCompleteDuplicateCheck: (skipped: number) => void;
+  onStartMinting: (nftCount: number, batchCount: number, batchSize: number) => void;
+  onCompleteBatch: (batchSize: number) => void;
+  onComplete: (nftCount: number) => void;
+};
+
+export class StandardMinter {
   schema: Schema;
   metadataProcessor: MetadataProcessor;
   flowGateway: FlowGateway;
@@ -25,7 +32,7 @@ export class StandardMinter implements Minter {
     csvOutputFile: string,
     withClaimKeys: boolean,
     batchSize: number,
-    hooks: MinterHooks,
+    hooks: StandardHooks,
   ) {
     const entries = await readCSV(path.resolve(process.cwd(), csvInputFile));
 
@@ -38,9 +45,9 @@ export class StandardMinter implements Minter {
     const total = newEntries.length;
     const skipped = entries.length - newEntries.length;
 
-    hooks.onCompleteDuplicateCheck(makeSkippedMessage(skipped));
+    hooks.onCompleteDuplicateCheck(skipped);
 
-    const batches = createBatches(newEntries, batchSize);
+    const batches = createBatches<PreparedEntry>(newEntries, batchSize);
 
     const csvTempFile = `${csvOutputFile}.tmp`;
 
@@ -65,6 +72,8 @@ export class StandardMinter implements Minter {
     if (existsSync(csvTempFile)) {
       await unlink(csvTempFile);
     }
+
+    hooks.onComplete(total);
   }
 
   async prepareMetadata(entries: MetadataMap[]): Promise<PreparedEntry[]> {
@@ -76,12 +85,17 @@ export class StandardMinter implements Minter {
   }
 
   async mintNFTs(batchIndex: number, csvOutputFile: string, nfts: PreparedEntry[]) {
-    const metadataFields = groupMetadataByField(this.schema.fields, nfts);
+    const metadataValues = groupMetadataByField(this.schema.fields, nfts);
 
-    // Use metadata hash as mint ID
+    // A mint ID is a unique identifier for each NFT used to prevent duplicate mints.
+    // We use the metadata hash the mint ID so that users do not need to manually
+    // specify a unique ID for each NFT.
+    //
+    // This means that two NFTs with identical metadata values are considered duplicates.
+    //
     const mintIds = nfts.map((nft) => nft.hash);
 
-    const results = await this.flowGateway.mint(mintIds, metadataFields);
+    const results = await this.flowGateway.mint(mintIds, metadataValues);
 
     const rows = results.map((result: any, i: number) => {
       const { id, transactionId } = result;
@@ -101,11 +115,20 @@ export class StandardMinter implements Minter {
   async mintNFTsWithClaimKeys(batchIndex: number, csvOutputFile: string, csvTempFile: string, nfts: PreparedEntry[]) {
     const { privateKeys, publicKeys } = generateClaimKeyPairs(nfts.length);
 
+    // We save claim private keys to a temporary file so that they are recoverable
+    // if the mint transaction is lost. Without this, we may publish the public keys
+    // but lose the corresponding private keys.
+    //
     await savePrivateKeysToFile(csvTempFile, nfts, privateKeys);
 
     const metadataFields = groupMetadataByField(this.schema.fields, nfts);
 
-    // Use metadata hash as mint ID
+    // A mint ID is a unique identifier for each NFT used to prevent duplicate mints.
+    // We use the metadata hash the mint ID so that users do not need to manually
+    // specify a unique ID for each NFT.
+    //
+    // This means that two NFTs with identical metadata values are considered duplicates.
+    //
     const mintIds = nfts.map((nft) => nft.hash);
 
     const results = await this.flowGateway.mintWithClaimKey(publicKeys, mintIds, metadataFields);
@@ -131,7 +154,7 @@ export class StandardMinter implements Minter {
     // Use metadata hash as mint ID
     const mintIds = nfts.map((nft) => nft.hash);
 
-    const batches = createBatches(mintIds, batchSize);
+    const batches = createBatches<string>(mintIds, batchSize);
 
     const duplicates = (await Promise.all(batches.map((batch) => this.flowGateway.getDuplicateNFTs(batch)))).flat();
 
@@ -148,13 +171,10 @@ function createBatches<T>(items: T[], batchSize: number): T[][] {
   return batches;
 }
 
-function groupMetadataByField(fields: Field[], nfts: PreparedEntry[]): BatchField[] {
+function groupMetadataByField(fields: Field[], entries: PreparedEntry[]): BatchField[] {
   return fields.map((field) => ({
-    field,
-    // Note: to select a metadata value, use `field.getValue(nft.preparedMetadata)` 
-    // instead of `nft.preparedMetadata[field.name]` so that the value is parsed
-    // to its correct type.
-    values: nfts.map((nft) => field.getValue(nft.preparedMetadata)),
+    cadenceType: field.asCadenceTypeObject(),
+    values: entries.map((entry) => entry.preparedMetadata[field.name]),
   }));
 }
 
@@ -167,14 +187,4 @@ async function savePrivateKeysToFile(filename: string, nfts: PreparedEntry[], pr
   });
 
   return writeCSV(filename, rows);
-}
-
-function makeSkippedMessage(skippedNFTCount: number): string {
-  if (!skippedNFTCount) {
-    return 'No duplicate NFTs found.';
-  }
-
-  return skippedNFTCount > 1
-    ? `Skipped ${skippedNFTCount} NFTs because they already exist.`
-    : `Skipped 1 NFT because it already exists.`;
 }

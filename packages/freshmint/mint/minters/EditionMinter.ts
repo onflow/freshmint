@@ -1,35 +1,64 @@
 import * as path from 'path';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
-import { IPFSFile, MetadataMap, Schema } from '@freshmint/core/metadata';
+import { MetadataMap, Field, Schema } from '@freshmint/core/metadata';
 
 import { MetadataProcessor } from '../processors';
-import { FlowGateway } from '../../flow';
+import { BatchField, FlowGateway } from '../../flow';
 import { formatClaimKey, generateClaimKeyPairs } from '../claimKeys';
-import { Minter, MinterHooks } from '.';
 import { readCSV, writeCSV } from '../csv';
+import { FreshmintError } from '../../errors';
 
-type Edition = {
-  id: string;
-  size: number;
-  limit: number;
-  rawMetadata: MetadataMap;
-  preparedMetadata: MetadataMap;
-};
-
-type PreparedEditionEntry = {
+interface EditionEntry {
   rawMetadata: MetadataMap;
   preparedMetadata: MetadataMap;
   hash: string;
+  limit: number | null;
+}
+
+interface LimitedEditionEntry extends EditionEntry {
   limit: number;
-};
+}
+
+interface Edition {
+  id: string;
+  size: number;
+  rawMetadata: MetadataMap;
+  preparedMetadata: MetadataMap;
+  transactionId?: string;
+}
+
+interface LimitedEdition extends Edition {
+  limit: number;
+}
 
 type EditionBatch = {
   edition: Edition;
   size: number;
 };
 
-export class EditionMinter implements Minter {
+export type EditionHooks = {
+  onStartDuplicateCheck: () => void;
+  onCompleteDuplicateCheck: (skippedEditions: number, skippedNFTs: number) => void;
+  onStartEditionCreation: (count: number) => void;
+  onCompleteEditionCreation: (count: number) => void;
+  onStartMinting: (total: number, batchCount: number, batchSize: number) => void;
+  onCompleteBatch: (batchSize: number) => void;
+  onComplete: (editionCount: number, nftCount: number) => void;
+};
+
+export class EditionLimitMintError extends FreshmintError {
+  message =
+    'Cannot mint NFTs into an edition with no defined size.\nYour CSV file contains at least one edition with an "edition_size" of null.\nUse the --templates flag to only create the edition template and skip minting.';
+}
+
+export class InvalidEditionSizeError extends FreshmintError {
+  constructor(value: string) {
+    super(`Edition size must be a number, received "${value}".`);
+  }
+}
+
+export class EditionMinter {
   schema: Schema;
   metadataProcessor: MetadataProcessor;
   flowGateway: FlowGateway;
@@ -45,40 +74,106 @@ export class EditionMinter implements Minter {
     csvOutputFile: string,
     withClaimKeys: boolean,
     batchSize: number,
-    hooks: MinterHooks,
+    templatesOnly: boolean,
+    hooks: EditionHooks,
   ) {
     const entries = await readCSV(path.resolve(process.cwd(), csvInputFile));
 
-    const preparedEntries = await this.prepareMetadata(entries);
+    const editionEntries = await this.prepareMetadata(entries);
 
+    if (templatesOnly) {
+      await this.createTemplates(editionEntries, csvOutputFile, hooks);
+    } else {
+      await this.createTemplatesAndMint(editionEntries, csvOutputFile, withClaimKeys, batchSize, hooks);
+    }
+  }
+
+  async createTemplates(editionEntries: EditionEntry[], csvOutputFile: string, hooks: EditionHooks) {
     hooks.onStartDuplicateCheck();
 
-    const { existingEditions, newEditionEntries } = await this.filterDuplicateEditions(preparedEntries);
+    const { existingEditions, newEditionEntries } = await this.filterDuplicateEditions(editionEntries);
 
     const existingEditionCount = existingEditions.length;
     const existingNFTCount = existingEditions.reduce((totalSize, edition) => totalSize + edition.size, 0);
-    const totalNFTCount = preparedEntries.reduce((totalLimit, edition) => totalLimit + edition.limit, 0);
-    const newNFTCount = totalNFTCount - existingNFTCount;
 
-    hooks.onCompleteDuplicateCheck(makeSkippedMessage(existingEditionCount, existingNFTCount));
+    hooks.onCompleteDuplicateCheck(existingEditionCount, existingNFTCount);
 
-    const newEditions = await this.createEditions(newEditionEntries, hooks);
+    hooks.onStartEditionCreation(newEditionEntries.length);
 
+    const newEditions = await this.createEditionTemplates(newEditionEntries);
+
+    hooks.onCompleteEditionCreation(newEditionEntries.length);
+
+    await this.writeEditionTemplates(newEditions, csvOutputFile);
+
+    hooks.onComplete(newEditions.length, 0);
+  }
+
+  async createTemplatesAndMint(
+    editionEntries: EditionEntry[],
+    csvOutputFile: string,
+    withClaimKeys: boolean,
+    batchSize: number,
+    hooks: EditionHooks,
+  ) {
+    const limitedEditionEntries: LimitedEditionEntry[] = editionEntries.map((edition) => {
+      if (edition.limit === null) {
+        throw new EditionLimitMintError();
+      }
+
+      return {
+        ...edition,
+        limit: edition.limit,
+      };
+    });
+
+    hooks.onStartDuplicateCheck();
+
+    const { existingEditions, newEditionEntries } = await this.filterDuplicateEditions(limitedEditionEntries);
+
+    const existingEditionCount = existingEditions.length;
+    const existingNFTCount = existingEditions.reduce((totalSize, edition) => totalSize + edition.size, 0);
+
+    hooks.onCompleteDuplicateCheck(existingEditionCount, existingNFTCount);
+
+    hooks.onStartEditionCreation(newEditionEntries.length);
+
+    const newEditions = await this.createEditionTemplates(newEditionEntries);
+
+    hooks.onCompleteEditionCreation(newEditionEntries.length);
+
+    // Combine existing and new editions into a single array
     const editions = [...existingEditions, ...newEditions];
 
+    // Remove editions that have already reached their size limit
     const editionsToMint = editions.filter((edition) => edition.size < edition.limit);
 
-    const batches = createBatches(editionsToMint, batchSize);
+    const nftCount = await this.mintInBatches(editionsToMint, csvOutputFile, withClaimKeys, batchSize, hooks);
 
+    hooks.onComplete(newEditions.length, nftCount);
+  }
+
+  async mintInBatches(
+    editions: LimitedEdition[],
+    csvOutputFile: string,
+    withClaimKeys: boolean,
+    batchSize: number,
+    hooks: EditionHooks,
+  ): Promise<number> {
+    const batches = createBatches(editions, batchSize);
+
+    // Create a temporary file to store claim keys
     const csvTempFile = `${csvOutputFile}.tmp`;
 
-    hooks.onStartMinting(newNFTCount, batches.length, batchSize);
+    const nftCount = batches.reduce((count, batch) => count + batch.size, 0);
+
+    hooks.onStartMinting(nftCount, batches.length, batchSize);
 
     for (const [batchIndex, batch] of batches.entries()) {
       if (withClaimKeys) {
-        await this.mintNFTsWithClaimKeys(batchIndex, csvOutputFile, csvTempFile, batch);
+        await this.mintBatchWithClaimKeys(batchIndex, batch, csvOutputFile, csvTempFile);
       } else {
-        await this.mintNFTs(batchIndex, csvOutputFile, batch);
+        await this.mintBatch(batchIndex, batch, csvOutputFile);
       }
 
       hooks.onCompleteBatch(batch.size);
@@ -88,17 +183,27 @@ export class EditionMinter implements Minter {
     if (existsSync(csvTempFile)) {
       await unlink(csvTempFile);
     }
+
+    return nftCount;
   }
 
   async filterDuplicateEditions(
-    entries: PreparedEditionEntry[],
-  ): Promise<{ existingEditions: Edition[]; newEditionEntries: PreparedEditionEntry[] }> {
+    entries: LimitedEditionEntry[],
+  ): Promise<{ existingEditions: LimitedEdition[]; newEditionEntries: LimitedEditionEntry[] }>;
+
+  async filterDuplicateEditions(
+    entries: EditionEntry[],
+  ): Promise<{ existingEditions: Edition[]; newEditionEntries: EditionEntry[] }>;
+
+  async filterDuplicateEditions(
+    entries: EditionEntry[],
+  ): Promise<{ existingEditions: Edition[]; newEditionEntries: EditionEntry[] }> {
     const mintIds = entries.map((edition) => edition.hash);
 
     const results = await this.flowGateway.getEditionsByMintId(mintIds);
 
     const existingEditions: Edition[] = [];
-    const newEditionEntries: PreparedEditionEntry[] = [];
+    const newEditionEntries: EditionEntry[] = [];
 
     for (const [i, entry] of entries.entries()) {
       const existingEdition = results[i];
@@ -123,32 +228,31 @@ export class EditionMinter implements Minter {
     };
   }
 
-  async createEditions(entries: PreparedEditionEntry[], hooks: MinterHooks): Promise<Edition[]> {
+  async createEditionTemplates(entries: LimitedEditionEntry[]): Promise<LimitedEdition[]>;
+
+  async createEditionTemplates(entries: EditionEntry[]): Promise<Edition[]>;
+
+  async createEditionTemplates(entries: EditionEntry[]): Promise<Edition[]> {
     if (entries.length === 0) {
       return [];
     }
 
     // Process the edition metadata fields (i.e. perform actions such as pinning files to IPFS)
-    await this.processMetadata(entries, hooks);
+    await this.processMetadata(entries);
 
-    const limits = entries.map((edition) => edition.limit);
+    const limits = entries.map((edition) => (edition.limit === null ? edition.limit : edition.limit.toString()));
 
-    const values = this.schema.fields.map((field) => ({
-      cadenceType: field.asCadenceTypeObject(),
-      // Note: to select a metadata value, use `field.getValue(edition.preparedMetadata)` 
-      // instead of `edition.preparedMetadata[field.name]` so that the value is parsed
-      // to its correct type.
-      values: entries.map((edition) => field.getValue(edition.preparedMetadata)),
-    }));
+    const metadataValues = groupMetadataByField(this.schema.fields, entries);
 
-    // Use metadata hash as mint ID
+    // A mint ID is a unique identifier for each edition used to prevent duplicate mints.
+    // We use the metadata hash the mint ID so that users do not need to manually
+    // specify a unique ID for each edition.
+    //
+    // This means that two editions with identical metadata values are considered duplicates.
+    //
     const mintIds = entries.map((edition) => edition.hash);
 
-    hooks.onStartEditionCreation(entries.length);
-
-    const results = await this.flowGateway.createEditions(mintIds, limits, values);
-
-    hooks.onCompleteEditionCreation();
+    const results = await this.flowGateway.createEditions(mintIds, limits, metadataValues);
 
     return results.map((result, i) => {
       const edition = entries[i];
@@ -157,18 +261,34 @@ export class EditionMinter implements Minter {
         id: result.id,
         limit: result.limit,
         size: result.size,
+        transactionId: result.transactionId,
         rawMetadata: edition.rawMetadata,
         preparedMetadata: edition.preparedMetadata,
       };
     });
   }
 
-  async prepareMetadata(entries: MetadataMap[]): Promise<PreparedEditionEntry[]> {
+  async writeEditionTemplates(editions: Edition[], csvOutputFile: string) {
+    const rows = editions.map((edition: any) => {
+      return {
+        _id: edition.id,
+        _edition_id: edition.id,
+        _edition_limit: edition.limit,
+        _transaction_id: edition.transactionId,
+        ...edition.preparedMetadata,
+      };
+    });
+
+    await writeCSV(csvOutputFile, rows);
+  }
+
+  async prepareMetadata(entries: MetadataMap[]): Promise<EditionEntry[]> {
     const preparedEntries = await this.metadataProcessor.prepare(entries);
 
     return preparedEntries.map((entry, i) => {
-      // Attach the edition size parsed from the input
-      const limit = parseInt(entries[i]['edition_size'], 10);
+      // Attach the edition limit parsed from the input
+      const editionSize = entries[i]['edition_size'];
+      const limit = parseEditionLimit(editionSize);
 
       return {
         ...entry,
@@ -177,22 +297,11 @@ export class EditionMinter implements Minter {
     });
   }
 
-  async processMetadata(entries: PreparedEditionEntry[], hooks: MinterHooks) {
-    const ipfsFields = this.schema.fields.filter((field) => field.type == IPFSFile);
-    const ipfsFileCount = entries.length * ipfsFields.length;
-
-    if (ipfsFileCount > 0) {
-      hooks.onStartPinning(ipfsFileCount);
-    }
-
+  async processMetadata(entries: EditionEntry[]) {
     await this.metadataProcessor.process(entries);
-
-    if (ipfsFileCount > 0) {
-      hooks.onCompletePinning();
-    }
   }
 
-  async mintNFTs(batchIndex: number, csvOutputFile: string, batch: EditionBatch) {
+  async mintBatch(batchIndex: number, batch: EditionBatch, csvOutputFile: string) {
     const results = await this.flowGateway.mintEdition(batch.edition.id, batch.size);
 
     const rows = results.map((result: any) => {
@@ -210,9 +319,13 @@ export class EditionMinter implements Minter {
     await writeCSV(csvOutputFile, rows, { append: batchIndex > 0 });
   }
 
-  async mintNFTsWithClaimKeys(batchIndex: number, csvOutputFile: string, csvTempFile: string, batch: EditionBatch) {
+  async mintBatchWithClaimKeys(batchIndex: number, batch: EditionBatch, csvOutputFile: string, csvTempFile: string) {
     const { privateKeys, publicKeys } = generateClaimKeyPairs(batch.size);
 
+    // We save claim private keys to a temporary file so that they are recoverable
+    // if the mint transaction is lost. Without this, we may publish the public keys
+    // but lose the corresponding private keys.
+    //
     await savePrivateKeysToFile(csvTempFile, batch, privateKeys);
 
     const results = await this.flowGateway.mintEditionWithClaimKey(batch.edition.id, publicKeys);
@@ -234,11 +347,11 @@ export class EditionMinter implements Minter {
   }
 }
 
-function createBatches(editions: Edition[], batchSize: number): EditionBatch[] {
+function createBatches(editions: LimitedEdition[], batchSize: number): EditionBatch[] {
   return editions.flatMap((edition) => createEditionBatches(edition, batchSize));
 }
 
-function createEditionBatches(edition: Edition, batchSize: number): EditionBatch[] {
+function createEditionBatches(edition: LimitedEdition, batchSize: number): EditionBatch[] {
   const batches: EditionBatch[] = [];
 
   let count = edition.size;
@@ -256,6 +369,13 @@ function createEditionBatches(edition: Edition, batchSize: number): EditionBatch
   return batches;
 }
 
+function groupMetadataByField(fields: Field[], entries: EditionEntry[]): BatchField[] {
+  return fields.map((field) => ({
+    cadenceType: field.asCadenceTypeObject(),
+    values: entries.map((entry) => entry.preparedMetadata[field.name]),
+  }));
+}
+
 async function savePrivateKeysToFile(filename: string, batch: EditionBatch, privateKeys: string[]) {
   const rows = privateKeys.map((privateKey) => ({
     _edition_id: batch.edition.id,
@@ -265,18 +385,19 @@ async function savePrivateKeysToFile(filename: string, batch: EditionBatch, priv
   return writeCSV(filename, rows);
 }
 
-function makeSkippedMessage(skippedEditionCount: number, skippedNFTCount: number): string {
-  if (skippedEditionCount === 0 && skippedNFTCount === 0) {
-    return 'No duplicate editions or NFTs found.';
+// Parse the edition limit from a string value.
+//
+// The edition limit must be an integer or "null".
+//
+function parseEditionLimit(value: string): number | null {
+  if (value === 'null') {
+    return null;
   }
 
-  if (skippedNFTCount > 0 && skippedEditionCount === 0) {
-    return `Skipped ${skippedNFTCount} NFTs because they already exist.`;
+  const limit = parseInt(value, 10);
+  if (isNaN(limit)) {
+    throw new InvalidEditionSizeError(value);
   }
 
-  const nftMessage = skippedNFTCount > 1 ? `${skippedNFTCount} NFTs` : '1 NFT';
-
-  return skippedEditionCount > 1
-    ? `Skipped ${skippedEditionCount} editions (${nftMessage}) because they already exist.`
-    : `Skipped 1 edition (${nftMessage}) because it already exists.`;
+  return limit;
 }

@@ -29,6 +29,7 @@ export class MetadataProcessor {
     return Promise.all(
       entries.map(async (rawMetadata: metadata.MetadataMap) => {
         const preparedMetadata = await this.#prepareMetadata(rawMetadata);
+
         const hash = metadata.hashMetadata(this.#schema, preparedMetadata).toString('hex');
 
         return {
@@ -40,16 +41,20 @@ export class MetadataProcessor {
     );
   }
 
-  async #prepareMetadata(entry: metadata.MetadataMap): Promise<metadata.MetadataMap> {
-    const metadata: metadata.MetadataMap = {};
+  async #prepareMetadata(rawMetadata: metadata.MetadataMap): Promise<metadata.MetadataMap> {
+    const preparedMetadata: metadata.MetadataMap = {};
 
     for (const field of this.#schema.fields) {
-      const rawValue = entry[field.name];
+      // Note: to select a metadata value, use `field.getValue(rawMetadata)`
+      // instead of `rawMetadata[field.name]` so that the value is parsed
+      // to its correct type.
+      //
+      const rawValue = field.getValue(rawMetadata);
 
-      metadata[field.name] = await this.#prepareField(field, rawValue);
+      preparedMetadata[field.name] = await this.#prepareField(field, rawValue);
     }
 
-    return metadata;
+    return preparedMetadata;
   }
 
   async #prepareField(field: metadata.Field, value: any) {

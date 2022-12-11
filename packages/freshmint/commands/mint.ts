@@ -7,21 +7,25 @@ import inquirer from 'inquirer';
 import { NFTStorage } from 'nft.storage';
 import * as metadata from '@freshmint/core/metadata';
 
-import { IPFSClient } from '../mint/ipfs';
-import { Minter, createMinter } from '../mint/minters';
-import { MetadataProcessor } from '../mint/processors';
-import { IPFSFileProcessor } from '../mint/processors/IPFSFileProcessor';
-
 import { envsubst } from '../envsubst';
 import { FlowGateway, FlowNetwork } from '../flow';
-import { FreshmintConfig, loadConfig } from '../config';
+import { ContractType, FreshmintConfig, loadConfig } from '../config';
+import { parsePositiveIntegerArgument } from '../arguments';
+import { FreshmintError } from '../errors';
+
+import { StandardMinter } from '../mint/minters/StandardMinter';
+import { EditionMinter } from '../mint/minters/EditionMinter';
+import { MetadataProcessor } from '../mint/processors';
+import { IPFSFileProcessor } from '../mint/processors/IPFSFileProcessor';
+import { IPFSClient } from '../mint/ipfs';
 
 export default new Command('mint')
   .description('mint NFTs using data from a CSV file')
   .option('-i, --input <csv-path>', 'The location of the input CSV file')
   .option('-o, --output <csv-path>', 'The location of the output CSV file')
-  .option('-b, --batch-size <number>', 'The number of NFTs to mint per batch', '10')
+  .option('-b, --batch-size <number>', 'The number of NFTs to mint per batch', parsePositiveIntegerArgument, 10)
   .option('-c, --claim', 'Generate a claim key for each NFT')
+  .option('-t, --templates', 'Create edition templates only, skip minting (for edition-based contracts only)')
   .option('-n, --network <network>', "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
   .action(mint);
 
@@ -31,81 +35,204 @@ async function mint({
   output,
   claim,
   batchSize,
+  templates,
 }: {
   network: FlowNetwork;
   input: string | undefined;
   output: string | undefined;
   claim: boolean;
-  batchSize: string;
+  batchSize: number;
+  templates: boolean;
 }) {
   const config = await loadConfig();
 
   const flow = new FlowGateway(network, config.getContractAccount(network));
 
-  const minter = getMinter(config, flow);
-
   const csvInputFile = input ?? config.nftDataPath;
   const csvOutputFile = output ?? generateOutputFilename(network);
+
+  if (templates && config.contract.type !== ContractType.Edition) {
+    throw new EditionTemplatesOptionError();
+  }
 
   const answer = await inquirer.prompt({
     type: 'confirm',
     name: 'confirm',
-    message: `Create NFTs using data from ${path.basename(csvInputFile)}?`,
+    message: `Mint NFTs using data from ${path.basename(csvInputFile)}?`,
   });
 
   if (!answer.confirm) return;
 
-  console.log();
+  lineBreak();
+  ora().info(`Results will be saved to ${chalk.cyan(csvOutputFile)}.`);
+
+  const metadataProcessor = getMetadataProcessor(config);
+
+  switch (config.contract.type) {
+    case ContractType.Standard:
+      return mintStandard(config, metadataProcessor, flow, csvInputFile, csvOutputFile, claim, batchSize);
+    case ContractType.Edition:
+      return mintEdition(config, metadataProcessor, flow, csvInputFile, csvOutputFile, claim, batchSize, templates);
+  }
+}
+
+async function mintStandard(
+  config: FreshmintConfig,
+  metadataProcessor: MetadataProcessor,
+  flow: FlowGateway,
+  csvInputFile: string,
+  csvOutputFile: string,
+  withClaimKeys: boolean,
+  batchSize: number,
+) {
+  const minter = new StandardMinter(config.contract.schema, metadataProcessor, flow);
 
   const duplicatesSpinner = ora();
-  const pinningSpinner = ora();
-  const editionSpinner = ora();
 
   let bar: ProgressBar;
 
-  await minter.mint(csvInputFile, csvOutputFile, claim, Number(batchSize), {
+  await minter.mint(csvInputFile, csvOutputFile, withClaimKeys, batchSize, {
     onStartDuplicateCheck: () => {
-      duplicatesSpinner.start('Checking for duplicates...\n');
+      lineBreak();
+      duplicatesSpinner.start('Checking for duplicates...');
     },
-    onCompleteDuplicateCheck: (message: string) => {
-      duplicatesSpinner.succeed(message + '\n');
-    },
-    onStartPinning: (count: number) => {
-      const message = count === 1 ? `Pinning 1 file to IPFS...\n` : `Pinning ${count} files to IPFS...\n`;
-
-      pinningSpinner.start(message);
-    },
-    onCompletePinning: () => {
-      pinningSpinner.succeed();
-    },
-    onStartEditionCreation: (count: number) => {
-      const message = count === 1 ? `Adding 1 new edition template...\n` : `Adding ${count} new edition templates...\n`;
-
-      editionSpinner.start(message);
-    },
-    onCompleteEditionCreation: () => {
-      editionSpinner.succeed();
-    },
-    onStartMinting: (total: number, batchCount: number, batchSize: number) => {
-      if (total === 0) {
+    onCompleteDuplicateCheck: (skipped: number) => {
+      if (skipped == 0) {
+        duplicatesSpinner.succeed('No duplicate NFTs found.');
         return;
       }
 
-      console.log(chalk.greenBright(`Minting ${total} NFTs in ${batchCount} batches (batchSize = ${batchSize})...\n`));
-      console.log(`Saving results to ${chalk.cyan(csvOutputFile)}\n`);
+      // We cannot use `pluralize` here because the grammar is a bit too complex.
+      //
+      if (skipped > 1) {
+        duplicatesSpinner.info(`Skipped ${skipped} NFTs because they already exist.`);
+      } else {
+        duplicatesSpinner.info('Skipped 1 NFT because it already exists.');
+      }
+    },
+    onStartMinting: (nftCount: number, batchCount: number, batchSize: number) => {
+      if (nftCount === 0) {
+        return;
+      }
+
+      lineBreak();
+      console.log(
+        chalk.greenBright(
+          `Minting ${pluralize(nftCount, 'NFT')} in ${pluralize(
+            batchCount,
+            'batch',
+            'es',
+          )} (batchSize = ${batchSize})...\n`,
+        ),
+      );
 
       console.log(chalk.gray('> flow transactions send ./cadence/transactions/mint.cdc <...>\n'));
 
-      bar = new ProgressBar('[:bar] :current/:total :percent :etas', { width: 40, total });
+      bar = new ProgressBar('[:bar] :current/:total :percent :etas', { width: 40, total: nftCount });
       bar.tick(0);
     },
     onCompleteBatch: (batchSize: number) => {
       bar.tick(batchSize);
     },
+    onComplete: (nftCount: number) => {
+      lineBreak();
+      console.log(chalk.greenBright(`Minted ${pluralize(nftCount, 'new NFT')}.`));
+    },
   });
 }
 
-function getMinter(config: FreshmintConfig, flowGateway: FlowGateway): Minter {
+async function mintEdition(
+  config: FreshmintConfig,
+  metadataProcessor: MetadataProcessor,
+  flow: FlowGateway,
+  csvInputFile: string,
+  csvOutputFile: string,
+  withClaimKeys: boolean,
+  batchSize: number,
+  templatesOnly: boolean,
+) {
+  const minter = new EditionMinter(config.contract.schema, metadataProcessor, flow);
+
+  const duplicatesSpinner = ora();
+  const editionSpinner = ora();
+
+  let bar: ProgressBar;
+
+  await minter.mint(csvInputFile, csvOutputFile, withClaimKeys, batchSize, templatesOnly, {
+    onStartDuplicateCheck: () => {
+      lineBreak();
+      duplicatesSpinner.start('Checking for duplicates...');
+    },
+    onCompleteDuplicateCheck: (skippedEditions: number, skippedNFTs: number) => {
+      if (skippedEditions === 0 && skippedNFTs === 0) {
+        duplicatesSpinner.succeed('No duplicate edition templates or NFTs found.');
+        return;
+      }
+
+      duplicatesSpinner.info(
+        `Skipped ${pluralize(skippedEditions, 'edition template')} and ${pluralize(
+          skippedNFTs,
+          'NFT',
+        )} because they already exist.`,
+      );
+    },
+    onStartEditionCreation: (count: number) => {
+      if (count === 0) {
+        return;
+      }
+
+      lineBreak();
+      editionSpinner.start(`Creating ${pluralize(count, 'new edition template')}...`);
+    },
+    onCompleteEditionCreation: (count: number) => {
+      if (count === 0) {
+        return;
+      }
+
+      editionSpinner.succeed(
+        `Successfully created ${pluralize(count, 'new edition template')} to ${chalk.cyan(config.contract.name)}.`,
+      );
+    },
+    onStartMinting: (nftCount: number, batchCount: number, batchSize: number) => {
+      if (nftCount === 0) {
+        return;
+      }
+
+      lineBreak();
+      console.log(
+        chalk.greenBright(
+          `Minting ${pluralize(nftCount, 'NFT')} in ${pluralize(
+            batchCount,
+            'batch',
+            'es',
+          )} (batchSize = ${batchSize})...\n`,
+        ),
+      );
+
+      console.log(chalk.gray('> flow transactions send ./cadence/transactions/mint.cdc <...>\n'));
+
+      bar = new ProgressBar('[:bar] :current/:total :percent :etas', { width: 40, total: nftCount });
+      bar.tick(0);
+    },
+    onCompleteBatch: (batchSize: number) => {
+      bar.tick(batchSize);
+    },
+    onComplete: (editionCount: number, nftCount: number) => {
+      lineBreak();
+      console.log(
+        chalk.greenBright(
+          `Created ${pluralize(editionCount, 'new edition template')} and minted ${pluralize(nftCount, 'new NFT')}.`,
+        ),
+      );
+    },
+  });
+}
+
+class EditionTemplatesOptionError extends FreshmintError {
+  message = 'The --templates flag can only be used with an edition-based contract.';
+}
+
+function getMetadataProcessor(config: FreshmintConfig): MetadataProcessor {
   const metadataProcessor = new MetadataProcessor(config.contract.schema);
 
   if (config.contract.schema.includesFieldType(metadata.IPFSFile)) {
@@ -124,8 +251,11 @@ function getMinter(config: FreshmintConfig, flowGateway: FlowGateway): Minter {
     metadataProcessor.addFieldProcessor(ipfsFileProcessor);
   }
 
-  return createMinter(config.contract, metadataProcessor, flowGateway);
+  return metadataProcessor;
 }
+
+const lineBreak = () => console.log();
+const pluralize = (count: number, noun: string, suffix = 's') => `${count} ${noun}${count !== 1 ? suffix : ''}`;
 
 function generateOutputFilename(network: string): string {
   const timestamp = generateTimestamp();
