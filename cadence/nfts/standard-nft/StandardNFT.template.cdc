@@ -11,7 +11,7 @@ pub contract {{ contractName }}: NonFungibleToken {
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
     pub event Minted(id: UInt64)
-    pub event Burned(id: UInt64)
+    pub event Burned(id: UInt64, metadata: Metadata)
 
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
@@ -89,7 +89,10 @@ pub contract {{ contractName }}: NonFungibleToken {
         destroy() {
             {{ contractName }}.totalSupply = {{ contractName }}.totalSupply - (1 as UInt64)
 
-            emit Burned(id: self.id)
+            // This contract includes metadata in the burn event so that off-chain systems
+            // can retroactively index NFTs that were burned in past sporks.
+            //
+            emit Burned(id: self.id, metadata: self.metadata)
         }
     }
 
