@@ -99,6 +99,15 @@ async function generateStandardProject(dir: string, contract: ContractConfig, in
 
   await writeFile(path.resolve(dir, 'cadence/transactions/mint_with_claim_key.cdc'), mintWithClaimKeyTransaction);
 
+  const destroyNFTsTransaction = CommonNFTGenerator.destroyNFTs({
+    imports: shiftedImports,
+    contractName: contract.name,
+    contractAddress,
+  });
+
+  await writeFile(path.resolve(dir, 'cadence/transactions/destroy_nfts.cdc'), destroyNFTsTransaction);
+
+
   if (includeCSVFile) {
     await createNFTsCSVFile(dir);
   }

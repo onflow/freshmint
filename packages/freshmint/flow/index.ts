@@ -230,6 +230,12 @@ export class FlowGateway {
 
     return parseGetEditionResults(results);
   }
+
+  async destroyNFTs(ids: string[]) {
+    return await this.cli.transaction('./cadence/transactions/destroy_nfts.cdc', this.signer, [
+      { type: t.Array(t.String), value: ids },
+    ]);
+  }
 }
 
 function parseMintResults(txOutput: any): MintResult[] {
