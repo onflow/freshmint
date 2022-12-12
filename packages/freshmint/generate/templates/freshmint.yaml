@@ -30,6 +30,22 @@ collection:
   socials:
     twitter: https://twitter.com/{{ name }}
 
+# Set one or more royalty receivers for your NFTs:
+#
+# royalties:
+#   emulator:
+#     - address: 0xf8d6e0586b0a20c7
+#       receiverPath: /public/flowTokenReceiver
+#       cut: 0.05 # 5%
+#   testnet:
+#     - address: ${FLOW_TESTNET_ADDRESS}
+#       receiverPath: /public/flowTokenReceiver
+#       cut: 0.05 # 5%
+#   mainnet:
+#     - address: ${FLOW_MAINNET_ADDRESS}
+#       receiverPath: /public/flowTokenReceiver
+#       cut: 0.05 # 5%
+
 ipfsPinningService:
   endpoint: ${PINNING_SERVICE_ENDPOINT}
   key: ${PINNING_SERVICE_KEY}

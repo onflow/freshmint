@@ -5,8 +5,10 @@ import * as fs from 'fs-extra';
 import * as yaml from 'js-yaml';
 import chalk from 'chalk';
 import * as metadata from '@freshmint/core/metadata';
+import { Royalty } from '@freshmint/core';
 
 import { FreshmintError } from './errors';
+import { FlowNetwork } from './flow';
 import { envsubst } from './envsubst';
 
 const defaultConfigPath = 'freshmint.yaml';
@@ -17,6 +19,7 @@ const defaultAssetPath = 'assets';
 export class FreshmintConfig {
   contract: ContractConfig;
   collection: CollectionConfig;
+  royalties: RoyaltiesConfig;
   ipfsPinningService: IPFSPinningServiceConfig;
   nftDataPath: string;
   nftAssetPath: string;
@@ -24,12 +27,13 @@ export class FreshmintConfig {
   constructor(config: FreshmintConfigInput) {
     this.contract = config.contract;
     this.collection = config.collection;
+    this.royalties = config.royalties;
     this.ipfsPinningService = config.ipfsPinningService;
     this.nftDataPath = config.nftDataPath;
     this.nftAssetPath = config.nftAssetPath;
   }
 
-  getContractAccount(network: string): string {
+  getContractAccount(network: FlowNetwork): string {
     const account = this.contract.account[network];
     if (!account) {
       throw new MissingContractAccountForNetworkError(network);
@@ -89,23 +93,28 @@ export class MissingContractAccountForNetworkError extends FreshmintError {
 export interface FreshmintConfigInput {
   contract: ContractConfig;
   collection: CollectionConfig;
+  royalties: RoyaltiesConfig;
   ipfsPinningService: IPFSPinningServiceConfig;
   nftDataPath: string;
   nftAssetPath: string;
 }
 
-export type AccountsByNetwork = { [network: string]: string };
-
 export interface ContractConfig {
   name: string;
   type: ContractType;
   schema: metadata.Schema;
-  account: AccountsByNetwork;
+  account: ContractAccount;
 }
 
 export enum ContractType {
   Standard = 'standard',
   Edition = 'edition',
+}
+
+export interface ContractAccount {
+  emulator?: string;
+  testnet?: string;
+  mainnet?: string;
 }
 
 export interface CollectionConfig {
@@ -119,6 +128,12 @@ export interface CollectionConfig {
   socials: { [key: string]: string };
 }
 
+export interface RoyaltiesConfig {
+  emulator: Royalty[];
+  testnet: Royalty[];
+  mainnet: Royalty[];
+}
+
 export interface IPFSPinningServiceConfig {
   endpoint: string;
   key: string;
@@ -130,39 +145,55 @@ export interface IPFSPinningServiceConfig {
 function stringMap() {
   return yup.lazy((value) => {
     const keys = Object.keys(value ?? {});
-    const entries = keys.map((key) => [key, yup.string().defined()]);
+    const entries = keys.map((key) => [key, yup.string().required()]);
     const shape = Object.fromEntries(entries);
 
-    return yup.object().defined().shape(shape);
+    return yup.object().required().shape(shape);
   });
 }
 
-const schema: yup.ObjectSchema<FreshmintConfigInput> = yup.object().shape({
+const royaltySchema = {
+  address: yup.string().required(),
+  receiverPath: yup.string().required(),
+  cut: yup.string().required(),
+  description: yup.string().optional(),
+};
+
+const schema: yup.ObjectSchema<FreshmintConfigInput> = yup.object({
   contract: yup
-    .object()
-    .defined()
-    .shape({
-      name: yup.string().defined(),
+    .object({
+      name: yup.string().required(),
       type: yup.string().oneOf(Object.values(ContractType)).required(),
       schema: yup
         .mixed((input): input is metadata.Schema => input instanceof metadata.Schema)
         .transform((value) => metadata.parseSchema(value))
-        .defined(),
-      account: stringMap(),
-    }),
-  collection: yup
-    .object()
-    .defined()
-    .shape({
-      name: yup.string().defined(),
-      description: yup.string().defined(),
-      url: yup.string().defined(),
-      images: yup.object().defined().shape({
-        square: yup.string().defined(),
-        banner: yup.string().defined(),
+        .required(),
+      account: yup.object({
+        emulator: yup.string(),
+        testnet: yup.string(),
+        mainnet: yup.string(),
       }),
+    })
+    .required(),
+  collection: yup
+    .object({
+      name: yup.string().required(),
+      description: yup.string().required(),
+      url: yup.string().required(),
+      images: yup
+        .object({
+          square: yup.string().required(),
+          banner: yup.string().required(),
+        })
+        .required(),
       socials: stringMap(),
-    }),
+    })
+    .required(),
+  royalties: yup.object({
+    emulator: yup.array(yup.object(royaltySchema)).default([]),
+    testnet: yup.array(yup.object(royaltySchema)).default([]),
+    mainnet: yup.array(yup.object(royaltySchema)).default([]),
+  }),
   ipfsPinningService: yup
     .object()
     // IPFS configuration is required when using an IPFS file field
@@ -170,11 +201,11 @@ const schema: yup.ObjectSchema<FreshmintConfigInput> = yup.object().shape({
       is: (schema: metadata.Schema) => {
         return schema.includesFieldType(metadata.IPFSFile);
       },
-      then: (schema) => schema.defined(),
+      then: (schema) => schema.required(),
     })
     .shape({
-      endpoint: yup.string().defined(),
-      key: yup.string().defined(),
+      endpoint: yup.string().required(),
+      key: yup.string().required(),
     }),
   nftDataPath: yup.string().when('contract.type', {
     is: ContractType.Standard,
@@ -205,7 +236,10 @@ function loadRawConfig(filename: string, basePath?: string): any {
   const filepath = path.resolve(basePath ?? process.cwd(), filename);
   const contents = fs.readFileSync(filepath, 'utf8');
 
-  return yaml.load(contents);
+  // Parse using FAILSAFE_SCHEMA so that addresses (e.g. 0xf8d6e0586b0a20c7)
+  // are interpreted as strings rather than integers.
+  //
+  return yaml.load(contents, { schema: yaml.FAILSAFE_SCHEMA });
 }
 
 export function getDefaultDataPath(contractType: ContractType): string {
