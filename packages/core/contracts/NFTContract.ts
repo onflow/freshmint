@@ -178,7 +178,15 @@ export abstract class NFTContract {
     }, Transaction.VoidResult);
   }
 
-  transferNFTs({ ids, toAddress }: { ids: string[]; toAddress: string }): Transaction<void> {
+  transferNFTs({
+    ids,
+    toAddress,
+    fromBucket,
+  }: {
+    ids: string[];
+    toAddress: string;
+    fromBucket?: string;
+  }): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
       const script = CommonNFTGenerator.transferNFTs({
         imports,
@@ -188,7 +196,11 @@ export abstract class NFTContract {
 
       return {
         script,
-        args: [fcl.arg(toAddress, t.Address), fcl.arg(ids, t.Array(t.UInt64))],
+        args: [
+          fcl.arg(toAddress, t.Address),
+          fcl.arg(ids, t.Array(t.UInt64)),
+          fcl.arg(fromBucket, t.Optional(t.String)),
+        ],
         computeLimit: 9999,
         signers: this.getSigners(),
       };

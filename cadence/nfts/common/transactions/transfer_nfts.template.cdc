@@ -3,7 +3,7 @@ import {{ contractName }} from {{{ contractAddress }}}
 
 /// This transaction transfers multiple {{ contractName }} NFTs from one account to another.
 ///
-transaction(recipient: Address, ids: [UInt64]) {
+transaction(recipient: Address, ids: [UInt64], fromBucketName: String?) {
 
     /// Reference to the sender's collection
     let withdrawRef: &{{ contractName }}.Collection
@@ -12,9 +12,14 @@ transaction(recipient: Address, ids: [UInt64]) {
     let depositRef: &{NonFungibleToken.CollectionPublic}
 
     prepare(signer: AuthAccount) {
+    
+        // Derive the collection path from the bucket name
+        let collectionName = {{ contractName }}.makeCollectionName(bucketName: fromBucketName)
+        let collectionStoragePath = {{ contractName }}.getStoragePath(suffix: collectionName)
+
         // Borrow a reference to the signer's NFT collection
         self.withdrawRef = signer
-            .borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath)
+            .borrow<&{{ contractName }}.Collection>(from: collectionStoragePath)
             ?? panic("Account does not store an object at the specified path")
 
         // Get the recipient's public account object

@@ -88,4 +88,31 @@ describe('Transfer NFTs', () => {
     // The 3 NFTs should now be in the new account
     expect([onChainNFT1.id, onChainNFT2.id, onChainNFT3.id]).toEqual([nft1.id, nft2.id, nft3.id]);
   });
+
+  it('should transfer three NFTs from one account to another from a custom bucket', async () => {
+    // Create a new account and set up an NFT collection
+    const account = await createAccount();
+    await client.send(contract.setupCollection(account.authorizer));
+
+    const bucketName = 'foo';
+
+    // Mint 3 new NFTs into
+    const [nft1, nft2, nft3] = await client.send(contract.mintNFTs(nfts.generate(3), bucketName));
+
+    // Transfer the 3 NFTs to the new account
+    await client.send(
+      contract.transferNFTs({
+        toAddress: account.address,
+        ids: [nft1.id, nft2.id, nft3.id],
+        fromBucket: bucketName,
+      }),
+    );
+
+    const onChainNFT1 = await client.query(contract.getNFT(account.address, nft1.id));
+    const onChainNFT2 = await client.query(contract.getNFT(account.address, nft2.id));
+    const onChainNFT3 = await client.query(contract.getNFT(account.address, nft3.id));
+
+    // The 3 NFTs should now be in the new account
+    expect([onChainNFT1.id, onChainNFT2.id, onChainNFT3.id]).toEqual([nft1.id, nft2.id, nft3.id]);
+  });
 });
