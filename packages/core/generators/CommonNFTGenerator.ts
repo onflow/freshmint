@@ -110,6 +110,22 @@ export class CommonNFTGenerator extends TemplateGenerator {
     });
   }
 
+  static transferNFTs({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/transactions/transfer_nfts.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
+
   static transferQueueToQueue({
     imports,
     contractName,
