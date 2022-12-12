@@ -48,6 +48,8 @@ async function deploy({ network }: { network: FlowNetwork }) {
     socials: config.collection.socials,
   };
 
+  const royalties = config.royalties[network];
+
   const contract = await fs.readFile(contractPath, 'utf-8');
 
   const spinner = ora();
@@ -57,7 +59,7 @@ async function deploy({ network }: { network: FlowNetwork }) {
   spinner.start(`Deploying ${config.contract.name} to ${network}...`);
 
   try {
-    await flow.deploy(contractName, contract, collectionMetadata, []);
+    await flow.deploy(contractName, contract, collectionMetadata, royalties);
   } catch (error: any) {
     spinner.fail('Failed to deploy:\n');
     throw new FreshmintError(error);
