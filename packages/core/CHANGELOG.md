@@ -1,5 +1,11 @@
 # @freshmint/core
 
+## 0.6.0
+
+### Minor Changes
+
+- Added optional bucket name to transfer NFTs transaction
+
 ## 0.5.0
 
 ### Minor Changes
