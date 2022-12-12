@@ -1,7 +1,7 @@
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import {{ contractName }} from {{{ contractAddress }}}
 
-/// This transaction transfers a {{ contractName }} NFT from one account to another.
+/// This transaction transfers multiple {{ contractName }} NFTs from one account to another.
 ///
 transaction(recipient: Address, ids: [UInt64]) {
 
