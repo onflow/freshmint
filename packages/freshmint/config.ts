@@ -236,6 +236,9 @@ function loadRawConfig(filename: string, basePath?: string): any {
   const filepath = path.resolve(basePath ?? process.cwd(), filename);
   const contents = fs.readFileSync(filepath, 'utf8');
 
+  // Parse using FAILSAFE_SCHEMA so that addresses (e.g. 0xf8d6e0586b0a20c7)
+  // are interpreted as strings rather than integers.
+  //
   return yaml.load(contents, { schema: yaml.FAILSAFE_SCHEMA });
 }
 
