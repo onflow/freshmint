@@ -23,7 +23,7 @@ async function main() {
 
   // Highlight errors in red
   program.configureOutput({
-    writeErr: (str) => process.stderr.write(chalk.red(str)),
+    outputError: (str: string, write: (str: string) => void) => write(chalk.red(str)),
   });
 
   // Copy parent program settings to all sub-commands
@@ -54,7 +54,6 @@ main()
       // to be displayed using only the message field.
       console.error(chalk.red(err.message));
     } else {
-      console.log(typeof err);
       // Other errors are unexpected fatal errors and should be
       // logged in their entirety.
       console.error(err);
