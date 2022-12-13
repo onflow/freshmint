@@ -9,7 +9,7 @@ import { parseUFix64Argument } from '../arguments';
 
 export default new Command('burn')
   .argument('<ids...>', 'The IDs of NFTs to destroy (e.g. 3425 1235 4524 216661).', parseUFix64Argument)
-  .description('destroy NFTs')
+  .description('burn (i.e. destroy) one or more NFTs')
   .option('-n, --network <network>', "Network to use. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
   .action(destroyNFTs);
 
