@@ -140,6 +140,23 @@ export abstract class NFTContract {
     }, Transaction.VoidResult);
   }
 
+  destroyNFTs(ids: string[], fromBucket?: string): Transaction<void> {
+    return new Transaction(({ imports }: FreshmintConfig) => {
+      const script = CommonNFTGenerator.destroyNFTs({
+        imports,
+        contractName: this.name,
+        contractAddress: this.getAddress(),
+      });
+
+      return {
+        script,
+        args: [fcl.arg(ids, t.Array(t.UInt64)), fcl.arg(fromBucket, t.Optional(t.String))],
+        computeLimit: 9999,
+        signers: this.getSigners(),
+      };
+    }, Transaction.VoidResult);
+  }
+
   setupCollection(authorizer: TransactionAuthorizer): Transaction<void> {
     return new Transaction(({ imports }: FreshmintConfig) => {
       const script = CommonNFTGenerator.setupCollection({
