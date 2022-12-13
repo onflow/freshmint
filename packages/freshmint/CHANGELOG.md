@@ -1,5 +1,16 @@
 # freshmint
 
+## 0.4.0
+
+### Minor Changes
+
+- Add burn transaction and command
+
+### Patch Changes
+
+- Updated dependencies
+  - @freshmint/core@0.7.0
+
 ## 0.3.2
 
 ### Patch Changes

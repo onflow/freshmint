@@ -1,5 +1,11 @@
 # @freshmint/core
 
+## 0.7.0
+
+### Minor Changes
+
+- Add burn transaction and command
+
 ## 0.6.0
 
 ### Minor Changes
