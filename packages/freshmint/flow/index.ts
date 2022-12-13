@@ -233,7 +233,7 @@ export class FlowGateway {
 
   async destroyNFTs(ids: string[]) {
     return await this.cli.transaction('./cadence/transactions/destroy_nfts.cdc', this.signer, [
-      { type: t.Array(t.String), value: ids },
+      { type: t.Array(t.UInt64), value: ids },
       { type: t.Optional(t.String), value: null } // bucketName
     ]);
   }
