@@ -3,7 +3,6 @@ import ora from 'ora';
 import chalk from 'chalk';
 
 import { FlowGateway, FlowNetwork } from '../flow';
-import { FreshmintError } from '../errors';
 import { loadConfig } from '../config';
 
 export default new Command('burn')
@@ -25,5 +24,9 @@ async function destroyNFTs(ids: string[], { network }: { network: FlowNetwork })
 
   await flow.destroyNFTs(ids);
 
-  spinner.succeed('The NFTs were destroyed.');
+  if (ids.length == 1) {
+    spinner.succeed(`1 NFT was destroyed.`);
+  } else {
+    spinner.succeed(`${ids.length} NFTs were destroyed.`);
+  }
 }

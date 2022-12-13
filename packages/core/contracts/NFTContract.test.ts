@@ -125,7 +125,7 @@ describe('Common NFT tests', () => {
     const [nft1, nft2, nft3] = await client.send(contract.mintNFTs(nfts.generate(3)));
 
     // Destroy the 3 NFTs
-    await client.send(contract.destroyNFTs( [nft1.id, nft2.id, nft3.id] ));
+    await client.send(contract.destroyNFTs([nft1.id, nft2.id, nft3.id]));
 
     const onChainNFT1 = await client.query(contract.getNFT(account.address, nft1.id));
     const onChainNFT2 = await client.query(contract.getNFT(account.address, nft2.id));
@@ -155,5 +155,4 @@ describe('Common NFT tests', () => {
     // The 3 NFTs should be null
     expect([onChainNFT1, onChainNFT2, onChainNFT3]).toEqual([null, null, null]);
   });
-
 });
