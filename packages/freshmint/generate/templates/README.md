@@ -1,6 +1,6 @@
 # {{ name }}
 
-This project was generated with [freshmint](https://github.com/packagelabs/freshmint).
+This project was generated with [freshmint](https://github.com/dapperlabs/freshmint).
 
 ## Setup
 
