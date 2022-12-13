@@ -13,7 +13,7 @@ import {
   teardownEmulator,
 } from '../testHelpers';
 
-describe('Transfer NFTs', () => {
+describe('Common NFT tests', () => {
   const contract = new StandardNFTContract({
     name: 'StandardNFT_Transfer_Test',
     schema: getTestSchema(),
@@ -131,7 +131,7 @@ describe('Transfer NFTs', () => {
     const onChainNFT2 = await client.query(contract.getNFT(account.address, nft2.id));
     const onChainNFT3 = await client.query(contract.getNFT(account.address, nft3.id));
 
-    // The 3 NFTs should now be in the new account
+    // The 3 NFTs should be null
     expect([onChainNFT1, onChainNFT2, onChainNFT3]).toEqual([null, null, null]);
   });
 
@@ -152,7 +152,7 @@ describe('Transfer NFTs', () => {
     const onChainNFT2 = await client.query(contract.getNFT(account.address, nft2.id));
     const onChainNFT3 = await client.query(contract.getNFT(account.address, nft3.id));
 
-    // The 3 NFTs should now be in the new account
+    // The 3 NFTs should be null
     expect([onChainNFT1, onChainNFT2, onChainNFT3]).toEqual([null, null, null]);
   });
 

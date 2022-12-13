@@ -11,6 +11,7 @@ import start from './commands/start';
 import dev from './commands/dev';
 import deploy from './commands/deploy';
 import mint from './commands/mint';
+import burn from './commands/burn';
 import startDrop from './commands/start-drop';
 import stopDrop from './commands/stop-drop';
 import gen from './commands/gen';
@@ -36,6 +37,7 @@ async function main() {
   addCommand(dev);
   addCommand(deploy);
   addCommand(mint);
+  addCommand(burn);
   addCommand(startDrop);
   addCommand(stopDrop);
   addCommand(gen);
