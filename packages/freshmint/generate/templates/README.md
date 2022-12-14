@@ -14,18 +14,12 @@ This project uses the [Flow emulator](https://github.com/onflow/flow-emulator) a
 
 ### Start the development server
 
-This command launches the emulator, dev wallet and deploys all contract dependencies.
+This command launches the emulator, dev wallet and deploys all Cadence contracts.
 
 Keep it running while you build!
 
 ```sh
 fresh dev
-```
-
-### Deploy your contract
-
-```sh
-fresh deploy
 ```
 
 ### Configure NFT.Storage for IPFS
