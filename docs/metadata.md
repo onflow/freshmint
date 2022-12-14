@@ -123,7 +123,6 @@ schema:
     - type: nft-collection-data
 ```
 
-
 ## Customize your metadata schema
 
 Every new Freshmint project uses a schema with three simple fields: `name`, `description` and `thumbnail`.
@@ -180,7 +179,7 @@ Your metadata can include links to external assets like images and videos.
 
 ### IPFS assets
 
-> We recommend storing assets in IPFS for long-term availability.
+> We recommend storing assets in [IPFS](https://ipfs.tech/), a peer-to-peer storage network.
 
 Start by adding an `ipfs-file` field to your schema.
 
