@@ -189,7 +189,7 @@ async function mintEdition(
       }
 
       editionSpinner.succeed(
-        `Successfully created ${pluralize(count, 'new edition template')} to ${chalk.cyan(config.contract.name)}.`,
+        `Successfully created ${pluralize(count, 'new edition template')} in ${chalk.cyan(config.contract.name)}.`,
       );
     },
     onStartMinting: (nftCount: number, batchCount: number, batchSize: number) => {

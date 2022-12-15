@@ -39,7 +39,7 @@ export type CreateEditionResult = {
 
 export type EditionResult = {
   id: string;
-  limit: number;
+  limit: number | null;
   size: number;
 } | null;
 
