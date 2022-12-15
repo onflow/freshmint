@@ -15,6 +15,7 @@ interface EditionEntry {
   rawMetadata: MetadataMap;
   preparedMetadata: MetadataMap;
   hash: string;
+  csvLineNumber: number;
 }
 
 interface Edition {
@@ -25,6 +26,7 @@ interface Edition {
   rawMetadata: MetadataMap;
   preparedMetadata: MetadataMap;
   transactionId?: string;
+  csvLineNumber: number;
 }
 
 type EditionBatch = {
@@ -43,8 +45,16 @@ export type EditionHooks = {
 };
 
 export class InvalidEditionLimitError extends FreshmintError {
-  constructor(value: string) {
-    super(`Edition size must be a number, received "${value}".`);
+  constructor(value: string, csvLineNumber: number) {
+    super(`Invalid edition on line ${csvLineNumber}: size must be a number, received "${value}".`);
+  }
+}
+
+export class ExceededEditionLimitError extends FreshmintError {
+  constructor(edition: Edition) {
+    super(
+      `Invalid edition on line ${edition.csvLineNumber} (with on-chain ID ${edition.id}): target size ${edition.targetSize} exceeds edition limit of ${edition.limit}.`,
+    );
   }
 }
 
@@ -87,6 +97,13 @@ export class EditionMinter {
 
     // Combine existing and new editions into a single array
     const editions = [...existingEditions, ...newEditions];
+
+    // Throw an error if any edition target size is larger than its limit
+    for (const edition of editions) {
+      if (edition.limit !== null && edition.targetSize > edition.limit) {
+        throw new ExceededEditionLimitError(edition);
+      }
+    }
 
     // Remove editions that have already reached their size limit
     const editionsToMint = editions.filter((edition) => {
@@ -159,6 +176,7 @@ export class EditionMinter {
           targetSize: entry.size,
           rawMetadata: entry.rawMetadata,
           preparedMetadata: entry.preparedMetadata,
+          csvLineNumber: entry.csvLineNumber,
         });
       } else {
         newEditionEntries.push(entry);
@@ -204,6 +222,7 @@ export class EditionMinter {
         transactionId: result.transactionId,
         rawMetadata: entry.rawMetadata,
         preparedMetadata: entry.preparedMetadata,
+        csvLineNumber: entry.csvLineNumber,
       };
     });
   }
@@ -225,13 +244,18 @@ export class EditionMinter {
   async prepareMetadata(entries: MetadataMap[]): Promise<EditionEntry[]> {
     const preparedEntries = await this.metadataProcessor.prepare(entries);
 
+    const csvHeaderLines = 1;
+
     return preparedEntries.map((entry, i) => {
+      const csvLineNumber = i + 1 + csvHeaderLines;
+
       // Attach the edition limit and size parsed from the input
-      const limit = parseEditionLimit(entries[i]['edition_limit']);
       const size = parseInt(entries[i]['edition_size'], 10);
+      const limit = parseEditionLimit(entries[i]['edition_limit'], size, csvLineNumber);
 
       return {
         ...entry,
+        csvLineNumber,
         size,
         limit,
       };
@@ -328,14 +352,19 @@ async function savePrivateKeysToFile(filename: string, batch: EditionBatch, priv
 //
 // The edition limit must be an integer or "null".
 //
-function parseEditionLimit(value: string | undefined): number | null {
-  if (value === 'null' || value === undefined) {
+function parseEditionLimit(value: string | undefined, size: number, csvLineNumber: number): number | null {
+  // If limit is undefined, use size as limit
+  if (value === undefined) {
+    return size;
+  }
+
+  if (value === 'null') {
     return null;
   }
 
   const limit = parseInt(value, 10);
   if (isNaN(limit)) {
-    throw new InvalidEditionLimitError(value);
+    throw new InvalidEditionLimitError(value, csvLineNumber);
   }
 
   return limit;
