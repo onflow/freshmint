@@ -5,7 +5,7 @@ Your NFT metadata is what makes each of your NFTs unique.
 An NFT's metadata can include text fields (e.g. name, description), media assets (e.g. images, video),
 traits (e.g. color, rarity) and any other information that you choose.
 
-Freshmint stores all NFT metadata on the blockchain (except for file assets like images, which we recommend you store in IFPS).
+Freshmint stores all NFT metadata on the blockchain (except for file assets like images, which we recommend you store in IFPS in order for them to be fetched via unique content identifiers).
 
 ## Metadata schema
 
@@ -13,7 +13,7 @@ Your metadata schema defines the structure of your metadata. It has two parts: f
 
 ### Fields
 
-A schema defines list of data fields attached to each NFT.
+A metadata schema defines a list of data fields attached to each NFT.
 All fields must have a name and a type.
 
 Freshmint reads each field in your schema and generates a corresponding 
@@ -74,7 +74,7 @@ to ensure that the video is supported by 3rd-party applications.
 #### Views in Freshmint
 
 Freshmint has support for a limited set of common metadata views.
-You can define these in your schema.
+You can define these in your metadata schema.
 
 |View|Schema ID|Description|
 |----|---------|-----------|
@@ -87,7 +87,7 @@ You can define these in your schema.
 |NFT Collection Display|`nft-collection-display`|Return the display information for your NFT collection.|
 |NFT Collection Data|`nft-collection-data`|Return the data needed to create a new `NonFungibleToken.Collection` instance for your NFTs.|
 
-Here's all the views defined in a single schema:
+Here's an example of a schema that defines views:
 
 ```yaml
 # freshmint.yaml
@@ -121,6 +121,7 @@ schema:
     - type: nft
     - type: nft-collection-display
     - type: nft-collection-data
+    - type: royalties
 ```
 
 ## Customize your metadata schema
@@ -221,6 +222,8 @@ Foo,This is the foo NFT,foo.jpeg
 
 Now when you run `fresh mint`, Freshmint will automatically pin the asset to IPFS and attach its
 [CID](https://docs.ipfs.tech/concepts/content-addressing/#what-is-a-cid) to the minted NFT.
+
+> Freshmint uses the IPFS pinning service endpoint (pre-populated with the [NFT.Storage](https://nft.storage/) API URL) and key (must be manually entered) defined in the `.env` file in the root directory of your project.
 
 #### Remote files
 
