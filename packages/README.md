@@ -104,7 +104,7 @@ After updating the versions, build all packages from the **root of this reposito
 npm run build
 ```
 
-### Publish a release
+### Publish a release to NPM
 
 Run this command to publish all new package versions to NPM.
 
@@ -121,3 +121,7 @@ Lastly, push the newly-created git tags to GitHub:
 ```sh
 git push --tags
 ```
+
+### Publish a release on GitHub
+
+Lastly, create a new release on GitHub from the tags you just pushed!
