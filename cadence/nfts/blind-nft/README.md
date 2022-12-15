@@ -108,4 +108,4 @@ as well as the salt values used to generate each metadata hash.
 
 ## Tests
 
-Tests are implemented in TypeScript in [`StandardNFTContract.test.ts`](../../../packages/core/contracts/BlindNFTContract.test.ts) and use [`@onflow/flow-js-testing`](https://github.com/onflow/flow-js-testing) to run on the Flow Emulator.
+Tests are implemented in TypeScript in [`BlindNFTContract.test.ts`](../../../packages/core/contracts/BlindNFTContract.test.ts) and use [`@onflow/flow-js-testing`](https://github.com/onflow/flow-js-testing) to run on the Flow Emulator.
