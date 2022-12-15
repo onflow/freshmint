@@ -10,7 +10,11 @@ npm install -g freshmint
 
 :warning: **Important:** Freshmint depends on the Flow CLI, so make sure you have it installed:
 
-- [Install the Flow CLI](https://developers.flow.com/tools/flow-cli/install)
+- [Install the Flow CLI](https://developers.flow.com/tools/flow-cli/install).
+- Verify that the Flow CLI is installed and callable by running:
+  ```sh
+  flow version
+  ```
 
 ## Create a project
 
@@ -24,11 +28,12 @@ cd ./your-project-name
 
 This command creates a new directory with the following:
 
-- A project configuration file (`freshmint.yaml`).
 - A custom NFT contract, just for you!
 - Transactions and scripts to interact with your contract.
-- Sample NFTs and image assets.
+- Sample NFTs and image assets (in `nfts.csv` and `assets`).
 - A pre-built Next.js web app for running a live drop.
+- A project configuration file (`freshmint.yaml`).
+- Flow configuration files.
 
 ## Start the local dev server
 
