@@ -10,7 +10,6 @@ import * as metadata from '@freshmint/core/metadata';
 import { FlowGateway, FlowNetwork } from '../flow';
 import { ContractType, FreshmintConfig, loadConfig } from '../config';
 import { parsePositiveIntegerArgument } from '../arguments';
-import { FreshmintError } from '../errors';
 
 import { StandardMinter } from '../mint/minters/StandardMinter';
 import { EditionMinter } from '../mint/minters/EditionMinter';
@@ -24,7 +23,6 @@ export default new Command('mint')
   .option('-o, --output <csv-path>', 'The location of the output CSV file')
   .option('-b, --batch-size <number>', 'The number of NFTs to mint per batch', parsePositiveIntegerArgument, 10)
   .option('-c, --claim', 'Generate a claim key for each NFT')
-  .option('-t, --templates', 'Create edition templates only, skip minting (for edition-based contracts only)')
   .option('-n, --network <network>', "Network to mint to. Either 'emulator', 'testnet' or 'mainnet'", 'emulator')
   .action(mint);
 
@@ -34,14 +32,12 @@ async function mint({
   output,
   claim,
   batchSize,
-  templates,
 }: {
   network: FlowNetwork;
   input: string | undefined;
   output: string | undefined;
   claim: boolean;
   batchSize: number;
-  templates: boolean;
 }) {
   const config = await loadConfig();
 
@@ -49,10 +45,6 @@ async function mint({
 
   const csvInputFile = input ?? config.nftDataPath;
   const csvOutputFile = output ?? generateOutputFilename(network);
-
-  if (templates && config.contract.type !== ContractType.Edition) {
-    throw new EditionTemplatesOptionError();
-  }
 
   const metadataProcessor = getMetadataProcessor(config);
 
@@ -71,7 +63,7 @@ async function mint({
     case ContractType.Standard:
       return mintStandard(config, metadataProcessor, flow, csvInputFile, csvOutputFile, claim, batchSize);
     case ContractType.Edition:
-      return mintEdition(config, metadataProcessor, flow, csvInputFile, csvOutputFile, claim, batchSize, templates);
+      return mintEdition(config, metadataProcessor, flow, csvInputFile, csvOutputFile, claim, batchSize);
   }
 }
 
@@ -148,7 +140,6 @@ async function mintEdition(
   csvOutputFile: string,
   withClaimKeys: boolean,
   batchSize: number,
-  templatesOnly: boolean,
 ) {
   const minter = new EditionMinter(config.contract.schema, metadataProcessor, flow);
 
@@ -157,7 +148,7 @@ async function mintEdition(
 
   let bar: ProgressBar;
 
-  await minter.mint(csvInputFile, csvOutputFile, withClaimKeys, batchSize, templatesOnly, {
+  await minter.mint(csvInputFile, csvOutputFile, withClaimKeys, batchSize, {
     onStartDuplicateCheck: () => {
       lineBreak();
       duplicatesSpinner.start('Checking for duplicates...');
@@ -225,10 +216,6 @@ async function mintEdition(
       );
     },
   });
-}
-
-class EditionTemplatesOptionError extends FreshmintError {
-  message = 'The --templates flag can only be used with an edition-based contract.';
 }
 
 function getMetadataProcessor(config: FreshmintConfig): MetadataProcessor {

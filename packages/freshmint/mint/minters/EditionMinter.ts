@@ -64,7 +64,6 @@ export class EditionMinter {
     csvOutputFile: string,
     withClaimKeys: boolean,
     batchSize: number,
-    templatesOnly: boolean,
     hooks: EditionHooks,
   ) {
     const entries = await readCSV(path.resolve(process.cwd(), csvInputFile));
