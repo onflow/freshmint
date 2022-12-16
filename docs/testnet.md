@@ -44,3 +44,12 @@ fresh mint --network testnet
 fresh start-drop 10.0 --network testnet
 fresh stop-drop --network testnet
 ```
+
+## Connect the web app to testnet
+
+```sh
+cd ./web
+
+NETWORK=testnet CONTRACT_ADDRESS=<testnet-contract-address> npm run dev
+```
+
