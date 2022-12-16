@@ -13,13 +13,13 @@ function getDefaults(network) {
       return {
         ACCESS_API: 'http://localhost:8888',
         WALLET_DISCOVERY: 'http://localhost:8701/fcl/authn',
-        MINTER_ADDRESS: '0xf8d6e0586b0a20c7'
+        CONTRACT_ADDRESS: '0xf8d6e0586b0a20c7'
       }
     case 'testnet':
       return {
         ACCESS_API: 'https://rest-testnet.onflow.org',
         WALLET_DISCOVERY: 'https://fcl-discovery.onflow.org/testnet/authn',
-        MINTER_ADDRESS: ''
+        CONTRACT_ADDRESS: ''
       }
   }
 
@@ -44,7 +44,11 @@ const nextConfig = {
               path.resolve('../flow.json'),
               path.resolve('../flow.testnet.json'),
               path.resolve('../flow.mainnet.json'),
-            ]
+            ],
+            env: {
+              FLOW_TESTNET_ADDRESS: process.env.CONTRACT_ADDRESS,
+              FLOW_MAINNET_ADDRESS: process.env.CONTRACT_ADDRESS
+            }
           },
         },
       ]
@@ -61,7 +65,7 @@ const nextConfig = {
     DESCRIPTION: process.env.DESCRIPTION || project.description,
     ACCESS_API: process.env.ACCESS_API || defaults.ACCESS_API,
     WALLET_DISCOVERY: process.env.WALLET_DISCOVERY || defaults.WALLET_DISCOVERY,
-    MINTER_ADDRESS: process.env.MINTER_ADDRESS || defaults.MINTER_ADDRESS
+    CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS || defaults.CONTRACT_ADDRESS
   }
 }
 

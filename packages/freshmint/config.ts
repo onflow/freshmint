@@ -82,9 +82,9 @@ export class MissingContractAccountForNetworkError extends FreshmintError {
 
   constructor(network: string) {
     super(
-      `Please specify a contract account for the "${network}" network.\n\nExample in ${chalk.green(
-        'freshmint.yaml',
-      )}:${chalk.cyan(`\n\ncontract:\n  account:\n    ${network}: your-account-name (as defined in flow.json)`)}`,
+      `Please specify a contract account for the "${network}" network.\n\nExample in freshmint.yaml:${chalk.cyan(
+        `\n\ncontract:\n  account:\n    ${network}: your-account-name (as defined in flow.json)`,
+      )}`,
     );
     this.network = network;
   }

@@ -9,6 +9,7 @@ import {
   TransactionResult,
   TransactionResultTransformer,
   convertToTransactionError,
+  TransactionStatus,
 } from '../transaction';
 import { FCLModule } from '../fcl';
 
@@ -17,9 +18,9 @@ export type TransactionExecutor = (...args: any[]) => Promise<void>;
 export function useTransaction<T = TransactionResult>(
   transaction: Transaction<T> | TransactionParameters | CadenceSourceCode,
   onResult?: TransactionResultTransformer<T>,
-): [T | undefined, TransactionExecutor, boolean] {
+): [T | undefined, TransactionExecutor, TransactionStatus] {
   const [result, setResult] = useState<T | undefined>(undefined);
-  const isLoading = result === undefined;
+  const [status, setStatus] = useState<TransactionStatus>(TransactionStatus.UNKNOWN);
 
   const { fcl, getNetwork } = useFCL();
 
@@ -32,12 +33,14 @@ export function useTransaction<T = TransactionResult>(
 
     const network = await getNetwork();
 
-    const result = await executeTransaction(fcl, transactionInstance, network);
+    const result = await executeTransaction(fcl, transactionInstance, network, (status: TransactionStatus) =>
+      setStatus(status),
+    );
 
     setResult(result);
   }
 
-  return [result, execute, isLoading];
+  return [result, execute, status];
 }
 
 function normalizeTransaction<T>(
@@ -55,11 +58,39 @@ function normalizeTransaction<T>(
   return new Transaction<T>({ cadence: transaction, args: args });
 }
 
-async function executeTransaction<T = void>(fcl: FCLModule, tx: Transaction<T>, network: string): Promise<T> {
+async function executeTransaction<T = void>(
+  fcl: FCLModule,
+  tx: Transaction<T>,
+  network: string,
+  onStatus?: (status: any) => void,
+): Promise<T> {
   const transactionId = await sendTransaction(fcl, tx, network);
 
   try {
-    const { events, error } = await fcl.tx({ transactionId }).onceSealed();
+    const fclTx = fcl.tx({ transactionId });
+
+    // Optionally subscribe to transaction status updates
+    if (onStatus) {
+      onStatus(TransactionStatus.SUBMITTED);
+
+      fclTx.subscribe((status: { statusCode: number; statusString: string }) => {
+        // Do not trigger the callback if the status is empty
+        if (status.statusString === '') {
+          return;
+        }
+
+        switch (status.statusString) {
+          case 'PENDING':
+            return onStatus(TransactionStatus.PENDING);
+          case 'EXECUTED':
+            return onStatus(TransactionStatus.EXECUTED);
+          case 'SEALED':
+            return onStatus(TransactionStatus.SEALED);
+        }
+      });
+    }
+
+    const { events, error } = await fclTx.onceSealed();
     if (error) {
       throw convertToTransactionError(error);
     }
@@ -74,7 +105,7 @@ async function executeTransaction<T = void>(fcl: FCLModule, tx: Transaction<T>, 
 
 async function sendTransaction(fcl: FCLModule, tx: Transaction<any>, network: string): Promise<string> {
   // Do not catch and convert errors that throw when building the transaction
-  const fclTransaction = await tx.toFCLTransaction(fcl, network);
+  const fclTransaction = await tx.toFCLTransaction(network);
 
   try {
     // Return the transaction ID
