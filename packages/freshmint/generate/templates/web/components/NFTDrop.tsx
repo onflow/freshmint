@@ -77,7 +77,7 @@ function getLoadingText(status: TransactionStatus) {
     case TransactionStatus.SUBMITTED:
       return 'Submitting...';
     case TransactionStatus.PENDING:
-      return 'Pending execution...';
+      return 'Executing...';
     case TransactionStatus.EXECUTED:
       return 'Verifying...';
     case TransactionStatus.SEALED:
