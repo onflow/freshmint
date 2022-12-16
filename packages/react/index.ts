@@ -5,5 +5,5 @@ export { useTransaction, useTransaction as useMutate } from './hooks/useTransact
 export { Script, isScriptParameters } from './script';
 export type { ScriptParameters, ScriptResultTransformer } from './script';
 
-export { Transaction, isTransactionParameters } from './transaction';
+export { Transaction, isTransactionParameters, TransactionStatus } from './transaction';
 export type { TransactionParameters, TransactionResult, TransactionResultTransformer } from './transaction';

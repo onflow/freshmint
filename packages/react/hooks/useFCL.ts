@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 // @ts-ignore
 import * as fcl from '@onflow/fcl';
@@ -16,7 +16,7 @@ export interface FCL {
 }
 
 export function useFCL(): FCL {
-  const [currentUser, setCurrentUser] = React.useState<FCLUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<FCLUser | null>(null);
 
   useEffect(() => {
     // Only subscribe to user updates if running in a browser environment

@@ -2,7 +2,7 @@
 import { withPrefix, sansPrefix } from '@onflow/util-address';
 
 import { CadenceSourceCode, resolveCadence, Arguments, resolveArgs } from './cadence';
-import { FCLModule, FCLTransaction } from './fcl';
+import { FCLTransaction } from './fcl';
 
 const toHex = (buffer: Buffer) => buffer.toString('hex');
 const fromHex = (hex: string) => Buffer.from(hex, 'hex');
@@ -21,6 +21,14 @@ export type TransactionEvent = {
   data: { [key: string]: string };
 };
 
+export enum TransactionStatus {
+  UNKNOWN = 'UNKNOWN',
+  SUBMITTED = 'SUBMITTED',
+  PENDING = 'PENDING',
+  EXECUTED = 'EXECUTED',
+  SEALED = 'SEALED',
+}
+
 export class TransactionAuthorizer {
   address: string;
   keyIndex: number;
@@ -36,7 +44,7 @@ export class TransactionAuthorizer {
     return async (account = {}) => {
       return {
         ...account,
-        tempId: 'SIGNER',
+        tempId: `${withPrefix(this.address)}-${this.keyIndex}`,
         addr: sansPrefix(this.address),
         keyId: this.keyIndex,
         signingFunction: (data: { message: string }) => ({
@@ -105,7 +113,7 @@ export class Transaction<T = TransactionResult> {
     );
   }
 
-  async toFCLTransaction(fcl: FCLModule, network: string): Promise<FCLTransaction> {
+  async toFCLTransaction(network: string): Promise<FCLTransaction> {
     const limit = this.computeLimit ?? Transaction.defaultComputeLimit;
     const cadence = resolveCadence(this.cadence, network);
     const args = await resolveArgs(cadence, this.args ?? []);
@@ -114,7 +122,7 @@ export class Transaction<T = TransactionResult> {
       cadence,
       args,
       limit,
-      ...this.getAuthorizations(fcl, this.signers),
+      ...this.getAuthorizations(this.signers),
     };
   }
 
@@ -122,7 +130,7 @@ export class Transaction<T = TransactionResult> {
     return await this._onResult(result);
   }
 
-  private getAuthorizations(fcl: FCLModule, signers: TransactionSigners | undefined) {
+  private getAuthorizations(signers: TransactionSigners | undefined) {
     if (signers) {
       return {
         payer: signers.payer.toFCLAuthorizationFunction(),
