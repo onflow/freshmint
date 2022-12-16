@@ -1,10 +1,14 @@
 # Freshmint 🍃
 
-Freshmint is a framework for building NFT-based applications on Flow.
+Freshmint is a tool for building NFT-based applications on Flow.
 
 > :warning: This project is still in development.
 >
 > The current alpha version is not yet intended for production (i.e. mainnet) use. Please expect breaking changes as the tool evolves!
+
+## Getting started
+
+Check out the [quick start guide](./docs/quick-start.md) to get started with Freshmint!
 
 ## Development
 
