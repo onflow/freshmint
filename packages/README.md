@@ -59,6 +59,15 @@ npm run test
 npm run test -- ./contracts/StandardNFTContract.test.ts
 ```
 
+### Updating snapshots
+
+Some tests use Jest's [snapshot testing feature](https://jestjs.io/docs/snapshot-testing).
+To update snaphots, run with the `-u` flag:
+
+```npm
+npm run test -- -u
+```
+
 ## Formatting & linting
 
 ```sh
