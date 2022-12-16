@@ -1,4 +1,4 @@
-# Freshmint Quick Start Guide
+# Getting Started with Freshmint
 
 This guide covers how to use the Freshmint CLI tool to create and manage an NFT application on Flow.
 
