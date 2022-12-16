@@ -1,5 +1,14 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
+/// This transaction reveals a batch of NFTs from the {{ contractName }} contract.
+///
+/// Parameters:
+/// - ids: a list of the NFT IDs to reveal.
+/// - metadataSalts: a list of salt values as hex-encoded strings (must be same length as ids).
+{{#each fields}}
+/// - {{ this.name }}: a {{ this.name }} metadata value for each NFT (must be same length as ids).
+{{/each}}
+///
 transaction(
     ids: [UInt64],
     metadataSalts: [String],

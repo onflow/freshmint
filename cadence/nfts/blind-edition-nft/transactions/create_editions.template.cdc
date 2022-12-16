@@ -1,10 +1,13 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-/// This transaction creates a batch of new editions.
+/// This transaction creates a batch of edition templates.
 ///
 /// Parameters:
-/// - mintIDs: a list containing the mint ID for each edition.
-/// - limits: a list containing an optional size limit for each edition.
+/// - mintIDs: a unique identifier for each edition, used to prevent duplicate mints.
+/// - limits: an optional limit for each edition.
+{{#each fields}}
+/// - {{ this.name }}: a {{ this.name }} metadata value for each NFT (must be same length as limits).
+{{/each}}
 ///
 transaction(
     mintIDs: [String],

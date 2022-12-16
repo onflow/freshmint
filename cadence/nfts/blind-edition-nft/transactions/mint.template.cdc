@@ -4,6 +4,37 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 
+/// This transaction mints a batch of blind NFTs into the given edition.
+///
+/// Parameters:
+/// - editionID: the ID of the edition to mint into.
+/// - hashs: a serial number hash for each NFT.
+/// - bucketName: (optional) the name of the collection bucket to mint into. If nil, the default collection is used.
+///
+transaction(editionID: UInt64, hashes: [String], bucketName: String?) {
+    
+    let admin: &{{ contractName }}.Admin
+    let mintQueue: &FreshmintQueue.CollectionQueue
+
+    prepare(signer: AuthAccount) {
+        self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
+            ?? panic("Could not borrow a reference to the NFT admin")
+        
+        self.mintQueue = getOrCreateMintQueue(
+            account: signer,
+            bucketName: bucketName
+        )
+    }
+
+    execute {
+        for hash in hashes {
+            let token <- self.admin.mintNFT(editionID: editionID, hash: hash.decodeHex())
+
+            self.mintQueue.deposit(token: <- token)
+        }
+    }
+}
+
 pub fun getOrCreateCollection(
     account: AuthAccount,
     bucketName: String?
@@ -63,28 +94,4 @@ pub fun getOrCreateMintQueue(
     account.link<&FreshmintQueue.CollectionQueue>(queuePrivatePath, target: queueStoragePath)
 
     return queueRef
-}
-
-transaction(editionID: UInt64, hashes: [String], bucketName: String?) {
-    
-    let admin: &{{ contractName }}.Admin
-    let mintQueue: &FreshmintQueue.CollectionQueue
-
-    prepare(signer: AuthAccount) {
-        self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
-            ?? panic("Could not borrow a reference to the NFT admin")
-        
-        self.mintQueue = getOrCreateMintQueue(
-            account: signer,
-            bucketName: bucketName
-        )
-    }
-
-    execute {
-        for hash in hashes {
-            let token <- self.admin.mintNFT(editionID: editionID, hash: hash.decodeHex())
-
-            self.mintQueue.deposit(token: <- token)
-        }
-    }
 }

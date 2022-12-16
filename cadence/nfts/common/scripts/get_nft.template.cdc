@@ -20,6 +20,14 @@ pub struct NFT {
     }
 }
 
+/// This script returns a basic representation of a {{ contractName }} NFT.
+///
+/// If the NFT is a blind NFT, it returns the metadata hash and a placeholder image.
+///
+/// Parameters:
+/// - address: the address of the account to fetch from.
+/// - id: the ID of the NFT.
+///
 pub fun main(address: Address, id: UInt64): NFT? {
     if let col = getAccount(address).getCapability<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic}>({{ contractName }}.CollectionPublicPath).borrow() {
         if let nft = col.borrow{{ contractName }}(id: id) {

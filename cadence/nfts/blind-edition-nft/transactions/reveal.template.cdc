@@ -1,5 +1,12 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
+/// This transaction reveals the serial numbers for a batch of NFTs.
+///
+/// Parameters:
+/// - ids: the NFT IDs to reveal.
+/// - hashs: a serial number for each NFT (must be same length as ids).
+/// - salts: a hex-encoded salt value for each NFT (must be same length as ids).
+///
 transaction(
     ids: [UInt64],
     serialNumbers: [UInt64],

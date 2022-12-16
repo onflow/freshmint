@@ -4,6 +4,45 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 
+/// This transaction mints a batch of NFTs into the given edition.
+///
+/// Parameters:
+/// - editionID: the ID of the edition to mint into.
+/// - count: the number of NFTs to mint.
+/// - bucketName: (optional) the name of the collection bucket to mint into. If nil, the default collection is used.
+///
+transaction(editionID: UInt64, count: Int, bucketName: String?) {
+    
+    let admin: &{{ contractName }}.Admin
+    let mintQueue: &FreshmintQueue.CollectionQueue
+
+    prepare(signer: AuthAccount) {
+        self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
+            ?? panic("Could not borrow a reference to the NFT admin")
+        
+        self.mintQueue = getOrCreateMintQueue(
+            account: signer,
+            bucketName: bucketName
+        )
+    }
+
+    execute {
+        var i = 0
+
+        while i < count {
+            let token <- self.admin.mintNFT(editionID: editionID)
+
+            // NFTs are minted into a queue to preserve the mint order.
+            // A CollectionQueue is linked to a collection. All NFTs minted into 
+            // the queue are deposited into the underlying collection.
+            //
+            self.mintQueue.deposit(token: <- token)
+
+            i = i + 1
+        }
+    }
+}
+
 pub fun getOrCreateCollection(
     account: AuthAccount,
     bucketName: String?
@@ -63,36 +102,4 @@ pub fun getOrCreateMintQueue(
     account.link<&FreshmintQueue.CollectionQueue>(queuePrivatePath, target: queueStoragePath)
 
     return queueRef
-}
-
-transaction(editionID: UInt64, count: Int, bucketName: String?) {
-    
-    let admin: &{{ contractName }}.Admin
-    let mintQueue: &FreshmintQueue.CollectionQueue
-
-    prepare(signer: AuthAccount) {
-        self.admin = signer.borrow<&{{ contractName }}.Admin>(from: {{ contractName }}.AdminStoragePath)
-            ?? panic("Could not borrow a reference to the NFT admin")
-        
-        self.mintQueue = getOrCreateMintQueue(
-            account: signer,
-            bucketName: bucketName
-        )
-    }
-
-    execute {
-        var i = 0
-
-        while i < count {
-            let token <- self.admin.mintNFT(editionID: editionID)
-
-            // NFTs are minted into a queue to preserve the mint order.
-            // A CollectionQueue is linked to a collection. All NFTs minted into 
-            // the queue are deposited into the underlying collection.
-            //
-            self.mintQueue.deposit(token: <- token)
-
-            i = i + 1
-        }
-    }
 }
