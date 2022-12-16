@@ -6,7 +6,6 @@ import { withPrefix } from '@onflow/fcl';
 // @ts-ignore
 import { extractImports } from '@onflow/flow-cadut';
 
-import envsubst from '@tuplo/envsubst';
 import { validate } from 'schema-utils';
 
 const schema: any = {
@@ -19,15 +18,23 @@ const schema: any = {
   required: ['flowConfig'],
 };
 
-function parseFlowConfigFile(configPath: string) {
-  const rawConfig = fs.readFileSync(configPath).toString('utf8');
-  const substitutedConfig = envsubst(rawConfig);
-  return JSON.parse(substitutedConfig);
+function envsubst(s: string, env: { [key: string]: string }): string {
+  for (const key in env) {
+    s = s.replace(`$\{${key}}`, env[key]);
+  }
+
+  return s;
 }
 
-function parseFlowConfigFiles(configPaths: string[]) {
-  const configs = configPaths.map((configPath) => parseFlowConfigFile(configPath));
+function parseFlowConfigFiles(configPaths: string[], env: { [key: string]: string }) {
+  const configs = configPaths.map((configPath) => parseFlowConfigFile(configPath, env));
   return mergeDeep({}, ...configs);
+}
+
+function parseFlowConfigFile(configPath: string, env: { [key: string]: string }) {
+  const rawConfig = fs.readFileSync(configPath).toString('utf8');
+  const substitutedConfig = envsubst(rawConfig, env);
+  return JSON.parse(substitutedConfig);
 }
 
 function isObject(item: any): boolean {
@@ -63,10 +70,10 @@ function mergeDeep(target: any, ...sources: any[]): any {
 type AddressMap = { [contractName: string]: string };
 type AddressMaps = { [network: string]: AddressMap };
 
-function getAddressMapsFromFlowConfig(configPath: string | string[]): AddressMaps {
+function getAddressMapsFromFlowConfig(configPath: string | string[], env: { [key: string]: string }): AddressMaps {
   const configPaths = Array.isArray(configPath) ? configPath : [configPath];
 
-  const config = parseFlowConfigFiles(configPaths);
+  const config = parseFlowConfigFiles(configPaths, env);
 
   return {
     emulator: getAddressMapForNetwork(config, 'emulator'),
@@ -208,7 +215,9 @@ export default function loader(this: WebpackLoader, source: string): string {
 
   validate(schema, options);
 
-  const addressMaps = getAddressMapsFromFlowConfig(options.flowConfig);
+  const env = options.env ?? {};
+
+  const addressMaps = getAddressMapsFromFlowConfig(options.flowConfig, env);
 
   const extractedImports = extractImports(source);
 
