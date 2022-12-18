@@ -123,9 +123,23 @@ This also creates a new git tag for each updated package.
 npx changeset publish
 ```
 
+### Commit and push the updated packages
+
+Commit the following changes:
+
+- Updated `CHANGELOG.md` files
+- Updated `package.json` files
+- Deleted changeset files (these are no longer needed)
+
+```sh
+git add .
+git commit -m "Prepare releases"
+git push
+```
+
 ### Push git tags
 
-Lastly, push the newly-created git tags to GitHub:
+Push the newly-created git tags to GitHub:
 
 ```sh
 git push --tags

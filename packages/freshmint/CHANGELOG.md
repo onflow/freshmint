@@ -1,5 +1,12 @@
 # freshmint
 
+## 0.5.0
+
+### Minor Changes
+
+- e95ee33: Show claim transaction status in web UI
+- 7346304: Add support for edition_limit field
+
 ## 0.4.0
 
 ### Minor Changes

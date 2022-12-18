@@ -10,14 +10,14 @@
   },
   "dependencies": {
     "@chakra-ui/react": "^2.3.4",
-    "@freshmint/react": "^0.0.33-alpha",
+    "@freshmint/react": "^0.1.0",
     "@onflow/fcl": "^1.2.1",
     "next": "12.3.1",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@freshmint/cadence-loader": "^0.0.32-alpha",
+    "@freshmint/cadence-loader": "^0.1.0",
     "@types/node": "^18.8.2",
     "@types/react": "18.0.21",
     "@types/react-dom": "18.0.6",
