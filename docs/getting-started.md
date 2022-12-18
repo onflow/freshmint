@@ -103,6 +103,13 @@ Users can purchase NFTs on a first come, first served basis in the same order th
 fresh start-drop 42.0
 ```
 
+## Stop a drop
+
+```sh
+# Stop a running drop
+fresh stop-drop
+```
+
 ## More concepts
 
 - [Customize your NFT metadata](./metadata.md)
