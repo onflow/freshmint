@@ -105,6 +105,5 @@ fresh start-drop 42.0
 
 ## More concepts
 
-- Customize your NFT metadata
-- Deploy to testnet
-- Deploy to mainnet
+- [Customize your NFT metadata](./metadata.md)
+- [Deploy to testnet](./testnet.md)
