@@ -5,29 +5,6 @@ import FungibleToken from {{{ imports.FungibleToken }}}
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 
-pub fun getOrCreateSaleCollection(account: AuthAccount): &FreshmintClaimSale.SaleCollection {
-    if let collectionRef = account.borrow<&FreshmintClaimSale.SaleCollection>(from: FreshmintClaimSale.SaleCollectionStoragePath) {
-        return collectionRef
-    }
-
-    let collection <- FreshmintClaimSale.createEmptySaleCollection()
-
-    let collectionRef = &collection as &FreshmintClaimSale.SaleCollection
-
-    account.save(<-collection, to: FreshmintClaimSale.SaleCollectionStoragePath)
-    account.link<&FreshmintClaimSale.SaleCollection{FreshmintClaimSale.SaleCollectionPublic}>(FreshmintClaimSale.SaleCollectionPublicPath, target: FreshmintClaimSale.SaleCollectionStoragePath)
-        
-    return collectionRef
-}
-
-pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&FreshmintClaimSale.Allowlist> {
-    let fullAllowlistName = FreshmintClaimSale.makeAllowlistName(name: allowlistName)
-
-    let privatePath = {{ contractName }}.getPrivatePath(suffix: fullAllowlistName)
-
-    return account.getCapability<&FreshmintClaimSale.Allowlist>(privatePath)
-}
-
 // This transaction starts a new claim sale.
 //
 // Parameters:
@@ -83,4 +60,27 @@ transaction(
 
         self.sales.insert(<- sale)
     }
+}
+
+pub fun getOrCreateSaleCollection(account: AuthAccount): &FreshmintClaimSale.SaleCollection {
+    if let collectionRef = account.borrow<&FreshmintClaimSale.SaleCollection>(from: FreshmintClaimSale.SaleCollectionStoragePath) {
+        return collectionRef
+    }
+
+    let collection <- FreshmintClaimSale.createEmptySaleCollection()
+
+    let collectionRef = &collection as &FreshmintClaimSale.SaleCollection
+
+    account.save(<-collection, to: FreshmintClaimSale.SaleCollectionStoragePath)
+    account.link<&FreshmintClaimSale.SaleCollection{FreshmintClaimSale.SaleCollectionPublic}>(FreshmintClaimSale.SaleCollectionPublicPath, target: FreshmintClaimSale.SaleCollectionStoragePath)
+        
+    return collectionRef
+}
+
+pub fun getAllowlist(account: AuthAccount, allowlistName: String): Capability<&FreshmintClaimSale.Allowlist> {
+    let fullAllowlistName = FreshmintClaimSale.makeAllowlistName(name: allowlistName)
+
+    let privatePath = {{ contractName }}.getPrivatePath(suffix: fullAllowlistName)
+
+    return account.getCapability<&FreshmintClaimSale.Allowlist>(privatePath)
 }

@@ -6,19 +6,6 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FlowToken from {{{ imports.FlowToken }}}
 
-pub fun intializeCollection(account: AuthAccount) {
-    if account.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
-        let collection <- {{ contractName }}.createEmptyCollection()
-        
-        account.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
-
-        account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(
-            {{ contractName }}.CollectionPublicPath, 
-            target: {{ contractName }}.CollectionStoragePath
-        )
-    }
-}
-
 // This transaction claims an NFT from a sale.
 //
 // Parameters:
@@ -52,5 +39,18 @@ transaction(saleAddress: Address, saleID: String) {
 
     execute {
         self.sale.claim(payment: <- self.payment, address: self.address)
+    }
+}
+
+pub fun intializeCollection(account: AuthAccount) {
+    if account.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
+        let collection <- {{ contractName }}.createEmptyCollection()
+        
+        account.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
+
+        account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(
+            {{ contractName }}.CollectionPublicPath, 
+            target: {{ contractName }}.CollectionStoragePath
+        )
     }
 }
