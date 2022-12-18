@@ -7,8 +7,8 @@ import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 /// This transaction moves NFTs from one queue to another within the signer's account.
 ///
 /// Parameters:
-/// - fromBucketName: the bucket name to withdraw from. If nil, the default bucket is used.
-/// - toBucketName: the bucket name to deposit to. If nil, the default bucket is used.
+/// - fromBucketName: (optional) the bucket name to withdraw from. If nil, the default bucket is used.
+/// - toBucketName: (optional) the bucket name to deposit to. If nil, the default bucket is used.
 /// - count: the number of NFTs to move.
 ///
 transaction(

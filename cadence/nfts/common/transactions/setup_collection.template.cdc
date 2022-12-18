@@ -3,6 +3,9 @@ import {{ contractName }} from {{{ contractAddress }}}
 import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 
+/// This transaction stores an empty {{ contractName }}.Collection in the signer's
+/// account if they do not already have one.
+///
 transaction {
     prepare(signer: AuthAccount) {
         // Return early if the account already has a collection

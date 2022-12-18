@@ -17,7 +17,9 @@ The template requires the following inputs when generating a contract:
 
 This template has an accompanying TypeScript wrapper in `@freshmint/core` implemented in [`StandardNFTContract.ts`](../../../packages/core/contracts/StandardNFTContract.ts).
 
-The wrapper contains functions to generate a cotnract, deploy a contract and mint NFTs.
+The wrapper contains functions to generate a contract, deploy it and mint NFTs.
+
+> See the [Standard NFTs section in the Node.js documentation](../../../docs/nodejs.md#standard-nfts) for more documentation and examples.
 
 ## Usage
 
