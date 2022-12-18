@@ -3,6 +3,10 @@ import {{ contractName }} from {{{ contractAddress }}}
 
 /// This transaction transfers a {{ contractName }} NFT from one account to another.
 ///
+/// Parameters:
+/// - recipient: the address of the recipient.
+/// - id: the ID of the NFT to transfer.
+///
 transaction(recipient: Address, id: UInt64) {
 
     /// Reference to the sender's collection

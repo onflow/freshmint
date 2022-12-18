@@ -3,6 +3,9 @@ import {{ contractName }} from {{{ contractAddress }}}
 
 /// This transaction withdraws an NFT from the signer's collection and destroys it.
 ///
+/// Parameters:
+/// - id: the ID of the NFT to destroy.
+///
 transaction(id: UInt64) {
 
     /// A reference to the signer's {{ contractName }} collection.
@@ -15,7 +18,7 @@ transaction(id: UInt64) {
     }
 
     execute {
-        // withdraw the NFT from the signers's collection
+        // Withdraw the NFT from the signers's collection
         let nft <- self.collectionRef.withdraw(withdrawID: id)
 
         destroy nft

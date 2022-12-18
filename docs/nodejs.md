@@ -1,6 +1,6 @@
 # Freshmint Node.js Library
 
-The Freshmint Node.js package provides the core pieces needed to deploy,
+The `@freshmint/core` package provides the core pieces needed to deploy,
 mint and distribute NFTs on Flow from a Node.js application.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -522,15 +522,6 @@ For smaller editions, you may be able mint the entire edition in a single transa
 but in most cases you will need to mint in smaller batches.
 
 ```js
-// This example shows how to mint editions into separate buckets.
-//
-// By default, Freshmint will mint all NFTs into a single collection
-// on the minter's account. By specifying a bucket, you can split 
-// your minted NFTs into separate collections (i.e. buckets) in the same account.
-//
-// In the case of editions, this allows you to sell or distribute each edition
-// separately, rather than mixing all editions into a single collection
-
 for (const edition of editions) {
 
   const mintedNFTs = await client.send(contract.mintNFTs({
@@ -575,6 +566,15 @@ In the case of editions, this allows you to [distribute each edition
 in a separate sale](#edition-based-claim-sales), rather than mixing all editions into a single collection.
 
 ```js
+// This example shows how to mint editions into separate buckets.
+//
+// By default, Freshmint will mint all NFTs into a single collection
+// on the minter's account. By specifying a bucket, you can split 
+// your minted NFTs into separate collections (i.e. buckets) in the same account.
+//
+// In the case of editions, this allows you to sell or distribute each edition
+// separately, rather than mixing all editions into a single collection
+
 const mintedNFTs = await client.send(contract.mintNFTs({ 
   editionId: '1',
   count: 10, 

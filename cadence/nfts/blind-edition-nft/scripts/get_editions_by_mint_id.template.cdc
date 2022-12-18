@@ -1,14 +1,14 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
-/// This transaction fetches a list of editions by their mint IDs.
+/// This script fetches batch of editions by their mint IDs.
 ///
-/// Parameters:
-/// - mintIDs: the edition mint IDs to fetch.
+/// The Freshmint minting tool uses this script to avoid 
+/// minting duplicate NFTs.
 ///
-/// Returns: a list of optional {{ contractName }}.Edition structs
-/// in the same order as their provided mint IDs.
+/// Returns: an arry of {{ contractName }}.Edition structs with one entry
+/// for each provided mint ID.
 ///
-/// If an edition is not found, it is returned as a nil entry in the list.
+/// A nil entry indicates that the mint ID at that index does not exist.
 ///
 pub fun main(mintIDs: [String]): [{{ contractName }}.Edition?] {
     let editions: [{{ contractName }}.Edition?] = []

@@ -22,6 +22,8 @@ This template has an accompanying TypeScript wrapper in `@freshmint/core` implem
 The wrapper contains functions to generate a cotnract, 
 deploy a contract, create editions and mint NFTs.
 
+> See the [Edition NFTs section in the Node.js documentation](../../../docs/nodejs.md#edition-nfts) for more documentation and examples.
+
 ## Usage
 
 ### Create an edition

@@ -1,5 +1,14 @@
 import {{ contractName }} from {{{ contractAddress }}}
 
+/// This transaction creates a batch of edition templates.
+///
+/// Parameters:
+/// - mintIDs: a unique identifier for each edition, used to prevent duplicate mints.
+/// - limits: an optional limit for each edition.
+{{#each fields}}
+/// - {{ this.name }}: a {{ this.name }} metadata value for each NFT (must be same length as limits).
+{{/each}}
+///
 transaction(
     mintIDs: [String],
     limits: [UInt64?],
@@ -23,6 +32,13 @@ transaction(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
+                // Use the attributes dictionary to add additional metadata
+                // not defined in the original schema.
+                //
+                // The attributes dictionary is empty by default.
+                //
+                // Attributes must be string values.
+                //
                 attributes: {}
             )
         }
