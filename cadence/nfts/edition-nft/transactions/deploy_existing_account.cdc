@@ -8,7 +8,7 @@ import FungibleToken from {{{ imports.FungibleToken }}}
 ///
 /// Parameters:
 /// - contractName: the name of the contract.
-/// - contractCode: hex-encoded string containing the UTF-8 bytes of the contract source code.
+/// - contractCode: a hex-encoded string containing the UTF-8 bytes of the contract source code.
 /// - collectionMetadata: the collection display metadata to attach to the contract.
 /// - royaltyAddresses: a list of royalty receiver addresses.
 /// - royaltyReceiverPaths: a list of royalty receiver paths (must be same length as royaltyAddresses).

@@ -4,7 +4,7 @@ import {{ contractName }} from {{{ contractAddress }}}
 ///
 /// Parameters:
 /// - ids: the NFT IDs to reveal.
-/// - hashs: a serial number for each NFT (must be same length as ids).
+/// - serialNumbers: a serial number for each NFT (must be same length as ids).
 /// - salts: a hex-encoded salt value for each NFT (must be same length as ids).
 ///
 transaction(

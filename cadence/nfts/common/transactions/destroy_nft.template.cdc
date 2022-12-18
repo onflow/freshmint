@@ -18,7 +18,7 @@ transaction(id: UInt64) {
     }
 
     execute {
-        // withdraw the NFT from the signers's collection
+        // Withdraw the NFT from the signers's collection
         let nft <- self.collectionRef.withdraw(withdrawID: id)
 
         destroy nft

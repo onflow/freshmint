@@ -8,7 +8,7 @@ import FungibleToken from {{{ imports.FungibleToken }}}
 ///
 /// Parameters:
 /// - contractName: the name of the contract.
-/// - contractCode: hex-encoded string containing the UTF-8 bytes of the contract source code.
+/// - contractCode: a hex-encoded string containing the UTF-8 bytes of the contract source code.
 /// - publicKeyHex: a hex-encoded public key string to add to the contract account.
 /// - signatureAlgorithm: the signature algorithm of the above public key.
 /// - hashAlgorithm: the hash algorithm to pair with the public key.

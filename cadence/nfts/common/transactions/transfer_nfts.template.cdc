@@ -17,7 +17,6 @@ transaction(recipient: Address, ids: [UInt64], fromBucketName: String?) {
     let depositRef: &{NonFungibleToken.CollectionPublic}
 
     prepare(signer: AuthAccount) {
-    
         // Derive the collection path from the bucket name
         let collectionName = {{ contractName }}.makeCollectionName(bucketName: fromBucketName)
         let collectionStoragePath = {{ contractName }}.getStoragePath(suffix: collectionName)

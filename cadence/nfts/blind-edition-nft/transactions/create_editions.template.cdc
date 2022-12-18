@@ -32,6 +32,13 @@ transaction(
                 {{#each fields}}
                 {{ this.name }}: {{ this.name }}[i],
                 {{/each}}
+                // Use the attributes dictionary to add additional metadata
+                // not defined in the original schema.
+                //
+                // The attributes dictionary is empty by default.
+                //
+                // Attributes must be string values.
+                //
                 attributes: {}
             )
         }

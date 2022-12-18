@@ -14,7 +14,6 @@ transaction(ids: [UInt64], bucketName: String?) {
     let collectionRef: &{{ contractName }}.Collection
 
     prepare(signer: AuthAccount) {
-        
         // Derive the collection path from the bucket name
         let collectionName = {{ contractName }}.makeCollectionName(bucketName: bucketName)
         let collectionStoragePath = {{ contractName }}.getStoragePath(suffix: collectionName)
