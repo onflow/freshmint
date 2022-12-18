@@ -10,26 +10,23 @@ import { readCSV, writeCSV } from '../csv';
 import { FreshmintError } from '../../errors';
 
 interface EditionEntry {
+  limit: number | null;
+  size: number;
   rawMetadata: MetadataMap;
   preparedMetadata: MetadataMap;
   hash: string;
-  limit: number | null;
-}
-
-interface LimitedEditionEntry extends EditionEntry {
-  limit: number;
+  csvLineNumber: number;
 }
 
 interface Edition {
   id: string;
-  size: number;
+  limit: number | null;
+  currentSize: number;
+  targetSize: number;
   rawMetadata: MetadataMap;
   preparedMetadata: MetadataMap;
   transactionId?: string;
-}
-
-interface LimitedEdition extends Edition {
-  limit: number;
+  csvLineNumber: number;
 }
 
 type EditionBatch = {
@@ -47,14 +44,17 @@ export type EditionHooks = {
   onComplete: (editionCount: number, nftCount: number) => void;
 };
 
-export class EditionLimitMintError extends FreshmintError {
-  message =
-    'Cannot mint NFTs into an edition with no defined size.\nYour CSV file contains at least one edition with an "edition_size" of null.\nUse the --templates flag to only create the edition template and skip minting.';
+export class InvalidEditionLimitError extends FreshmintError {
+  constructor(value: string, csvLineNumber: number) {
+    super(`Invalid edition on line ${csvLineNumber}: size must be a number, received "${value}".`);
+  }
 }
 
-export class InvalidEditionSizeError extends FreshmintError {
-  constructor(value: string) {
-    super(`Edition size must be a number, received "${value}".`);
+export class ExceededEditionLimitError extends FreshmintError {
+  constructor(edition: Edition) {
+    super(
+      `Invalid edition on line ${edition.csvLineNumber} (with on-chain ID ${edition.id}): target size ${edition.targetSize} exceeds edition limit of ${edition.limit}.`,
+    );
   }
 }
 
@@ -74,65 +74,18 @@ export class EditionMinter {
     csvOutputFile: string,
     withClaimKeys: boolean,
     batchSize: number,
-    templatesOnly: boolean,
     hooks: EditionHooks,
   ) {
     const entries = await readCSV(path.resolve(process.cwd(), csvInputFile));
 
     const editionEntries = await this.prepareMetadata(entries);
 
-    if (templatesOnly) {
-      await this.createTemplates(editionEntries, csvOutputFile, hooks);
-    } else {
-      await this.createTemplatesAndMint(editionEntries, csvOutputFile, withClaimKeys, batchSize, hooks);
-    }
-  }
-
-  async createTemplates(editionEntries: EditionEntry[], csvOutputFile: string, hooks: EditionHooks) {
     hooks.onStartDuplicateCheck();
 
     const { existingEditions, newEditionEntries } = await this.filterDuplicateEditions(editionEntries);
 
     const existingEditionCount = existingEditions.length;
-    const existingNFTCount = existingEditions.reduce((totalSize, edition) => totalSize + edition.size, 0);
-
-    hooks.onCompleteDuplicateCheck(existingEditionCount, existingNFTCount);
-
-    hooks.onStartEditionCreation(newEditionEntries.length);
-
-    const newEditions = await this.createEditionTemplates(newEditionEntries);
-
-    hooks.onCompleteEditionCreation(newEditionEntries.length);
-
-    await this.writeEditionTemplates(newEditions, csvOutputFile);
-
-    hooks.onComplete(newEditions.length, 0);
-  }
-
-  async createTemplatesAndMint(
-    editionEntries: EditionEntry[],
-    csvOutputFile: string,
-    withClaimKeys: boolean,
-    batchSize: number,
-    hooks: EditionHooks,
-  ) {
-    const limitedEditionEntries: LimitedEditionEntry[] = editionEntries.map((edition) => {
-      if (edition.limit === null) {
-        throw new EditionLimitMintError();
-      }
-
-      return {
-        ...edition,
-        limit: edition.limit,
-      };
-    });
-
-    hooks.onStartDuplicateCheck();
-
-    const { existingEditions, newEditionEntries } = await this.filterDuplicateEditions(limitedEditionEntries);
-
-    const existingEditionCount = existingEditions.length;
-    const existingNFTCount = existingEditions.reduce((totalSize, edition) => totalSize + edition.size, 0);
+    const existingNFTCount = existingEditions.reduce((totalSize, edition) => totalSize + edition.currentSize, 0);
 
     hooks.onCompleteDuplicateCheck(existingEditionCount, existingNFTCount);
 
@@ -145,8 +98,21 @@ export class EditionMinter {
     // Combine existing and new editions into a single array
     const editions = [...existingEditions, ...newEditions];
 
+    // Throw an error if any edition target size is larger than its limit
+    for (const edition of editions) {
+      if (edition.limit !== null && edition.targetSize > edition.limit) {
+        throw new ExceededEditionLimitError(edition);
+      }
+    }
+
     // Remove editions that have already reached their size limit
-    const editionsToMint = editions.filter((edition) => edition.size < edition.limit);
+    const editionsToMint = editions.filter((edition) => {
+      if (edition.limit === null) {
+        return true;
+      }
+
+      return edition.currentSize < edition.limit;
+    });
 
     const nftCount = await this.mintInBatches(editionsToMint, csvOutputFile, withClaimKeys, batchSize, hooks);
 
@@ -154,7 +120,7 @@ export class EditionMinter {
   }
 
   async mintInBatches(
-    editions: LimitedEdition[],
+    editions: Edition[],
     csvOutputFile: string,
     withClaimKeys: boolean,
     batchSize: number,
@@ -188,14 +154,6 @@ export class EditionMinter {
   }
 
   async filterDuplicateEditions(
-    entries: LimitedEditionEntry[],
-  ): Promise<{ existingEditions: LimitedEdition[]; newEditionEntries: LimitedEditionEntry[] }>;
-
-  async filterDuplicateEditions(
-    entries: EditionEntry[],
-  ): Promise<{ existingEditions: Edition[]; newEditionEntries: EditionEntry[] }>;
-
-  async filterDuplicateEditions(
     entries: EditionEntry[],
   ): Promise<{ existingEditions: Edition[]; newEditionEntries: EditionEntry[] }> {
     const mintIds = entries.map((edition) => edition.hash);
@@ -210,12 +168,15 @@ export class EditionMinter {
 
       if (existingEdition) {
         existingEditions.push({
-          ...existingEdition,
           // TODO: the on-chain ID needs to be converted to a string in order to be
           // used as an FCL argument. Find a better way to sanitize this.
           id: existingEdition.id.toString(),
+          limit: existingEdition.limit,
+          currentSize: existingEdition.size,
+          targetSize: entry.size,
           rawMetadata: entry.rawMetadata,
           preparedMetadata: entry.preparedMetadata,
+          csvLineNumber: entry.csvLineNumber,
         });
       } else {
         newEditionEntries.push(entry);
@@ -227,10 +188,6 @@ export class EditionMinter {
       newEditionEntries,
     };
   }
-
-  async createEditionTemplates(entries: LimitedEditionEntry[]): Promise<LimitedEdition[]>;
-
-  async createEditionTemplates(entries: EditionEntry[]): Promise<Edition[]>;
 
   async createEditionTemplates(entries: EditionEntry[]): Promise<Edition[]> {
     if (entries.length === 0) {
@@ -255,15 +212,17 @@ export class EditionMinter {
     const results = await this.flowGateway.createEditions(mintIds, limits, metadataValues);
 
     return results.map((result, i) => {
-      const edition = entries[i];
+      const entry = entries[i];
 
       return {
         id: result.id,
         limit: result.limit,
-        size: result.size,
+        currentSize: result.size,
+        targetSize: entry.size,
         transactionId: result.transactionId,
-        rawMetadata: edition.rawMetadata,
-        preparedMetadata: edition.preparedMetadata,
+        rawMetadata: entry.rawMetadata,
+        preparedMetadata: entry.preparedMetadata,
+        csvLineNumber: entry.csvLineNumber,
       };
     });
   }
@@ -285,13 +244,19 @@ export class EditionMinter {
   async prepareMetadata(entries: MetadataMap[]): Promise<EditionEntry[]> {
     const preparedEntries = await this.metadataProcessor.prepare(entries);
 
+    const csvHeaderLines = 1;
+
     return preparedEntries.map((entry, i) => {
-      // Attach the edition limit parsed from the input
-      const editionSize = entries[i]['edition_size'];
-      const limit = parseEditionLimit(editionSize);
+      const csvLineNumber = i + 1 + csvHeaderLines;
+
+      // Attach the edition limit and size parsed from the input
+      const size = parseInt(entries[i]['edition_size'], 10);
+      const limit = parseEditionLimit(entries[i]['edition_limit'], size, csvLineNumber);
 
       return {
         ...entry,
+        csvLineNumber,
+        size,
         limit,
       };
     });
@@ -347,20 +312,18 @@ export class EditionMinter {
   }
 }
 
-function createBatches(editions: LimitedEdition[], batchSize: number): EditionBatch[] {
+function createBatches(editions: Edition[], batchSize: number): EditionBatch[] {
   return editions.flatMap((edition) => createEditionBatches(edition, batchSize));
 }
 
-function createEditionBatches(edition: LimitedEdition, batchSize: number): EditionBatch[] {
+function createEditionBatches(edition: Edition, batchSize: number): EditionBatch[] {
   const batches: EditionBatch[] = [];
 
-  let count = edition.size;
-  let remaining = edition.limit - edition.size;
+  let remaining = edition.targetSize - edition.currentSize;
 
   while (remaining > 0) {
     const size = Math.min(batchSize, remaining);
 
-    count = count + size;
     remaining = remaining - size;
 
     batches.push({ edition: edition, size });
@@ -389,14 +352,19 @@ async function savePrivateKeysToFile(filename: string, batch: EditionBatch, priv
 //
 // The edition limit must be an integer or "null".
 //
-function parseEditionLimit(value: string): number | null {
+function parseEditionLimit(value: string | undefined, size: number, csvLineNumber: number): number | null {
+  // If limit is undefined, use size as limit
+  if (value === undefined) {
+    return size;
+  }
+
   if (value === 'null') {
     return null;
   }
 
   const limit = parseInt(value, 10);
   if (isNaN(limit)) {
-    throw new InvalidEditionSizeError(value);
+    throw new InvalidEditionLimitError(value, csvLineNumber);
   }
 
   return limit;

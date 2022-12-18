@@ -78,6 +78,22 @@ export class CommonNFTGenerator extends TemplateGenerator {
     });
   }
 
+  static destroyNFTs({
+    imports,
+    contractName,
+    contractAddress,
+  }: {
+    imports: ContractImports;
+    contractName: string;
+    contractAddress: string;
+  }): string {
+    return this.generate(require('../../../cadence/nfts/common/transactions/destroy_nfts.template.cdc'), {
+      imports,
+      contractName,
+      contractAddress,
+    });
+  }
+
   static setupCollection({
     imports,
     contractName,

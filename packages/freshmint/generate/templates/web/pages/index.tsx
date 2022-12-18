@@ -18,7 +18,7 @@ const Home: NextPage = () => {
       <Text fontSize="lg" mb={3}>
         {process.env.DESCRIPTION}
       </Text>
-      <NFTDrop address={process.env.MINTER_ADDRESS!} />
+      <NFTDrop address={process.env.CONTRACT_ADDRESS!} />
       <UserInfo />
     </Container>
   );

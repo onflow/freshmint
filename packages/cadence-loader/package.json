@@ -23,7 +23,6 @@
   "dependencies": {
     "@onflow/fcl": "^1.2.0",
     "@onflow/flow-cadut": "^0.2.0-alpha.9",
-    "@tuplo/envsubst": "^1.15.0",
     "react": "^18.2.0",
     "schema-utils": "^4.0.0"
   },

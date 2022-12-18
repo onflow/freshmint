@@ -2,7 +2,7 @@
   "name": "@freshmint/react",
   "version": "0.0.33-alpha",
   "license": "Apache-2.0",
-  "repository": "github:packagelabs/freshmint",
+  "repository": "github:dapperlabs/freshmint",
   "engines": {
     "node": ">=14.0.0"
   },

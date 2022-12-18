@@ -1,13 +1,13 @@
 {
   "name": "freshmint",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "The minty fresh way to launch an NFT project.",
   "contributors": [
     "Mackenzie Kieran",
     "Peter Siemens <peterjsiemens@gmail.com>"
   ],
   "license": "Apache-2.0",
-  "repository": "github:packagelabs/freshmint",
+  "repository": "github:dapperlabs/freshmint",
   "keywords": [
     "nft",
     "blockchain"
@@ -21,11 +21,11 @@
   "scripts": {
     "build": "tsup index.ts --clean --minify --format esm,cjs",
     "postbuild": "cpx --include-empty-dirs \"generate/templates/**\" dist/templates",
-    "dev": "npm run build -- --watch --onSuccess \"npm run postbuild\"",
+    "dev": "tsup index.ts --clean --format esm,cjs --watch --onSuccess \"npm run postbuild\"",
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
-    "@freshmint/core": "^0.6.0",
+    "@freshmint/core": "^0.7.0",
     "@ipld/car": "^4.1.6",
     "@onflow/decode": "0.0.11",
     "@onflow/flow-cadut": "^0.2.0-alpha.9",
