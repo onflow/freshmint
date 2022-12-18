@@ -56,12 +56,14 @@ This template has an accompanying TypeScript wrapper in `@freshmint/core` implem
 
 The wrapper contains functions to generate a contract, deploy it and mint NFTs.
 
+> See the [Blind Edition NFTs section in the Node.js documentation](../../../docs/nodejs.md#blind-edition-nfts) for more documentation and examples.
+
 ## Usage
 
 ### Create an edition
 
 Before minting NFTs, you must create an edition and add it to the contract.
-This acts a blueprint for all NFTs that will exist in the edition.
+This acts as a blueprint for all NFTs that will exist in the edition.
 
 Editions are created in batches. Use the [`create_editions.cdc`](./transactions/create_editions.template.cdc) transaction to create one or more editions.
 

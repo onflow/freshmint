@@ -16,7 +16,7 @@ change after minting.
 
 ### Generating the metadata hash
 
-The metadata hash created by computing the SHA3_256 hash of the following:
+The metadata hash is created by computing the SHA3_256 hash of the following:
 
 - A 32 byte random salt (this prevents users from hash grinding all possible metadata combinations)
 - The concatenated byte encoding of all metadata fields (in the order they are defined in the schema)
@@ -87,6 +87,8 @@ The template requires the following inputs when generating a contract:
 This template has an accompanying TypeScript wrapper in `@freshmint/core` implemented in [`BlindNFTContract.ts`](../../../packages/core/contracts/BlindNFTContract.ts).
 
 The wrapper contains functions to generate a contract, deploy it and mint NFTs.
+
+> See the [Blind NFTs section in the Node.js documentation](../../../docs/nodejs.md#blind-nfts) for more documentation and examples.
 
 ## Usage
 
