@@ -909,7 +909,7 @@ const nft0 = {
 
 const nft1 = {
   id: '1',
-  serialNumber: '3',
+  serialNumber: '1',
   salt: 'a6947ce365881c9ac7a631b2493bfef6be3d6c91f6966ea70a222d67f35e1531',
 };
 

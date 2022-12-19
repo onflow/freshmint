@@ -53,7 +53,7 @@ export class InvalidEditionLimitError extends FreshmintError {
 export class ExceededEditionLimitError extends FreshmintError {
   constructor(edition: Edition) {
     super(
-      `Invalid edition on line ${edition.csvLineNumber} (with on-chain ID ${edition.id}): target size ${edition.targetSize} exceeds edition limit of ${edition.limit}.`,
+      `Invalid edition on line ${edition.csvLineNumber} (with on-chain ID ${edition.id}): target size ${edition.targetSize} exceeds edition limit of ${edition.limit} (defined during first minting and non-modifiable thereafter).`,
     );
   }
 }

@@ -195,7 +195,7 @@ async function mintEdition(
             batchCount,
             'batch',
             'es',
-          )} (batchSize = ${batchSize})...\n`,
+          )} (batchSize = ${batchSize}; separate batches needed for each edition)...\n`,
         ),
       );
 
