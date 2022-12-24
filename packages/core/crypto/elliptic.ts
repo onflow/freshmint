@@ -20,8 +20,11 @@ function getEC(sigAlgo: SignatureAlgorithm): elliptic.ec {
 
 class InvalidECSignatureError extends Error {}
 
+// These constants apply to both the ECDSA_P256 and ECDSA_secp256k1 curves
+const nSize = 32; // The size of the `n` curve parameter
+const pSize = 32; // The size of the `p` curve parameter
+
 class ECSignature {
-  private static n = 32;
   private r: Buffer;
   private s: Buffer;
 
@@ -32,8 +35,8 @@ class ECSignature {
 
   public static fromECSignature(ecSignature: elliptic.ec.Signature): ECSignature {
     return new ECSignature(
-      ecSignature.r.toBuffer(bufferEndianness, ECSignature.n),
-      ecSignature.s.toBuffer(bufferEndianness, ECSignature.n),
+      ecSignature.r.toBuffer(bufferEndianness, nSize),
+      ecSignature.s.toBuffer(bufferEndianness, nSize),
     );
   }
 
@@ -43,11 +46,11 @@ class ECSignature {
   }
 
   public static fromBuffer(buffer: Buffer): ECSignature {
-    if (buffer.length !== ECSignature.n * 2) {
-      throw new InvalidECSignatureError(`signature must have length ${ECSignature.n * 2}`);
+    if (buffer.length !== nSize * 2) {
+      throw new InvalidECSignatureError(`signature must have length ${nSize * 2}`);
     }
 
-    return new ECSignature(buffer.slice(0, ECSignature.n), buffer.slice(ECSignature.n));
+    return new ECSignature(buffer.slice(0, nSize), buffer.slice(nSize));
   }
 
   toObject(): { r: string; s: string } {
@@ -66,12 +69,36 @@ class ECSignature {
   }
 }
 
+export type ECPublicKeyCoordinates = {
+  x: string; // X as a hex-encoded string
+  y: string; // Y as a hex-encoded string
+};
+
 export class ECPublicKey implements PublicKey {
-  private static size = 32;
   private ecKeyPair: elliptic.ec.KeyPair;
   private sigAlgo: SignatureAlgorithm;
 
-  constructor(ecKeyPair: elliptic.ec.KeyPair, sigAlgo: SignatureAlgorithm) {
+  private constructor(ecKeyPair: elliptic.ec.KeyPair, sigAlgo: SignatureAlgorithm) {
+    // The `elliptic` library implements signing and public key verification
+    // on the same `KeyPair` object, which means this object can contain
+    // both public and private key data.
+    //
+    // To prevent the private key from leaking, we reject a keypair that contains private key data.
+    //
+    // Regardless, this is a private constructor not intended for use outside this file.
+    // While Typescript has support for private constructors, the resulting JavaScript
+    // code is publicly callable. Therefore we add this check to prevent misuse.
+    //
+    // Users should instead use these functions to construct public keys,
+    // all which only accept public key data:
+    // - ECPublicKey.fromHex
+    // - ECPublicKey.fromBuffer
+    // - ECPublicKey.fromCoordinates
+    //
+    if (ecKeyPair.getPrivate() !== null) {
+      throw 'Cannot pass private key data to the ECPublicKey constructor';
+    }
+
     this.ecKeyPair = ecKeyPair;
     this.sigAlgo = sigAlgo;
   }
@@ -95,10 +122,16 @@ export class ECPublicKey implements PublicKey {
     return new ECPublicKey(ecKeyPair, sigAlgo);
   }
 
-  verify(message: Buffer, signature: Buffer): boolean {
+  public static fromCoordinates(coordinates: ECPublicKeyCoordinates, sigAlgo: SignatureAlgorithm): ECPublicKey {
+    const ec = getEC(sigAlgo);
+    const ecKeyPair = ec.keyFromPublic(coordinates);
+    return new ECPublicKey(ecKeyPair, sigAlgo);
+  }
+
+  verify(digest: Buffer, signature: Buffer): boolean {
     try {
       const ecSignature = ECSignature.fromBuffer(signature);
-      return this.ecKeyPair.verify(message, ecSignature.toObject());
+      return this.ecKeyPair.verify(digest, ecSignature.toObject());
     } catch (e) {
       return false;
     }
@@ -107,8 +140,8 @@ export class ECPublicKey implements PublicKey {
   toBuffer(): Buffer {
     const publicKey = this.ecKeyPair.getPublic();
 
-    const x = publicKey.getX().toArrayLike(Buffer, bufferEndianness, ECPublicKey.size);
-    const y = publicKey.getY().toArrayLike(Buffer, bufferEndianness, ECPublicKey.size);
+    const x = publicKey.getX().toArrayLike(Buffer, bufferEndianness, pSize);
+    const y = publicKey.getY().toArrayLike(Buffer, bufferEndianness, pSize);
 
     return Buffer.concat([x, y]);
   }
@@ -154,19 +187,15 @@ export class InMemoryECPrivateKey {
   getPublicKey(): PublicKey {
     const pubPoint = this.ecKeyPair.getPublic();
 
-    const ec = getEC(this.sigAlgo);
-
     const x = pubPoint.getX();
     const y = pubPoint.getY();
 
-    const publicKey = {
+    const coordinates = {
       x: x.toString('hex'),
       y: y.toString('hex'),
     };
 
-    const ecKeyPair = ec.keyFromPublic(publicKey);
-
-    return new ECPublicKey(ecKeyPair, this.sigAlgo);
+    return ECPublicKey.fromCoordinates(coordinates, this.sigAlgo);
   }
 
   getSignatureAlgorithm(): SignatureAlgorithm {
