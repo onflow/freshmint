@@ -2,7 +2,7 @@
 
 This directory contains the Cadence contracts, transactions and scripts that power Freshmint.
 
-## NFT Templates
+## NFT templates
 
 Freshmint generates valid NFT contracts using Cadence template files written with the [Handlebars](https://handlebarsjs.com/) templating syntax. The [`@freshmint/core`](../packages/core) package imports these templates
 to generate unique contracts for users.
@@ -18,14 +18,14 @@ Freshmint currently supports four NFT template types:
 - [Edition NFTs](./nfts/edition-nft/)
 - [Blind Edition NFTs](./nfts/blind-edition-nft/)
 
-### Common Template Files
+### Common template files
 
 The are also common template files shared by all NFT templates:
 
 - [Common partials](./nfts/common/partials/) - [Handlebars template partials](https://handlebarsjs.com/guide/partials.html) that are reused across all NFT templates.
 - [Metadata views partials](./nfts/metadata-views/) - [Handlebars template partials](https://handlebarsjs.com/guide/partials.html) containing implementations of common NFT metadata views.
 
-## Freshmint Contracts
+## Freshmint contracts
 
 Freshmint also depends on several supporting contracts that provide functionality such as NFT distribution (i.e. drops) and metadata encoding.
 
@@ -35,7 +35,7 @@ Freshmint also depends on several supporting contracts that provide functionalit
 - [FreshmintQueue](./freshmint-queue/) - a container for storing NFTs in a FIFO queue (used by `FreshmintClaimSaleV2`).
 - [FreshmintLockBox](./freshmint-lock-box/) - distribute NFTs that can be claimed with unique claim keys (e.g. for airdrops).
 
-### Deprecated Contracts
+### Deprecated contracts
 
 - [FreshmintClaimSale](./freshmint-claim-sale/) (use `FreshmintClaimSaleV2` instead)
 
@@ -52,6 +52,33 @@ The Freshmint contracts are deployed to Flow testnet and mainnet.
 |`FreshmintLockBox`|`0x0cad7d1c09a3a433`|`0xdd1c2c328f849078`|
 |`FreshmintClaimSale` (deprecated)|`0x2d3d6874bc231156`|`0x16a3117d86821389`|
 
-### Contract Updates
+### Contract updates
 
-Deployments are defined in [`flow.json`](./flow.json). Contact a project maintainer for more information on how to update deployed contracts.
+Deployments are defined in [`flow.json`](./flow.json), [`flow.testnet.json`](./flow.testnet.json) and [`flow.mainnet.json`](./flow.mainnet.json).
+
+> This repository does not contain the private key information for the contracts.
+Contact a project maintainer for more information on how to update deployed contracts.
+
+#### Update testnet contracts
+
+- Replace the import placeholders in each contract with their testnet address.
+  - For example, `{{ imports.NonFungibleToken }}` becomes `0x631e88ae7f1d7c20`.
+  - All contract addresses are defined in [config.ts](../packages/core/config.ts).
+- If you only want to update one contract, remove all but that contract from the `"deployments"` section of `flow.testnet.json` (but don't commit that change).
+- Copy the `freshmint-testnet.private.json` file into this directory.
+
+```sh
+flow deploy -f flow.json -f flow.testnet.json --update --network testnet
+```
+
+#### Update mainnet contracts
+
+- Replace the import placeholders in each contract with their mainnet address.
+  - For example, `{{ imports.NonFungibleToken }}` becomes `0x1d7e57aa55817448`.
+  - All contract addresses are defined in [config.ts](../packages/core/config.ts).
+- If you only want to update one contract, remove all but that contract from the `"deployments"` section of `flow.mainnet.json` (but don't commit that change).
+- Copy the `freshmint-mainnet.private.json` file into this directory.
+
+```sh
+flow deploy -f flow.json -f flow.mainnet.json --update --network mainnet
+```

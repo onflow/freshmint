@@ -1,0 +1,44 @@
+{
+	"deployments": {
+		"mainnet": {
+			"freshmint-lock-box-mainnet": [
+				"FreshmintLockBox"
+			],
+			"freshmint-claim-sale-mainnet": [
+				"FreshmintClaimSale"
+			],
+			"freshmint-claim-sale-v2-mainnet": [
+				"FreshmintClaimSaleV2"
+			],
+			"freshmint-metadata-views-mainnet": [
+				"FreshmintMetadataViews"
+			],
+			"freshmint-queue-mainnet": [
+				"FreshmintQueue"
+			],
+			"freshmint-encoding-mainnet": [
+				"FreshmintEncoding"
+			]
+		}
+	},
+	"accounts": {
+		"freshmint-lock-box-mainnet": {
+			"fromFile": "freshmint-mainnet.private.json"
+		},
+		"freshmint-claim-sale-mainnet": {
+			"fromFile": "freshmint-mainnet.private.json"
+		},
+		"freshmint-claim-sale-v2-mainnet": {
+			"fromFile": "freshmint-mainnet.private.json"
+		},
+		"freshmint-metadata-views-mainnet": {
+			"fromFile": "freshmint-mainnet.private.json"
+		},
+		"freshmint-queue-mainnet": {
+			"fromFile": "freshmint-mainnet.private.json"
+		},
+		"freshmint-encoding-mainnet": {
+			"fromFile": "freshmint-mainnet.private.json"
+		}
+	}
+}
