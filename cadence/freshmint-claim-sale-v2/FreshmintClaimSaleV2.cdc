@@ -3,17 +3,18 @@ import MetadataViews from {{{ imports.MetadataViews }}}
 import FungibleToken from {{{ imports.FungibleToken }}}
 import FreshmintQueue from {{{ imports.FreshmintQueue }}}
 
-/// FreshmintClaimSaleV2 provides functionality to operate a claim-style sale of NFTs.
+/// FreshmintClaimSaleV2 provides functionality to operate an NFT drop.
 ///
 /// In a claim sale, users can claim NFTs from a queue for a fee.
 /// All NFTs in a sale are sold for the same price.
 ///
 /// Unlike in the NFTStorefront contract, a user cannot purchase a specific NFT by ID.
-/// On each claim, the user receives the next available NFT in the queue.
+/// On each claim, the user receives the next available NFT in the queue on a
+/// first come, first served basis.
 /// 
 pub contract FreshmintClaimSaleV2 {
 
-    /// The SaleCreated event is emitted when a new sale is created.
+    /// The SaleCreated event is emitted when a new sale resource is created.
     ///
     pub event SaleCreated(
         uuid: UInt64,
@@ -59,12 +60,12 @@ pub contract FreshmintClaimSaleV2 {
         pub fun borrowSale(id: String): &{SalePublic}?
     }
 
-    /// A SaleCollection is a container that holds one or
-    /// more Sale resources.
+    /// A SaleCollection is a container that holds one or more Sale resources.
     ///
     /// The sale creator does not need to use a sale collection,
-    /// but it is useful when running multiple sales from different collections
-    /// in the same account.
+    /// but it is useful when running multiple sales from the same account.
+    /// For example, a seller may want to sell NFTs from multiple NFT collections
+    /// or editions at the same time.
     ///
     pub resource SaleCollection: SaleCollectionPublic {
 
@@ -78,6 +79,11 @@ pub contract FreshmintClaimSaleV2 {
             destroy self.sales
         }
 
+        /// Insert a sale resource into this collection, indexed by its ID.
+        ///
+        /// Note: if a sale with the same ID already exists in this collection,
+        /// it will be destroyed.
+        ///
         pub fun insert(_ sale: @Sale) {
 
             emit SaleInserted(
@@ -91,6 +97,8 @@ pub contract FreshmintClaimSaleV2 {
             destroy oldSale
         }
 
+        /// Remove a sale resource by its ID.
+        ///
         pub fun remove(id: String): @Sale {
             let sale <- self.sales.remove(key: id) ?? panic("sale does not exist")
 
@@ -103,15 +111,24 @@ pub contract FreshmintClaimSaleV2 {
             return <- sale
         }
 
+        /// Return the list of sale IDs in this collection.
+        ///
         pub fun getIDs(): [String] {
             return self.sales.keys
         }
         
+        /// Borrow a public reference to a sale in this collection.
+        ///
+        /// This function allows users to claim NFTs from the sale
+        /// and view information about the sale (e.g. its price, remaining supply).
+        ///
         pub fun borrowSale(id: String): &{SalePublic}? {
             return &self.sales[id] as &{SalePublic}?
         }
 
-        /// Borrow a full reference to a sale.
+        /// Borrow a private reference to a sale in this collection.
+        ///
+        /// This function is only meant to be called by the owner of the collection.
         ///
         /// Use this function to modify properties of the sale
         /// (e.g. to set an allowlist or claim limit).
@@ -121,8 +138,10 @@ pub contract FreshmintClaimSaleV2 {
         }
     }
 
-    /// SaleInfo is a struct containing the information
-    /// about a sale including its price, payment type, size and supply.
+    /// SaleInfo is a read-only utility struct that makes it easier to return all the 
+    /// relevant information about a sale in a single Cadence script.
+    ///
+    /// For example, an application may display this data on a public web page for the sale.
     ///
     pub struct SaleInfo {
 
@@ -159,9 +178,12 @@ pub contract FreshmintClaimSaleV2 {
         pub let size: Int?
         pub let receiverPath: PublicPath
 
+        /// Return the read-only SaleInfo utility struct defined above.
+        ///
+        pub fun getInfo(): SaleInfo
+
         pub fun getPaymentVaultType(): Type
         pub fun getSupply(): Int?
-        pub fun getInfo(): SaleInfo
         pub fun getRemainingClaims(address: Address): UInt?
 
         pub fun claim(payment: @FungibleToken.Vault, address: Address)
@@ -175,11 +197,30 @@ pub contract FreshmintClaimSaleV2 {
     ///
     pub resource Sale: SalePublic {
     
+        /// A string indentifier chosen by the sale creator.
+        ///
+        /// This ID field exists to make it easier for the creator
+        /// to manage and track multiple sales within their account.
+        /// It does not need to be globaly unique, but should be unique
+        /// across other sales in the same account.
+        ///
         pub let id: String
+
+        /// The cost of claiming one NFT from this sale.
+        ///
         pub let price: UFix64
+
+        /// The initial size of the sale.
+        ///
+        /// This field is optional because not every sale needs to have a
+        /// fixed size limit. For example, a creator may set up a sale
+        /// that mints NFTs on demand for a period of time.
+        ///
         pub let size: Int?
 
-        /// A capability to the queue that returns the NFTs to be sold in this sale.
+        /// A capability to the queue implementation that returns the NFTs to be sold in this sale.
+        ///
+        /// See the FreshmintQueue contract for more information on how NFT queues work.
         ///
         access(self) let queue: Capability<&{FreshmintQueue.Queue}>
         
@@ -189,7 +230,9 @@ pub contract FreshmintClaimSaleV2 {
         ///
         pub let receiverPath: PublicPath
 
-        /// A capability to the receiver that will receive payments from this sale.
+        /// A capability to the fungible token receiver that will receive payments from this sale.
+        ///
+        /// The token type for this sale is determined based on the type of this receiver.
         ///
         pub let paymentReceiver: Capability<&{FungibleToken.Receiver}>
 
@@ -360,6 +403,14 @@ pub contract FreshmintClaimSaleV2 {
             // Get the next NFT from the queue
             let nft <- queue.getNextNFT() ?? panic("sale is sold out")
 
+            // Note: normally at this point we would move the NFT resource
+            // to the caller. However, this would allow users to
+            // bypass the address-based claim limt and the allowlist.
+            //
+            // This is a slight Cadence anti-pattern, but to ensure that the NFT
+            // is received by the correct address, we deposit it directly into
+            // the account.
+            //
             let nftReceiver = getAccount(address)
                 .getCapability(self.receiverPath)
                 .borrow<&{NonFungibleToken.CollectionPublic}>()!
