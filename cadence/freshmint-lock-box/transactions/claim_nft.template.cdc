@@ -4,19 +4,6 @@ import NonFungibleToken from {{{ imports.NonFungibleToken }}}
 import MetadataViews from {{{ imports.MetadataViews }}}
 import FreshmintLockBox from {{{ imports.FreshmintLockBox }}}
 
-pub fun intializeCollection(account: AuthAccount) {
-    if account.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
-        let collection <- {{ contractName }}.createEmptyCollection()
-        
-        account.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
-
-        account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(
-            {{ contractName }}.CollectionPublicPath, 
-            target: {{ contractName }}.CollectionStoragePath
-        )
-    }
-}
-
 // This transaction claims on NFT from a lock box at the given address.
 //
 // Parameters:
@@ -53,6 +40,19 @@ transaction(
             id: nftID,
             address: self.receiverAddress,
             signature: signature.decodeHex() 
+        )
+    }
+}
+
+pub fun intializeCollection(account: AuthAccount) {
+    if account.borrow<&{{ contractName }}.Collection>(from: {{ contractName }}.CollectionStoragePath) == nil {
+        let collection <- {{ contractName }}.createEmptyCollection()
+        
+        account.save(<-collection, to: {{ contractName }}.CollectionStoragePath)
+
+        account.link<&{{ contractName }}.Collection{NonFungibleToken.CollectionPublic, {{ contractName }}.{{ contractName }}CollectionPublic, MetadataViews.ResolverCollection}>(
+            {{ contractName }}.CollectionPublicPath, 
+            target: {{ contractName }}.CollectionStoragePath
         )
     }
 }

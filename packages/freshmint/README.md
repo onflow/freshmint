@@ -1,6 +1,6 @@
 # Freshmint CLI
 
-![npm](https://img.shields.io/npm/v/freshmint)
+[![npm](https://img.shields.io/npm/v/freshmint)](https://www.npmjs.com/package/freshmint)
 
 `freshmint` is the main entrypoint for developers using Freshmint.
 
