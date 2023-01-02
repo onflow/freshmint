@@ -9,12 +9,22 @@ contract:
         type: string
       - name: thumbnail
         type: ipfs-file
+
+    # Include the views required by the Flow NFT Catalog: https://www.flow-nft-catalog.com/
     views:
       - type: display
         options:
           name: name
           description: description
           thumbnail: thumbnail
+      - type: external-url
+        # Use the ${collection.url}, ${nft.owner} and ${nft.id} variables to construct the NFT URL.
+        # For example, this will produce URLs like http://localhost:3000/nfts/0xf8d6e0586b0a20c7/42
+        options: ${collection.url}/nfts/${nft.owner}/${nft.id}
+      - type: royalties
+      - type: nft-collection-display
+      - type: nft-collection-data
+
   account:
     emulator: emulator-account
     testnet: testnet-account
