@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use freshmint in your research or reference it, please cite it as below."
+title: "freshmint: TypeScript NFT minting toolkit for the Flow network"
+authors:
+  - name: "Flow Foundation"
+    website: "https://flow.com"
+repository-code: "https://github.com/onflow/freshmint"
+url: "https://flow.com"
+license: Apache-2.0
+type: software
+keywords:
+  - flow
+  - flow-network
+  - cadence
+  - nft
+  - nft-minting
+  - typescript
+  - ipfs
