@@ -79,14 +79,7 @@ Metadata schemas are defined per project and validated before minting. Freshmint
 Check the [Releases](https://github.com/onflow/freshmint/releases) page for current version and release notes before using it in production.
 
 **Where do I report bugs or request features?**
-Open an issue in this repo, or join the community channels listed below.
-
-## Community & Support
-
-- [Flow Discord](https://discord.gg/flow) — real-time developer chat.
-- [Flow Forum](https://forum.flow.com) — longer-form discussions and announcements.
-- [Flow Improvement Proposals (FLIPs)](https://github.com/onflow/flips) — protocol and ecosystem governance.
-- [GitHub Issues](https://github.com/onflow/freshmint/issues) — bug reports and feature requests for Freshmint.
+Open an issue in this repo, or join the [Flow Discord](https://discord.gg/flow).
 
 ## About Flow
 
