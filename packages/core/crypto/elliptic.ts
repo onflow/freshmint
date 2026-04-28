@@ -1,4 +1,4 @@
-import * as elliptic from 'elliptic';
+import elliptic from 'elliptic';
 
 import { PublicKey } from './publicKey';
 import { Signer, SignatureAlgorithm } from './sign';
